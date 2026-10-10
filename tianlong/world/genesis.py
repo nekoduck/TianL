@@ -2,7 +2,7 @@
 [INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
-       处理开端未明的人物（休眠）、校验全部 id 引用；任何引用错误都在开局前失败，绝不带病入世
+       处理开端未明的人物（休眠）、路程按骑马换算(PACE)、校验全部 id 引用；任何引用错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -15,6 +15,12 @@ from .clock import DAYS_PER_MONTH, PER_DAY, day_of
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "canon"
 START_SHICHEN = 4  # 开场于辰时
+PACE = 60 / 100    # 原始路程按步行(日行六十里)估算；江湖人多骑马(日行百里)，入世时统一换算
+
+
+def _ride(days: int) -> int:
+    """步行日数 → 骑马日数；同处(0日)仍为 0，异地至少 1 日。"""
+    return 0 if days == 0 else max(1, round(days * PACE))
 
 # ============================================================
 #  各类实体保留的字段——src / inferred / *_basis 等抽取元数据不进入世界
@@ -117,7 +123,7 @@ def load(root: Path = DATA) -> dict:
 def _compile(root: str) -> dict:
     root = Path(root)
     nodes = _nodes(root)
-    roads = [tuple(r) for r in _read(root, "02_roads.json")]
+    roads = [(a, b, _ride(days)) for a, b, days in _read(root, "02_roads.json")]
     relations = [{k: r[k] for k in ("src", "dst", "rel", "secret") if k in r} for r in _read(root, "07_relations.json")]
     canon = _schedule(_read(root, "08_canon.json"))
     errors = _validate(nodes, roads, relations, canon)

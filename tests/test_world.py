@@ -26,6 +26,15 @@ class GenesisTest(unittest.TestCase):
         self.assertEqual([e["order"] for e in w.canon], sorted(e["order"] for e in w.canon))
         self.assertTrue(all(a["day"] <= b["day"] for a, b in zip(w.canon, w.canon[1:])))  # 日序随 order 单调
 
+    def test_roads_are_ridden_not_walked(self):
+        raw = {(a, b): d for a, b, d in genesis._read(genesis.DATA, "02_roads.json")}
+        w = World.create()
+        for e in w.graph.edges:
+            if e["rel"] == "road":
+                walk = raw[(e["src"], e["dst"])]
+                self.assertEqual(e["days"], genesis._ride(walk))
+                self.assertTrue(e["days"] <= walk and (walk == 0) == (e["days"] == 0))
+
     def test_unconfirmed_persons_are_dormant(self):
         w = World.create()
         self.assertTrue(w.graph.get("黎老汉", "dormant"))

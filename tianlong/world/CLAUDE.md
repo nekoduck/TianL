@@ -4,7 +4,7 @@
 基础设施层。掌管世界的唯一真相——地理、人物、器物、武学由 genesis 从 data/canon 原著硬知识编译而来，LLM 不新造；它服务于剧情：替导演记住一切、算好距离功力与时日、把剧情后果落账并传播。只经 effects 一个入口改变，本目录不 import 任何 LLM 代码。
 
 成员清单
-genesis.py: 创世导入器，读 data/canon 编译世界：裁剪抽取元数据、按 order 排定原著日程(同月均匀铺开且单调)、开端未明者休眠(dormant)、校验全部 id 引用，错一处即拒绝开局；编译结果缓存、每次深拷贝
+genesis.py: 创世导入器，读 data/canon 编译世界：裁剪抽取元数据、按 order 排定原著日程(同月均匀铺开且单调)、开端未明者休眠(dormant)、路程按骑马换算(PACE=0.6)、校验全部 id 引用，错一处即拒绝开局；编译结果缓存、每次深拷贝
 world.py: World 聚合根，create 创世(genesis)、apply→record(标记亲历/公开)→advance→sync 状态流水线、观察校正认知、整世界 JSON 存读档
 graph.py: 内存图数据库，节点属性 + 有向关系边 + 无向道路边(days 权重)；地点 state.accessible/exists 为 false 则道路断绝；Dijkstra 距离与 BFS 跳数是消息延迟和 LOD 分层的度量
 clock.py: 全局时钟，以时辰计数、原点元祐元年正月初一，advance 返回跨日/跨月数驱动 LOD 节拍，渲染并解析(day_of)元祐→绍圣→元符年号历法

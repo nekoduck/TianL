@@ -90,10 +90,18 @@ class DirectorTest(unittest.TestCase):
     def test_journey_time_from_roads_not_llm(self):
         llm = StubLLM(director(effects=[{"op": "set", "id": "player", "key": "location", "value": "镇南王府"}]))
         game = Game(World.create(), llm)
-        start = game.world.clock.day
+        w = game.world
+        start, ride = w.clock.day, w.graph.distances(w.here)["镇南王府"]
         turn = game.act("直奔镇南王府")
         self.assertEqual(turn["place"], "镇南王府")
-        self.assertEqual(game.world.clock.day, start + 3)
+        self.assertEqual((ride, w.clock.day), (2, start + ride))  # 步行 3 日，骑马 2 日；导演只估了 1 时辰
+
+    def test_time_always_flows_when_the_player_acts(self):
+        llm = StubLLM(director(elapsed=0))
+        game = Game(World.create(), llm)
+        tick = game.world.clock.tick
+        game.act("与段誉闲谈")
+        self.assertEqual(game.world.clock.tick, tick + 1)
 
     def test_invented_entities_rejected_and_told_to_writer(self):
         llm = StubLLM(director(effects=[
