@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 tianlong.world 全部基础设施（不接入 LLM）
-[OUTPUT]: unittest 用例——历法、创造物化、世界物理、场外在场性、消息延迟传播、认知/真相分离、隐情揭示、LOD 污染判定、存读档
-[POS]: tests 的状态层验证，证明基础设施能把任意创造稳稳接住，并只拦下违背世界物理的部分
+[OUTPUT]: unittest 用例——历法、剧情后果落账、器物与地理归基础设施、宽松规整、世界物理、场外在场性、消息延迟、隐情揭示、LOD 污染、存读档
+[POS]: tests 的状态层验证，证明剧情能自由改变既有世界，而地理与器物只由系统掌管
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import tempfile
@@ -24,66 +24,75 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(Clock().label(19), "元祐七年正月二十")
 
 
-class CreationTest(unittest.TestCase):
+class PlotTest(unittest.TestCase):
     def setUp(self):
         self.w = World.from_seed("测试")
 
-    def test_created_person_item_and_place_become_truth(self):
-        ops = [{"op": "create", "id": "青衫剑客", "type": "person", "attrs": {"title": "无量剑西宗弃徒", "power": 50}},
-               {"op": "create", "id": "断剑", "type": "item", "attrs": {"desc": "半截青钢剑"}},
-               {"op": "push", "id": "player", "key": "inventory", "value": "断剑"},
-               {"op": "create", "id": "后山崖底", "type": "location", "road": {"to": "剑湖宫", "days": 0},
-                "attrs": {"region": "无量山", "desc": "深谷"}},
-               {"op": "link", "src": "青衫剑客", "dst": "player", "rel": "欠你一命"}]
+    def test_plot_consequences_become_truth(self):
+        ops = [{"op": "set", "id": "段誉", "key": "status", "value": "wounded"},
+               {"op": "set", "id": "左子穆", "key": "mood", "value": "恼羞成怒"},
+               {"op": "link", "src": "左子穆", "dst": "player", "rel": "记恨"},
+               {"op": "add", "id": "player", "key": "hp", "value": -20},
+               {"op": "set", "id": "剑湖宫", "key": "state", "value": "比剑被搅散，满厅狼藉"}]
         applied, rejected = self.w.apply(ops, "director")
         self.assertEqual((len(applied), rejected), (5, []))
-        self.w.sync()
         pack = rag.build(self.w)
-        self.assertIn("青衫剑客", [p["name"] for p in pack["people"]])  # 默认落在此地，且被亲眼看见
-        self.assertEqual(self.w.graph.get("青衫剑客", "status"), "alive")
-        self.assertIn("断剑", self.w.player["inventory"])
-        self.assertIsNone(self.w.graph.get("断剑", "location"))  # 随身即离地
-        self.assertIn("后山崖底", [e["name"] for e in pack["exits"]])
+        self.assertEqual(pack["scene"]["state"], "比剑被搅散，满厅狼藉")
+        self.assertIn("左子穆→你：记恨", next(p for p in pack["people"] if p["name"] == "左子穆")["toward_you"])
+        self.assertEqual(self.w.player["hp"], 80)
+        self.assertIn("段誉", self.w.taint)
 
-    def test_infrastructure_tolerates_loose_schema(self):
-        ops = [{"op": "create", "id": "后山禁地", "type": "location",
-                "attrs": {"desc": "崖壁如玉", "road": {"to": "剑湖宫"}}},          # road 写进了 attrs、缺 days
-               {"op": "create", "id": "崖底石洞", "type": "location", "attrs": {}},  # 没写 road：缺省连到此地
-               GO("后山禁地"),
-               {"op": "set", "id": "player", "key": "姿态", "value": "跌坐"},           # 中文属性名
-               {"op": "create", "id": "火折", "type": "item", "attrs": {"location": "player"}},  # 造出即随身
-               GO("无量玉璧")]                                                            # 景物名 → 其所在之地
+    def test_items_and_geography_belong_to_infrastructure(self):
+        ops = [{"op": "create", "id": "青衫剑客", "type": "person", "attrs": {}},           # 不能新造人物
+               {"op": "create", "id": "断剑", "type": "item", "attrs": {}},                 # 不能新造器物
+               GO("后山禁地"),                                                              # 世上没有此地
+               {"op": "push", "id": "player", "key": "inventory", "value": "倚天剑"},       # 世上没有此物
+               {"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"},  # 远在琅嬛福地
+               {"op": "set", "id": "北冥神功卷轴", "key": "grants", "value": {}},            # 器物定义不可改
+               {"op": "set", "id": "剑湖宫", "key": "desc", "value": "一片废墟"}]            # 地理定义不可改
         applied, rejected = self.w.apply(ops, "director")
-        self.assertEqual((len(applied), rejected), (6, []))
-        self.assertEqual(dict(self.w.graph.roads("后山禁地")), {"剑湖宫": 1})
-        self.assertEqual((self.w.player["posture"], self.w.here), ("跌坐", "剑湖宫"))
-        self.assertIn("火折", self.w.player["inventory"])
+        self.assertEqual((applied, len(rejected)), ([], 7))
+
+    def test_loose_writing_is_understood(self):
+        ops = [{"op": "set", "id": "player", "key": "姿态", "value": "跌坐"},  # 中文属性名
+               GO("无量玉璧")]                                                 # 景物名 → 其所在之地
+        applied, rejected = self.w.apply(ops, "director")
+        self.assertEqual((len(applied), rejected), (2, []))
+        self.assertEqual((self.w.player["posture"], self.w.here), ("跌坐", "无量后山"))
+
+    def test_hidden_item_found_through_plot(self):
+        self.w.apply([GO("琅嬛福地")], "director")
+        self.assertEqual(rag.build(self.w)["items"], [])
+        self.assertTrue(any("北冥神功卷轴" in h for h in rag.backstage(self.w)["hidden"]))
+        self.w.apply([{"op": "set", "id": "北冥神功卷轴", "key": "hidden", "value": False}], "director")  # 蒲团磕破
+        self.assertEqual([i["name"] for i in rag.build(self.w)["items"]], ["北冥神功卷轴"])
+        applied, _ = self.w.apply([{"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}],
+                                  "director")
+        self.assertEqual(len(applied), 1)
+        self.assertIsNone(self.w.graph.get("北冥神功卷轴", "location"))
 
     def test_player_hp_floor(self):
         self.w.apply([{"op": "add", "id": "player", "key": "hp", "value": -500}], "director")
         self.assertEqual(self.w.player["hp"], 1)
 
-    def test_physics_rejects_only_impossible(self):
+    def test_physics_rejects_the_impossible(self):
         self.w.graph.set("左子穆", "status", "dead")
-        ops = [{"op": "set", "id": "左子穆", "key": "status", "value": "alive"},       # 死者复生
-               {"op": "set", "id": "乔峰", "key": "status", "value": "dead"},          # 远在无锡，够不着
-               {"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"},  # 远在琅嬛福地
-               {"op": "create", "id": "孤岛", "type": "location", "road": {"to": "蓬莱"}},  # 接向不存在之地
-               {"op": "set", "id": "段誉", "key": "status", "value": "wounded"}]        # 合法
+        ops = [{"op": "set", "id": "左子穆", "key": "status", "value": "alive"},  # 死者复生
+               {"op": "set", "id": "乔峰", "key": "status", "value": "dead"},     # 远在无锡，够不着
+               {"op": "set", "id": "段誉", "key": "status", "value": "wounded"}]   # 合法
         applied, rejected = self.w.apply(ops, "director")
         self.assertEqual([op["id"] for op in applied], ["段誉"])
-        self.assertEqual(len(rejected), 4)
+        self.assertEqual(len(rejected), 2)
 
     def test_offscreen_cannot_touch_player_but_can_hate_him(self):
         _, ring = lod.lod1_scope(self.w)
         ops = [{"op": "add", "id": "player", "key": "hp", "value": -50},
-               {"op": "link", "src": "钟万仇", "dst": "player", "rel": "誓杀"},
-               {"op": "set", "id": "段正淳", "key": "location", "value": "雁门关"},  # 一日千里
+               {"op": "link", "src": "鸠摩智", "dst": "player", "rel": "起了杀心"},
                {"op": "set", "id": "段正淳", "key": "status", "value": "wounded"},
-               {"op": "create", "id": "黑衣刺客", "type": "person", "attrs": {"location": "大理城"}}]
+               {"op": "set", "id": "段正淳", "key": "location", "value": "雁门关"},  # 一日千里
+               {"op": "set", "id": "段正淳", "key": "location", "value": "万劫谷"}]
         applied, rejected = self.w.apply(ops, "lod1", ring)
-        self.assertEqual(len(applied), 3)
-        self.assertEqual(len(rejected), 2)
+        self.assertEqual((len(applied), len(rejected)), (3, 2))
         self.assertEqual(self.w.player["hp"], 100)
 
     def test_garbage_rejected(self):
@@ -108,15 +117,15 @@ class PropagationTest(unittest.TestCase):
         self.assertEqual([e["summary"] for e in w.sync()], ["游骥身亡"])
         self.assertEqual(w.knowledge.view("游骥")["status"], "dead")
 
-    def test_offscreen_creation_spreads_as_news(self):
+    def test_offscreen_plot_spreads_as_news(self):
         w = World.from_seed()
-        op = {"op": "create", "id": "血刀客", "type": "person", "attrs": {"location": "大理城", "title": "西域狂僧"}}
-        w.apply([op], "lod1", {"大理城"})
-        w.record("血刀客现身大理", "大理城", [op], "lod1", 1)
-        self.assertFalse(w.knowledge.knows("血刀客"))
+        _, ring = lod.lod1_scope(w)
+        lod.absorb(w, [{"where": "大理城", "event": "国师夜闯天龙寺", "result": "段正淳负伤",
+                        "effects": [{"op": "set", "id": "段正淳", "key": "status", "value": "wounded"}]}], ring)
+        self.assertEqual(w.knowledge.view("段正淳")["status"], "alive")
         w.advance(12 * 3)
         w.sync()
-        self.assertEqual(w.knowledge.view("血刀客")["title"], "西域狂僧")
+        self.assertEqual(w.knowledge.view("段正淳")["status"], "wounded")
 
     def test_observation_overrides_belief(self):
         w = World.from_seed()
@@ -133,14 +142,6 @@ class PropagationTest(unittest.TestCase):
         self.assertNotIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])
         w.graph.set("段延庆", "location", "剑湖宫")
         self.assertIn("段延庆—生父—段誉", rag.build(w)["relations"])
-
-    def test_hidden_things_are_backstage(self):
-        w = World.from_seed()
-        w.apply([GO("琅嬛福地")], "director")
-        self.assertEqual(rag.build(w)["items"], [])
-        self.assertTrue(any("北冥神功卷轴" in h for h in rag.backstage(w)["hidden"]))
-        applied, _ = w.apply([{"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
-        self.assertEqual(len(applied), 1)
 
 
 class LodTest(unittest.TestCase):

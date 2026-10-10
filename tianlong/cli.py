@@ -70,7 +70,7 @@ def main(argv=None):
     ap.add_argument("--offline", action="store_true", help="不调用大模型，全部走确定性兜底")
     ap.add_argument("--load", type=Path, help="读取存档")
     ap.add_argument("--name", help="主角名号")
-    ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败、创造未成立等诊断日志")
+    ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败、剧情后果未成立等诊断日志")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR, format="  [%(levelname)s] %(message)s")
     _load_dotenv()

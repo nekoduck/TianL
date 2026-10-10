@@ -69,8 +69,6 @@ class Knowledge:
         for op in event["effects"]:
             if op["op"] == "set" and op.get("id") != "player" and op["key"] in PUBLIC_KEYS:
                 self.beliefs.setdefault(op["id"], {})[op["key"]] = op["value"]
-            elif op["op"] == "create" and not op["attrs"].get("hidden"):
-                self.beliefs[op["id"]] = {k: v for k, v in op["attrs"].items() if k in PUBLIC_KEYS}
             elif op["op"] == "reveal":
                 self.reveal(op["src"], op["dst"], op["rel"])
 

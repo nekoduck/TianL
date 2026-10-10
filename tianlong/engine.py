@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/（World、lod、rag）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act / debug），每回合返回一个纯 dict 的 Turn
-[POS]: 两层唯一的交汇点——游戏主循环：取材(RAG+后台) → 导演裁定与创造 → 物化为真相 → 按道路结算时日
+[POS]: 两层唯一的交汇点——游戏主循环：取材(RAG+后台) → 导演编织剧情与选项 → 剧情后果落账 → 按道路结算时日
        → LOD1/LOD2 场外推演 → 传闻投递 → 编剧成文。基础设施在每一步替 LLM 记忆、算账、送信
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """

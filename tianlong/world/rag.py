@@ -3,7 +3,7 @@
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、dossier()、power_tier()
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知；
-       backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、远近道路、命运骰，让它的创造有据可依
+       backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、远近道路、命运骰，让它编织的剧情有据可依
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
@@ -95,7 +95,7 @@ def build(world) -> dict:
 
 
 # ============================================================
-#  导演后台：玩家看不见、但创造必须依据的一切
+#  导演后台：玩家看不见、但剧情必须依据的一切
 # ============================================================
 def backstage(world) -> dict:
     g, me, here = world.graph, world.player, world.here

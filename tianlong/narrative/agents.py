@@ -1,8 +1,8 @@
 """
 [INPUT]: 依赖 narrative/prompts 的四组提示词组装器，依赖 narrative/llm 的 LLMError；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：裁定+创造）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
+[OUTPUT]: 对外提供 direct()（导演：编织剧情 + 拟定选项）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
 [POS]: narrative 层的四个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容，
-       内容是否成立交给 world/effects 的世界物理；llm 为 None 或调用失败时走朴素兜底，离线亦可运行
+       剧情后果能否落账交给 world/effects；llm 为 None 或调用失败时走朴素兜底，离线亦可运行
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -29,7 +29,7 @@ def _dicts(xs) -> list[dict]:
 
 
 # ============================================================
-#  LOD0：导演（裁定 + 创造）
+#  LOD0：导演（剧情 + 选项）
 # ============================================================
 def _plain_director(pack: dict, deed: str) -> dict:
     """离线兜底：只会走路与旁观的朴素说书人。"""
@@ -67,7 +67,7 @@ def write(llm, pack: dict, deed: str, beats: list[str], void: list[str], news: l
 
 
 # ============================================================
-#  LOD1 / LOD2：场外创造，物化与物理校验在 world/lod + world/effects
+#  LOD1 / LOD2：场外剧情，后果落账在 world/lod + world/effects
 # ============================================================
 def simulate(llm, time: str, days: int, actors: list[dict]) -> list[dict]:
     r = _ask(llm, prompts.simulator(time, days, actors), lambda: {"reports": []}, tokens=800)
