@@ -1,0 +1,1556 @@
+[
+  {
+    "id": "北冥神功",
+    "school": "逍遥派",
+    "type": "内功",
+    "tier": "绝顶",
+    "desc": "以手太阴肺经等吸取他人内力，纳入自身。",
+    "requires": "先忘弃原有内功；吸取强于己者有凶险。",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "凌波微步",
+    "school": "逍遥派",
+    "type": "轻功",
+    "tier": "绝顶",
+    "desc": "按易经六十四卦方位行步，闪避间蓄积内力。",
+    "requires": "须熟悉六十四卦方位。",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "一阳指",
+    "school": "大理段氏",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "以指力点穴、疗伤，可隔空运劲。",
+    "requires": "出指耗损真力，须控制力度。",
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "以六经内力化无形剑气，分别由六指发出。",
+    "requires": "内力须十分深厚。",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "降龙二十八掌",
+    "school": "丐帮",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "掌力雄浑刚猛，乔峰施展摧枯拉朽。",
+    "requires": "需以深厚内力配合；为丐帮绝学。",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "降龙十八掌",
+    "school": "丐帮",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "萧峰、虚竹削去重复十掌后，精要威力更增。",
+    "requires": "原著末段才整理形成。",
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "打狗棒法",
+    "school": "丐帮",
+    "type": "棍棒",
+    "tier": "绝顶",
+    "desc": "绊、劈、缠、戳等诀变化精微，专制敌棒。",
+    "requires": "心法历来单传帮主。",
+    "src": "第12回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "易筋经",
+    "school": "少林派",
+    "type": "内功",
+    "tier": "绝顶",
+    "desc": "修成后内力雄强，使普通招数也具威力。",
+    "requires": "难在去除修习武功的执念。",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "神足经",
+    "school": null,
+    "type": "内功",
+    "tier": "绝顶",
+    "desc": "瑜伽姿势与运气图能化解毒质及外来魔障。",
+    "requires": "图形湿时显、干时隐，须照图行功。",
+    "src": "第28回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "小无相功",
+    "school": "逍遥派",
+    "type": "内功",
+    "tier": "绝顶",
+    "desc": "不着形相，可借其内力模仿各派招数。",
+    "requires": "完整功诀共八册；缺册强练可能走火入魔。",
+    "src": "第32回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "天长地久不老长春功",
+    "school": "逍遥派",
+    "type": "内功",
+    "tier": "绝顶",
+    "desc": "可驻颜，童姥每三十年返童须重练。",
+    "requires": "每次返童功力暂失，须逐日恢复。",
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "不老长春功",
+    "school": "星宿派",
+    "type": "内功",
+    "tier": "一流",
+    "desc": "丁春秋等借毒物精华行功，意在驻颜。",
+    "requires": "不可与童姥的完整功法混为同一名目。",
+    "src": "第25回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "化功大法",
+    "school": "星宿派",
+    "type": "毒术",
+    "tier": "一流",
+    "desc": "以毒侵袭经脉，使对方内力不能正常施展。",
+    "requires": "需以毒物持续补充，不能等同北冥吸功。",
+    "src": "第25回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "生死符",
+    "school": "灵鹫宫部属",
+    "type": "奇术",
+    "tier": "绝顶",
+    "desc": "以阴阳内力将水酒化冰，植入穴道折磨受者。",
+    "requires": "解除须知每枚符阴阳力道及穴位。",
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "天山折梅手",
+    "school": "逍遥派",
+    "type": "外功",
+    "tier": "绝顶",
+    "desc": "三路掌法三路擒拿手，可将多种招式纳入。",
+    "requires": "内力与见识越长，变化越繁。",
+    "src": "第32回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "天山六阳掌",
+    "school": "逍遥派",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "六路掌法运阴阳内力，可解生死符。",
+    "requires": "解符时须按阴阳份量施劲。",
+    "src": "第36回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "白虹掌力",
+    "school": "逍遥派",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "掌力可曲直如意，绕过遮挡袭击。",
+    "requires": null,
+    "src": "第37回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "传音搜魂大法",
+    "school": "逍遥派",
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "以远处声音传送话语，逼人现身。",
+    "requires": null,
+    "src": "第37回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "龟息功",
+    "school": "星宿派",
+    "type": "内功",
+    "tier": "一流",
+    "desc": "可闭息至心停气绝外观，阿紫潜水诈死时施用。",
+    "requires": null,
+    "src": "第22回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "斗转星移",
+    "school": "姑苏慕容",
+    "type": "奇术",
+    "tier": "绝顶",
+    "desc": "牵引对手劲力，反转其招伤其自身。",
+    "requires": "对手远强于己时难以转移。",
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "参合指",
+    "school": "姑苏慕容",
+    "type": "指法",
+    "tier": "绝顶",
+    "desc": "慕容博以凌空指力点刺，凝聚而有劲。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "火焰刀",
+    "school": null,
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "鸠摩智以手掌发出无形刀劲，远近攻敌。",
+    "requires": "须以内力凝聚刀劲。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "控鹤功",
+    "school": null,
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "隔空引动物件。",
+    "requires": null,
+    "src": "第31回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "擒龙功",
+    "school": "丐帮",
+    "type": "奇术",
+    "tier": "绝顶",
+    "desc": "乔峰凌空取物，劲力及于离手之处。",
+    "requires": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "段氏剑法",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "一流",
+    "desc": "大理段氏家传剑法，段正淳持剑御敌。",
+    "requires": null,
+    "src": "第48回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "鹤蛇八打",
+    "school": "四大恶人",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "云中鹤以双钢爪勾打拿人。",
+    "requires": null,
+    "src": "第16回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "软鞭十三式",
+    "school": "伏牛派",
+    "type": "外功",
+    "tier": "二流",
+    "desc": "软鞭变化攻守，崔百泉、过彦之用以对敌。",
+    "requires": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "青字九打",
+    "school": "青城派",
+    "type": "暗器",
+    "tier": "二流",
+    "desc": "青城派暗器手法，出手前有特定准备。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "城字十八破",
+    "school": "青城派",
+    "type": "外功",
+    "tier": "二流",
+    "desc": "青城派破招的门内功法。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "五虎断门刀",
+    "school": "秦家寨势力",
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "姚伯当所使刀法，走刚猛路线。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "地火功",
+    "school": "赤焰洞势力",
+    "type": "内功",
+    "tier": "二流",
+    "desc": "端木元身法、发声形似浮跃小虫。",
+    "requires": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "五斗米神功",
+    "school": null,
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "王语嫣据端木元招式说出之功法名目。",
+    "requires": "端木元口头否认；不能确认他实会。",
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "narrative_status": "角色推测未证实"
+  },
+  {
+    "id": "长白山剑法",
+    "school": null,
+    "type": "剑法",
+    "tier": "一流",
+    "desc": "卓不凡从剑谱学得后练出剑芒。",
+    "requires": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "少林七十二绝技",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "绝顶",
+    "desc": "少林七十二门技艺的总称，不是单一招式。",
+    "requires": "各技须有相应佛学修持。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "collection": true
+  },
+  {
+    "id": "罗汉拳",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "三流",
+    "desc": "少林入门拳法，虚竹开端已修习。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "韦陀掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "三流",
+    "desc": "少林基础掌法，招式平实。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "般若掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "玄难施掌，掌风含轻微爆响，劲力深厚。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "大金刚拳",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "玄慈握拳击发刚猛劲力。",
+    "requires": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "大金刚掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "刚猛掌力，修习须与佛法慈悲相配。",
+    "requires": null,
+    "src": "第20回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "大韦陀杵",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "玄悲成名绝技，胸部可受杵劲致命。",
+    "requires": null,
+    "src": "第9回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "拈花指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "拈花般轻柔弹指出劲，玄渡等使用。",
+    "requires": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "多罗叶指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "十指轮弹，轮转指劲损物。",
+    "requires": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "无相劫指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "以无形指力隔空伤物。",
+    "requires": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "一拍两散",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "凝聚全身劲力一击，中石化粉，中人毙命。",
+    "requires": "耗力极大，重在单次一掌。",
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "燃木刀法",
+    "school": "少林派",
+    "type": "刀法",
+    "tier": "一流",
+    "desc": "以木刀运内劲，连劈生热。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "伏魔杖法",
+    "school": "少林派",
+    "type": "棍棒",
+    "tier": "一流",
+    "desc": "少林杖法，持杖降伏对手。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "降魔禅杖",
+    "school": "少林派",
+    "type": "棍棒",
+    "tier": "一流",
+    "desc": "少林禅杖技法，玄慈用于应对丐帮武技。",
+    "requires": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "摩诃指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "少林指法之一，凝劲出指。",
+    "requires": null,
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "龙爪手",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "抢珠三式、沛然有雨等擒拿抓穴，可反夺兵刃。",
+    "requires": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "袈裟伏魔功",
+    "school": "少林派",
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "以衣物施内劲，拦截抵挡攻击。",
+    "requires": null,
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "袖里乾坤",
+    "school": "少林派",
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "以袖运劲，把拳掌变化隐在袖下。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "如影随形腿",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "腿法追逐敌身，如影附随。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "罗汉大阵",
+    "school": "少林派",
+    "type": "阵法",
+    "tier": "一流",
+    "desc": "少林僧众列队结成阵势。",
+    "requires": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "锁喉功",
+    "school": "丐帮",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "马大元成名绝技，以手抓喉制敌。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "缠丝擒拿手",
+    "school": "丐帮",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "白世镜所用擒拿，缠绕扣拿关节。",
+    "requires": null,
+    "src": "第20回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "打狗阵",
+    "school": "丐帮",
+    "type": "阵法",
+    "tier": "二流",
+    "desc": "丐帮弟子联手围住敌人。",
+    "requires": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "百毒不侵",
+    "school": null,
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "段誉误吞莽牯朱蛤后能抵抗多种毒质。",
+    "requires": "非主动修习功法；由奇遇形成体质。",
+    "src": "第34回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "narrative_status": "体质，非修习功法",
+    "trainable": false
+  },
+  {
+    "id": "毒箭术",
+    "school": null,
+    "type": "暗器",
+    "tier": "三流",
+    "desc": "木婉清袖中机括发短箭，箭头淬毒。",
+    "requires": null,
+    "src": "第3回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "易容术",
+    "school": null,
+    "type": "奇术",
+    "tier": "二流",
+    "desc": "阿朱以颜料、假装改扮人物面貌与嗓音。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "医术",
+    "school": null,
+    "type": "医术",
+    "tier": "一流",
+    "desc": "薛慕华诊脉疗伤，治病须辨病因。",
+    "requires": null,
+    "src": "第19回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "悲酥清风制毒法",
+    "school": "西夏一品堂",
+    "type": "毒术",
+    "tier": "一流",
+    "desc": "无色无臭毒气令人流泪、筋骨酥软。",
+    "requires": "使用者先服解药；不能写作瞬时致死。",
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "腐尸毒",
+    "school": "星宿派",
+    "type": "毒术",
+    "tier": "一流",
+    "desc": "将毒质布于尸身，投向敌群传播。",
+    "requires": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "连珠腐尸毒",
+    "school": "星宿派",
+    "type": "毒术",
+    "tier": "一流",
+    "desc": "连续掷出带毒尸身，以数量逼敌。",
+    "requires": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "三笑逍遥散施毒",
+    "school": "星宿派",
+    "type": "毒术",
+    "tier": "一流",
+    "desc": "毒发时受者发笑，苏星河、玄难遭此害。",
+    "requires": null,
+    "src": "第32回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "normalized_label": true
+  },
+  {
+    "id": "碧磷针法",
+    "school": "碧磷洞势力",
+    "type": "暗器",
+    "tier": "二流",
+    "desc": "桑土公以带毒细针袭击敌人。",
+    "requires": null,
+    "src": "第22回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "normalized_label": true
+  },
+  {
+    "id": "亢龙有悔",
+    "school": "丐帮",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "降龙掌中蓄劲留余，强掌后仍可转圜。",
+    "requires": "为降龙掌招式，非独立全套功法。",
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "见龙在田",
+    "school": "丐帮",
+    "type": "掌法",
+    "tier": "绝顶",
+    "desc": "降龙掌招式，乔峰近身强掌攻敌。",
+    "requires": "为降龙掌中一招。",
+    "src": "第43回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·少商剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "拇指循手太阴肺经出雄劲剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·商阳剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "食指循手阳明大肠经发剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·中冲剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "中指循手厥阴心包经发雄迈剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·关冲剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "无名指循手少阳三焦经发剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·少冲剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "右小指循手少阴心经发轻灵剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六脉神剑·少泽剑",
+    "school": "大理段氏",
+    "type": "剑法",
+    "tier": "绝顶",
+    "desc": "左小指循手太阳小肠经出剑气。",
+    "requires": "六脉之一。",
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "无量剑法",
+    "school": "无量剑",
+    "type": "剑法",
+    "tier": "二流",
+    "desc": "无量剑门人持剑拆招，诱敌进击。",
+    "requires": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ],
+    "normalized_label": true
+  },
+  {
+    "id": "太祖长拳",
+    "school": null,
+    "type": "外功",
+    "tier": "二流",
+    "desc": "三十二路平常拳法，乔峰运使时威力极大。",
+    "requires": null,
+    "src": "第19回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "通臂拳",
+    "school": "丐帮",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "陈长老挥拳时力尽又生新力，拳路伸长。",
+    "requires": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "天王补心针法",
+    "school": "蓬莱派",
+    "type": "暗器",
+    "tier": "一流",
+    "desc": "锥内藏十二钢针，击锤连发，以劲力和去势区别青蜂钉。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "虎爪功",
+    "school": null,
+    "type": "外功",
+    "tier": "一流",
+    "desc": "华赫艮以十指如铁爪抓土挖道；少林高僧亦有此功。",
+    "requires": null,
+    "src": "第8回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "王字四刀",
+    "school": "秦家寨势力",
+    "type": "刀法",
+    "tier": "一流",
+    "desc": "五虎断门刀最刚猛的绝招，三横一直砍向面门。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "奇门三才刀",
+    "school": "丐帮",
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "吴长风的刀法，连挥四刀分击敌人各方。",
+    "requires": null,
+    "src": "第16回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "劈空神拳",
+    "school": null,
+    "type": "外功",
+    "tier": "一流",
+    "desc": "以拳劲隔空发力的功夫名目。",
+    "requires": null,
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "天竺佛指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "玄寂指力嗤嗤作响，点人璇玑穴。",
+    "requires": null,
+    "src": "第19回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "快掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "二流",
+    "desc": "玄难连出十八掌，逼丁春秋退十八步。",
+    "requires": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "封喉剑",
+    "school": null,
+    "type": "剑法",
+    "tier": "二流",
+    "desc": "原著提及的剑法名目。",
+    "requires": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "降魔掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "刚性掌力，少林僧说与摩诃指不可同练。",
+    "requires": "与摩诃指不可同时修练。",
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "托钵掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "少林掌法名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "大智无定指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "少林指法名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "去烦恼指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "少林指法名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "罗汉掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "二流",
+    "desc": "少林掌法名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "虎爪手",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "二流",
+    "desc": "原著提及的爪手名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "鹰爪功",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "二流",
+    "desc": "原著提及的爪功名目。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "八卦刀法",
+    "school": null,
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "原著提及的刀法名目。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "六合刀",
+    "school": null,
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "慕容复使来抵御六脉剑气，手中兵刃仍被震断。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "九天九地方便铲法",
+    "school": "少林派",
+    "type": "棍棒",
+    "tier": "一流",
+    "desc": "慕容博与萧远山交手，将此少林器技化入拳掌。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "袖中指",
+    "school": null,
+    "type": "指法",
+    "tier": "一流",
+    "desc": "慕容博拂袖暗中发指，使崔百泉、过彦之摔倒不能动。",
+    "requires": null,
+    "src": "第42回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "擒龙手",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "少林高僧擒拿手法之一，可隔衣抓人制穴。",
+    "requires": null,
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "青蜂钉",
+    "school": "青城派",
+    "type": "暗器",
+    "tier": "二流",
+    "desc": "青字第四打，器形及发射姿式与天王补心针相似。",
+    "requires": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "传音入密",
+    "school": null,
+    "type": "奇术",
+    "tier": "一流",
+    "desc": "凝聚声音仅送入特定人耳中，旁人难以听闻。",
+    "requires": null,
+    "src": "第31回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "跌扑步",
+    "school": "无量剑东宗",
+    "type": "剑法",
+    "tier": "三流",
+    "desc": "龚光杰比剑佯装脚步踉跄，诱敌轻率进招。",
+    "requires": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "五罗轻烟掌",
+    "school": "大理段氏",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "段正淳连出五掌，眼望前方而劈熄身后五烛。",
+    "requires": null,
+    "src": "第7回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "拦云手",
+    "school": null,
+    "type": "掌法",
+    "tier": "二流",
+    "desc": "黄眉僧昔年推掌拦敌，仍被少年慕容博指伤。",
+    "requires": null,
+    "src": "第9回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "慈悲刀",
+    "school": "天童寺僧团",
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "宁波天童寺心观所创，以刀背击敌，只制敌不杀人。",
+    "requires": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "羽衣刀",
+    "school": "太乙派",
+    "type": "刀法",
+    "tier": "一流",
+    "desc": "太乙派刀法；王语嫣说其第十七招可衔接御敌。",
+    "requires": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "冰蚕掌",
+    "school": null,
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "游坦之以内力结合冰蚕寒毒发掌，伤人经脉。",
+    "requires": null,
+    "src": "第32回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "蜀道难牌法",
+    "school": "雷电门",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "九翼道人以铁牌使四十二路，严护上身各方。",
+    "requires": null,
+    "src": "第34回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "柳絮剑法",
+    "school": null,
+    "type": "剑法",
+    "tier": "一流",
+    "desc": "慕容复缓剑轻刺，隐去刃上风声，仍破不了凌波步。",
+    "requires": null,
+    "src": "第48回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "少林擒拿十八打",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "玄净隔袖拿腕，招式与另三僧的擒拿不同。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "达摩掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "少林掌法名目，可用来应接师父般若掌。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "雪山掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "少林掌法名目，可用来应接师父般若掌。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "如来千手法",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "少林掌法名目，可用来应接师父般若掌。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "金钟罩",
+    "school": null,
+    "type": "外功",
+    "tier": "一流",
+    "desc": "护体功夫名目；鸠摩智认为仍挡不住自己的重手。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "铁布衫",
+    "school": null,
+    "type": "外功",
+    "tier": "一流",
+    "desc": "护体功夫名目；鸠摩智认为仍挡不住自己的重手。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "金刚指",
+    "school": "少林派",
+    "type": "指法",
+    "tier": "一流",
+    "desc": "少林高僧围擒乔峰时施用的擒拿手法之一。",
+    "requires": null,
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "握石掌",
+    "school": "少林派",
+    "type": "掌法",
+    "tier": "一流",
+    "desc": "少林高僧围擒乔峰时施用的擒拿手法之一。",
+    "requires": null,
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "寂灭抓",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "鸠摩智使此抓法，连同诸绝技攻虚竹眼目咽喉。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "因陀罗抓",
+    "school": "少林派",
+    "type": "外功",
+    "tier": "一流",
+    "desc": "鸠摩智使此抓法，连同诸绝技攻虚竹眼目咽喉。",
+    "requires": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "柴刀十八路",
+    "school": "黎山洞势力",
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "广西黎山洞黎老汉刀法，李延宗西劈一刀时使出。",
+    "requires": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "回风拂柳刀",
+    "school": "江南史家",
+    "type": "刀法",
+    "tier": "二流",
+    "desc": "江南史家刀法，李延宗回转而削的一刀采用此法。",
+    "requires": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  },
+  {
+    "id": "后山三绝招",
+    "school": null,
+    "type": "刀法",
+    "tier": "一流",
+    "desc": "金刀杨老令公擒敌招数；长柄砍刀招可改用于单刀。",
+    "requires": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "tier"
+    ]
+  }
+]

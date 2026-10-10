@@ -1,0 +1,68 @@
+{
+  "edition": "世纪新修版（三版）；依据用户附件正文及二〇〇二年十一月后记",
+  "story_start": "元祐六年二月（推断；原著第一回仅明说元祐年间）",
+  "inferred": true,
+  "inferred_fields": [
+    "story_start"
+  ],
+  "calendar": {
+    "epoch": "元祐七年正月初一",
+    "days_per_month": 30,
+    "months_per_year": 12,
+    "historical_calendar": false
+  },
+  "initial_snapshot": "第一回段誉在剑湖宫观看东西宗第四场比剑，褚师弟受伤之前",
+  "source": {
+    "file": "1_天龙八部_世纪新修版_1_天龙八部_世纪新修版_txt_z_library_sk,_1lib_sk,_z_lib.txt",
+    "sha256": "87f840d000b9cc7a41109529908dbad013db8e18299d557400ef2bdfb2c1dcea",
+    "encoding": "gb18030",
+    "chars": 1285392
+  },
+  "chapter_count": 50,
+  "coverage_status": "全书候选抽取；不宣称穷尽所有无名人物、杂物、招式与移动",
+  "notes": [
+    "全文按GB18030解码；数据文件全部为UTF-8。剔除序言、后记、附录及章内作者现代说明的虚构世界外人物。",
+    "power、grants.power、tier是用户游戏尺度下的估计，不是原著量化事实；统一标注推断，不能用作客观武功排名。",
+    "元祐六年开端由段誉十九岁、壬子年出生及钟灵乙卯年出生十六年前等线索估计；年月存在年龄计法和叙事历时的不确定性。",
+    "历法原点并不证明故事开始在元祐七年。无法确定日期的事件以推断年月和date_basis说明，尾声跨年事另行标注。",
+    "第二回降龙二十八掌、第二十八回神足经、第三十回石清风及第四十回李青萝/丁春秋关系均按附件新修版处理。",
+    "降龙二十八掌与第五十回删繁后的降龙十八掌是不同武学；少室山与少林寺、琅嬛福地与琅嬛玉洞是不同地点。",
+    "原著人物使用描述性规范ID收录无名而可辨认的人物；normalized_label说明编辑性消歧，不意味着原著有其姓名。",
+    "未知年龄使用null；无依据的性情、外貌、口吻使用空字符串。初始具体位置不能确定时，用有出处的粗粒度地区并标location推断。",
+    "08中的时间是剧情发生时间；回忆中的开端前事实归入初始状态和关系，不重复作为开端后事件执行。前后死期不明者单独列问题。",
+    "为容纳revealed_by引用，索引增加events组。secret关系的揭露可只对少数人，不自动视为天下皆知；reveal_scope另列。",
+    "门派易主使用set state对象保存leader并同步人物title；03.leader为开端快照。导入器须支持该约定或扩展leader指令。",
+    "物品holder与location不兼存；毁弃或消耗使用set state对象并清空holder/location。state是允许指令但05模板未展示的扩展字段。",
+    "道路表示粗略地理通达，不保证无条件可走；潜入、机关、悬崖、渡江、敌对控制需另加游戏规则。整数days全部是估算。",
+    "一个实体可属于国家而掌握另一派武功；单一faction只能写主要从属，其余用关系或注记表示，不把段誉开端写为逍遥派弟子。",
+    "同一实体跨技能的别名只用于同义写法，不把整套功法和其中一招混同。多套功法合卷，grants保持单对象，其余功法列入grants_extra。",
+    "附件可能含文字讹误；仅凭电子文本不能确认每字均与正规印本一致。问题清单保留抽取局限。",
+    "未提供导入校验器的实际代码；本包自检验证明示结构与回放，不保证外部校验器接受新增元数据。",
+    "第三十九回来访僧按附件为观心、道清、觉贤、融智、神音及神山；不使用别版或记忆中的所属寺院。",
+    "所有精确月份和非锚点功力都是估计；后叙多年后事件为时间占位，需维护者重定。",
+    "scope字段、来源定位与问题清单均不代表人工逐字段穷尽核对已经完成。"
+  ],
+  "schema_extensions": {
+    "events_index": "00增加events组，供07.revealed_by引用。",
+    "faction_state": "03.leader为开端快照，事件用set state中的leader表示后续首领。",
+    "item_state": "state.exists/available区分尚未形成、消耗、毁损；引擎应先检查这两项。",
+    "location_state": "道路为静态连接候选；地道及机关state.exists/accessible为false时，引擎必须禁用对应入口。",
+    "multi_skill_book": "grants_extra表示一件秘籍包含第二种功法；八册合练应按06.requires处理。",
+    "secret_scope": "reveal_scope限制该次真相知情者；缺省也不能直接推成天下皆知。",
+    "new_secret_relations": "开端后才发生的隐秘谋杀用08.link(secret=true, revealed_by=事件id)建立，再reveal，绝不塞进07。",
+    "unknown_initial_state": "initial_state_confirmed=false的人物保留枚举占位，禁止当作已确认开端存活角色激活。",
+    "animal_items": "动物按要求暂放05，entity_kind=animal；state.living与exists记录存亡。",
+    "namespaces": "寺院地点与僧团使用不同全局ID；aliases只作检索，不能在引用中代替ID。"
+  },
+  "production_ready": false,
+  "counts": {
+    "persons": 242,
+    "locations": 183,
+    "factions": 55,
+    "items": 98,
+    "skills": 119,
+    "events": 235,
+    "roads": 191,
+    "relations": 191
+  }
+}

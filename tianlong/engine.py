@@ -55,7 +55,8 @@ class Game:
         w.player.remember(f"{w.clock.label()}·{w.here}：{plan['memory']}")
         me = w.player
         return {"time": w.clock.label(), "place": w.here, "text": text,
-                "news": [f"{w.clock.label(e['day'])}·{e['where']}：{e['summary']}" for e in news],
+                "news": [f"{'亲眼所见' if e.get('witnessed') else '江湖传闻'}｜{w.clock.label(e['day'])}·{e['where']}："
+                         f"{e['summary']}" for e in news],
                 "options": self.options, "void": void,
                 "status": f"气血 {me['hp']}/{me['max_hp']}｜{rag.power_tier(me['power'])}｜{me['posture']}"
                           f"｜随身：{'、'.join(me['inventory']) or '无'}"}
@@ -67,13 +68,16 @@ class Game:
             if actors:
                 reports = agents.simulate(self.llm, w.clock.label(), days, [rag.dossier(w, a) for a in actors])
                 lod.absorb(w, reports, ring)
-        for ev, reasons in lod.due_canon(w, days, months):  # LOD2：干净走原著轨道，污染则唤醒史官
-            if not reasons:
+        for ev, tier in lod.due_canon(w, days, months):  # LOD2：按 order 依次结算，裁定在每桩结算前现场作出
+            path, reasons = lod.verdict(w, ev, tier)
+            if path == "canon":
                 lod.settle(w, ev, ev, "canon")
-                continue
-            outcome = agents.chronicle(self.llm, ev, reasons, [rag.dossier(w, a) for a in ev["actors"]],
-                                       lod.broken(w, ev))
-            lod.settle(w, ev, outcome, "chronicle")
+            elif path == "skip":
+                lod.settle(w, ev, {"happens": False}, "canon")
+            else:
+                outcome = agents.chronicle(self.llm, ev, reasons, [rag.dossier(w, a) for a in ev["actors"]],
+                                           lod.broken(w, ev))
+                lod.settle(w, ev, outcome, "chronicle")
 
     # ------------------------------------------------------------
     #  调试视图：双账本对照

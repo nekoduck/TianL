@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 heapq 做 Dijkstra
-[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图距离/跳数、按属性查询）
+[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图距离/跳数(尊重地点 state 的通断)、按属性查询）
 [POS]: world 层的内存图数据库，世界客观状态的唯一载体；Truth 账本只记"发生过什么"，"现在是什么"永远在这里
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -55,11 +55,18 @@ class Graph:
     # ------------------------------------------------------------
     #  道路拓扑：距离（日）与跳数——消息延迟与 LOD 分层的度量衡
     # ------------------------------------------------------------
+    def open(self, loc: str) -> bool:
+        """地点的 state 若声明 exists/accessible 为 false（地道塌毁、机关封闭），其道路即断。"""
+        state = self.get(loc, "state")
+        return not isinstance(state, dict) or (state.get("exists", True) and state.get("accessible", True))
+
     def roads(self, loc: str) -> list[tuple[str, int]]:
         out = []
         for e in self.edges:
             if e["rel"] == ROAD and loc in (e["src"], e["dst"]):
-                out.append((e["dst"] if e["src"] == loc else e["src"], e["days"]))
+                other = e["dst"] if e["src"] == loc else e["src"]
+                if self.open(other):
+                    out.append((other, e["days"]))
         return out
 
     def distances(self, src: str) -> dict[str, int]:

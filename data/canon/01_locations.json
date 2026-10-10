@@ -1,0 +1,1695 @@
+[
+  {
+    "id": "中原",
+    "parent": null,
+    "region": "中原",
+    "desc": "宋境腹地，江湖诸派往来之地。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "江南",
+    "parent": null,
+    "region": "江南",
+    "desc": "水乡湖泊众多，舟楫通行。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "塞外",
+    "parent": null,
+    "region": "塞外",
+    "desc": "关外辽人与女真人活动之地。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "西域",
+    "parent": null,
+    "region": "西域",
+    "desc": "西部诸国、门派往来之地。",
+    "lore": [],
+    "state": null,
+    "src": "第10回"
+  },
+  {
+    "id": "无量山",
+    "parent": null,
+    "region": "大理·无量山",
+    "desc": "山势险峻，剑湖宫与后山谷地在此。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "剑湖宫",
+    "parent": "无量山",
+    "region": "大理·无量山",
+    "desc": "无量剑门人练剑、举行剑会的宫院。",
+    "lore": [
+      "无量剑每五年比剑；五场三胜的一宗居宫五年。",
+      "开端由东宗居住，第四场正在进行。"
+    ],
+    "state": "无量剑东宗居住；东西宗比剑进行中",
+    "src": "第1回"
+  },
+  {
+    "id": "剑湖宫·练武厅",
+    "parent": "剑湖宫",
+    "region": "大理·无量山",
+    "desc": "东西宗弟子比剑，掌门与宾客分坐两旁。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "无量后山",
+    "parent": "无量山",
+    "region": "大理·无量山",
+    "desc": "有溪流与隐僻小径，邻近陡崖深谷。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "无量山·山崖",
+    "parent": "无量后山",
+    "region": "大理·无量山",
+    "desc": "高崖险峻，坠落可至谷底。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "无量山·谷底",
+    "parent": "无量后山",
+    "region": "大理·无量山",
+    "desc": "谷内有瀑布、湖水与隐蔽石门。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "无量玉壁",
+    "parent": "无量山·谷底",
+    "region": "大理·无量山",
+    "desc": "瀑布附近光滑石壁，月下可映剑影。",
+    "lore": [
+      "月光反射洞内练剑人影，被门人误认仙剑。"
+    ],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "琅嬛福地",
+    "parent": "无量山·谷底",
+    "region": "大理·无量山",
+    "desc": "湖畔山洞内的隐居石室。",
+    "lore": [
+      "旧为无崖子与李秋水隐居处。",
+      "玉像足上刻有磕首千遍、供驱策等字。"
+    ],
+    "state": "久无人居，卷轴藏在蒲团内",
+    "src": "第2回"
+  },
+  {
+    "id": "琅嬛福地·玉像石室",
+    "parent": "琅嬛福地",
+    "region": "大理·无量山",
+    "desc": "有女身玉像、蒲团与采光水晶。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "琅嬛福地·书房",
+    "parent": "琅嬛福地",
+    "region": "大理·无量山",
+    "desc": "书架留有各派签条，秘籍已被搬空。",
+    "lore": [
+      "旧藏各派武谱，开端已空。",
+      "签条注明缺易筋经、降龙二十八掌及段氏绝学。"
+    ],
+    "state": "书架空置，只余分类签条",
+    "src": "第2回"
+  },
+  {
+    "id": "琅嬛福地·石级隧道",
+    "parent": "琅嬛福地",
+    "region": "大理·无量山",
+    "desc": "石级斜向上行，通至外面的出口。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "无量洞",
+    "parent": "无量山",
+    "region": "大理·无量山",
+    "desc": "多进屋舍和花园，无量剑门人居处。",
+    "lore": [],
+    "state": null,
+    "src": "第5回"
+  },
+  {
+    "id": "无量洞·囚室",
+    "parent": "无量洞",
+    "region": "大理·无量山",
+    "desc": "园后小屋可从外锁住，用以拘禁段誉。",
+    "lore": [],
+    "state": null,
+    "src": "第5回"
+  },
+  {
+    "id": "澜沧江",
+    "parent": null,
+    "region": "大理",
+    "desc": "急流穿行山间，万劫谷在西岸。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "万劫谷",
+    "parent": null,
+    "region": "大理·万劫谷",
+    "desc": "钟万仇一家隐居的山谷，入口隐秘。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "万劫谷·谷口",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "有刻字树干与进谷的机关暗号。",
+    "lore": [
+      "树干刻姓段者入此谷杀无赦。",
+      "入谷须知机关暗号。"
+    ],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "万劫谷·大厅",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "谷主待客与议事的厅堂。",
+    "lore": [],
+    "state": null,
+    "src": "第8回"
+  },
+  {
+    "id": "万劫谷·石屋",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "段誉与木婉清被囚的石室。",
+    "lore": [],
+    "state": null,
+    "src": "第7回"
+  },
+  {
+    "id": "万劫谷·药室",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "瓶罐密布，钟灵在此配药。",
+    "lore": [],
+    "state": null,
+    "src": "第8回"
+  },
+  {
+    "id": "万劫谷·地道",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "由救援者挖掘的地下通道。",
+    "lore": [
+      "开端尚未挖通；由巴天石、华赫艮等救人时施工。"
+    ],
+    "state": {
+      "exists": false,
+      "accessible": false
+    },
+    "src": "第8回"
+  },
+  {
+    "id": "木婉清居所",
+    "parent": null,
+    "region": "大理",
+    "desc": "万劫谷附近的大屋，木婉清与婢女居住。",
+    "lore": [],
+    "state": null,
+    "src": "第3回"
+  },
+  {
+    "id": "大理城",
+    "parent": null,
+    "region": "大理",
+    "desc": "段氏皇室所在都城，街市居民众多。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "大理皇宫",
+    "parent": "大理城",
+    "region": "大理",
+    "desc": "保定帝居处，有诵经禅房。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "镇南王府",
+    "parent": "大理城",
+    "region": "大理",
+    "desc": "段正淳府第，厅堂内室齐备。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "镇南王府·书房",
+    "parent": "镇南王府",
+    "region": "大理",
+    "desc": "镇南王读书、独坐的房间。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "玉虚观",
+    "parent": "大理城",
+    "region": "大理",
+    "desc": "刀白凤离家后所居道观，外有绿柳。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "天龙寺",
+    "parent": "大理城",
+    "region": "大理",
+    "desc": "大理皇家寺院，段氏高僧修持武学。",
+    "lore": [],
+    "state": null,
+    "src": "第8回"
+  },
+  {
+    "id": "天龙寺·牟尼堂",
+    "parent": "天龙寺",
+    "region": "大理",
+    "desc": "天龙寺群僧研习六脉神剑之堂。",
+    "lore": [],
+    "state": null,
+    "src": "第10回"
+  },
+  {
+    "id": "天龙寺·菩提树下",
+    "parent": "天龙寺",
+    "region": "大理",
+    "desc": "寺外菩提树下，段延庆昔年濒死停留。",
+    "lore": [],
+    "state": null,
+    "src": "第48回"
+  },
+  {
+    "id": "拈花寺",
+    "parent": "大理城",
+    "region": "大理",
+    "desc": "偏僻小古庙，黄眉僧及弟子在此。",
+    "lore": [],
+    "state": null,
+    "src": "第8回"
+  },
+  {
+    "id": "陆凉州",
+    "parent": null,
+    "region": "大理",
+    "desc": "少林使者南来时停留的州郡。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "身戒寺",
+    "parent": "陆凉州",
+    "region": "大理",
+    "desc": "玄悲挂单并遇害的寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "普洱",
+    "parent": null,
+    "region": "大理",
+    "desc": "马五德所在滇南茶区。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "苏州",
+    "parent": null,
+    "region": "江南·苏州",
+    "desc": "太湖附近城镇，慕容氏庄园所在地区。",
+    "lore": [],
+    "state": null,
+    "src": "第3回"
+  },
+  {
+    "id": "太湖",
+    "parent": "江南",
+    "region": "江南·太湖",
+    "desc": "湖中诸洲庄园靠舟船往来。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "燕子坞",
+    "parent": "太湖",
+    "region": "江南·太湖",
+    "desc": "慕容氏所居岛坞，外人难辨路径。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "参合庄",
+    "parent": "燕子坞",
+    "region": "江南·太湖",
+    "desc": "慕容家的庄园，因祖上往事得名。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "还施水阁",
+    "parent": "参合庄",
+    "region": "江南·太湖",
+    "desc": "慕容家收藏各派武学图谱的所在。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "琴韵小筑",
+    "parent": "燕子坞",
+    "region": "江南·太湖",
+    "desc": "阿碧居处，雅舍临水。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "听香水榭",
+    "parent": "燕子坞",
+    "region": "江南·太湖",
+    "desc": "阿朱所居的小洲，设有厨室厅堂。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "听香水榭·厨房",
+    "parent": "听香水榭",
+    "region": "江南·太湖",
+    "desc": "老顾烹食之处。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "曼陀山庄",
+    "parent": "太湖",
+    "region": "江南·太湖",
+    "desc": "王夫人母女居处，广植山茶。",
+    "lore": [
+      "王夫人厌恶姓段与大理人；私设酷刑。"
+    ],
+    "state": null,
+    "src": "第12回"
+  },
+  {
+    "id": "琅嬛玉洞",
+    "parent": "曼陀山庄",
+    "region": "江南·太湖",
+    "desc": "王家武学藏谱，源自无量山旧藏。",
+    "lore": [],
+    "state": null,
+    "src": "第12回"
+  },
+  {
+    "id": "青云庄",
+    "parent": null,
+    "region": "江南",
+    "desc": "邓百川管理的慕容家庄园。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "赤霞庄",
+    "parent": null,
+    "region": "江南",
+    "desc": "公冶乾管理的慕容家庄园。",
+    "lore": [],
+    "state": null,
+    "src": "第15回"
+  },
+  {
+    "id": "金风庄",
+    "parent": null,
+    "region": "江南",
+    "desc": "包不同管理的慕容家庄园。",
+    "lore": [],
+    "state": null,
+    "src": "第15回"
+  },
+  {
+    "id": "玄霜庄",
+    "parent": null,
+    "region": "江南",
+    "desc": "风波恶管理的慕容家庄园。",
+    "lore": [],
+    "state": null,
+    "src": "第15回"
+  },
+  {
+    "id": "无锡",
+    "parent": null,
+    "region": "江南·无锡",
+    "desc": "段誉与乔峰初识的城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第12回"
+  },
+  {
+    "id": "松鹤楼",
+    "parent": "无锡",
+    "region": "江南·无锡",
+    "desc": "乔峰、段誉饮酒的酒楼。",
+    "lore": [],
+    "state": null,
+    "src": "第14回"
+  },
+  {
+    "id": "杏子林",
+    "parent": "无锡",
+    "region": "江南·无锡",
+    "desc": "丐帮大会所在，林内道路纵横。",
+    "lore": [],
+    "state": null,
+    "src": "第14回"
+  },
+  {
+    "id": "天宁寺",
+    "parent": null,
+    "region": "江南",
+    "desc": "西夏武士拘禁丐帮众人的寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "少室山",
+    "parent": null,
+    "region": "中原·少室山",
+    "desc": "少林寺所在山岭，乔峰旧居在山阳。",
+    "lore": [],
+    "state": null,
+    "src": "第16回"
+  },
+  {
+    "id": "少林寺",
+    "parent": "少室山",
+    "region": "中原·少室山",
+    "desc": "佛门大寺，院堂分布山间。",
+    "lore": [
+      "寺规不接待女客；群雄大会时未拘此限。",
+      "高深武学须佛法修为相配。"
+    ],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "少林寺·菩提院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "乔峰潜入之院，阿朱盗经所在。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "少林寺·玄苦禅房",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "玄苦养伤及圆寂的禅房。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "少林寺·大雄宝殿",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "群僧与来客会集的大殿。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "少林寺·藏经阁",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "收藏佛经武谱，扫地老僧在此清扫。",
+    "lore": [
+      "萧远山、慕容博分别潜入偷阅武谱。"
+    ],
+    "state": null,
+    "src": "第43回"
+  },
+  {
+    "id": "少林寺·戒律院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "戒律首座主持寺规惩戒的院属。",
+    "lore": [],
+    "state": null,
+    "src": "第42回"
+  },
+  {
+    "id": "乔三槐家",
+    "parent": "少室山",
+    "region": "中原·少室山",
+    "desc": "山坡旁农舍，门前菜园有大枣树。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "聚贤庄",
+    "parent": null,
+    "region": "中原·河南",
+    "desc": "游氏兄弟庄院，召开讨伐乔峰的英雄大会。",
+    "lore": [],
+    "state": null,
+    "src": "第19回"
+  },
+  {
+    "id": "聚贤庄·大厅",
+    "parent": "聚贤庄",
+    "region": "中原·河南",
+    "desc": "群雄饮绝交酒并混战的厅堂。",
+    "lore": [],
+    "state": null,
+    "src": "第19回"
+  },
+  {
+    "id": "聚贤庄·后院",
+    "parent": "聚贤庄",
+    "region": "中原·河南",
+    "desc": "薛慕华给阿朱治伤之处。",
+    "lore": [],
+    "state": null,
+    "src": "第19回"
+  },
+  {
+    "id": "雁门关",
+    "parent": null,
+    "region": "塞北",
+    "desc": "宋辽交通的关口，附近有险峻山崖。",
+    "lore": [],
+    "state": null,
+    "src": "第15回"
+  },
+  {
+    "id": "雁门关·石壁",
+    "parent": "雁门关",
+    "region": "塞北",
+    "desc": "刻有萧远山当年遗言的崖壁。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "泰山",
+    "parent": null,
+    "region": "中原·山东",
+    "desc": "单正一家原居之地。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "天台山",
+    "parent": null,
+    "region": "江南·浙江",
+    "desc": "智光和尚所在山地。",
+    "lore": [],
+    "state": null,
+    "src": "第16回"
+  },
+  {
+    "id": "止观寺",
+    "parent": "天台山",
+    "region": "江南·浙江",
+    "desc": "智光住持的寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "信阳",
+    "parent": null,
+    "region": "中原·豫南",
+    "desc": "康敏居所附近城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "康敏家",
+    "parent": "信阳",
+    "region": "中原·豫南",
+    "desc": "马大元与康敏的居所。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "小镜湖",
+    "parent": null,
+    "region": "中原·豫南",
+    "desc": "阮星竹隐居水滨，邻有竹屋。",
+    "lore": [],
+    "state": null,
+    "src": "第22回"
+  },
+  {
+    "id": "小镜湖·方竹林",
+    "parent": "小镜湖",
+    "region": "中原·豫南",
+    "desc": "湖边有方形竹的竹林。",
+    "lore": [],
+    "state": null,
+    "src": "第22回"
+  },
+  {
+    "id": "小镜湖·竹屋",
+    "parent": "小镜湖",
+    "region": "中原·豫南",
+    "desc": "阮星竹居室，段正淳在此停留。",
+    "lore": [],
+    "state": null,
+    "src": "第22回"
+  },
+  {
+    "id": "小镜湖·青石桥",
+    "parent": "小镜湖",
+    "region": "中原·豫南",
+    "desc": "桥畔约战，阿朱易容赴会。",
+    "lore": [],
+    "state": null,
+    "src": "第23回"
+  },
+  {
+    "id": "晋阳",
+    "parent": null,
+    "region": "中原·山西",
+    "desc": "萧峰与阿紫北行途中提及的城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第24回"
+  },
+  {
+    "id": "女真部落",
+    "parent": "塞外",
+    "region": "塞外·辽东",
+    "desc": "阿骨打等居处，帐篷与木屋用于居住。",
+    "lore": [],
+    "state": null,
+    "src": "第26回",
+    "inferred": true,
+    "inferred_fields": [
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "南京",
+    "parent": null,
+    "region": "辽·南京",
+    "desc": "辽国南方重镇，萧峰任南院大王。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "南院大王府",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "萧峰在辽国府第，阿紫、游坦之曾居此。",
+    "lore": [],
+    "state": null,
+    "src": "第44回"
+  },
+  {
+    "id": "南院大王府·偏殿",
+    "parent": "南院大王府",
+    "region": "辽·南京",
+    "desc": "阿紫用神木王鼎、冰蚕练功之处。",
+    "lore": [],
+    "state": null,
+    "src": "第29回"
+  },
+  {
+    "id": "南院大王府·铁笼",
+    "parent": "南院大王府",
+    "region": "辽·南京",
+    "desc": "王府厅中的猛狮铁笼，后来加重镣囚禁乔峰。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "白马桥",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "阿紫投水脱逃的城中桥梁。",
+    "lore": [],
+    "state": null,
+    "src": "第49回"
+  },
+  {
+    "id": "辽国皇宫",
+    "parent": null,
+    "region": "辽",
+    "desc": "耶律洪基理政及受叛军攻击的宫城。",
+    "lore": [],
+    "state": null,
+    "src": "第27回"
+  },
+  {
+    "id": "星宿海",
+    "parent": null,
+    "region": "西域·青海",
+    "desc": "泉流小湖众多，丁春秋门徒活动之地。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "擂鼓山",
+    "parent": null,
+    "region": "中原",
+    "desc": "苏星河摆珍珑棋局所在山地。",
+    "lore": [],
+    "state": null,
+    "src": "第29回"
+  },
+  {
+    "id": "擂鼓山·棋局场",
+    "parent": "擂鼓山",
+    "region": "中原",
+    "desc": "松树旁石桌设棋，群雄在此试解珍珑。",
+    "lore": [],
+    "state": null,
+    "src": "第31回"
+  },
+  {
+    "id": "擂鼓山·木屋",
+    "parent": "擂鼓山",
+    "region": "中原",
+    "desc": "无崖子隐居的小屋，设有隔壁。",
+    "lore": [],
+    "state": null,
+    "src": "第31回"
+  },
+  {
+    "id": "函谷关",
+    "parent": null,
+    "region": "中原",
+    "desc": "苏星河昔年授艺，八弟子据此称函谷八友。",
+    "lore": [],
+    "state": null,
+    "src": "第30回"
+  },
+  {
+    "id": "天山",
+    "parent": null,
+    "region": "西域·天山",
+    "desc": "灵鹫宫所在高山区域。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "缥缈峰",
+    "parent": "天山",
+    "region": "西域·天山",
+    "desc": "云雾环绕，峰上为灵鹫宫。",
+    "lore": [],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "灵鹫宫",
+    "parent": "缥缈峰",
+    "region": "西域·天山",
+    "desc": "天山童姥所居，九天九部统辖群女。",
+    "lore": [
+      "九天九部均为女子。",
+      "童姥以生死符控制三十六洞、七十二岛。"
+    ],
+    "state": null,
+    "src": "第1回"
+  },
+  {
+    "id": "灵鹫宫·铁索桥",
+    "parent": "灵鹫宫",
+    "region": "西域·天山",
+    "desc": "连接山峰的铁索通路。",
+    "lore": [],
+    "state": null,
+    "src": "第37回"
+  },
+  {
+    "id": "西夏",
+    "parent": null,
+    "region": "西域·西夏",
+    "desc": "李氏统治之国，皇宫与一品堂所在地区。",
+    "lore": [],
+    "state": null,
+    "src": "第7回"
+  },
+  {
+    "id": "兴州",
+    "parent": "西夏",
+    "region": "西域·西夏",
+    "desc": "西夏都城，招亲群雄会集。",
+    "lore": [],
+    "state": null,
+    "src": "第36回"
+  },
+  {
+    "id": "西夏皇宫",
+    "parent": "兴州",
+    "region": "西域·西夏",
+    "desc": "李秋水所居及银川公主招亲的宫城。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "西夏皇宫·冰库",
+    "parent": "西夏皇宫",
+    "region": "西域·西夏",
+    "desc": "多层地下冰窖，虚竹与童姥藏身。",
+    "lore": [
+      "地下冰库可藏身，门重而不易为人发现。"
+    ],
+    "state": null,
+    "src": "第36回"
+  },
+  {
+    "id": "西夏皇宫·招亲厅",
+    "parent": "西夏皇宫",
+    "region": "西域·西夏",
+    "desc": "宫女传问三语，选驸马的厅堂。",
+    "lore": [],
+    "state": null,
+    "src": "第46回"
+  },
+  {
+    "id": "西夏宾馆",
+    "parent": "兴州",
+    "region": "西域·西夏",
+    "desc": "各国求亲者暂居馆舍。",
+    "lore": [],
+    "state": null,
+    "src": "第46回"
+  },
+  {
+    "id": "西夏古庙",
+    "parent": "兴州",
+    "region": "西域·西夏",
+    "desc": "段誉等候进城时暂住的庙宇。",
+    "lore": [],
+    "state": null,
+    "src": "第45回"
+  },
+  {
+    "id": "西夏枯井",
+    "parent": "西夏古庙",
+    "region": "西域·西夏",
+    "desc": "井底泥污，段誉等遭困其内。",
+    "lore": [],
+    "state": null,
+    "src": "第45回"
+  },
+  {
+    "id": "吐蕃",
+    "parent": null,
+    "region": "西域·吐蕃",
+    "desc": "鸠摩智的故国，国王派王子赴西夏求亲。",
+    "lore": [],
+    "state": null,
+    "src": "第7回"
+  },
+  {
+    "id": "大雪山",
+    "parent": "吐蕃",
+    "region": "西域·吐蕃",
+    "desc": "大轮寺所在雪山。",
+    "lore": [],
+    "state": null,
+    "src": "第10回"
+  },
+  {
+    "id": "大轮寺",
+    "parent": "大雪山",
+    "region": "西域·吐蕃",
+    "desc": "鸠摩智讲经的寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第10回"
+  },
+  {
+    "id": "皋兰",
+    "parent": null,
+    "region": "西域·甘肃",
+    "desc": "段誉从兴州南归经过的地点。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "秦州",
+    "parent": null,
+    "region": "中原·陇右",
+    "desc": "兴州至蜀北路线上经过的州郡。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "汉中",
+    "parent": null,
+    "region": "中原·汉中",
+    "desc": "段誉追赶父亲南行时经过。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "广元",
+    "parent": null,
+    "region": "四川",
+    "desc": "南归入蜀路上经过。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "剑阁",
+    "parent": null,
+    "region": "四川",
+    "desc": "段誉南下蜀北路上经过的关隘。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "梓潼",
+    "parent": null,
+    "region": "四川",
+    "desc": "秦红棉与阮星竹争斗后和解之处。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "双凤驿",
+    "parent": null,
+    "region": "大理",
+    "desc": "段正淳一行被截获的驿道附近。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "红沙滩",
+    "parent": "双凤驿",
+    "region": "大理",
+    "desc": "段延庆截获镇南王一行的地点。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "王夫人山庄",
+    "parent": null,
+    "region": "大理",
+    "desc": "王夫人在大理附近另设的茶花庄园。",
+    "lore": [],
+    "state": null,
+    "src": "第47回"
+  },
+  {
+    "id": "王夫人山庄·木柱陷阱",
+    "parent": "王夫人山庄",
+    "region": "大理",
+    "desc": "刻字木柱内藏醉人蜂与迷药。",
+    "lore": [],
+    "state": {
+      "exists": false,
+      "accessible": false
+    },
+    "src": "第47回"
+  },
+  {
+    "id": "善巨郡",
+    "parent": null,
+    "region": "大理·滇北",
+    "desc": "段誉救援萧峰北上时途经的州郡。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "不老长春谷",
+    "parent": "善巨郡",
+    "region": "大理·滇北",
+    "desc": "传言有驻颜长寿的山谷，叙事未实证。",
+    "lore": [
+      "驻颜长寿是人物转述的传说，不能当已确认功效。"
+    ],
+    "state": null,
+    "src": "第50回",
+    "inferred": true,
+    "uncertain_fields": [
+      "desc"
+    ],
+    "narrative_status": "传闻，未证实"
+  },
+  {
+    "id": "长白山",
+    "parent": null,
+    "region": "塞外",
+    "desc": "卓不凡避居学剑之山地。",
+    "lore": [],
+    "state": null,
+    "src": "第25回"
+  },
+  {
+    "id": "五台山",
+    "parent": null,
+    "region": "中原·山西",
+    "desc": "清凉寺所在的佛教山地。",
+    "lore": [],
+    "state": null,
+    "src": "第16回"
+  },
+  {
+    "id": "清凉寺",
+    "parent": "五台山",
+    "region": "中原·山西",
+    "desc": "神山上人主持的寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "庐山",
+    "parent": null,
+    "region": "江南·江西",
+    "desc": "东林寺所在山地。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "东林寺",
+    "parent": "庐山",
+    "region": "江南·江西",
+    "desc": "来少林的观心大师所属寺院。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "汴梁",
+    "parent": null,
+    "region": "中原·开封",
+    "desc": "大宋都城，赵煦理政。",
+    "lore": [],
+    "state": null,
+    "src": "第7回"
+  },
+  {
+    "id": "汴梁皇宫",
+    "parent": "汴梁",
+    "region": "中原·开封",
+    "desc": "高太皇太后病逝、宋帝掌政的皇宫。",
+    "lore": [],
+    "state": null,
+    "src": "第49回"
+  },
+  {
+    "id": "崇庆殿",
+    "parent": "汴梁皇宫",
+    "region": "中原·开封",
+    "desc": "太皇太后病中与赵煦谈话之处。",
+    "lore": [],
+    "state": null,
+    "src": "第49回"
+  },
+  {
+    "id": "定州",
+    "parent": null,
+    "region": "中原·河北",
+    "desc": "苏轼被贬后赴任之州。",
+    "lore": [],
+    "state": null,
+    "src": "第49回"
+  },
+  {
+    "id": "洛阳",
+    "parent": null,
+    "region": "中原·洛阳",
+    "desc": "慕容复赴会丐帮好手的城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第7回"
+  },
+  {
+    "id": "海南岛",
+    "parent": null,
+    "region": "南海",
+    "desc": "端木元来自的海岛。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "五指山",
+    "parent": "海南岛",
+    "region": "南海",
+    "desc": "海南赤焰洞所在山地。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "赤焰洞",
+    "parent": "五指山",
+    "region": "南海",
+    "desc": "端木元所辖洞府。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "碧磷洞",
+    "parent": null,
+    "region": "西南",
+    "desc": "桑土公所在洞府。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "伏牛山",
+    "parent": null,
+    "region": "中原",
+    "desc": "崔百泉、柯百岁所传门派的活动区域。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "蓬莱",
+    "parent": null,
+    "region": "山东",
+    "desc": "蓬莱派所据地方。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "青城山",
+    "parent": null,
+    "region": "四川",
+    "desc": "青城派所据山地。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "薛慕华居所",
+    "parent": null,
+    "region": "中原",
+    "desc": "薛神医住处，少林与慕容家众人在此求医。",
+    "lore": [],
+    "state": null,
+    "src": "第29回"
+  },
+  {
+    "id": "王夫人山庄·大厅",
+    "parent": "王夫人山庄",
+    "region": "大理",
+    "desc": "慕容复在此杀人逼迫镇南王。",
+    "lore": [],
+    "state": null,
+    "src": "第48回"
+  },
+  {
+    "id": "虎牢关",
+    "parent": null,
+    "region": "中原",
+    "desc": "过彦之来访时名帖所载居处。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "秦家寨",
+    "parent": "云州",
+    "region": "中原·云州",
+    "desc": "姚伯当执掌的山寨，众头领均学五虎断门刀。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "英雄大会客店",
+    "parent": null,
+    "region": "中原·河南",
+    "desc": "乔峰替阿朱接气，闻听聚贤庄会讯的客店。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "汝州山洞",
+    "parent": "汝州",
+    "region": "中原·京西路",
+    "desc": "黑衣人把乔峰送来的山洞，近处有深峡。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "智光禅房",
+    "parent": "止观寺",
+    "region": "江南·浙江",
+    "desc": "智光圆寂的寺中房舍。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "泰山单家",
+    "parent": "泰山",
+    "region": "中原·山东",
+    "desc": "单正一家住处，后来被纵火焚毁。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "宋境乡村",
+    "parent": null,
+    "region": "中原",
+    "desc": "末回慕容复戴纸冠与小儿演君臣戏的乡村。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "盐井",
+    "parent": null,
+    "region": "大理",
+    "desc": "段誉取得制盐井后经营食盐的地方。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "青凤阁",
+    "parent": "西夏皇宫",
+    "region": "西域·西夏",
+    "desc": "银川公主居处，招亲时宾客候问。",
+    "lore": [],
+    "state": null,
+    "src": "第46回"
+  },
+  {
+    "id": "悯忠寺",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "慧净在辽国挂单的佛寺。",
+    "lore": [],
+    "state": null,
+    "src": "第28回"
+  },
+  {
+    "id": "少林寺·证道院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "玄苦大师所属院处。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "少林寺·药王院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "寺中与医药有关的院处。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "少林寺·舍利院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "寺中的院处。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "镇南王府·云锦楼",
+    "parent": "镇南王府",
+    "region": "大理",
+    "desc": "王府中以云锦命名的楼阁。",
+    "lore": [],
+    "state": null,
+    "src": "第12回"
+  },
+  {
+    "id": "圣慈宫",
+    "parent": "大理皇宫",
+    "region": "大理",
+    "desc": "大理宫廷中的宫室。",
+    "lore": [],
+    "state": null,
+    "src": "第6回"
+  },
+  {
+    "id": "许家集",
+    "parent": null,
+    "region": "中原·河南",
+    "desc": "乔峰替阿朱延医的镇集。",
+    "lore": [],
+    "state": null,
+    "src": "第18回"
+  },
+  {
+    "id": "卫辉",
+    "parent": null,
+    "region": "中原·河南",
+    "desc": "徐冲霄葬祭及谭公等遇害的城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "卫辉·船舱",
+    "parent": "卫辉",
+    "region": "中原·河南",
+    "desc": "谭公、谭婆、赵钱孙被杀后沉船之处。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "三甲镇",
+    "parent": null,
+    "region": "中原·晋南",
+    "desc": "乔峰、阿朱听闻徐长老死讯的小镇。",
+    "lore": [],
+    "state": null,
+    "src": "第21回"
+  },
+  {
+    "id": "上京",
+    "parent": null,
+    "region": "辽",
+    "desc": "辽国京城，重元父子曾据之作乱。",
+    "lore": [],
+    "state": null,
+    "src": "第27回"
+  },
+  {
+    "id": "辽国军营",
+    "parent": null,
+    "region": "辽",
+    "desc": "耶律洪基围猎、平叛时所驻营帐。",
+    "lore": [],
+    "state": null,
+    "src": "第27回"
+  },
+  {
+    "id": "雪地客店",
+    "parent": null,
+    "region": "中原·北地",
+    "desc": "乔峰携受伤阿紫投宿医治之处。",
+    "lore": [],
+    "state": null,
+    "src": "第25回"
+  },
+  {
+    "id": "万仙大会山谷",
+    "parent": null,
+    "region": "中原·西行山道",
+    "desc": "洞主、岛主夜聚密议反叛的山谷。",
+    "lore": [],
+    "state": null,
+    "src": "第33回"
+  },
+  {
+    "id": "西夏皇宫·冰库底层",
+    "parent": "西夏皇宫·冰库",
+    "region": "西夏·兴州",
+    "desc": "层叠冰块间藏身、练功与幽会之处。",
+    "lore": [],
+    "state": null,
+    "src": "第36回"
+  },
+  {
+    "id": "灵鹫宫·石室",
+    "parent": "灵鹫宫",
+    "region": "天山·缥缈峰",
+    "desc": "石壁刻有逍遥派武学图形。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "少林寺·山门",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "江湖群雄聚集、交手与揭开旧案之处。",
+    "lore": [],
+    "state": null,
+    "src": "第40回"
+  },
+  {
+    "id": "洞庭湖",
+    "parent": null,
+    "region": "中原·荆湖",
+    "desc": "丐帮君山大会所在大湖。",
+    "lore": [],
+    "state": null,
+    "src": "第41回"
+  },
+  {
+    "id": "君山",
+    "parent": "洞庭湖",
+    "region": "中原·荆湖",
+    "desc": "游坦之夺得帮主之位的丐帮大会场所。",
+    "lore": [],
+    "state": null,
+    "src": "第41回"
+  },
+  {
+    "id": "西夏石室",
+    "parent": "青凤阁",
+    "region": "西夏·兴州",
+    "desc": "公主隔帘询问求婚者三个问题的暗室。",
+    "lore": [],
+    "state": null,
+    "src": "第46回"
+  },
+  {
+    "id": "慕容复土坟",
+    "parent": "宋境乡村",
+    "region": "中原·江南",
+    "desc": "慕容复戴纸冠受村童跪拜的土坟。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "曼陀山庄·茶花园",
+    "parent": "曼陀山庄",
+    "region": "江南·太湖",
+    "desc": "庄中红白山茶遍植，段誉受命莳花。",
+    "lore": [],
+    "state": null,
+    "src": "第12回"
+  },
+  {
+    "id": "碾坊",
+    "parent": null,
+    "region": "江南·无锡近郊",
+    "desc": "溪水推动木轮碾米，楼上堆谷。",
+    "lore": [],
+    "state": null,
+    "src": "第17回"
+  },
+  {
+    "id": "碾坊·阁楼",
+    "parent": "碾坊",
+    "region": "江南·无锡近郊",
+    "desc": "段誉、王语嫣避雨并对付西夏武士的楼层。",
+    "lore": [],
+    "state": null,
+    "src": "第17回"
+  },
+  {
+    "id": "汝州",
+    "parent": null,
+    "region": "中原·京西路",
+    "desc": "乔峰养伤出山后所在的州郡。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "梁县",
+    "parent": "汝州",
+    "region": "中原·京西路",
+    "desc": "乔峰为取得旅资潜入官库的县城。",
+    "lore": [],
+    "state": null,
+    "src": "第20回"
+  },
+  {
+    "id": "大相国寺",
+    "parent": "汴梁",
+    "region": "中原·开封",
+    "desc": "观心大师所住的开封佛寺。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "普渡寺",
+    "parent": "江南",
+    "region": "江南",
+    "desc": "道清大师所属佛寺，重佛法轻武功。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "长安",
+    "parent": null,
+    "region": "中原·关中",
+    "desc": "净影寺所在城镇。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "净影寺",
+    "parent": "长安",
+    "region": "中原·关中",
+    "desc": "融智大师所住佛寺。",
+    "lore": [],
+    "state": null,
+    "src": "第39回"
+  },
+  {
+    "id": "少林寺·达摩院",
+    "parent": "少林寺",
+    "region": "中原·少室山",
+    "desc": "玄难任首座的院属。",
+    "lore": [],
+    "state": null,
+    "src": "第29回"
+  },
+  {
+    "id": "信阳酒馆",
+    "parent": "信阳",
+    "region": "中原·豫南",
+    "desc": "乔峰与阿朱谈六脉神剑、翻阅梵经之处。",
+    "lore": [],
+    "state": null,
+    "src": "第22回"
+  },
+  {
+    "id": "长春谷外山岭",
+    "parent": "善巨郡",
+    "region": "大理·滇北",
+    "desc": "群人止步谷外，与采燕客谈神书和泉水。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "琅嬛福地·铜镜后室",
+    "parent": "琅嬛福地",
+    "region": "大理·无量山",
+    "desc": "满壁铜镜，李秋水旧居的后室。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "云州",
+    "parent": "中原",
+    "region": "中原·云州",
+    "desc": "秦家寨所处州郡，正文未详述城内景观。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "陕西",
+    "parent": "中原",
+    "region": "中原·陕西",
+    "desc": "秦伯起被杀的区域，具体处所未明。",
+    "lore": [],
+    "state": null,
+    "src": "第13回"
+  },
+  {
+    "id": "薛慕华居所·地窖",
+    "parent": "薛慕华居所",
+    "region": "中原",
+    "desc": "石清风受重伤后留在其中的地窖。",
+    "lore": [],
+    "state": null,
+    "src": "第30回"
+  },
+  {
+    "id": "南京·北门",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "乔峰携阿紫突围时毒发被捕的城门。",
+    "lore": [],
+    "state": null,
+    "src": "第49回"
+  }
+]

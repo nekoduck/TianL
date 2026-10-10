@@ -21,7 +21,10 @@ def _section(title: str, lines) -> str:
 def render(pack: dict) -> str:
     s, me = pack["scene"], pack["player"]
     people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{STATUS.get(p['status'], p['status'])}"
-              f"｜性情：{p['persona']}" + (f"｜与你：{'；'.join(p['toward_you'])}" if p["toward_you"] else "")
+              + "".join(f"｜{label}：{p[key]}" for label, key in (("外貌", "appearance"), ("性情", "persona"),
+                                                                  ("言谈", "speech")) if p.get(key))
+              + (f"｜随身：{'、'.join(p['carrying'])}" if p["carrying"] else "")
+              + (f"｜与你：{'；'.join(p['toward_you'])}" if p["toward_you"] else "")
               for p in pack["people"]]
     parts = [
         f"【时间】{pack['time']}",
@@ -49,8 +52,9 @@ def render_backstage(gm: dict) -> str:
         _section("各怀图谋", gm["agendas"]),
         _section("此地隐匿之人与暗藏之物", gm["hidden"]),
         _section("未揭隐情", gm["secrets"]),
+        _section("在场武学", gm["arts"]),
         _section("武学机缘", gm["grants"]),
-        f"【天下道路】{'、'.join(gm['places'])}",
+        f"【近处去向】{'、'.join(gm['places'])}（更远的原著地点亦可直呼其名，路程由系统结算）",
     ]
     return "\n".join(p for p in parts if p)
 
@@ -65,7 +69,7 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 - {"op":"link"/"unlink","src":…,"dst":…,"rel":"恩怨/结义/师承等","secret":可选true}　{"op":"reveal","src":…,"dst":…,"rel":…}（揭开一条既有隐情）
 - 地点与景物只可改其现状：{"op":"set","id":"地点或景物","key":"state","value":"…"}；暗藏之人或物被发现：{"op":"set","id":…,"key":"hidden","value":false}
 主角(player)可写属性：location/hp/power/posture/inventory/skills；人物 status 取 alive/wounded/dead；
-主角移动即 set player.location 为【天下道路】中的地点（跋涉时日由系统按道路结算）。
+主角移动即 set player.location 为原著中的地点（跋涉时日由系统按道路结算）；器物易手用 {"op":"set","id":器物,"key":"holder","value":在场人物}。
 不成立之事（会被系统驳回）：新造人物/地点/器物、前往不存在之地、拿取此地没有的器物、死者复生、触碰不在此地的人。
 剧情所需的路人龙套（店小二、巡山弟子之流）可以在节拍里出场，但他们只活在叙事中，不写入 effects。"""
 

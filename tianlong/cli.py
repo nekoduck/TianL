@@ -37,7 +37,7 @@ def show(turn: dict):
     print(f"\n{_c(bar, '2')}\n  {_c(turn['time'] + ' · ' + turn['place'], '1;33')}\n{_c(bar, '2')}")
     print(turn["text"])
     for line in turn["news"]:
-        print(_c(f"  ☰ 江湖传闻｜{line}", "36"))
+        print(_c(f"  ☰ {line}", "36"))
     print(_c(f"\n  {turn['status']}", "2"))
     for i, label in enumerate(turn["options"], 1):
         print(f"  {_c(f'[{i}]', '1;32')} {label}")
@@ -82,7 +82,7 @@ def main(argv=None):
         world = World.load(args.load)
     else:
         name = args.name or input("  侠客名号（回车默认「无名」）：").strip()
-        world = World.from_seed(name or None)
+        world = World.create(name or None)
 
     game = Game(world, llm)
     show(game.open())

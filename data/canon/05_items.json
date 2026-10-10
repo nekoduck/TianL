@@ -1,0 +1,2155 @@
+[
+  {
+    "id": "北冥神功卷轴",
+    "kind": "秘籍",
+    "desc": "蒲团内藏帛卷，绘图载北冥神功与凌波微步。",
+    "location": "琅嬛福地·玉像石室",
+    "holder": null,
+    "hidden": true,
+    "hint": "磕首千遍损破蒲团后发现。",
+    "grants": {
+      "skill": "北冥神功",
+      "power": 30
+    },
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    },
+    "grants_extra": [
+      {
+        "skill": "凌波微步",
+        "power": 0
+      }
+    ]
+  },
+  {
+    "id": "六脉神剑经",
+    "kind": "秘籍",
+    "desc": "六幅经络剑法图谱，为天龙寺镇寺之宝。",
+    "location": "天龙寺·牟尼堂",
+    "holder": null,
+    "hidden": true,
+    "hint": "天龙寺高僧保管，外人不得见。",
+    "grants": {
+      "skill": "六脉神剑",
+      "power": 25
+    },
+    "effect": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "易筋经经书",
+    "kind": "秘籍",
+    "desc": "梵文经书，纸上另藏遇水显出的神足经图。",
+    "location": "少林寺·菩提院",
+    "holder": null,
+    "hidden": true,
+    "hint": "藏在菩提院佛像旁铜镜后。",
+    "grants": {
+      "skill": "易筋经",
+      "power": 25
+    },
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    },
+    "grants_extra": [
+      {
+        "skill": "神足经",
+        "power": 25
+      }
+    ]
+  },
+  {
+    "id": "小无相功甲册",
+    "kind": "秘籍",
+    "desc": "功诀伪装成家用账目，共八册之一。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "藏柜刻青牛西去、紫气东来。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功乙册",
+    "kind": "秘籍",
+    "desc": "八册功簿中的乙册。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功丙册",
+    "kind": "秘籍",
+    "desc": "八册功簿中的丙册。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功丁册",
+    "kind": "秘籍",
+    "desc": "八册功簿中的丁册。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功戊册",
+    "kind": "秘籍",
+    "desc": "八册功簿中的戊册。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功己册",
+    "kind": "秘籍",
+    "desc": "八册功簿中的己册。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功庚册",
+    "kind": "秘籍",
+    "desc": "第七册载冲脉等四条奇经功法。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "丁春秋在盗书前将本册收入怀中。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "小无相功辛册",
+    "kind": "秘籍",
+    "desc": "第八册载任督等四条奇经功法。",
+    "location": "琅嬛玉洞",
+    "holder": null,
+    "hidden": true,
+    "hint": "伪装账目藏在王家书柜。",
+    "grants": {
+      "skill": "小无相功",
+      "power": 5
+    },
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "无崖子画像",
+    "kind": "宝物",
+    "desc": "无崖子所绘的美女绢画，画中有酒窝与小痣。",
+    "location": null,
+    "holder": "无崖子",
+    "hidden": true,
+    "hint": "无崖子贴身珍藏。",
+    "grants": null,
+    "effect": null,
+    "src": "第31回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "神仙姊姊玉像",
+    "kind": "宝物",
+    "desc": "真人大小的美人玉像，以宝石嵌双目。",
+    "location": "琅嬛福地·玉像石室",
+    "holder": null,
+    "hidden": true,
+    "hint": "藏在无量山洞石室。",
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "七宝指环",
+    "kind": "信物",
+    "desc": "逍遥派掌门信物，传给虚竹。",
+    "location": null,
+    "holder": "无崖子",
+    "hidden": true,
+    "hint": "由无崖子秘密保管。",
+    "grants": null,
+    "effect": null,
+    "src": "第35回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "打狗棒",
+    "kind": "信物",
+    "desc": "丐帮帮主所持的碧绿竹棒。",
+    "location": null,
+    "holder": "乔峰",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第12回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "神木王鼎",
+    "kind": "宝物",
+    "desc": "精雕的小木鼎，木纹隐现红丝。",
+    "location": null,
+    "holder": "丁春秋",
+    "hidden": true,
+    "hint": "星宿派重宝，吸引毒虫用于练功。",
+    "grants": null,
+    "effect": "吸引毒虫，供星宿派练毒功",
+    "src": "第25回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "闪电貂",
+    "kind": "杂物",
+    "desc": "钟灵驯养的小貂，迅捷且带毒。",
+    "location": null,
+    "holder": "钟灵",
+    "hidden": true,
+    "hint": "平时藏在钟灵腰间皮囊内。",
+    "grants": null,
+    "effect": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true,
+      "living": true
+    },
+    "entity_kind": "animal"
+  },
+  {
+    "id": "黑玫瑰",
+    "kind": "杂物",
+    "desc": "木婉清的骏马，通身黑色，蹄落轻捷。",
+    "location": null,
+    "holder": "木婉清",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第3回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true,
+      "living": true
+    },
+    "entity_kind": "animal"
+  },
+  {
+    "id": "莽牯朱蛤",
+    "kind": "毒物",
+    "desc": "体小色红，叫声如牛的剧毒蛤蟆。",
+    "location": "无量山",
+    "holder": null,
+    "hidden": true,
+    "hint": "出没于无量山。",
+    "grants": null,
+    "effect": "剧毒，段誉误吞后能抵多种毒物",
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true,
+      "living": true
+    },
+    "entity_kind": "animal"
+  },
+  {
+    "id": "冰蚕",
+    "kind": "毒物",
+    "desc": "通体冰冷，能放出寒毒的异蚕。",
+    "location": null,
+    "holder": "慧净",
+    "hidden": true,
+    "hint": "慧净称得自昆仑山之巅。",
+    "grants": null,
+    "effect": "散寒毒，练功结合可形成阴寒掌力",
+    "src": "第29回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true,
+      "living": true
+    },
+    "entity_kind": "animal",
+    "initial_state_basis": "慧净捕蚕、南来时点未明；初始归他保管为推断。"
+  },
+  {
+    "id": "钟灵黄金钿盒",
+    "kind": "信物",
+    "desc": "精致黄金盒，内有钟灵出生八字纸。",
+    "location": null,
+    "holder": "甘宝宝",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "钟灵生辰字条",
+    "kind": "信物",
+    "desc": "写乙卯年十二月初五丑时女，纸溅旧血。",
+    "location": null,
+    "holder": "甘宝宝",
+    "hidden": true,
+    "hint": "在钟夫人黄金钿盒内。",
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "段誉长命金牌",
+    "kind": "信物",
+    "desc": "一面刻长命百岁，一面刻壬子年十一月廿三日生。",
+    "location": null,
+    "holder": "段誉",
+    "hidden": true,
+    "hint": "金链悬在段誉颈间。",
+    "grants": null,
+    "effect": null,
+    "src": "第48回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "阿朱金锁片",
+    "kind": "信物",
+    "desc": "刻天上星、亮晶晶、永灿烂、长安宁，嵌母名星。",
+    "location": null,
+    "holder": "阿朱",
+    "hidden": true,
+    "hint": "由阿朱佩带。",
+    "grants": null,
+    "effect": null,
+    "src": "第23回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "阿紫金锁片",
+    "kind": "信物",
+    "desc": "刻湖边竹、盈盈绿、报平安、多喜乐，嵌母名竹。",
+    "location": null,
+    "holder": "阿紫",
+    "hidden": true,
+    "hint": "由阿紫佩带。",
+    "grants": null,
+    "effect": null,
+    "src": "第23回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "通天草",
+    "kind": "药物",
+    "desc": "神农帮寻找的草药，能缓解生死符发作。",
+    "location": "无量山",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "可缓生死符痛痒，不能根除",
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "闪电貂毒解药",
+    "kind": "药物",
+    "desc": "可治闪电貂咬伤之药。",
+    "location": null,
+    "holder": "甘宝宝",
+    "hidden": true,
+    "hint": "钟灵指引段誉向母亲求取。",
+    "grants": null,
+    "effect": "解闪电貂咬伤之毒",
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "断肠散",
+    "kind": "毒物",
+    "desc": "神农帮迫段誉吞服之毒药。",
+    "location": null,
+    "holder": "司空玄",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "阴阳和合散",
+    "kind": "毒物",
+    "desc": "催动情欲的药散，段誉与木婉清遭下药。",
+    "location": null,
+    "holder": "段延庆",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第7回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "悲酥清风",
+    "kind": "毒物",
+    "desc": "无色无臭的毒气，令人流泪、浑身酥软。",
+    "location": null,
+    "holder": "赫连铁树",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "悲酥清风解药",
+    "kind": "药物",
+    "desc": "气味恶臭，嗅后可解除悲酥清风。",
+    "location": null,
+    "holder": "努儿海",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "恶臭，闻后解悲酥清风",
+    "src": "第17回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "三笑逍遥散",
+    "kind": "毒物",
+    "desc": "星宿派毒药，中毒者笑后死亡。",
+    "location": null,
+    "holder": "丁春秋",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "毒发笑后死亡",
+    "src": "第32回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "七香迷魂散",
+    "kind": "毒物",
+    "desc": "慕容复用来迷倒段正淳一行的药散。",
+    "location": null,
+    "holder": "慕容复",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第24回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "生死符冰片",
+    "kind": "毒物",
+    "desc": "薄冰中带阴阳内劲，入体后令人奇痒剧痛。",
+    "location": null,
+    "holder": null,
+    "hidden": true,
+    "hint": "与生死符技法不同，是施术所用冰片。",
+    "grants": null,
+    "effect": null,
+    "src": "第35回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "一次性冰片临用凝成；已有植入体内符力属于受者state。"
+  },
+  {
+    "id": "生死符镇痛药",
+    "kind": "药物",
+    "desc": "暂缓生死符痛痒，不能根除体内符力。",
+    "location": null,
+    "holder": "天山童姥",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第35回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "金创药",
+    "kind": "药物",
+    "desc": "敷治兵刃伤口的外用药。",
+    "location": null,
+    "holder": "木婉清",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第4回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "醉人蜂",
+    "kind": "毒物",
+    "desc": "藏在刻字木柱内，受触动飞出使人中毒。",
+    "location": null,
+    "holder": "王夫人",
+    "hidden": true,
+    "hint": "置于木柱机关内。",
+    "grants": null,
+    "effect": null,
+    "src": "第47回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true,
+      "living": true
+    },
+    "entity_kind": "animal"
+  },
+  {
+    "id": "麻药",
+    "kind": "毒物",
+    "desc": "配合木柱陷阱制敌的药物。",
+    "location": null,
+    "holder": "王夫人",
+    "hidden": true,
+    "hint": "藏于陷阱。",
+    "grants": null,
+    "effect": null,
+    "src": "第47回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "鸠摩智匕首",
+    "kind": "兵刃",
+    "desc": "藏在布袜中的匕首，近身突刺。",
+    "location": null,
+    "holder": "鸠摩智",
+    "hidden": true,
+    "hint": "布袜中。",
+    "grants": null,
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "段延庆铁杖",
+    "kind": "兵刃",
+    "desc": "双铁杖助其行走，也用来出指劲、点穴。",
+    "location": null,
+    "holder": "段延庆",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第7回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "鳄嘴剪",
+    "kind": "兵刃",
+    "desc": "短柄长口，有锯齿的奇形剪刀。",
+    "location": null,
+    "holder": "南海鳄神",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "鳄尾鞭",
+    "kind": "兵刃",
+    "desc": "成鳄尾形的锯齿软鞭。",
+    "location": null,
+    "holder": "南海鳄神",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "云中鹤钢爪",
+    "kind": "兵刃",
+    "desc": "一对钢爪，用以抓拿与勾打。",
+    "location": null,
+    "holder": "云中鹤",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "龚光杰长剑",
+    "kind": "兵刃",
+    "desc": "龚光杰在比剑及驱敌时持用的长剑。",
+    "location": null,
+    "holder": "龚光杰",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "褚师弟青钢剑",
+    "kind": "兵刃",
+    "desc": "西宗少年在比剑时所用之剑。",
+    "location": null,
+    "holder": "褚师弟",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "左子穆长剑",
+    "kind": "兵刃",
+    "desc": "无量剑掌门持用的长剑。",
+    "location": null,
+    "holder": "左子穆",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "木婉清袖箭",
+    "kind": "兵刃",
+    "desc": "机括藏袖，发射短小毒箭。",
+    "location": null,
+    "holder": "木婉清",
+    "hidden": true,
+    "hint": "藏于袖内。",
+    "grants": null,
+    "effect": null,
+    "src": "第3回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "吴长风鬼头刀",
+    "kind": "兵刃",
+    "desc": "宽厚鬼头刀，招式迅捷狠辣。",
+    "location": null,
+    "holder": "吴长风",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第15回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "宋长老钢杖",
+    "kind": "兵刃",
+    "desc": "宋长老外家武功所用钢杖。",
+    "location": null,
+    "holder": "宋长老",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "陈孤雁麻袋",
+    "kind": "兵刃",
+    "desc": "柔软麻袋配合拳法套拿敌人。",
+    "location": null,
+    "holder": "陈孤雁",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第14回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "古笃诚板斧",
+    "kind": "兵刃",
+    "desc": "农人护卫所使大斧。",
+    "location": null,
+    "holder": "古笃诚",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第6回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "朱丹臣判官笔",
+    "kind": "兵刃",
+    "desc": "一对判官笔，以点穴迎敌。",
+    "location": null,
+    "holder": "朱丹臣",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "高昇泰铁笛",
+    "kind": "兵刃",
+    "desc": "鄯阐侯吹奏及对敌使用的铁笛。",
+    "location": null,
+    "holder": "高昇泰",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第6回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "康广陵瑶琴",
+    "kind": "杂物",
+    "desc": "可奏曲也可运劲对敌的瑶琴。",
+    "location": null,
+    "holder": "康广陵",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "范百龄棋盘",
+    "kind": "兵刃",
+    "desc": "磁铁棋盘能吸住铁铸棋子，兼用作兵刃。",
+    "location": null,
+    "holder": "范百龄",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "吴领军画笔",
+    "kind": "兵刃",
+    "desc": "画师所用判官笔式兵器。",
+    "location": null,
+    "holder": "吴领军",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "石清风花粉",
+    "kind": "毒物",
+    "desc": "使人醉倒的花粉，苏星河门人用于自保。",
+    "location": null,
+    "holder": "石清风",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "司马林雷公轰",
+    "kind": "兵刃",
+    "desc": "短锥与小锤组合，敲锥发暗器。",
+    "location": null,
+    "holder": "司马林",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "诸保昆雷公轰",
+    "kind": "兵刃",
+    "desc": "诸保昆持用的短锥、小锤。",
+    "location": null,
+    "holder": "诸保昆",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "碧磷针",
+    "kind": "兵刃",
+    "desc": "带毒细针，配合机关发射。",
+    "location": null,
+    "holder": "桑土公",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第22回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "游骥钢盾",
+    "kind": "兵刃",
+    "desc": "游骥的锋刃圆盾，攻守兼用，盾在人在。",
+    "location": null,
+    "holder": "游骥",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第19回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "汪剑通信",
+    "kind": "信物",
+    "desc": "汪剑通留下关于乔峰身世与接任条件的密信。",
+    "location": null,
+    "holder": "康敏",
+    "hidden": true,
+    "hint": "由马大元保管；其死后康敏取出。",
+    "grants": null,
+    "effect": null,
+    "src": "第16回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    },
+    "initial_state_basis": "马大元已死，遗物由康敏掌握；开端确切取出时间未明。"
+  },
+  {
+    "id": "乔峰折扇",
+    "kind": "信物",
+    "desc": "乔峰曾持折扇，被盗后用于陷害他。",
+    "location": null,
+    "holder": "康敏",
+    "hidden": true,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第16回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    },
+    "initial_state_basis": "白世镜先偷来栽赃；以杏子林前已发生推置开端，盗窃与开端先后未明。"
+  },
+  {
+    "id": "阿朱易容物",
+    "kind": "杂物",
+    "desc": "颜料与假饰等改装容貌的物品。",
+    "location": null,
+    "holder": "阿朱",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "西夏招亲榜",
+    "kind": "信物",
+    "desc": "李乾顺公开征选银川公主驸马的榜文。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第40回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "段正淳求亲信",
+    "kind": "信物",
+    "desc": "要求段誉赴西夏娶公主，为国家结姻之信。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第44回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "段正淳朱印国书",
+    "kind": "信物",
+    "desc": "向西夏求亲的正式国书，盖镇南王朱印。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第44回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "油布小包",
+    "kind": "杂物",
+    "desc": "用来包裹易筋经经书的油布包。",
+    "location": null,
+    "holder": "阿朱",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第27回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "铁头罩",
+    "kind": "杂物",
+    "desc": "套游坦之头上的铁罩，后来无法自行摘除。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第28回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "冰蚕葫芦",
+    "kind": "杂物",
+    "desc": "藏养冰蚕的葫芦，触手冰冷。",
+    "location": null,
+    "holder": "慧净",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第28回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "辽国铁锁铁铐",
+    "kind": "杂物",
+    "desc": "囚禁乔峰时加在手脚的大铁链铁铐。",
+    "location": "南院大王府",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "乔三槐旧茶壶",
+    "kind": "杂物",
+    "desc": "柄断仍使用多年的旧茶壶。",
+    "location": null,
+    "holder": "乔三槐",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "神仙姊姊蒲团",
+    "kind": "杂物",
+    "desc": "玉像前供叩拜的蒲团，内藏帛卷。",
+    "location": "琅嬛福地·玉像石室",
+    "holder": null,
+    "hidden": true,
+    "hint": "卷轴藏于蒲团内。",
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "琅嬛洞烛台",
+    "kind": "杂物",
+    "desc": "段誉入洞后用来照明的烛台。",
+    "location": "琅嬛福地·玉像石室",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "神仙姊姊玉钏",
+    "kind": "宝物",
+    "desc": "玉像鬓旁插玉钏，嵌两颗明珠。",
+    "location": "琅嬛福地·玉像石室",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "珍珑棋局",
+    "kind": "杂物",
+    "desc": "无崖子所设难解棋局，苏星河以之择传人。",
+    "location": "擂鼓山·棋局场",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第31回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "无崖子悬绳",
+    "kind": "杂物",
+    "desc": "无崖子瘫痪后用绳悬起身体。",
+    "location": "擂鼓山·木屋",
+    "holder": null,
+    "hidden": true,
+    "hint": "小木屋内。",
+    "grants": null,
+    "effect": null,
+    "src": "第31回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "逍遥子神书",
+    "kind": "秘籍",
+    "desc": "谷边刻文及采燕人所说曾带走的长春神书。",
+    "location": null,
+    "holder": null,
+    "hidden": true,
+    "hint": "只属人物所述传说，原著未展示原书。",
+    "grants": {
+      "skill": "天长地久不老长春功",
+      "power": 0
+    },
+    "effect": null,
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": false
+    },
+    "narrative_status": "传说；原著人物未验证",
+    "unknown_fields": [
+      "present_location",
+      "present_holder",
+      "survival"
+    ]
+  },
+  {
+    "id": "长春泉",
+    "kind": "宝物",
+    "desc": "传闻可使谷中人驻颜，出谷则迅速衰老。",
+    "location": "不老长春谷",
+    "holder": null,
+    "hidden": true,
+    "hint": "未由主要人物入谷实证。",
+    "grants": null,
+    "effect": "驻颜之效仅为传闻，未实证",
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": true,
+      "available": false
+    },
+    "narrative_status": "传说；原著人物未验证",
+    "unknown_fields": [
+      "reported_effect"
+    ]
+  },
+  {
+    "id": "慕容复纸冠",
+    "kind": "杂物",
+    "desc": "慕容复发疯后戴在头上演皇帝的纸冠。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "慕容复糖饼",
+    "kind": "杂物",
+    "desc": "发给乡童以换取跪拜称万岁的糖与糕饼。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "location",
+      "holder"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    },
+    "initial_state_basis": "开端尚未形成；地点/持有人由后续事件创建。"
+  },
+  {
+    "id": "寒玉冰蟾膏",
+    "kind": "药物",
+    "desc": "寒玉与玄冰蟾蜍合成的治伤膏。",
+    "location": null,
+    "holder": "谭公",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "治重创，不能代替内伤诊治",
+    "src": "第18回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "六阳正气丹",
+    "kind": "药物",
+    "desc": "少林派用于克制寒毒的丹药。",
+    "location": null,
+    "holder": "玄难",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "可克寒毒，未必能治游坦之异毒",
+    "src": "第29回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "辽国猎弓",
+    "kind": "兵刃",
+    "desc": "辽国围猎与作战的弓。",
+    "location": null,
+    "holder": "耶律洪基",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第27回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "石杵",
+    "kind": "兵刃",
+    "desc": "杀害徐冲霄的凶器。",
+    "location": "中原",
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    },
+    "initial_state_basis": "第三十九回提及凶器，初始归属与位置未明。"
+  },
+  {
+    "id": "雁门崖文拓片",
+    "kind": "信物",
+    "desc": "记萧远山绝笔的崖刻拓片。",
+    "location": null,
+    "holder": "智光",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第21回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "绿波香露刀",
+    "kind": "兵刃",
+    "desc": "乌老大的厚背薄刃毒刀，腥臭难闻。",
+    "location": null,
+    "holder": "乌老大",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "刀刃带毒，伤人后难治",
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "断筋腐骨丸",
+    "kind": "毒物",
+    "desc": "乌老大用来威逼虚竹的毒药。",
+    "location": null,
+    "holder": "乌老大",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "被称可断筋腐骨的毒药",
+    "src": "第35回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "柔丝网",
+    "kind": "兵刃",
+    "desc": "阿紫的柔丝渔网，收拢仅拳头大小。",
+    "location": null,
+    "holder": "阿紫",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "干时坚韧缠人，遇水松软",
+    "src": "第22回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "人皮面具",
+    "kind": "杂物",
+    "desc": "游坦之用来遮掩毁容面貌的面具。",
+    "location": null,
+    "holder": null,
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": false,
+      "available": false
+    }
+  },
+  {
+    "id": "鸠摩智火焰刀经",
+    "kind": "秘籍",
+    "desc": "鸠摩智取出愿用来换六脉神剑经的火焰刀秘籍。",
+    "location": null,
+    "holder": "鸠摩智",
+    "hidden": false,
+    "hint": null,
+    "grants": {
+      "skill": "火焰刀",
+      "power": 20
+    },
+    "effect": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location",
+      "grants.power"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "丁春秋柔丝索",
+    "kind": "兵刃",
+    "desc": "雪蚕丝绞成的透明细索。",
+    "location": null,
+    "holder": "丁春秋",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": "透明坚韧，能隔空缠缚人身",
+    "src": "第41回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "辽帝御箭",
+    "kind": "兵刃",
+    "desc": "辽帝以作誓证的羽箭，乔峰折断后用以自尽。",
+    "location": null,
+    "holder": "耶律洪基",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第50回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "游驹钢盾",
+    "kind": "兵刃",
+    "desc": "游驹的锋刃圆盾，与兄长钢盾成对。",
+    "location": null,
+    "holder": "游驹",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第19回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "天王补心针",
+    "kind": "兵刃",
+    "desc": "藏于诸保昆钢锥中的十二枚发射钢针。",
+    "location": null,
+    "holder": "诸保昆",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "傅思归齐眉棍",
+    "kind": "兵刃",
+    "desc": "傅思归使用的熟铜齐眉棍。",
+    "location": null,
+    "holder": "傅思归",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第5回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "褚万里钓杆",
+    "kind": "兵刃",
+    "desc": "褚万里钓鱼并挥使御敌的长杆。",
+    "location": null,
+    "holder": "褚万里",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第22回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  },
+  {
+    "id": "金算盘",
+    "kind": "兵刃",
+    "desc": "崔百泉以金珠算盘珠为暗器的算盘。",
+    "location": null,
+    "holder": "崔百泉",
+    "hidden": false,
+    "hint": null,
+    "grants": null,
+    "effect": null,
+    "src": "第9回",
+    "inferred": true,
+    "inferred_fields": [
+      "holder",
+      "location"
+    ],
+    "state": {
+      "exists": true,
+      "available": true
+    }
+  }
+]

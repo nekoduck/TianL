@@ -5,7 +5,7 @@
 
 成员清单
 llm.py: Gemini REST 网关(urllib 直连，text/json 两种调用，thinkingBudget=0 省 token，累计 tokens)，from_env 读取 GEMINI_API_KEY/GEMINI_MODEL
-prompts.py: 提示词组装器，render/render_backstage 把视锥与后台压成文本，PLOT_GUIDE 教 LLM 剧情落账，另有 director/writer/simulator/chronicler 四组 (system,user)
+prompts.py: 提示词组装器，render/render_backstage 把视锥(人物外貌/性情/言谈/随身)与后台(含在场武学)压成文本，PLOT_GUIDE 教 LLM 剧情落账，另有 director/writer/simulator/chronicler 四组 (system,user)
 agents.py: 四个 Agent 的 组装→调用→整形→兜底——direct(剧情节拍+后果+时辰+事件+3自由选项)、write(正文)、simulate(LOD1 场外剧情)、chronicle(LOD2 改写原著)；整形只保形状不审内容，llm=None 或失败即走朴素 fallback
 __init__.py: 包标记，空
 

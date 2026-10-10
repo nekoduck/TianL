@@ -1,0 +1,629 @@
+[
+  {
+    "id": "无量剑",
+    "desc": "东西北三宗合称；五年一度比剑争居剑湖宫。",
+    "base": "剑湖宫",
+    "leader": null,
+    "src": "第1回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "无量剑东宗",
+    "desc": "无量剑东宗，开端居住剑湖宫。",
+    "base": "剑湖宫",
+    "leader": "左子穆",
+    "src": "第1回",
+    "state": {
+      "leader": "左子穆"
+    }
+  },
+  {
+    "id": "无量剑西宗",
+    "desc": "无量剑西宗，开端参加剑会。",
+    "base": "无量洞",
+    "leader": "辛双清",
+    "src": "第1回",
+    "state": {
+      "leader": "辛双清"
+    }
+  },
+  {
+    "id": "无量剑北宗",
+    "desc": "早年迁山西后，不再与东西宗通音问。",
+    "base": null,
+    "leader": null,
+    "src": "第1回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "神农帮",
+    "desc": "用药制毒的帮会，受灵鹫宫辖制。",
+    "base": "无量山",
+    "leader": "司空玄",
+    "src": "第1回",
+    "state": {
+      "leader": "司空玄"
+    }
+  },
+  {
+    "id": "大理段氏",
+    "desc": "大理皇族，家传一阳指及段氏剑法。",
+    "base": "大理城",
+    "leader": "段正明",
+    "src": "第2回",
+    "state": {
+      "leader": "段正明"
+    }
+  },
+  {
+    "id": "大理国",
+    "desc": "段氏皇室统治，通国崇奉佛教。",
+    "base": "大理皇宫",
+    "leader": "段正明",
+    "src": "第6回",
+    "state": {
+      "leader": "段正明"
+    }
+  },
+  {
+    "id": "大宋",
+    "desc": "北宋朝廷，元祐时期高太皇太后临朝。",
+    "base": "汴梁皇宫",
+    "leader": "赵煦",
+    "src": "第49回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "赵煦"
+    }
+  },
+  {
+    "id": "大辽",
+    "desc": "契丹朝廷，设南北院大王等职。",
+    "base": "辽国皇宫",
+    "leader": "耶律洪基",
+    "src": "第27回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "耶律洪基"
+    }
+  },
+  {
+    "id": "西夏国",
+    "desc": "西陲李氏王朝，以弓马立国。",
+    "base": "西夏皇宫",
+    "leader": "李乾顺",
+    "src": "第44回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "李乾顺"
+    }
+  },
+  {
+    "id": "吐蕃国",
+    "desc": "鸠摩智为护国法王，国王派宗赞赴西夏求亲。",
+    "base": "吐蕃",
+    "leader": null,
+    "src": "第10回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "丐帮",
+    "desc": "遍布中原的帮会，弟子以袋数分等。",
+    "base": null,
+    "leader": "乔峰",
+    "src": "第14回",
+    "state": {
+      "leader": "乔峰"
+    }
+  },
+  {
+    "id": "少林派",
+    "desc": "少林僧众组成的武学宗门。",
+    "base": "少林寺",
+    "leader": "玄慈",
+    "src": "第2回",
+    "state": {
+      "leader": "玄慈"
+    }
+  },
+  {
+    "id": "天龙寺僧团",
+    "desc": "大理皇家佛寺，寺中所藏段氏秘学不传外人。",
+    "base": "天龙寺",
+    "leader": "本因",
+    "src": "第10回",
+    "state": {
+      "leader": "本因"
+    },
+    "normalized_label": true
+  },
+  {
+    "id": "逍遥派",
+    "desc": "武学精深，门人常兼通琴棋书画医术。",
+    "base": null,
+    "leader": "无崖子",
+    "src": "第2回",
+    "state": {
+      "leader": "无崖子"
+    }
+  },
+  {
+    "id": "星宿派",
+    "desc": "丁春秋所立宗派，以毒与化功害人。",
+    "base": "星宿海",
+    "leader": "丁春秋",
+    "src": "第25回",
+    "state": {
+      "leader": "丁春秋"
+    }
+  },
+  {
+    "id": "灵鹫宫部属",
+    "desc": "童姥统辖九天九部及受生死符控制的洞岛势力。",
+    "base": "灵鹫宫",
+    "leader": "天山童姥",
+    "src": "第1回",
+    "state": {
+      "leader": "天山童姥"
+    },
+    "normalized_label": true
+  },
+  {
+    "id": "姑苏慕容",
+    "desc": "鲜卑慕容后裔，以彼之道还施彼身闻名。",
+    "base": "参合庄",
+    "leader": "慕容复",
+    "src": "第9回",
+    "state": {
+      "leader": "慕容复"
+    }
+  },
+  {
+    "id": "西夏一品堂",
+    "desc": "西夏招揽高手的组织，赫连铁树领队。",
+    "base": "西夏",
+    "leader": "赫连铁树",
+    "src": "第13回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "赫连铁树"
+    }
+  },
+  {
+    "id": "四大恶人",
+    "desc": "四人以恶为号，按排行同行作恶。",
+    "base": null,
+    "leader": "段延庆",
+    "src": "第4回",
+    "state": {
+      "leader": "段延庆"
+    }
+  },
+  {
+    "id": "青城派",
+    "desc": "川西武林门派，司马林追查父亲被害。",
+    "base": "青城山",
+    "leader": "司马林",
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "司马林"
+    }
+  },
+  {
+    "id": "蓬莱派",
+    "desc": "蓬莱武学门派，诸保昆暗中师从都灵子。",
+    "base": "蓬莱",
+    "leader": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "伏牛派",
+    "desc": "柯百岁、崔百泉所属门派，以软鞭等见长。",
+    "base": "伏牛山",
+    "leader": null,
+    "src": "第9回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "昆仑派",
+    "desc": "武谱分类签条中列出的门派。",
+    "base": null,
+    "leader": null,
+    "src": "第2回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "函谷八友",
+    "desc": "苏星河八名弟子，以函谷关授艺纪念自称。",
+    "base": null,
+    "leader": null,
+    "src": "第30回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "三十六洞七十二岛",
+    "desc": "受童姥生死符制约的诸洞主岛主。",
+    "base": null,
+    "leader": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "一字慧剑门",
+    "desc": "被童姥灭门，卓不凡逃脱后苦练剑术。",
+    "base": null,
+    "leader": "卓不凡",
+    "src": "第38回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "卓不凡"
+    }
+  },
+  {
+    "id": "清凉寺僧团",
+    "desc": "五台山佛寺，武学渊源不及少林。",
+    "base": "清凉寺",
+    "leader": "神山上人",
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "神山上人"
+    }
+  },
+  {
+    "id": "东林寺僧团",
+    "desc": "庐山佛寺，觉贤大师在此修持。",
+    "base": "东林寺",
+    "leader": null,
+    "src": "第39回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "女真族",
+    "desc": "辽东渔猎部落，阿骨打等尚未建金国。",
+    "base": "女真部落",
+    "leader": null,
+    "src": "第26回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": null
+    },
+    "normalized_label": true
+  },
+  {
+    "id": "赤焰洞势力",
+    "desc": "海南五指山洞府，洞主擅地火功。",
+    "base": "赤焰洞",
+    "leader": "端木元",
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "端木元"
+    },
+    "normalized_label": true
+  },
+  {
+    "id": "碧磷洞势力",
+    "desc": "桑土公所属洞府，以地遁暗器应敌。",
+    "base": "碧磷洞",
+    "leader": "桑土公",
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "base",
+      "leader"
+    ],
+    "state": {
+      "leader": "桑土公"
+    },
+    "normalized_label": true
+  },
+  {
+    "id": "大相国寺僧团",
+    "desc": "大相国寺僧众，重佛法修持。",
+    "base": "大相国寺",
+    "leader": null,
+    "src": "第39回"
+  },
+  {
+    "id": "普渡寺僧团",
+    "desc": "普渡寺僧众，重佛法修持。",
+    "base": "普渡寺",
+    "leader": null,
+    "src": "第39回"
+  },
+  {
+    "id": "净影寺僧团",
+    "desc": "净影寺僧众，重佛法修持。",
+    "base": "净影寺",
+    "leader": null,
+    "src": "第39回"
+  },
+  {
+    "id": "昊天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "阳天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "赤天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "朱天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "成天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "幽天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "玄天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "鸾天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "钧天部",
+    "desc": "灵鹫宫九天九部之一，听命于尊主。",
+    "base": "灵鹫宫",
+    "leader": null,
+    "src": "第37回",
+    "state": {
+      "subordinate_to": "灵鹫宫部属"
+    }
+  },
+  {
+    "id": "回鹘",
+    "desc": "与大理互遣使节的国度。",
+    "base": null,
+    "leader": null,
+    "src": "第48回"
+  },
+  {
+    "id": "高丽",
+    "desc": "与大理互遣使节的国度。",
+    "base": null,
+    "leader": null,
+    "src": "第48回"
+  },
+  {
+    "id": "蒲甘",
+    "desc": "与大理互遣使节的国度。",
+    "base": null,
+    "leader": null,
+    "src": "第48回"
+  },
+  {
+    "id": "秦家寨势力",
+    "desc": "云州秦家寨，以五虎断门刀同门为众头领。",
+    "base": "秦家寨",
+    "leader": "姚伯当",
+    "state": {
+      "leader": "姚伯当"
+    },
+    "src": "第13回"
+  },
+  {
+    "id": "太乙派",
+    "desc": "道家门派，有羽衣刀刀法。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "灵飞派",
+    "desc": "道家门派，有清风徐来刀招。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "玉树派",
+    "desc": "青海门派，有大漠飞沙刀招。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "雷电门",
+    "desc": "九翼道人所属门派，铁牌与雷公挡兼用。",
+    "base": null,
+    "leader": null,
+    "src": "第34回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "黎山洞势力",
+    "desc": "广西黎山洞，黎老汉有柴刀十八路。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "江南史家",
+    "desc": "江南武学世家，有回风拂柳刀。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  },
+  {
+    "id": "天童寺僧团",
+    "desc": "宁波天童寺僧众，心观创慈悲刀。",
+    "base": null,
+    "leader": null,
+    "src": "第17回",
+    "state": {
+      "leader": null
+    }
+  }
+]

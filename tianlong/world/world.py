@@ -1,20 +1,17 @@
 """
-[INPUT]: 依赖 world/ 下 graph、clock、blackboard、ledger、effects、rag 全部基础设施
-[OUTPUT]: 对外提供 World 门面（创世 / 写入 / 记事 / 推进时间 / 同步认知 / 存读档）
+[INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
+[OUTPUT]: 对外提供 World 门面（create 创世 / 写入 / 记事 / 推进时间 / 同步认知 / 存读档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
 from pathlib import Path
 
-from . import effects, rag
+from . import effects, genesis, rag
 from .blackboard import Blackboard
 from .clock import Clock
 from .graph import ROAD, Graph
 from .ledger import Knowledge, Messenger, Truth
-
-SEED = Path(__file__).with_name("seed.json")
-
 
 class World:
     def __init__(self, graph, player, clock, truth, knowledge, messenger, canon, done, taint, seed):
@@ -30,11 +27,11 @@ class World:
         self.seed: int = seed
 
     # ------------------------------------------------------------
-    #  创世
+    #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试
     # ------------------------------------------------------------
     @classmethod
-    def from_seed(cls, name: str | None = None, path: Path = SEED) -> "World":
-        d = json.loads(Path(path).read_text("utf-8"))
+    def create(cls, name: str | None = None, data: dict | None = None) -> "World":
+        d = data or genesis.load()
         graph = Graph(d["nodes"])
         for a, b, days in d["roads"]:
             graph.link(a, b, ROAD, days=days)
@@ -56,9 +53,11 @@ class World:
     def apply(self, ops: list, origin: str, scope: set | None = None):
         return effects.apply(self, ops, origin, scope)
 
-    def record(self, summary: str, where: str, applied: list, origin: str, weight: int = 1) -> dict:
-        """写入绝对真实账本，并把传闻投进消息队列。"""
+    def record(self, summary: str, where: str, applied: list, origin: str, weight: int = 1,
+               public: bool = True) -> dict:
+        """写入绝对真实账本，并把传闻投进消息队列；主角身在事发之地即为亲历者。"""
         event = self.truth.record(self.clock.day, where, summary, applied, origin, weight)
+        event.update(public=public, witnessed=where == self.here)
         self.messenger.post(event)
         return event
 

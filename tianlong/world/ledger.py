@@ -5,7 +5,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-PUBLIC_KEYS = ("status", "location", "title", "faction", "state")  # 江湖可传闻、可目睹的属性
+PUBLIC_KEYS = ("status", "location", "title", "faction", "state", "holder")  # 江湖可传闻、可目睹的属性
 NEWS_SPEED = 1.0  # 传闻每日扩散的道路距离（日）× 事件分量 weight
 
 
@@ -37,9 +37,12 @@ class Knowledge:
 
     @classmethod
     def from_truth(cls, graph) -> "Knowledge":
-        """开局常识：所有非隐秘节点的公开属性。"""
+        """开局常识：所有非隐秘节点的公开属性，但人物的隐秘字段(secret_fields，如诈死者的生死去处)不入常识。"""
         k = cls()
         k.observe(graph, [nid for nid, n in graph.nodes.items() if not n.get("hidden")])
+        for nid, belief in k.beliefs.items():
+            for key in graph.get(nid, "secret_fields") or []:
+                belief.pop(key, None)
         return k
 
     def view(self, nid: str) -> dict:
@@ -62,14 +65,14 @@ class Knowledge:
             self.beliefs[nid] = {k: node.get(k) for k in PUBLIC_KEYS if k in node}
 
     def learn(self, event: dict):
-        """传闻抵达：事件中的公开变更写入信念。"""
+        """传闻抵达：事件中的公开变更写入信念；只对少数人揭开的隐情(public=false)，唯有亲历者得知。"""
         if event["id"] in self.known:
             return
         self.known.append(event["id"])
         for op in event["effects"]:
             if op["op"] == "set" and op.get("id") != "player" and op["key"] in PUBLIC_KEYS:
                 self.beliefs.setdefault(op["id"], {})[op["key"]] = op["value"]
-            elif op["op"] == "reveal":
+            elif op["op"] == "reveal" and (event.get("public", True) or event.get("witnessed")):
                 self.reveal(op["src"], op["dst"], op["rel"])
 
 

@@ -1,0 +1,982 @@
+[
+  {
+    "stage": 1,
+    "kind": "persons",
+    "candidate": "慕容儁",
+    "action": "excluded",
+    "reason": "附件正文无此名称；不沿用其他版本或记忆"
+  },
+  {
+    "stage": 1,
+    "kind": "persons",
+    "candidate": "黄裳",
+    "action": "excluded",
+    "reason": "附件正文无此名称；不沿用其他版本或记忆"
+  },
+  {
+    "stage": 1,
+    "kind": "persons",
+    "candidate": "小蓉",
+    "action": "excluded",
+    "reason": "附件正文无此名称；不沿用其他版本或记忆"
+  },
+  {
+    "stage": 1,
+    "kind": "persons",
+    "candidate": "阿钰",
+    "action": "excluded",
+    "reason": "附件正文无此名称；不沿用其他版本或记忆"
+  },
+  {
+    "stage": 1,
+    "kind": "persons",
+    "candidate": "阿俊",
+    "action": "excluded",
+    "reason": "附件正文无此名称；不沿用其他版本或记忆"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "曼陀山庄·茶花园",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "磨坊",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "少林寺·山门外",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "辽东",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "薛慕华居所",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "薛慕华居所·地窖",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "灵鹫宫·大殿",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "灵鹫宫·石窖",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "王夫人山庄·大厅",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "江陵",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "章华寺",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "峨眉山",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "locations",
+    "candidate": "普贤寺",
+    "action": "excluded",
+    "reason": "名称或指称未在目标回目定位"
+  },
+  {
+    "stage": 1,
+    "kind": "factions",
+    "candidate": "章华寺",
+    "action": "excluded",
+    "reason": "正文未定位"
+  },
+  {
+    "stage": 1,
+    "kind": "factions",
+    "candidate": "普贤寺",
+    "action": "excluded",
+    "reason": "正文未定位"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "无量剑法",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "鳄嘴剪法",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "三十六路天罡掌",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "伏虎拳",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "大力金刚指",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "金刚不坏体",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "普渡杖法",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "心意气混元功",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "金刚伏魔圈",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "碧磷烟",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "化骨绵掌",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "双龙取水",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 1,
+    "kind": "skills",
+    "candidate": "神龙摆尾",
+    "action": "excluded",
+    "reason": "附件正文未定位，禁止用其他金庸作品补入"
+  },
+  {
+    "stage": 4,
+    "kind": "items",
+    "candidate": "奚山河锯齿铁锏",
+    "action": "excluded",
+    "reason": "未在附件定位"
+  },
+  {
+    "stage": 4,
+    "kind": "items",
+    "candidate": "褚万里钓竿",
+    "action": "excluded",
+    "reason": "未在附件定位"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "杜老者",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "迟老者",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "金老者",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "褚老者",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "孙老者",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "张全祥",
+    "action": "added_before_reference",
+    "src": "第14回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "方舵主",
+    "action": "added_before_reference",
+    "src": "第14回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "左子穆之子",
+    "action": "added_before_reference",
+    "src": "第5回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "许家集",
+    "action": "added_before_reference",
+    "src": "第18回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "卫辉",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "卫辉·船舱",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "三甲镇",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "上京",
+    "action": "added_before_reference",
+    "src": "第27回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "辽国军营",
+    "action": "added_before_reference",
+    "src": "第27回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "雪地客店",
+    "action": "added_before_reference",
+    "src": "第25回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "寒玉冰蟾膏",
+    "action": "added_before_reference",
+    "src": "第18回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "六阳正气丹",
+    "action": "added_before_reference",
+    "src": "第29回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "辽国猎弓",
+    "action": "added_before_reference",
+    "src": "第27回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "石杵",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "雁门崖文拓片",
+    "action": "added_before_reference",
+    "src": "第21回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "万仙大会山谷",
+    "action": "added_before_reference",
+    "src": "第33回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "西夏皇宫·冰库底层",
+    "action": "added_before_reference",
+    "src": "第36回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "灵鹫宫·石室",
+    "action": "added_before_reference",
+    "src": "第38回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "少林寺·山门",
+    "action": "added_before_reference",
+    "src": "第40回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "云岛主",
+    "action": "added_before_reference",
+    "src": "第38回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "玄黄子",
+    "action": "added_before_reference",
+    "src": "第33回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "章达人",
+    "action": "added_before_reference",
+    "src": "第33回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "绿波香露刀",
+    "action": "added_before_reference",
+    "src": "第33回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "断筋腐骨丸",
+    "action": "added_before_reference",
+    "src": "第35回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "柔丝网",
+    "action": "added_before_reference",
+    "src": "第22回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "人皮面具",
+    "action": "added_before_reference",
+    "src": "第41回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "洞庭湖",
+    "action": "added_before_reference",
+    "src": "第41回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "君山",
+    "action": "added_before_reference",
+    "src": "第41回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "辽国牢狱",
+    "action": "added_before_reference",
+    "src": "第49回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "西夏石室",
+    "action": "added_before_reference",
+    "src": "第46回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "慕容复土坟",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "鸠摩智火焰刀经",
+    "action": "added_before_reference",
+    "src": "第10回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "丁春秋柔丝索",
+    "action": "added_before_reference",
+    "src": "第41回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "辽帝御箭",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "张将军",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "觉贤",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "慕容夫人",
+    "action": "added_before_reference",
+    "src": "第42回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "霍洞主",
+    "action": "added_before_reference",
+    "src": "第34回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "司马岛主",
+    "action": "added_before_reference",
+    "src": "第34回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "洪兄弟",
+    "action": "added_before_reference",
+    "src": "第34回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "金阿二",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "碾坊农女",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "乐士宣",
+    "action": "added_before_reference",
+    "src": "第49回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "刘惟简",
+    "action": "added_before_reference",
+    "src": "第49回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "梁从政",
+    "action": "added_before_reference",
+    "src": "第49回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "丐帮少年帮主",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "曼陀山庄·茶花园",
+    "action": "added_before_reference",
+    "src": "第12回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "碾坊",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "碾坊·阁楼",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "汝州",
+    "action": "added_before_reference",
+    "src": "第20回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "汝州山洞",
+    "action": "added_before_reference",
+    "src": "第20回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "梁县",
+    "action": "added_before_reference",
+    "src": "第20回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "大相国寺",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "普渡寺",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "长安",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "净影寺",
+    "action": "added_before_reference",
+    "src": "第39回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "少林寺·达摩院",
+    "action": "added_before_reference",
+    "src": "第29回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "信阳酒馆",
+    "action": "added_before_reference",
+    "src": "第22回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "长春谷外山岭",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "琅嬛福地·铜镜后室",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 6,
+    "kind": "factions",
+    "old_id": "清凉寺",
+    "id": "清凉寺僧团",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "factions",
+    "old_id": "东林寺",
+    "id": "东林寺僧团",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "id": "李傀儡面具",
+    "action": "removed_after_review",
+    "reason": "正文讲戏痴性情，未找到具体面具。"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "id": "冯阿三木器",
+    "action": "removed_after_review",
+    "reason": "巧匠身份不能证明持有一件特定木器。"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "id": "苟读书卷",
+    "action": "removed_after_review",
+    "reason": "书生身份不能证明存在可用作兵器的书卷。"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "id": "北冥神功画像",
+    "action": "removed_after_review",
+    "reason": "卷轴内图页，不再作为第二件独立器物。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "绿波香露刀",
+    "action": "removed_after_review",
+    "reason": "明确为乌老大的毒刀，非独立功法名目。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "锁喉擒拿手",
+    "action": "removed_after_review",
+    "reason": "合并同一功法的称法。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "龙爪功",
+    "action": "removed_after_review",
+    "reason": "合并同一功法的称法。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "old_id": "天王补心针",
+    "id": "天王补心针法",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "old_id": "龚光杰青钢剑",
+    "id": "龚光杰长剑",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "items",
+    "old_id": "游氏钢盾",
+    "id": "游骥钢盾",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "游驹钢盾",
+    "action": "added_before_reference",
+    "src": "第19回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "天王补心针",
+    "action": "added_before_reference",
+    "src": "第13回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "傅思归齐眉棍",
+    "action": "added_before_reference",
+    "src": "第5回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "褚万里钓杆",
+    "action": "added_before_reference",
+    "src": "第22回"
+  },
+  {
+    "stage": 5,
+    "kind": "items",
+    "id": "金算盘",
+    "action": "added_before_reference",
+    "src": "第9回"
+  },
+  {
+    "stage": 6,
+    "kind": "locations",
+    "old_id": "少室山山洞",
+    "id": "汝州山洞",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "events",
+    "old_id": "小镜湖认女",
+    "id": "阿朱偷听自认身世",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "events",
+    "old_id": "神农帮归属无量洞",
+    "id": "司空玄自尽无量剑改隶",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "events",
+    "old_id": "磨坊击退西夏武士",
+    "id": "碾坊击退西夏武士",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "events",
+    "old_id": "李延宗给段誉悲酥解药",
+    "id": "李延宗给段誉悲酥解药",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "六阳融雪功",
+    "action": "removed_after_review",
+    "reason": "第12回段誉明说随口捏造，用以掩饰北冥神功。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "踏尸蹶步",
+    "action": "removed_after_review",
+    "reason": "第17回形容踩到尸身的双关，不是另一个轻功。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "锁腰擒拿手",
+    "action": "removed_after_review",
+    "reason": "第24回康敏的调情双关，白世镜明说没有这种功法。"
+  },
+  {
+    "stage": 6,
+    "kind": "skills",
+    "id": "四象六合刀",
+    "action": "removed_after_review",
+    "reason": "第16回王语嫣故意将奇门三才刀误报，以诱云中鹤上当。"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "云州",
+    "action": "added_before_reference",
+    "src": "第13回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "陕西",
+    "action": "added_before_reference",
+    "src": "第13回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "秦伯起",
+    "action": "added_before_reference",
+    "src": "第13回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "秦姓寨主",
+    "action": "added_before_reference",
+    "src": "第13回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "玄念",
+    "action": "added_before_reference",
+    "src": "第40回"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "薛慕华居所·地窖",
+    "action": "added_before_reference",
+    "src": "第30回"
+  },
+  {
+    "stage": 6,
+    "kind": "locations",
+    "old_id": "辽国牢狱",
+    "id": "南院大王府·铁笼",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 5,
+    "kind": "locations",
+    "id": "南京·北门",
+    "action": "added_before_reference",
+    "src": "第49回"
+  },
+  {
+    "stage": 6,
+    "kind": "events",
+    "old_id": "阿紫受骗下药乔峰被囚",
+    "id": "乔峰毒发北门被捕",
+    "action": "renamed_after_review"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "辽御营都指挥使",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "凯虎儿",
+    "action": "added_before_reference",
+    "src": "第50回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "黎老汉",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "心观",
+    "action": "added_before_reference",
+    "src": "第17回"
+  },
+  {
+    "stage": 5,
+    "kind": "persons",
+    "id": "金刀杨老令公",
+    "action": "added_before_reference",
+    "src": "第17回"
+  }
+]

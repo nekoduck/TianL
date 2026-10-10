@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
-[OUTPUT]: 对外提供 tiers()、lod1_scope()、absorb()、due_canon()、dirt()、broken()、settle()
+[OUTPUT]: 对外提供 tiers()、lod1_scope()、absorb()、due_canon()、verdict()、dirt()、broken()、settle()
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、何时刷新、是否被污染），
        把需要 LLM 的工作以"任务"形式交给 engine，并把场外剧情的后果经 effects 落账为真相
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -36,10 +36,15 @@ def absorb(world, reports: list[dict], scope: set[str]) -> list[dict]:
 
 # ============================================================
 #  LOD2：原著平行轨道 + 因果涟漪(dirty flag)
-#  结算节拍随距离变粗：LOD0 即时、LOD1 按日、LOD2 按月
+#  结算节拍随距离变粗：LOD0 即时、LOD1 按日、LOD2 按月；但永远按 order 依次结算，远事不会被近事插队
 # ============================================================
+def _holds(world, nid: str, key: str, want) -> bool:
+    cur = world.graph.get(nid, key)
+    return want in cur if isinstance(cur, list) and not isinstance(want, list) else cur == want
+
+
 def _unmet(world, ev: dict) -> list[tuple]:
-    return [(nid, key, want) for nid, key, want in ev["requires"] if world.graph.get(nid, key) != want]
+    return [(nid, key, want) for nid, key, want in ev["requires"] if not _holds(world, nid, key, want)]
 
 
 def broken(world, ev: dict) -> bool:
@@ -47,25 +52,33 @@ def broken(world, ev: dict) -> bool:
     return bool(_unmet(world, ev))
 
 
-def dirt(world, ev: dict, tier: int) -> list[str]:
+def dirt(world, ev: dict) -> list[str]:
     g = world.graph
     reasons = [f"{nid}的{key}应为{want}，实为{g.get(nid, key)}" for nid, key, want in _unmet(world, ev)]
-    reasons += [f"{a}曾受玩家影响" for a in ev["actors"] if a in world.taint]
-    if tier == 0:
-        reasons.append("玩家亲临现场")
+    touched = set(ev["actors"]) | {r[0] for r in ev["requires"]} | {op.get("id") for op in ev["effects"]}
+    reasons += [f"{n}曾受主角影响" for n in sorted(touched & world.taint)]
     return reasons
 
 
-def due_canon(world, days: int, months: int) -> list[tuple[dict, list[str]]]:
+def verdict(world, ev: dict, tier: int) -> tuple[str, list[str]]:
+    """裁定一桩到期原著事件的走向：canon 照原著 / chronicle 唤醒史官 / skip 悄然不发生。
+    主角亲历而未被扰动的原著照常上演（主角是见证者）；史官只为"附近的破局"与"被扰动的大事"醒来，远方小事破局则作罢。"""
+    reasons = dirt(world, ev)
+    if not reasons:
+        return "canon", []
+    if broken(world, ev):
+        return ("chronicle" if ev["weight"] >= 2 or tier <= 1 else "skip"), reasons
+    return ("chronicle" if ev["weight"] >= 2 else "canon"), reasons
+
+
+def due_canon(world, days: int, months: int) -> list[tuple[dict, int]]:
+    """到期且到了刷新节拍的事件，连同排在它之前的全部到期事件，按 order 返回 (事件, 层级)。"""
     t = tiers(world)
-    due = []
-    for ev in world.canon:
-        if ev["id"] in world.done or ev["day"] > world.clock.day:
-            continue
-        tier = t.get(ev["where"], 2)
-        if months or tier == 0 or (days and tier == 1):
-            due.append((ev, dirt(world, ev, tier)))
-    return due
+    done = set(world.done)
+    pending = [ev for ev in world.canon if ev["id"] not in done and ev["day"] <= world.clock.day]
+    ripe = [i for i, ev in enumerate(pending)
+            if months or t.get(ev["where"], 2) == 0 or (days and t.get(ev["where"], 2) == 1)]
+    return [(ev, t.get(ev["where"], 2)) for ev in pending[:ripe[-1] + 1]] if ripe else []
 
 
 def settle(world, ev: dict, outcome: dict, origin: str) -> dict | None:
@@ -73,6 +86,7 @@ def settle(world, ev: dict, outcome: dict, origin: str) -> dict | None:
     world.done.append(ev["id"])
     if not outcome.get("happens", True):
         return None
-    scope = set(ev["actors"]) | {ev["where"]}
+    scope = set(ev["actors"]) | {ev["where"]} | {r[0] for r in ev["requires"]} | {op.get("id") for op in ev["effects"]}
     applied, _ = world.apply(outcome.get("effects", []), origin, scope)
-    return world.record(outcome.get("summary") or ev["summary"], ev["where"], applied, origin, ev["weight"])
+    return world.record(outcome.get("summary") or ev["summary"], ev["where"], applied, origin, ev["weight"],
+                        ev.get("public", True))

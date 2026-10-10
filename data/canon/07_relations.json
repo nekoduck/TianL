@@ -1,0 +1,1386 @@
+[
+  {
+    "src": "段正淳",
+    "dst": "段誉",
+    "rel": "父子",
+    "secret": false,
+    "src_ref": "第7回"
+  },
+  {
+    "src": "刀白凤",
+    "dst": "段誉",
+    "rel": "生母",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "段正明",
+    "dst": "段正淳",
+    "rel": "兄弟",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "段正明",
+    "dst": "段誉",
+    "rel": "伯父",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "段正淳",
+    "dst": "刀白凤",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "钟万仇",
+    "dst": "甘宝宝",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "钟万仇",
+    "dst": "钟灵",
+    "rel": "父女",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "甘宝宝",
+    "dst": "钟灵",
+    "rel": "生母",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "秦红棉",
+    "dst": "木婉清",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第4回"
+  },
+  {
+    "src": "秦红棉",
+    "dst": "甘宝宝",
+    "rel": "师姊妹",
+    "secret": false,
+    "src_ref": "第4回"
+  },
+  {
+    "src": "阮星竹",
+    "dst": "段正淳",
+    "rel": "旧恋",
+    "secret": false,
+    "src_ref": "第23回"
+  },
+  {
+    "src": "秦红棉",
+    "dst": "段正淳",
+    "rel": "旧恋",
+    "secret": false,
+    "src_ref": "第7回"
+  },
+  {
+    "src": "甘宝宝",
+    "dst": "段正淳",
+    "rel": "旧恋",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "康敏",
+    "dst": "马大元",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "王夫人",
+    "dst": "王语嫣",
+    "rel": "生母",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "慕容博",
+    "dst": "慕容复",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第43回"
+  },
+  {
+    "src": "王语嫣",
+    "dst": "慕容复",
+    "rel": "表妹",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "王语嫣",
+    "dst": "慕容复",
+    "rel": "倾慕",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "慕容复",
+    "dst": "王夫人",
+    "rel": "外甥",
+    "secret": false,
+    "src_ref": "第47回"
+  },
+  {
+    "src": "乔三槐",
+    "dst": "乔三槐之妻",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第18回"
+  },
+  {
+    "src": "乔三槐",
+    "dst": "乔峰",
+    "rel": "养父",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "乔三槐之妻",
+    "dst": "乔峰",
+    "rel": "养母",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "萧远山",
+    "dst": "萧远山之妻",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "玄苦",
+    "dst": "乔峰",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第18回"
+  },
+  {
+    "src": "汪剑通",
+    "dst": "乔峰",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "宋长老",
+    "dst": "乔峰",
+    "rel": "半师半友",
+    "secret": false,
+    "src_ref": "第14回"
+  },
+  {
+    "src": "慧轮",
+    "dst": "虚竹",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第39回"
+  },
+  {
+    "src": "无崖子",
+    "dst": "苏星河",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第32回"
+  },
+  {
+    "src": "无崖子",
+    "dst": "丁春秋",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第32回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "丁春秋",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第32回"
+  },
+  {
+    "src": "李秋水",
+    "dst": "天山童姥",
+    "rel": "师姊妹",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "无崖子",
+    "dst": "李秋水",
+    "rel": "师兄妹",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "无崖子",
+    "dst": "天山童姥",
+    "rel": "师姊弟",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "李秋水",
+    "rel": "死敌",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "无崖子",
+    "dst": "丁春秋",
+    "rel": "师门叛仇",
+    "secret": false,
+    "src_ref": "第32回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "丁春秋",
+    "rel": "假聋哑之约",
+    "secret": false,
+    "src_ref": "第32回"
+  },
+  {
+    "src": "王夫人",
+    "dst": "丁春秋",
+    "rel": "养父女称谓",
+    "secret": false,
+    "src_ref": "第40回"
+  },
+  {
+    "src": "黄眉僧",
+    "dst": "段正明",
+    "rel": "相交",
+    "secret": false,
+    "src_ref": "第8回"
+  },
+  {
+    "src": "黄眉僧",
+    "dst": "破疑",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第8回"
+  },
+  {
+    "src": "黄眉僧",
+    "dst": "破嗔",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第8回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "辛双清",
+    "rel": "同门",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "辛双清",
+    "rel": "剑会竞争",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "容子矩",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "龚光杰",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "干光豪",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "辛双清",
+    "dst": "葛光佩",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "辛双清",
+    "dst": "褚师弟",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "司空玄",
+    "dst": "左子穆",
+    "rel": "结怨",
+    "secret": false,
+    "src_ref": "第1回"
+  },
+  {
+    "src": "钟万仇",
+    "dst": "段正淳",
+    "rel": "情敌仇恨",
+    "secret": false,
+    "src_ref": "第2回"
+  },
+  {
+    "src": "崔百泉",
+    "dst": "柯百岁",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第9回"
+  },
+  {
+    "src": "柯百岁",
+    "dst": "过彦之",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第9回"
+  },
+  {
+    "src": "司马卫",
+    "dst": "司马林",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "司马卫",
+    "dst": "诸保昆",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "都灵子",
+    "dst": "诸保昆",
+    "rel": "秘密师父",
+    "secret": true,
+    "src_ref": "第13回",
+    "revealed_by": "听香水榭揭破诸保昆卧底"
+  },
+  {
+    "src": "全冠清",
+    "dst": "乔峰",
+    "rel": "暗中反对",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "徐冲霄",
+    "dst": "乔峰",
+    "rel": "师辈",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "吴长风",
+    "dst": "乔峰",
+    "rel": "故交",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "谭公",
+    "dst": "谭婆",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "赵钱孙",
+    "dst": "谭婆",
+    "rel": "同门旧情",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "赵钱孙",
+    "dst": "谭公",
+    "rel": "情敌",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "谭公",
+    "dst": "赵钱孙",
+    "rel": "相争",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "单正",
+    "dst": "单伯山",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "单正",
+    "dst": "单仲山",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "单正",
+    "dst": "单叔山",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "单正",
+    "dst": "单季山",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第16回"
+  },
+  {
+    "src": "单正",
+    "dst": "单小山",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第15回"
+  },
+  {
+    "src": "游骥",
+    "dst": "游驹",
+    "rel": "兄弟",
+    "secret": false,
+    "src_ref": "第19回"
+  },
+  {
+    "src": "游驹",
+    "dst": "游坦之",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第28回"
+  },
+  {
+    "src": "游驹",
+    "dst": "游坦之之母",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第28回"
+  },
+  {
+    "src": "游坦之之母",
+    "dst": "游坦之",
+    "rel": "生母",
+    "secret": false,
+    "src_ref": "第28回"
+  },
+  {
+    "src": "游骥",
+    "dst": "游坦之",
+    "rel": "伯父",
+    "secret": false,
+    "src_ref": "第28回"
+  },
+  {
+    "src": "慕容博",
+    "dst": "鸠摩智",
+    "rel": "旧友",
+    "secret": false,
+    "src_ref": "第10回"
+  },
+  {
+    "src": "段正淳",
+    "dst": "康敏",
+    "rel": "旧恋",
+    "secret": false,
+    "src_ref": "第24回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "卓不凡",
+    "rel": "灭门仇",
+    "secret": false,
+    "src_ref": "第38回"
+  },
+  {
+    "src": "神山上人",
+    "dst": "神音",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第39回"
+  },
+  {
+    "src": "神山上人",
+    "dst": "少林派",
+    "rel": "旧怨",
+    "secret": false,
+    "src_ref": "第39回"
+  },
+  {
+    "src": "李乾顺",
+    "dst": "李清露",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第46回"
+  },
+  {
+    "src": "耶律重元",
+    "dst": "耶律洪基",
+    "rel": "皇叔",
+    "secret": false,
+    "src_ref": "第27回"
+  },
+  {
+    "src": "耶律重元",
+    "dst": "耶律涅鲁古",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第27回"
+  },
+  {
+    "src": "高昇泰",
+    "dst": "高泰明",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第48回"
+  },
+  {
+    "src": "包不同",
+    "dst": "包不靓",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "高太皇太后",
+    "dst": "赵煦",
+    "rel": "祖孙",
+    "secret": false,
+    "src_ref": "第49回"
+  },
+  {
+    "src": "慕容龙城",
+    "dst": "慕容博",
+    "rel": "祖先",
+    "secret": false,
+    "src_ref": "第43回"
+  },
+  {
+    "src": "逍遥子",
+    "dst": "无崖子",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第50回"
+  },
+  {
+    "src": "逍遥子",
+    "dst": "李秋水",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第50回"
+  },
+  {
+    "src": "逍遥子",
+    "dst": "天山童姥",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第50回"
+  },
+  {
+    "src": "李秋水",
+    "dst": "李秋水之妹",
+    "rel": "姊妹",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "段延庆",
+    "dst": "段誉",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第48回",
+    "revealed_by": "刀白凤揭示段誉生父"
+  },
+  {
+    "src": "段延庆",
+    "dst": "刀白凤",
+    "rel": "一夕情缘",
+    "secret": true,
+    "src_ref": "第48回",
+    "revealed_by": "刀白凤自认观音身份"
+  },
+  {
+    "src": "段正淳",
+    "dst": "木婉清",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第7回",
+    "revealed_by": "木婉清身世揭开"
+  },
+  {
+    "src": "秦红棉",
+    "dst": "木婉清",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第7回",
+    "revealed_by": "木婉清身世揭开"
+  },
+  {
+    "src": "段正淳",
+    "dst": "钟灵",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第9回",
+    "revealed_by": "钟灵身世向段家明示"
+  },
+  {
+    "src": "段正淳",
+    "dst": "阿朱",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第23回",
+    "revealed_by": "阿朱偷听自认身世"
+  },
+  {
+    "src": "阮星竹",
+    "dst": "阿朱",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第23回",
+    "revealed_by": "阿朱偷听自认身世"
+  },
+  {
+    "src": "段正淳",
+    "dst": "阿紫",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第23回",
+    "revealed_by": "段正淳救阿紫认旧物"
+  },
+  {
+    "src": "阮星竹",
+    "dst": "阿紫",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第22回",
+    "revealed_by": "段正淳救阿紫认旧物"
+  },
+  {
+    "src": "阿朱",
+    "dst": "阿紫",
+    "rel": "姊妹",
+    "secret": true,
+    "src_ref": "第23回",
+    "revealed_by": "阿朱偷听自认身世"
+  },
+  {
+    "src": "萧远山",
+    "dst": "乔峰",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第16回",
+    "revealed_by": "智光交契丹崖文说生父名"
+  },
+  {
+    "src": "萧远山之妻",
+    "dst": "乔峰",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第16回",
+    "revealed_by": "杏子林揭示契丹身世"
+  },
+  {
+    "src": "玄慈",
+    "dst": "虚竹",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "虚竹父母身份揭开"
+  },
+  {
+    "src": "叶二娘",
+    "dst": "虚竹",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "虚竹父母身份揭开"
+  },
+  {
+    "src": "玄慈",
+    "dst": "叶二娘",
+    "rel": "私情",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "虚竹父母身份揭开"
+  },
+  {
+    "src": "白世镜",
+    "dst": "康敏",
+    "rel": "私情",
+    "secret": true,
+    "src_ref": "第24回",
+    "revealed_by": "康敏杀夫阴谋败露"
+  },
+  {
+    "src": "白世镜",
+    "dst": "马大元",
+    "rel": "杀害",
+    "secret": true,
+    "src_ref": "第24回",
+    "revealed_by": "康敏杀夫阴谋败露"
+  },
+  {
+    "src": "康敏",
+    "dst": "马大元",
+    "rel": "谋杀",
+    "secret": true,
+    "src_ref": "第24回",
+    "revealed_by": "康敏杀夫阴谋败露"
+  },
+  {
+    "src": "康敏",
+    "dst": "全冠清",
+    "rel": "私情",
+    "secret": true,
+    "src_ref": "第16回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "慕容博",
+    "dst": "慕容博",
+    "rel": "诈死",
+    "secret": true,
+    "src_ref": "第43回",
+    "revealed_by": "慕容博现身"
+  },
+  {
+    "src": "慕容博",
+    "dst": "玄悲",
+    "rel": "杀害",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "雁门关幕后主使揭开"
+  },
+  {
+    "src": "慕容博",
+    "dst": "玄慈",
+    "rel": "假传辽讯",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "雁门关幕后主使揭开"
+  },
+  {
+    "src": "无崖子",
+    "dst": "李秋水之妹",
+    "rel": "暗恋",
+    "secret": true,
+    "src_ref": "第37回",
+    "revealed_by": "画像所绘之人揭开"
+  },
+  {
+    "src": "无崖子",
+    "dst": "王夫人",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第40回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "李秋水",
+    "dst": "王夫人",
+    "rel": "生母",
+    "secret": true,
+    "src_ref": "第40回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "李秋水",
+    "dst": "丁春秋",
+    "rel": "私情",
+    "secret": true,
+    "src_ref": "第32回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "李秋水",
+    "dst": "丁春秋",
+    "rel": "秘密传功",
+    "secret": true,
+    "src_ref": "第32回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "无崖子",
+    "dst": "李秋水",
+    "rel": "夫妻旧情",
+    "secret": true,
+    "src_ref": "第40回",
+    "revealed_by": null,
+    "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+  },
+  {
+    "src": "王夫人",
+    "dst": "段正淳",
+    "rel": "旧恋",
+    "secret": true,
+    "src_ref": "第47回",
+    "revealed_by": "王夫人旧情当面显露"
+  },
+  {
+    "src": "段正淳",
+    "dst": "王语嫣",
+    "rel": "生父",
+    "secret": true,
+    "src_ref": "第48回",
+    "revealed_by": "王语嫣父系向段誉说明"
+  },
+  {
+    "src": "苏星河",
+    "dst": "康广陵",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "范百龄",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "苟读",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "吴领军",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "薛慕华",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "冯阿三",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "石清风",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "苏星河",
+    "dst": "李傀儡",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第30回"
+  },
+  {
+    "src": "邓百川",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "公冶乾",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "包不同",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "风波恶",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "阿朱",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "阿碧",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "阿胜",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "阿洪",
+    "dst": "慕容复",
+    "rel": "效忠",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "褚万里",
+    "dst": "段正淳",
+    "rel": "护卫",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "朱丹臣",
+    "dst": "段正淳",
+    "rel": "护卫",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "傅思归",
+    "dst": "段正淳",
+    "rel": "护卫",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "古笃诚",
+    "dst": "段正淳",
+    "rel": "护卫",
+    "secret": false,
+    "src_ref": "第6回"
+  },
+  {
+    "src": "来福儿",
+    "dst": "甘宝宝",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第3回"
+  },
+  {
+    "src": "瑞婆婆",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "平婆婆",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "小茗",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "幽草",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "小翠",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "小茶",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "小兰",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "小诗",
+    "dst": "王夫人",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第12回"
+  },
+  {
+    "src": "梅剑",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "兰剑",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "竹剑",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "菊剑",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "余婆婆",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "符敏仪",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "石嫂",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "程青霜",
+    "dst": "天山童姥",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第37回"
+  },
+  {
+    "src": "丁春秋",
+    "dst": "摘星子",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第25回"
+  },
+  {
+    "src": "丁春秋",
+    "dst": "摩云子",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第25回"
+  },
+  {
+    "src": "丁春秋",
+    "dst": "追风子",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第25回"
+  },
+  {
+    "src": "丁春秋",
+    "dst": "出尘子",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第25回"
+  },
+  {
+    "src": "丁春秋",
+    "dst": "阿紫",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第25回"
+  },
+  {
+    "src": "叶二娘",
+    "dst": "段延庆",
+    "rel": "同行服从",
+    "secret": false,
+    "src_ref": "第4回"
+  },
+  {
+    "src": "南海鳄神",
+    "dst": "段延庆",
+    "rel": "同行服从",
+    "secret": false,
+    "src_ref": "第4回"
+  },
+  {
+    "src": "云中鹤",
+    "dst": "段延庆",
+    "rel": "同行服从",
+    "secret": false,
+    "src_ref": "第4回"
+  },
+  {
+    "src": "晓蕾",
+    "dst": "李清露",
+    "rel": "主仆",
+    "secret": false,
+    "src_ref": "第50回"
+  },
+  {
+    "src": "杜老者",
+    "dst": "迟老者",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第21回"
+  },
+  {
+    "src": "杜老者",
+    "dst": "金老者",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第21回"
+  },
+  {
+    "src": "杜老者",
+    "dst": "褚老者",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第21回"
+  },
+  {
+    "src": "杜老者",
+    "dst": "孙老者",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第21回"
+  },
+  {
+    "src": "左子穆",
+    "dst": "左子穆之子",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第5回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "乌老大",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "安洞主",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "钦岛主",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "区岛主",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "端木元",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "桑土公",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "哈大霸",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "天山童姥",
+    "dst": "云岛主",
+    "rel": "生死符控制",
+    "secret": false,
+    "src_ref": "第34回"
+  },
+  {
+    "src": "乌老大",
+    "dst": "天山童姥",
+    "rel": "暗中绑架",
+    "secret": true,
+    "src_ref": "第35回",
+    "revealed_by": "女童身份向虚竹揭开"
+  },
+  {
+    "src": "乔峰",
+    "dst": "乔峰",
+    "rel": "契丹出身",
+    "secret": true,
+    "src_ref": "第16回",
+    "revealed_by": "杏子林揭示契丹身世"
+  },
+  {
+    "src": "李秋水",
+    "dst": "李清露",
+    "rel": "祖母",
+    "secret": false,
+    "src_ref": "第50回"
+  },
+  {
+    "src": "金阿二",
+    "dst": "碾坊农女",
+    "rel": "相恋",
+    "secret": false,
+    "src_ref": "第17回"
+  },
+  {
+    "src": "慕容博",
+    "dst": "慕容夫人",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第42回"
+  },
+  {
+    "src": "慕容夫人",
+    "dst": "慕容复",
+    "rel": "生母",
+    "secret": false,
+    "src_ref": "第42回"
+  },
+  {
+    "src": "慕容夫人",
+    "dst": "慕容博",
+    "rel": "知诈死",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": null,
+    "unrevealed_reason": "母亲早年筹办假丧，原著未描写她公开揭开此事。"
+  },
+  {
+    "src": "耶律洪基",
+    "dst": "穆贵妃",
+    "rel": "夫妻",
+    "secret": false,
+    "src_ref": "第49回"
+  },
+  {
+    "src": "玄慈",
+    "dst": "萧远山",
+    "rel": "带头伏击",
+    "secret": true,
+    "src_ref": "第16回",
+    "revealed_by": "雁门关幕后主使揭开"
+  },
+  {
+    "src": "慕容博",
+    "dst": "柯百岁",
+    "rel": "杀害",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "雁门关幕后主使揭开"
+  },
+  {
+    "src": "萧远山",
+    "dst": "虚竹",
+    "rel": "盗婴",
+    "secret": true,
+    "src_ref": "第42回",
+    "revealed_by": "虚竹父母身份揭开"
+  },
+  {
+    "src": "秦姓寨主",
+    "dst": "姚伯当",
+    "rel": "师父",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "秦姓寨主",
+    "dst": "秦伯起",
+    "rel": "生父",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "姚伯当",
+    "dst": "秦伯起",
+    "rel": "师兄弟",
+    "secret": false,
+    "src_ref": "第13回"
+  },
+  {
+    "src": "姚伯当",
+    "dst": "慕容复",
+    "rel": "疑杀师弟",
+    "secret": false,
+    "src_ref": "第13回",
+    "suspected": true,
+    "inferred": true,
+    "inference_basis": "群人怀疑姑苏慕容氏，具体归到慕容复为人物判断。"
+  }
+]

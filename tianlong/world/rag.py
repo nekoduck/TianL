@@ -3,13 +3,16 @@
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、dossier()、power_tier()
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知；
-       backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、远近道路、命运骰，让它编织的剧情有据可依
+       backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、在场武学、远近道路、命运骰，让它编织的剧情有据可依
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
 
+from .effects import usable
+
 TIERS = ((15, "不会武功"), (35, "三流身手"), (60, "二流好手"), (85, "一流高手"), (10**9, "绝顶高手"))
 NEWS_WINDOW = 3
+PLACES_SHOWN = 15  # 后台只列最近的若干去处；更远之地导演仍可直呼其名，距离由系统结算
 
 
 def power_tier(power: int) -> str:
@@ -30,7 +33,11 @@ def scene(world) -> dict:
     people = at("person")
     return {"people": [p for p in people if g.get(p, "status") != "dead"],
             "dead": [p for p in people if g.get(p, "status") == "dead"],
-            "features": at("feature"), "items": at("item")}
+            "features": at("feature"), "items": [i for i in at("item") if usable(world, i)]}
+
+
+def _held(world, pid: str) -> list[str]:
+    return [i for i in world.graph.where(type="item", holder=pid) if not world.graph.get(i, "hidden") and usable(world, i)]
 
 
 # ============================================================
@@ -73,7 +80,8 @@ def build(world) -> dict:
     visible = {here, *s["people"], *s["dead"], *s["features"], *s["items"]}
     people = [{"name": p, "title": g.get(p, "title"), "faction": g.get(p, "faction"),
                "status": g.get(p, "status"), "tier": power_tier(g.get(p, "power", 30)),
-               "persona": g.get(p, "persona"), "toward_you": _toward_player(world, p)} for p in s["people"]]
+               "persona": g.get(p, "persona"), "appearance": g.get(p, "appearance"), "speech": g.get(p, "speech"),
+               "carrying": _held(world, p), "toward_you": _toward_player(world, p)} for p in s["people"]]
     carried = [{"name": i, "desc": g.get(i, "desc")} for i in me["inventory"]]
     news = [f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}"
             for e in (world.truth.get(i) for i in world.knowledge.known[-NEWS_WINDOW:])]
@@ -100,7 +108,7 @@ def build(world) -> dict:
 def backstage(world) -> dict:
     g, me, here = world.graph, world.player, world.here
     s = scene(world)
-    hidden = [n for n in g.where(location=here) if g.get(n, "hidden")]
+    hidden = [n for n in g.where(location=here) if g.get(n, "hidden") and not g.get(n, "dormant")]
     cast = set(s["people"]) | set(s["dead"]) | set(hidden) | {"player"}
     secrets = [f"{e['src']}—{e['rel']}—{e['dst']}" for e in g.edges
                if e.get("secret") and {e["src"], e["dst"]} & cast and not world.knowledge.knows_secret(e)]
@@ -121,8 +129,18 @@ def backstage(world) -> dict:
         "grants": [f"{i}：研习可得「{g.get(i, 'grants')['skill']}」，功力+{g.get(i, 'grants')['power']}"
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]
                    if g.get(i, "grants")],
-        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here],
+        "arts": _arts(world, ["player", *s["people"]]),
+        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
     }
+
+
+def _arts(world, cast: list[str]) -> list[str]:
+    """在场诸人所会武学及其原著表现——导演编排交手时的依据。"""
+    g, owners = world.graph, {}
+    for p in cast:
+        for sk in (world.player["skills"] if p == "player" else g.get(p, "skills") or []):
+            owners.setdefault(sk, []).append("主角" if p == "player" else p)
+    return [f"{sk}（{'、'.join(who)}）：{g.get(sk, 'desc') or ''}" for sk, who in owners.items()]
 
 
 def dossier(world, pid: str) -> dict:

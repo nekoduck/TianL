@@ -1,0 +1,86 @@
+{
+  "passed": true,
+  "scope": "结构、引用、长度、道路、锚点、隐情映射、顺序与requires回放；不证明原著事实穷尽或所有推断正确。",
+  "counts": {
+    "persons": 242,
+    "locations": 183,
+    "factions": 55,
+    "items": 98,
+    "skills": 119,
+    "events": 235,
+    "roads": 191,
+    "relations": 191
+  },
+  "checks": {
+    "global_id_unique": true,
+    "road_components": 1,
+    "replayed_events": 235,
+    "requires_failures": 0,
+    "anchor_count": 18,
+    "late_skill_checks": 7,
+    "error_count": 0,
+    "warning_count": 6
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "李秋水之妹",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "丐帮少年帮主",
+      "detail": [
+        "age",
+        "location",
+        "status"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "秦姓寨主",
+      "detail": [
+        "status",
+        "location"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "黎老汉",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "心观",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "金刀杨老令公",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    }
+  ],
+  "limitations": [
+    "日期是抽取者推断；转成游戏日数不增加其史实可信度。",
+    "没有用户实际导入校验器，未检验该外部程序。",
+    "来源excerpt为定位证据，未逐字段证明文学事实。",
+    "initial_state_confirmed=false的枚举占位必须禁用自动开端活动。"
+  ]
+}

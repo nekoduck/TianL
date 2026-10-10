@@ -1,0 +1,1890 @@
+{
+  "scope": "分回目录与定位核对记录；不是事实穷尽或逐字段验证证书",
+  "chapter_count": 50,
+  "chapters_with_events": 50,
+  "event_count": 235,
+  "source_locator_check": {
+    "records": 933,
+    "invalid_count": 0,
+    "invalid_ids": []
+  },
+  "batches": [
+    {
+      "chapters": [
+        1,
+        10
+      ],
+      "event_count": 38
+    },
+    {
+      "chapters": [
+        11,
+        20
+      ],
+      "event_count": 34
+    },
+    {
+      "chapters": [
+        21,
+        30
+      ],
+      "event_count": 41
+    },
+    {
+      "chapters": [
+        31,
+        40
+      ],
+      "event_count": 43
+    },
+    {
+      "chapters": [
+        41,
+        50
+      ],
+      "event_count": 79
+    }
+  ],
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "青衫磊落险峰行",
+      "src": "第1回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 24083,
+      "indexed_by_primary_source": {
+        "persons": 14,
+        "locations": 9,
+        "factions": 6,
+        "items": 7,
+        "skills": 4,
+        "events": 6
+      },
+      "event_count": 6,
+      "events": [
+        {
+          "id": "无量剑第四场比剑",
+          "order": 1
+        },
+        {
+          "id": "龚光杰掌掴段誉",
+          "order": 2
+        },
+        {
+          "id": "容子矩毒伤毙命",
+          "order": 3
+        },
+        {
+          "id": "钟灵以闪电貂御敌",
+          "order": 4
+        },
+        {
+          "id": "神农帮留钟灵下毒逼援",
+          "order": 5
+        },
+        {
+          "id": "段誉赴万劫谷求解药",
+          "order": 6
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "title": "玉壁月华明",
+      "src": "第2回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 26125,
+      "indexed_by_primary_source": {
+        "persons": 4,
+        "locations": 12,
+        "factions": 6,
+        "items": 8,
+        "skills": 5,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "干葛私奔",
+          "order": 7
+        },
+        {
+          "id": "段誉坠入无量山谷",
+          "order": 8
+        },
+        {
+          "id": "段誉发现琅嬛福地",
+          "order": 9
+        },
+        {
+          "id": "磕首取得北冥卷轴",
+          "order": 10
+        },
+        {
+          "id": "甘宝宝托段誉向段家求援",
+          "order": 11
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "title": "马疾香幽",
+      "src": "第3回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22120,
+      "indexed_by_primary_source": {
+        "persons": 4,
+        "locations": 2,
+        "factions": 0,
+        "items": 2,
+        "skills": 1,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "段誉借乘黑玫瑰",
+          "order": 12
+        },
+        {
+          "id": "木婉清杀干葛追敌",
+          "order": 13
+        },
+        {
+          "id": "木婉清射杀平婆婆",
+          "order": 14
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "title": "崖高人远",
+      "src": "第4回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 28419,
+      "indexed_by_primary_source": {
+        "persons": 3,
+        "locations": 0,
+        "factions": 1,
+        "items": 1,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "黑玫瑰跃涧坠亡",
+          "order": 15
+        },
+        {
+          "id": "木婉清与段誉订婚约",
+          "order": 16
+        },
+        {
+          "id": "南海鳄神扣木婉清待徒",
+          "order": 17
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "title": "微步縠纹生",
+      "src": "第5回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25873,
+      "indexed_by_primary_source": {
+        "persons": 7,
+        "locations": 2,
+        "factions": 0,
+        "items": 6,
+        "skills": 0,
+        "events": 6
+      },
+      "event_count": 6,
+      "events": [
+        {
+          "id": "司空玄自尽无量剑改隶",
+          "order": 18
+        },
+        {
+          "id": "无量洞拘禁段誉",
+          "order": 19
+        },
+        {
+          "id": "段誉修得北冥与凌波",
+          "order": 20
+        },
+        {
+          "id": "段誉吞朱蛤得抗毒体质",
+          "order": 21
+        },
+        {
+          "id": "段誉脱囚吸无量门人内力",
+          "order": 22
+        },
+        {
+          "id": "高昇泰等救左子穆幼子",
+          "order": 23
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "title": "谁家子弟谁家院",
+      "src": "第6回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22870,
+      "indexed_by_primary_source": {
+        "persons": 4,
+        "locations": 6,
+        "factions": 1,
+        "items": 2,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "南海鳄神反拜段誉",
+          "order": 24
+        },
+        {
+          "id": "段誉木婉清赴玉虚观",
+          "order": 25
+        },
+        {
+          "id": "段誉携母与木婉清回府",
+          "order": 26
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "title": "无计悔多情",
+      "src": "第7回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22329,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 5,
+        "factions": 0,
+        "items": 2,
+        "skills": 1,
+        "events": 2
+      },
+      "event_count": 2,
+      "events": [
+        {
+          "id": "木婉清身世揭开",
+          "order": 27
+        },
+        {
+          "id": "段誉木婉清被囚石屋",
+          "order": 28
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "title": "虎啸龙吟",
+      "src": "第8回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23769,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 5,
+        "factions": 0,
+        "items": 0,
+        "skills": 1,
+        "events": 2
+      },
+      "event_count": 2,
+      "events": [
+        {
+          "id": "黄眉僧以棋拖住段延庆",
+          "order": 29
+        },
+        {
+          "id": "巴天石华赫艮掘地道",
+          "order": 30
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "title": "换巢鸾凤",
+      "src": "第9回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 31774,
+      "indexed_by_primary_source": {
+        "persons": 10,
+        "locations": 6,
+        "factions": 2,
+        "items": 1,
+        "skills": 2,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "段誉木婉清脱离石屋",
+          "order": 31
+        },
+        {
+          "id": "万劫谷地道群人失内力",
+          "order": 32
+        },
+        {
+          "id": "钟灵身世向段家明示",
+          "order": 33
+        },
+        {
+          "id": "慧真慧观报告玄悲遇害",
+          "order": 34
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "title": "剑气碧烟横",
+      "src": "第10回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25352,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 4,
+        "factions": 2,
+        "items": 2,
+        "skills": 12,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "段誉异种内力失调送天龙寺",
+          "order": 35
+        },
+        {
+          "id": "段正明出家群僧习六脉",
+          "order": 36
+        },
+        {
+          "id": "枯荣焚六脉图段誉记剑",
+          "order": 37
+        },
+        {
+          "id": "鸠摩智擒段誉离天龙寺",
+          "order": 38
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "title": "向来痴",
+      "src": "第11回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25678,
+      "indexed_by_primary_source": {
+        "persons": 2,
+        "locations": 6,
+        "factions": 0,
+        "items": 0,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "鸠摩智押段誉抵姑苏",
+          "order": 39
+        },
+        {
+          "id": "阿碧引众人至琴韵小筑",
+          "order": 40
+        },
+        {
+          "id": "朱碧救段誉脱离鸠摩智",
+          "order": 41
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "title": "从此醉",
+      "src": "第12回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 27617,
+      "indexed_by_primary_source": {
+        "persons": 11,
+        "locations": 5,
+        "factions": 0,
+        "items": 1,
+        "skills": 1,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "朱碧携段誉登曼陀山庄",
+          "order": 42
+        },
+        {
+          "id": "王夫人留段誉做花匠",
+          "order": 43
+        },
+        {
+          "id": "段誉初见王语嫣",
+          "order": 44
+        },
+        {
+          "id": "王语嫣离庄寻慕容复",
+          "order": 45
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "title": "水榭听香 指点群豪戏",
+      "src": "第13回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 29138,
+      "indexed_by_primary_source": {
+        "persons": 11,
+        "locations": 7,
+        "factions": 2,
+        "items": 4,
+        "skills": 8,
+        "events": 2
+      },
+      "event_count": 2,
+      "events": [
+        {
+          "id": "听香水榭揭破诸保昆卧底",
+          "order": 46
+        },
+        {
+          "id": "包不同驱散水榭来客",
+          "order": 47
+        }
+      ]
+    },
+    {
+      "chapter": 14,
+      "title": "剧饮千杯男儿事",
+      "src": "第14回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23918,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 2,
+        "factions": 1,
+        "items": 2,
+        "skills": 5,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "松鹤楼相遇结义",
+          "order": 51
+        },
+        {
+          "id": "杏子林初斗慕容家将",
+          "order": 52
+        },
+        {
+          "id": "丐帮传功执法长老获释",
+          "order": 53
+        }
+      ]
+    },
+    {
+      "chapter": 15,
+      "title": "杏子林中 商略平生义",
+      "src": "第15回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 24797,
+      "indexed_by_primary_source": {
+        "persons": 14,
+        "locations": 4,
+        "factions": 0,
+        "items": 1,
+        "skills": 0,
+        "events": 1
+      },
+      "event_count": 1,
+      "events": [
+        {
+          "id": "乔峰以己血赦四长老",
+          "order": 54
+        }
+      ]
+    },
+    {
+      "chapter": 16,
+      "title": "昔时因",
+      "src": "第16回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25574,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 3,
+        "factions": 0,
+        "items": 2,
+        "skills": 2,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "杏子林揭示契丹身世",
+          "order": 56
+        },
+        {
+          "id": "乔峰辞丐帮交还信物",
+          "order": 57
+        },
+        {
+          "id": "西夏以悲酥清风擒丐帮",
+          "order": 58
+        },
+        {
+          "id": "段誉救王语嫣出杏林",
+          "order": 59
+        }
+      ]
+    },
+    {
+      "chapter": 17,
+      "title": "今日意",
+      "src": "第17回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23389,
+      "indexed_by_primary_source": {
+        "persons": 5,
+        "locations": 2,
+        "factions": 6,
+        "items": 2,
+        "skills": 6,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "西夏武士杀碾坊恋人",
+          "order": 60
+        },
+        {
+          "id": "碾坊击退西夏武士",
+          "order": 61
+        },
+        {
+          "id": "李延宗给段誉悲酥解药",
+          "order": 62
+        }
+      ]
+    },
+    {
+      "chapter": 18,
+      "title": "胡汉恩仇 须倾英雄泪",
+      "src": "第18回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 36592,
+      "indexed_by_primary_source": {
+        "persons": 7,
+        "locations": 9,
+        "factions": 0,
+        "items": 2,
+        "skills": 6,
+        "events": 7
+      },
+      "event_count": 7,
+      "events": [
+        {
+          "id": "谭公赠阿朱冰蟾膏",
+          "order": 55
+        },
+        {
+          "id": "阿朱扮乔峰救群丐",
+          "order": 63
+        },
+        {
+          "id": "萧远山杀乔三槐夫妇",
+          "order": 64
+        },
+        {
+          "id": "萧远山重伤玄苦",
+          "order": 65
+        },
+        {
+          "id": "玄苦临终乔峰蒙嫌",
+          "order": 66
+        },
+        {
+          "id": "阿朱盗易筋经受掌伤",
+          "order": 67
+        },
+        {
+          "id": "乔峰救阿朱送客店",
+          "order": 68
+        }
+      ]
+    },
+    {
+      "chapter": 19,
+      "title": "虽万千人吾往矣",
+      "src": "第19回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25537,
+      "indexed_by_primary_source": {
+        "persons": 7,
+        "locations": 3,
+        "factions": 0,
+        "items": 2,
+        "skills": 3,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "乔峰携阿朱赴聚贤庄",
+          "order": 69
+        },
+        {
+          "id": "聚贤庄群雄大战",
+          "order": 70
+        },
+        {
+          "id": "游氏兄弟失盾自尽",
+          "order": 71
+        },
+        {
+          "id": "单伯山单仲山战死",
+          "order": 72
+        }
+      ]
+    },
+    {
+      "chapter": 20,
+      "title": "悄立雁门 绝壁无余字",
+      "src": "第20回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 14435,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 6,
+        "factions": 0,
+        "items": 0,
+        "skills": 2,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "萧远山救乔峰出聚贤庄",
+          "order": 73
+        },
+        {
+          "id": "薛慕华治愈阿朱",
+          "order": 75
+        },
+        {
+          "id": "乔峰赴雁门关与阿朱重逢",
+          "order": 76
+        }
+      ]
+    },
+    {
+      "chapter": 21,
+      "title": "千里茫茫若梦",
+      "src": "第21回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 29428,
+      "indexed_by_primary_source": {
+        "persons": 6,
+        "locations": 8,
+        "factions": 0,
+        "items": 1,
+        "skills": 0,
+        "events": 7
+      },
+      "event_count": 7,
+      "events": [
+        {
+          "id": "萧远山杀徐冲霄",
+          "order": 77
+        },
+        {
+          "id": "萧远山杀谭公等沉船",
+          "order": 78
+        },
+        {
+          "id": "泰山单家遭纵火灭门",
+          "order": 79
+        },
+        {
+          "id": "智光交契丹崖文说生父名",
+          "order": 80
+        },
+        {
+          "id": "智光服毒自尽",
+          "order": 81
+        },
+        {
+          "id": "乔峰阿朱相恋约塞外",
+          "order": 82
+        },
+        {
+          "id": "阿朱扮白世镜被康敏误导",
+          "order": 83
+        }
+      ]
+    },
+    {
+      "chapter": 22,
+      "title": "双眸粲粲如星",
+      "src": "第22回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 32162,
+      "indexed_by_primary_source": {
+        "persons": 3,
+        "locations": 4,
+        "factions": 0,
+        "items": 3,
+        "skills": 2,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "阿朱将梵文经交乔峰保管",
+          "order": 84
+        },
+        {
+          "id": "段正淳救阿紫认旧物",
+          "order": 86
+        },
+        {
+          "id": "褚万里战段延庆身亡",
+          "order": 87
+        },
+        {
+          "id": "乔峰解段正淳之围",
+          "order": 88
+        }
+      ]
+    },
+    {
+      "chapter": 23,
+      "title": "塞上牛羊空许约",
+      "src": "第23回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22572,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 1,
+        "factions": 0,
+        "items": 2,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "阿朱偷听自认身世",
+          "order": 89
+        },
+        {
+          "id": "阿朱代父赴青石桥",
+          "order": 90
+        },
+        {
+          "id": "乔峰误杀阿朱",
+          "order": 91
+        }
+      ]
+    },
+    {
+      "chapter": 24,
+      "title": "烛畔鬓云有旧盟",
+      "src": "第24回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 29326,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 1,
+        "factions": 0,
+        "items": 1,
+        "skills": 0,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "康敏迷倒咬伤段正淳",
+          "order": 92
+        },
+        {
+          "id": "萧远山杀白世镜",
+          "order": 93
+        },
+        {
+          "id": "康敏杀夫阴谋败露",
+          "order": 94
+        },
+        {
+          "id": "阿紫折磨康敏致死",
+          "order": 95
+        }
+      ]
+    },
+    {
+      "chapter": 25,
+      "title": "莽苍踏雪行",
+      "src": "第25回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 31604,
+      "indexed_by_primary_source": {
+        "persons": 3,
+        "locations": 2,
+        "factions": 1,
+        "items": 1,
+        "skills": 2,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "阿紫盗神木鼎逃离星宿",
+          "order": 85
+        },
+        {
+          "id": "阿紫设计摘星子受伤",
+          "order": 96
+        },
+        {
+          "id": "阿紫暗算乔峰反受重伤",
+          "order": 97
+        },
+        {
+          "id": "乔峰抱阿紫北行求参",
+          "order": 98
+        }
+      ]
+    },
+    {
+      "chapter": 26,
+      "title": "赤手屠熊搏虎",
+      "src": "第26回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 12868,
+      "indexed_by_primary_source": {
+        "persons": 2,
+        "locations": 1,
+        "factions": 1,
+        "items": 0,
+        "skills": 0,
+        "events": 2
+      },
+      "event_count": 2,
+      "events": [
+        {
+          "id": "乔峰遇阿骨打居女真部落",
+          "order": 99
+        },
+        {
+          "id": "乔峰结识围猎中的辽帝",
+          "order": 100
+        }
+      ]
+    },
+    {
+      "chapter": 27,
+      "title": "金戈荡寇鏖兵",
+      "src": "第27回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 24682,
+      "indexed_by_primary_source": {
+        "persons": 5,
+        "locations": 3,
+        "factions": 1,
+        "items": 2,
+        "skills": 0,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "乔峰参加辽帝围猎",
+          "order": 101
+        },
+        {
+          "id": "耶律重元父子举兵",
+          "order": 102
+        },
+        {
+          "id": "乔峰平辽乱擒杀叛党",
+          "order": 103
+        },
+        {
+          "id": "乔峰受封南院大王",
+          "order": 104
+        },
+        {
+          "id": "游坦之以石灰袭乔峰失败",
+          "order": 105
+        }
+      ]
+    },
+    {
+      "chapter": 28,
+      "title": "草木残生颅铸铁",
+      "src": "第28回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22762,
+      "indexed_by_primary_source": {
+        "persons": 2,
+        "locations": 1,
+        "factions": 0,
+        "items": 2,
+        "skills": 1,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "游坦之母殉夫",
+          "order": 74
+        },
+        {
+          "id": "阿紫拘游坦之戴铁罩",
+          "order": 106
+        },
+        {
+          "id": "游坦之拾易筋经油包",
+          "order": 107
+        },
+        {
+          "id": "游坦之显图习神足经",
+          "order": 108
+        },
+        {
+          "id": "游坦之夺慧净冰蚕",
+          "order": 109
+        }
+      ]
+    },
+    {
+      "chapter": 29,
+      "title": "虫豸凝寒掌作冰",
+      "src": "第29回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 28011,
+      "indexed_by_primary_source": {
+        "persons": 4,
+        "locations": 4,
+        "factions": 0,
+        "items": 2,
+        "skills": 0,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "游坦之吸冰蚕成寒毒内力",
+          "order": 110
+        },
+        {
+          "id": "阿紫离南京返中原",
+          "order": 111
+        },
+        {
+          "id": "丁春秋收游坦之抓慧净",
+          "order": 112
+        },
+        {
+          "id": "游坦之伤慕容家将与玄痛",
+          "order": 113
+        }
+      ]
+    },
+    {
+      "chapter": 30,
+      "title": "挥洒缚豪英",
+      "src": "第30回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23863,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 2,
+        "factions": 1,
+        "items": 4,
+        "skills": 2,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "函谷八友误斗后合议",
+          "order": 114
+        },
+        {
+          "id": "玄痛寒毒不治",
+          "order": 115
+        },
+        {
+          "id": "丁春秋逼八友与诸客入车",
+          "order": 116
+        }
+      ]
+    },
+    {
+      "chapter": 31,
+      "title": "输赢成败 又争由人算",
+      "src": "第31回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22792,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 2,
+        "factions": 0,
+        "items": 3,
+        "skills": 2,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "诸客抵擂鼓山会棋",
+          "order": 117
+        },
+        {
+          "id": "虚竹救段延庆误投死棋",
+          "order": 118
+        },
+        {
+          "id": "段延庆传音助破珍珑",
+          "order": 119
+        },
+        {
+          "id": "无崖子传功授掌门信物",
+          "order": 120
+        },
+        {
+          "id": "无崖子传功后去世",
+          "order": 121
+        }
+      ]
+    },
+    {
+      "chapter": 32,
+      "title": "且自逍遥没谁管",
+      "src": "第32回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23675,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 0,
+        "factions": 0,
+        "items": 1,
+        "skills": 4,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "虚竹助苏星河反卷火柱",
+          "order": 122
+        },
+        {
+          "id": "苏星河传虚竹疗伤法",
+          "order": 123
+        },
+        {
+          "id": "三笑毒杀苏星河玄难",
+          "order": 124
+        },
+        {
+          "id": "虚竹治伤并下山寻同门",
+          "order": 125
+        }
+      ]
+    },
+    {
+      "chapter": 33,
+      "title": "奈天昏地暗 斗转星移",
+      "src": "第33回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 19253,
+      "indexed_by_primary_source": {
+        "persons": 5,
+        "locations": 6,
+        "factions": 3,
+        "items": 1,
+        "skills": 3,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "慕容复反弹三笑毒粉",
+          "order": 126
+        },
+        {
+          "id": "丁春秋毒筷伤阿紫双目",
+          "order": 127
+        },
+        {
+          "id": "游坦之自称庄聚贤",
+          "order": 128
+        },
+        {
+          "id": "全冠清结交游坦之",
+          "order": 129
+        },
+        {
+          "id": "慕容一行闯万仙大会",
+          "order": 130
+        }
+      ]
+    },
+    {
+      "chapter": 34,
+      "title": "风骤紧 缥缈峰头云乱",
+      "src": "第34回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22237,
+      "indexed_by_primary_source": {
+        "persons": 6,
+        "locations": 0,
+        "factions": 1,
+        "items": 0,
+        "skills": 2,
+        "events": 2
+      },
+      "event_count": 2,
+      "events": [
+        {
+          "id": "段誉救王语嫣出围",
+          "order": 131
+        },
+        {
+          "id": "洞岛首领结盟反灵鹫",
+          "order": 132
+        }
+      ]
+    },
+    {
+      "chapter": 35,
+      "title": "红颜弹指老 刹那芳华",
+      "src": "第35回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 26961,
+      "indexed_by_primary_source": {
+        "persons": 2,
+        "locations": 0,
+        "factions": 0,
+        "items": 4,
+        "skills": 0,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "卓不凡杀逃会区岛主",
+          "order": 135
+        },
+        {
+          "id": "虚竹救布袋女童",
+          "order": 137
+        },
+        {
+          "id": "女童身份向虚竹揭开",
+          "order": 138
+        },
+        {
+          "id": "虚竹将掌门指环交童姥",
+          "order": 139
+        }
+      ]
+    },
+    {
+      "chapter": 36,
+      "title": "梦里真真语真幻",
+      "src": "第36回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 23209,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 3,
+        "factions": 0,
+        "items": 0,
+        "skills": 1,
+        "events": 6
+      },
+      "event_count": 6,
+      "events": [
+        {
+          "id": "李秋水夺指环断童姥腿",
+          "order": 140
+        },
+        {
+          "id": "童姥传虚竹天山折梅手",
+          "order": 141
+        },
+        {
+          "id": "虚竹童姥藏身西夏冰库",
+          "order": 142
+        },
+        {
+          "id": "童姥掳梦姑与虚竹幽会",
+          "order": 143
+        },
+        {
+          "id": "童姥给虚竹种生死符",
+          "order": 144
+        },
+        {
+          "id": "虚竹学六阳掌解生死符",
+          "order": 145
+        }
+      ]
+    },
+    {
+      "chapter": 37,
+      "title": "同一笑 到头万事俱空",
+      "src": "第37回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 21775,
+      "indexed_by_primary_source": {
+        "persons": 5,
+        "locations": 1,
+        "factions": 9,
+        "items": 0,
+        "skills": 2,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "李秋水寻至冰库血战",
+          "order": 146
+        },
+        {
+          "id": "童姥指定虚竹继灵鹫宫",
+          "order": 147
+        },
+        {
+          "id": "画像所绘之人揭开",
+          "order": 148
+        },
+        {
+          "id": "童姥李秋水相继去世",
+          "order": 149
+        }
+      ]
+    },
+    {
+      "chapter": 38,
+      "title": "糊涂醉 情长计短",
+      "src": "第38回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22854,
+      "indexed_by_primary_source": {
+        "persons": 8,
+        "locations": 0,
+        "factions": 1,
+        "items": 0,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "洞岛叛众攻入灵鹫宫",
+          "order": 150
+        },
+        {
+          "id": "虚竹制卓不凡救宫人",
+          "order": 151
+        },
+        {
+          "id": "虚竹为洞岛众解生死符",
+          "order": 152
+        }
+      ]
+    },
+    {
+      "chapter": 39,
+      "title": "解不了 名缰系嗔贪",
+      "src": "第39回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 22445,
+      "indexed_by_primary_source": {
+        "persons": 15,
+        "locations": 9,
+        "factions": 5,
+        "items": 1,
+        "skills": 3,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "虚竹参悟灵鹫石壁武学",
+          "order": 153
+        },
+        {
+          "id": "虚竹段誉结义赴少林",
+          "order": 154
+        },
+        {
+          "id": "神山率诸僧赴少林责问",
+          "order": 155
+        }
+      ]
+    },
+    {
+      "chapter": 40,
+      "title": "却试问 几时把痴心断",
+      "src": "第40回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 28211,
+      "indexed_by_primary_source": {
+        "persons": 5,
+        "locations": 1,
+        "factions": 0,
+        "items": 10,
+        "skills": 20,
+        "events": 7
+      },
+      "event_count": 7,
+      "events": [
+        {
+          "id": "丁春秋取走小无相庚册",
+          "order": 48
+        },
+        {
+          "id": "鸠摩智盗七册小无相秘籍",
+          "order": 49
+        },
+        {
+          "id": "鸠摩智练七册小无相功",
+          "order": 50
+        },
+        {
+          "id": "虚竹与鸠摩智比武",
+          "order": 156
+        },
+        {
+          "id": "虚竹坦承破戒少林议处",
+          "order": 157
+        },
+        {
+          "id": "易大彪遇害托招亲榜",
+          "order": 158
+        },
+        {
+          "id": "丁春秋慕容复争斗至寺前",
+          "order": 159
+        }
+      ]
+    },
+    {
+      "chapter": 41,
+      "title": "燕云十八飞骑 奔腾如虎风烟举",
+      "src": "第41回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 27377,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 2,
+        "factions": 0,
+        "items": 2,
+        "skills": 5,
+        "events": 8
+      },
+      "event_count": 8,
+      "events": [
+        {
+          "id": "全冠清除铁罩换人皮面具",
+          "order": 133
+        },
+        {
+          "id": "游坦之夺丐帮帮主",
+          "order": 134
+        },
+        {
+          "id": "游坦之向阿紫学习腐尸毒",
+          "order": 136
+        },
+        {
+          "id": "游坦之挟丐帮赴少林",
+          "order": 160
+        },
+        {
+          "id": "丁春秋夺阿紫迫庄聚贤拜师",
+          "order": 161
+        },
+        {
+          "id": "乔峰燕云十八骑到少林",
+          "order": 162
+        },
+        {
+          "id": "乔峰虚竹段誉会合结义",
+          "order": 163
+        },
+        {
+          "id": "慕容复伤段誉与段正淳",
+          "order": 164
+        }
+      ]
+    },
+    {
+      "chapter": 42,
+      "title": "老魔小丑 岂堪一击 胜之不武",
+      "src": "第42回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 30108,
+      "indexed_by_primary_source": {
+        "persons": 4,
+        "locations": 1,
+        "factions": 0,
+        "items": 0,
+        "skills": 7,
+        "events": 11
+      },
+      "event_count": 11,
+      "events": [
+        {
+          "id": "三兄弟分战三强",
+          "order": 165
+        },
+        {
+          "id": "虚竹生死符制伏丁春秋",
+          "order": 166
+        },
+        {
+          "id": "慕容博阻慕容复自尽",
+          "order": 167
+        },
+        {
+          "id": "萧远山现身承认多案",
+          "order": 168
+        },
+        {
+          "id": "虚竹父母身份揭开",
+          "order": 169
+        },
+        {
+          "id": "虚竹受刑被逐少林",
+          "order": 170
+        },
+        {
+          "id": "慕容博现身",
+          "order": 171
+        },
+        {
+          "id": "雁门关幕后主使揭开",
+          "order": 172
+        },
+        {
+          "id": "慕容博袖中指伤崔过",
+          "order": 173
+        },
+        {
+          "id": "玄慈受杖传位玄寂",
+          "order": 174
+        },
+        {
+          "id": "玄慈自绝叶二娘殉情",
+          "order": 175
+        }
+      ]
+    },
+    {
+      "chapter": 43,
+      "title": "王霸雄图 血海深恨 尽归尘土",
+      "src": "第43回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 24006,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 1,
+        "factions": 0,
+        "items": 0,
+        "skills": 1,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "萧慕两家逐入藏经阁",
+          "order": 176
+        },
+        {
+          "id": "扫地僧揭武学伤患",
+          "order": 177
+        },
+        {
+          "id": "扫地僧闭息两老承乔峰掌",
+          "order": 178
+        },
+        {
+          "id": "二老疗伤皈依扫地僧",
+          "order": 179
+        }
+      ]
+    },
+    {
+      "chapter": 44,
+      "title": "念枉求美眷 良缘安在",
+      "src": "第44回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 25506,
+      "indexed_by_primary_source": {
+        "persons": 2,
+        "locations": 1,
+        "factions": 1,
+        "items": 2,
+        "skills": 0,
+        "events": 6
+      },
+      "event_count": 6,
+      "events": [
+        {
+          "id": "宋吴长老擒下全冠清",
+          "order": 180
+        },
+        {
+          "id": "游坦之杀宋长老与随从",
+          "order": 181
+        },
+        {
+          "id": "乔峰虚竹救段誉钟灵",
+          "order": 182
+        },
+        {
+          "id": "丁春秋留少林受看管",
+          "order": 183
+        },
+        {
+          "id": "段誉一行赴西夏招亲",
+          "order": 184
+        },
+        {
+          "id": "吐蕃勇士拦路内力被吸",
+          "order": 185
+        }
+      ]
+    },
+    {
+      "chapter": 45,
+      "title": "枯井底 污泥处",
+      "src": "第45回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 27790,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 2,
+        "factions": 0,
+        "items": 0,
+        "skills": 0,
+        "events": 3
+      },
+      "event_count": 3,
+      "events": [
+        {
+          "id": "慕容复推段誉入枯井",
+          "order": 186
+        },
+        {
+          "id": "王语嫣投井与段誉相许",
+          "order": 187
+        },
+        {
+          "id": "鸠摩智失控坠井",
+          "order": 188
+        }
+      ]
+    },
+    {
+      "chapter": 46,
+      "title": "酒罢问君三语",
+      "src": "第46回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 27133,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 4,
+        "factions": 0,
+        "items": 0,
+        "skills": 0,
+        "events": 5
+      },
+      "event_count": 5,
+      "events": [
+        {
+          "id": "段誉吸鸠摩智功力救其命",
+          "order": 189
+        },
+        {
+          "id": "鸠摩智悔悟归吐蕃",
+          "order": 190
+        },
+        {
+          "id": "西夏公主三问择婿",
+          "order": 191
+        },
+        {
+          "id": "梦姑梦郎相认成婚",
+          "order": 192
+        },
+        {
+          "id": "段誉闻父难离西夏",
+          "order": 193
+        }
+      ]
+    },
+    {
+      "chapter": 47,
+      "title": "为谁开 茶花满路",
+      "src": "第47回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 19959,
+      "indexed_by_primary_source": {
+        "persons": 0,
+        "locations": 10,
+        "factions": 0,
+        "items": 2,
+        "skills": 0,
+        "events": 4
+      },
+      "event_count": 4,
+      "events": [
+        {
+          "id": "王夫人布置路上陷阱",
+          "order": 194
+        },
+        {
+          "id": "王夫人陷阱误捕段誉",
+          "order": 195
+        },
+        {
+          "id": "醉人蜂制住段誉随行者",
+          "order": 196
+        },
+        {
+          "id": "王夫人旧情当面显露",
+          "order": 198
+        }
+      ]
+    },
+    {
+      "chapter": 48,
+      "title": "王孙落魄 怎生消得 杨枝玉露",
+      "src": "第48回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 31353,
+      "indexed_by_primary_source": {
+        "persons": 1,
+        "locations": 2,
+        "factions": 3,
+        "items": 1,
+        "skills": 2,
+        "events": 14
+      },
+      "event_count": 14,
+      "events": [
+        {
+          "id": "红沙滩段家被擒古笃诚死",
+          "order": 197
+        },
+        {
+          "id": "段延庆押段家入王夫人山庄",
+          "order": 199
+        },
+        {
+          "id": "慕容复拜段延庆为义父",
+          "order": 200
+        },
+        {
+          "id": "慕容复杀包不同失家臣",
+          "order": 201
+        },
+        {
+          "id": "南海鳄神救段誉被杀",
+          "order": 202
+        },
+        {
+          "id": "慕容复杀段正淳四情人",
+          "order": 203
+        },
+        {
+          "id": "刀白凤自认观音身份",
+          "order": 204
+        },
+        {
+          "id": "段正淳刀白凤相继自尽",
+          "order": 205
+        },
+        {
+          "id": "刀白凤揭示段誉生父",
+          "order": 206
+        },
+        {
+          "id": "段誉退慕容复解众人毒",
+          "order": 207
+        },
+        {
+          "id": "华赫艮杀云中鹤",
+          "order": 208
+        },
+        {
+          "id": "王语嫣父系向段誉说明",
+          "order": 209
+        },
+        {
+          "id": "高昇泰逝世消息确认",
+          "order": 210
+        },
+        {
+          "id": "段正明禅位段誉登基",
+          "order": 211
+        }
+      ]
+    },
+    {
+      "chapter": 49,
+      "title": "敝屣荣华 浮云生死 此身何惧",
+      "src": "第49回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 24001,
+      "indexed_by_primary_source": {
+        "persons": 10,
+        "locations": 5,
+        "factions": 1,
+        "items": 0,
+        "skills": 0,
+        "events": 7
+      },
+      "event_count": 7,
+      "events": [
+        {
+          "id": "高太皇太后去世赵煦亲政",
+          "order": 212
+        },
+        {
+          "id": "虚竹用游坦之眼治阿紫",
+          "order": 213
+        },
+        {
+          "id": "赵煦贬苏轼奖内侍",
+          "order": 214
+        },
+        {
+          "id": "阿紫复明回南京求乔峰",
+          "order": 215
+        },
+        {
+          "id": "辽帝命乔峰率军侵宋",
+          "order": 216
+        },
+        {
+          "id": "乔峰毒发北门被捕",
+          "order": 217
+        },
+        {
+          "id": "阿紫潜水脱身传警",
+          "order": 218
+        }
+      ]
+    },
+    {
+      "chapter": 50,
+      "title": "教单于折箭 六军辟易 奋英雄怒",
+      "src": "第50回",
+      "review_status": "首轮候选；未宣称逐段穷尽",
+      "source_characters": 34866,
+      "indexed_by_primary_source": {
+        "persons": 6,
+        "locations": 8,
+        "factions": 0,
+        "items": 6,
+        "skills": 1,
+        "events": 17
+      },
+      "event_count": 17,
+      "events": [
+        {
+          "id": "乔峰被重镣锁入王府铁笼",
+          "order": 219
+        },
+        {
+          "id": "全冠清被丐帮处死",
+          "order": 220
+        },
+        {
+          "id": "群雄合力劫牢救乔峰",
+          "order": 221
+        },
+        {
+          "id": "乔峰辞丐帮主拒打狗棒",
+          "order": 222
+        },
+        {
+          "id": "乔峰传虚竹丐帮两绝技",
+          "order": 223
+        },
+        {
+          "id": "乔峰虚竹精简降龙十八掌",
+          "order": 224
+        },
+        {
+          "id": "宋守关将拒群雄入雁门",
+          "order": 225
+        },
+        {
+          "id": "段誉虚竹擒辽帝迫停战",
+          "order": 226
+        },
+        {
+          "id": "乔峰折箭自尽",
+          "order": 227
+        },
+        {
+          "id": "阿紫还眼抱乔峰坠谷",
+          "order": 228
+        },
+        {
+          "id": "雁门守将开关群雄分别",
+          "order": 229
+        },
+        {
+          "id": "王语嫣等探不老长春谷",
+          "order": 230
+        },
+        {
+          "id": "王语嫣推倒神仙玉像",
+          "order": 231
+        },
+        {
+          "id": "王语嫣回到慕容复身边",
+          "order": 232
+        },
+        {
+          "id": "段誉免盐税拓盐路",
+          "order": 233
+        },
+        {
+          "id": "段誉封三妃并遣返四剑",
+          "order": 234
+        },
+        {
+          "id": "少年帮主赴灵鹫获两绝技",
+          "order": 235
+        }
+      ]
+    }
+  ]
+}

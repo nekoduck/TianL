@@ -1,0 +1,360 @@
+{
+  "edition": "世纪新修版（三版）；依据用户附件正文及二〇〇二年十一月后记",
+  "delivery_status": "全50回首轮候选数据；结构通过，文学事实与穷尽性未全部核准",
+  "production_ready": false,
+  "validation_file": "12_validation.json",
+  "counts": {
+    "persons": 242,
+    "locations": 183,
+    "factions": 55,
+    "items": 98,
+    "skills": 119,
+    "events": 235,
+    "roads": 191,
+    "relations": 191
+  },
+  "self_checks": [
+    {
+      "criterion": "所有运行时引用ID在索引中",
+      "status": "机器检查通过",
+      "detail": "核心表、事件指令和隐情引用已作类型检查；补录及删除日志保留旧称以供审计。"
+    },
+    {
+      "criterion": "道路连通及每个子区域连接parent",
+      "status": "机器检查通过",
+      "detail": "191条无向边，1个连通分量；宏观地区与据地连接仍为游戏估计。"
+    },
+    {
+      "criterion": "初始状态未混入后续变化",
+      "status": "已核正主线，尚待逐字段复核",
+      "detail": "已分离六脉、北冥、神足、降龙十八掌、后挖地道及后设机关；不能据此证明所有时点均已核准。"
+    },
+    {
+      "criterion": "secret关系对应reveal或未揭说明",
+      "status": "结构检查通过，未揭说明需文学复核",
+      "detail": {
+        "secret_count": 37,
+        "without_reveal_count": 7
+      }
+    },
+    {
+      "criterion": "power符合用户锚点",
+      "status": "机器检查通过",
+      "detail": "18个锚点完全匹配，所有数值范围0至100；其余人物及增益是游戏估计。"
+    },
+    {
+      "criterion": "按order执行时requires成立",
+      "status": "候选模型回放通过",
+      "detail": {
+        "events_replayed": 235,
+        "requires_failures": 0,
+        "caution": "只证明所写前提在本模型成立，不证明前提齐全或每个文学情节都已抽取。"
+      }
+    }
+  ],
+  "issues": [
+    {
+      "id": "coverage_not_certified",
+      "severity": "high",
+      "src": "第1回",
+      "description": "未完成逐段、逐字段穷尽审计，不能声称已抽到全部有行动的无名人物、临时器物、招式、迁移和支线变化。",
+      "affected_files": [
+        "00_index.json",
+        "01_locations.json",
+        "03_factions.json",
+        "04_persons.json",
+        "05_items.json",
+        "06_skills.json",
+        "07_relations.json",
+        "08_canon.json"
+      ],
+      "handling": "保留候选标记；13_chapter_coverage.json仅记录50回都有条目，不能视为穷尽证书。"
+    },
+    {
+      "id": "unknown_initial_persons",
+      "severity": "high",
+      "src": "第13回",
+      "description": "以下六人初始生死或去处无充分依据。枚举占位并非确认存活，尤其多年后少年帮主可能尚未出生。",
+      "entries": [
+        {
+          "id": "李秋水之妹",
+          "fields": [
+            "status",
+            "location",
+            "age"
+          ],
+          "src": "第37回",
+          "reason": "原著只叙早年容貌；开端生死未明，alive仅供占位，勿生成当前活动。"
+        },
+        {
+          "id": "丐帮少年帮主",
+          "fields": [
+            "age",
+            "location",
+            "status"
+          ],
+          "src": "第50回",
+          "reason": "后叙多年后人物；开端是否已经出生不明，禁止自动生成开端活动。"
+        },
+        {
+          "id": "秦姓寨主",
+          "fields": [
+            "status",
+            "location"
+          ],
+          "src": "第13回",
+          "reason": "正文说明他传位，未说明开端时生死及去处。"
+        },
+        {
+          "id": "黎老汉",
+          "fields": [
+            "status",
+            "location",
+            "age"
+          ],
+          "src": "第17回",
+          "reason": "本回只说明武学源流，未交代开端生死、年龄和现居；禁止用枚举占位生成活动。"
+        },
+        {
+          "id": "心观",
+          "fields": [
+            "status",
+            "location",
+            "age"
+          ],
+          "src": "第17回",
+          "reason": "本回只说明武学源流，未交代开端生死、年龄和现居；禁止用枚举占位生成活动。"
+        },
+        {
+          "id": "金刀杨老令公",
+          "fields": [
+            "status",
+            "location",
+            "age"
+          ],
+          "src": "第17回",
+          "reason": "本回只说明武学源流，未交代开端生死、年龄和现居；禁止用枚举占位生成活动。"
+        }
+      ],
+      "handling": "initial_state_confirmed=false；在补足依据前禁用其开端活动，不能无条件导入成活跃NPC。"
+    },
+    {
+      "id": "opening_relative_dates",
+      "severity": "medium",
+      "src": "第1回",
+      "description": "开端元祐六年二月由年龄和生年线索推估；全书精确月份、跨年及多年后元符二年均未由原著直接给定。",
+      "handling": "when均标推断；order优先表示本抽取的相对先后，不能用估计月份反向制造原著事实。"
+    },
+    {
+      "id": "early_death_and_injury_cutoff",
+      "severity": "medium",
+      "src": "第6回",
+      "persons": [
+        "玄悲",
+        "容子矩",
+        "马大元",
+        "秦伯起"
+      ],
+      "description": "初始死伤依据后文回叙向开端回推；具体日数与开端先后仍有不确定性。容子矩发现尸身前的毒伤阶段亦属推断。",
+      "handling": "保留推断属性；开端既死人物不再通过08重复杀死。"
+    },
+    {
+      "id": "initial_item_ownership",
+      "severity": "medium",
+      "src": "第16回",
+      "items": [
+        "乔峰折扇",
+        "汪剑通信",
+        "冰蚕",
+        "石杵",
+        "逍遥子神书"
+      ],
+      "description": "折扇偷取、汪信取得、慧净捕蚕与开端的先后未明；石杵初始归处不明；神书仅有传说，不能当作已确认可拾取物。",
+      "handling": "initial_state_basis或unknown_fields保留限制；有未知现存性者不得按普通掉落物生成。"
+    },
+    {
+      "id": "azi_theft_cutoff",
+      "severity": "medium",
+      "src": "第22回",
+      "persons": [
+        "阿紫"
+      ],
+      "items": [
+        "神木王鼎"
+      ],
+      "events": [
+        "阿紫盗神木鼎逃离星宿"
+      ],
+      "description": "只能确认阿紫第22回登场前已盗鼎出走，未确认发生在第一回之前还是之后；本包暂列登场前事件。",
+      "handling": "若另有明确开端前证据，应移入初始holder/location并删去重复事件。"
+    },
+    {
+      "id": "secrets_without_action",
+      "severity": "medium",
+      "src": "第32回",
+      "description": "以下隐情当前未安排reveal，说明为未定位到对应动作；这不证明原著绝无揭露，也不授权把旁白真相公开给所有NPC。",
+      "entries": [
+        {
+          "src": "康敏",
+          "dst": "全冠清",
+          "rel": "私情",
+          "secret": true,
+          "src_ref": "第16回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "无崖子",
+          "dst": "王夫人",
+          "rel": "生父",
+          "secret": true,
+          "src_ref": "第40回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "李秋水",
+          "dst": "王夫人",
+          "rel": "生母",
+          "secret": true,
+          "src_ref": "第40回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "李秋水",
+          "dst": "丁春秋",
+          "rel": "私情",
+          "secret": true,
+          "src_ref": "第32回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "李秋水",
+          "dst": "丁春秋",
+          "rel": "秘密传功",
+          "secret": true,
+          "src_ref": "第32回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "无崖子",
+          "dst": "李秋水",
+          "rel": "夫妻旧情",
+          "secret": true,
+          "src_ref": "第40回",
+          "revealed_by": null,
+          "unrevealed_reason": "附件叙述或少数知情者知道，未见对应公开揭露动作。"
+        },
+        {
+          "src": "慕容夫人",
+          "dst": "慕容博",
+          "rel": "知诈死",
+          "secret": true,
+          "src_ref": "第42回",
+          "revealed_by": null,
+          "unrevealed_reason": "母亲早年筹办假丧，原著未描写她公开揭开此事。"
+        }
+      ],
+      "handling": "复核有关回目中的知情者及动作；原著不公开的保留secret。"
+    },
+    {
+      "id": "inferred_power_and_learning",
+      "severity": "medium",
+      "src": "第40回",
+      "description": "非锚点power、tier、秘籍增益以及将后来展示的武学回推为开端已会，属于游戏估计或时间推断。",
+      "handling": "不得把power当作客观排名；关键已知后学功法已有push事件，其余skills仍需逐人复核。"
+    },
+    {
+      "id": "road_scale_and_permissions",
+      "severity": "medium",
+      "src": "第8回",
+      "locations": [
+        "万劫谷·地道",
+        "王夫人山庄·木柱陷阱"
+      ],
+      "description": "道路是通达候选，粗地区parent连接可能影响最短路估算；静态连通不表示所有入口在开端可用。",
+      "handling": "先判断地点exists/accessible、机关和控制权；重新校准长期旅行时再用最短路日数。"
+    },
+    {
+      "id": "reported_long_life_lore",
+      "severity": "medium",
+      "src": "第50回",
+      "locations": [
+        "不老长春谷",
+        "长春谷外山岭"
+      ],
+      "items": [
+        "长春泉",
+        "逍遥子神书"
+      ],
+      "description": "众人停在谷外听采燕客叙说，不等于入谷验明泉水药效或找到了神书。",
+      "handling": "保留reported/verified=false及未知归属，不能生成被原著验证的长生奖励。"
+    },
+    {
+      "id": "fall_and_recovery_inferences",
+      "severity": "medium",
+      "src": "第50回",
+      "persons": [
+        "阿紫",
+        "游坦之",
+        "段誉"
+      ],
+      "description": "阿紫、游坦之坠谷死亡是强推断而无验尸；段誉碾坊箭伤数月后痊愈时点亦未明确描写。",
+      "handling": "相关effects已标推断，不应在事实界面称为原著明确死亡或精确伤愈日。"
+    },
+    {
+      "id": "field_level_evidence",
+      "severity": "high",
+      "src": "第1回",
+      "description": "11_evidence.json证明名称或场景可在给定回目和偏移定位；它不能逐字段证明年龄、口吻、功力、时间和整条事件。",
+      "handling": "基于同一附件复核每个重要字段；电子附件中的讹字及OCR变体不能未经核实另生人物。"
+    },
+    {
+      "id": "schema_extensions_and_external_import",
+      "severity": "medium",
+      "src": "第1回",
+      "description": "用户实际导入器未提供。events索引、faction.state.leader、grants_extra、物品与地点state以及限定知情者元数据超出示例中展示的字段。",
+      "handling": "按meta.schema_extensions适配；set state替换整个对象，后续更新需保留仍有效字段。若导入器忽略初始确认标记或可用性标记，须先适配再导入。"
+    }
+  ],
+  "corrected_examples": [
+    {
+      "src": "第12回",
+      "detail": "六阳融雪功为段誉编造的掩饰名，保留为带说明的北冥别名。"
+    },
+    {
+      "src": "第16回",
+      "detail": "四象六合刀为王语嫣故意误称，独立六合刀依据第42回。"
+    },
+    {
+      "src": "第24回",
+      "detail": "锁腰擒拿手为双关，未当作可练武学。"
+    },
+    {
+      "src": "第13回",
+      "detail": "姚伯当及王字四刀属秦家寨，未归蓬莱派。"
+    },
+    {
+      "src": "第23回",
+      "detail": "阿朱自己偷听认出身世，未写成段正淳当场认阿朱。"
+    },
+    {
+      "src": "第39回",
+      "detail": "来访僧籍贯按附件；灵鹫石壁参悟回目由38核至39。"
+    },
+    {
+      "src": "第50回",
+      "detail": "乔峰被囚处核为南院王府厅中铁笼，分离第49回北门毒发被捕。"
+    }
+  ],
+  "next_review_priority": [
+    "先解决或隔离六个未知初始人物",
+    "逐人和逐物核对开端切片",
+    "逐章确认未收录的状态变化",
+    "逐条核对隐情知情者及事件作用",
+    "接入用户实际导入校验器"
+  ]
+}
