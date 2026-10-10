@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
-[OUTPUT]: 对外提供 main()（终端交互循环；--web 时改为启动 Web 服务，续读 --load 存档或上次的自动存档）
+[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，world/blackboard 的 ORIGINS，narrative/llm 的 from_env，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
+[OUTPUT]: 对外提供 main()（终端交互循环：选名号与出身、开卷、自由输入；--web 时改为启动 Web 服务，续读 --load 存档或上次的自动存档；--trace 记录大模型调用）
 [POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -13,6 +13,7 @@ from pathlib import Path
 
 from .engine import Game
 from .narrative.llm import from_env
+from .world.blackboard import ORIGINS
 from .world.world import World
 
 QUICKSAVE = Path("saves/quick.json")
@@ -65,6 +66,14 @@ def _command(game: Game, line: str) -> Game | None:
     return game
 
 
+def _choose_origin() -> str:
+    keys = list(ORIGINS)
+    for i, k in enumerate(keys, 1):
+        print(f"  [{i}] {k}：{ORIGINS[k]['origin']}——所求：{ORIGINS[k]['goal']}")
+    pick = input("  出身（回车默认 1）：").strip()
+    return keys[int(pick) - 1] if pick.isdigit() and 1 <= int(pick) <= len(keys) else keys[0]
+
+
 def _serve_web(args, llm):
     """Web 模式：续读 --load 指定的存档，否则续读上次的自动存档；之后每回合自动存档。"""
     from .server import AUTOSAVE, make_server
@@ -93,6 +102,8 @@ def main(argv=None):
     ap.add_argument("--offline", action="store_true", help="不调用大模型，全部走确定性兜底")
     ap.add_argument("--load", type=Path, help="读取存档")
     ap.add_argument("--name", help="主角名号")
+    ap.add_argument("--origin", choices=list(ORIGINS), help="主角出身（不给则在终端选择）")
+    ap.add_argument("--trace", type=Path, help="把每次大模型调用记成 JSONL，供提示词迭代")
     ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败、剧情后果未成立等诊断日志")
     ap.add_argument("--web", action="store_true", help="以 Web 界面开卷（浏览器访问），而非终端")
     ap.add_argument("--host", default="127.0.0.1", help="Web 服务监听地址")
@@ -101,7 +112,7 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR, format="  [%(levelname)s] %(message)s")
     _load_dotenv()
 
-    llm = None if args.offline else from_env()
+    llm = None if args.offline else from_env(trace=args.trace)
     if llm is None and not args.offline:
         print(_c("  未检测到 GEMINI_API_KEY，以离线模式运行。", "33"))
     if args.web:
@@ -110,7 +121,7 @@ def main(argv=None):
         world = World.load(args.load)
     else:
         name = args.name or input("  侠客名号（回车默认「无名」）：").strip()
-        world = World.create(name or None)
+        world = World.create(name or None, origin=args.origin or _choose_origin())
 
     game = Game(world, llm)
     show(game.open())

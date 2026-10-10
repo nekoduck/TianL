@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 tianlong.world 全部基础设施与 data/canon 原著硬知识（不接入 LLM）
-[OUTPUT]: unittest 用例——创世导入、历法、剧情后果落账、地理器物武学归基础设施、器物易手、世界物理、场外在场性、
-          消息延迟、隐情与隐秘字段、LOD2 依序结算与裁定、存读档
+[OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表)、历法、剧情后果落账、地理器物武学归基础设施、器物易手、世界物理、场外在场性、
+          消息延迟、隐情与隐秘字段(含揭示门控)、LOD 按距离分层、到期原著远近分流与依序结算、裁定、存读档
 [POS]: tests 的状态层验证，以真实原著世界为对象，证明剧情能自由改变既有世界，而人、地、物、武学只由系统掌管
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -25,6 +25,13 @@ class GenesisTest(unittest.TestCase):
         self.assertEqual(w.canon[0]["id"], "无量剑第四场比剑")
         self.assertEqual([e["order"] for e in w.canon], sorted(e["order"] for e in w.canon))
         self.assertTrue(all(a["day"] <= b["day"] for a, b in zip(w.canon, w.canon[1:])))  # 日序随 order 单调
+
+    def test_a_chapter_scene_happens_on_one_day(self):
+        w = World.create()
+        hall = [e for e in w.canon if e["where"] == START and e["order"] <= 4]  # 第一回练武厅里的四件事
+        self.assertEqual(len({e["day"] for e in hall}), 1)                       # 同一天，而非撒在三天里
+        self.assertEqual(w.aliases["萧峰"], "乔峰")
+        self.assertEqual(w.aliases["剑湖宫练武厅"], START)
 
     def test_roads_are_ridden_not_walked(self):
         raw = {(a, b): d for a, b, d in genesis._read(genesis.DATA, "02_roads.json")}
@@ -100,10 +107,14 @@ class PlotTest(unittest.TestCase):
         self.assertEqual(len(rejected), 1)  # 乔峰不在此地
 
     def test_loose_writing_is_understood(self):
-        ops = [{"op": "set", "id": "player", "key": "姿态", "value": "跌坐"}, GO("段正淳")]  # 中文属性名；走向某人
+        ops = [{"op": "set", "id": "测试", "key": "姿态", "value": "跌坐"}, GO("段正淳"),  # 名号当 id；中文属性名；走向某人
+               {"op": "link", "src": "段誉", "dst": "主角", "rel": "结交", "note": "同去王府"}]
         applied, rejected = self.w.apply(ops, "director")
-        self.assertEqual((len(applied), rejected), (2, []))
+        self.assertEqual((len(applied), rejected), (3, []))
         self.assertEqual((self.w.player["posture"], self.w.here), ("跌坐", "镇南王府"))
+        self.assertEqual(self.w.graph._find("段誉", "player", "结交")["note"], "同去王府")
+        self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
+        self.assertEqual([e["rel"] for e in self.w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["结义"])  # 写新覆盖旧
 
     def test_hidden_item_found_through_plot(self):
         self.w.apply([GO("琅嬛福地·玉像石室")], "director")
@@ -168,12 +179,14 @@ class KnowledgeTest(unittest.TestCase):
                 self.assertNotIn(key, w.knowledge.view(nid))
         self.assertFalse(w.knowledge.knows("慕容博"))  # 诈死潜伏者不在常识之中
 
-    def test_secrets_backstage_only_until_revealed(self):
+    def test_secrets_reach_the_director_only_when_their_time_is_near(self):
         w = World.create()
         self.assertNotIn("段延庆—生父", str(rag.build(w)))
+        self.assertNotIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])   # 第四十八回的真相，第一回不摆上桌
+        w.done.append("刀白凤揭示段誉生父")                                  # 揭示之事已在江湖上发生
         self.assertIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])
         w.apply([{"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"}], "director")
-        self.assertNotIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])
+        self.assertNotIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])   # 主角已知，无需再提
 
     def test_scoped_reveal_reaches_only_witnesses(self):
         w = World.create()
@@ -185,18 +198,26 @@ class KnowledgeTest(unittest.TestCase):
 
 
 class LodTest(unittest.TestCase):
-    def test_opening_canon_plays_out_before_the_player(self):
+    def test_tiers_follow_road_distance_not_hops(self):
         w = World.create()
-        due = lod.due_canon(w, 0, 0)
-        self.assertEqual([ev["id"] for ev, _ in due], ["无量剑第四场比剑", "龚光杰掌掴段誉"])
-        self.assertEqual(lod.verdict(w, due[0][0], due[0][1]), ("canon", []))  # 亲历而未扰动：照原著上演
+        t = lod.tiers(w)
+        self.assertEqual((t[START], t["无量山"], t["琅嬛福地·玉像石室"], t["万劫谷"], t["聚贤庄"]), (0, 1, 1, 1, 2))  # 零日路一簇皆为近处
 
-    def test_due_events_settle_in_order_never_skipping_ahead(self):
+    def test_due_canon_splits_into_offstage_and_the_one_on_stage(self):
         w = World.create()
+        offstage, staged = lod.split_due(w)
+        self.assertEqual((offstage, staged["id"]), ([], "无量剑第四场比剑"))  # 开局：此地一桩，交导演
+        self.assertEqual(lod.verdict(w, staged, 0), ("canon", []))
+        self.assertEqual([ev["id"] for ev, _ in lod.upcoming(w, {staged["id"]})][:1], ["龚光杰掌掴段誉"])  # 近事可伏笔
+
+    def test_offstage_events_settle_in_order_never_skipping_ahead(self):
+        w = World.create()
+        quiet = next(l for l in w.graph.where(type="location") if all(e["where"] != l for e in w.canon))
+        w.player.set("location", quiet)
         w.advance(PER_DAY * 40)
-        due = lod.due_canon(w, 40, 1)
-        orders = [ev["order"] for ev, _ in due]
-        self.assertEqual(orders, list(range(1, len(orders) + 1)))
+        offstage, staged = lod.split_due(w)
+        orders = [ev["order"] for ev, _ in offstage]
+        self.assertEqual((orders, staged), (list(range(1, len(orders) + 1)), None))
 
     def test_verdicts(self):
         w = World.create()

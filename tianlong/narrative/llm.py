@@ -1,15 +1,17 @@
 """
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
-[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
+[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
-       stream 走 streamGenerateContent?alt=sse，供编剧边写边送
+       stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}"
 DEFAULT_MODEL = "gemini-flash-latest"
@@ -41,9 +43,17 @@ def sse_texts(lines, usage: dict):
 
 
 class Gemini:
-    def __init__(self, key: str, model: str = DEFAULT_MODEL, timeout: int = 60):
+    def __init__(self, key: str, model: str = DEFAULT_MODEL, timeout: int = 60, trace=None):
         self.key, self.model, self.timeout = key, model, timeout
         self.tokens = 0  # 累计消耗，用于自查成本
+        self.trace = Path(trace) if trace else None  # 每次调用一行 JSONL：提示词、回答、用量、耗时
+
+    def _log(self, system: str, user: str, text: str, used: int, t0: float):
+        if self.trace:
+            self.trace.parent.mkdir(parents=True, exist_ok=True)
+            with self.trace.open("a", encoding="utf-8") as f:
+                f.write(json.dumps({"model": self.model, "secs": round(time.time() - t0, 1), "tokens": used,
+                                    "system": system, "user": user, "raw": text}, ensure_ascii=False) + "\n")
 
     def _request(self, method: str, system: str, user: str, *, as_json: bool, max_tokens: int,
                  temperature: float) -> urllib.request.Request:
@@ -60,15 +70,18 @@ class Gemini:
     def _call(self, system: str, user: str, *, as_json: bool, max_tokens: int, temperature: float) -> str:
         req = self._request("generateContent", system, user, as_json=as_json, max_tokens=max_tokens,
                             temperature=temperature)
+        t0 = time.time()
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 data = json.load(resp)
         except NET_ERRORS as e:
             raise LLMError(f"请求失败：{e}") from e
-        self.tokens += data.get("usageMetadata", {}).get("totalTokenCount", 0)
+        used = data.get("usageMetadata", {}).get("totalTokenCount", 0)
+        self.tokens += used
         text = _texts(data)
         if not text:
             raise LLMError(f"响应无内容：{str(data)[:200]}")
+        self._log(system, user, text, used, t0)
         return text
 
     def text(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.9) -> str:
@@ -89,16 +102,19 @@ class Gemini:
         """逐块产出正文增量；任何网络或解析失败都化为 LLMError（调用方据已得多少决定如何收场）。"""
         req = self._request("streamGenerateContent?alt=sse", system, user, as_json=False, max_tokens=max_tokens,
                             temperature=temperature)
-        usage = {}
+        usage, parts, t0 = {}, [], time.time()
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                yield from sse_texts(resp, usage)
+                for delta in sse_texts(resp, usage):
+                    parts.append(delta)
+                    yield delta
         except NET_ERRORS as e:
             raise LLMError(f"流式请求中断：{e}") from e
         finally:
             self.tokens += usage.get("total", 0)
+            self._log(system, user, "".join(parts), usage.get("total", 0), t0)
 
 
-def from_env() -> Gemini | None:
+def from_env(trace=None) -> Gemini | None:
     key = os.environ.get("GEMINI_API_KEY")
-    return Gemini(key, os.environ.get("GEMINI_MODEL", DEFAULT_MODEL)) if key else None
+    return Gemini(key, os.environ.get("GEMINI_MODEL", DEFAULT_MODEL), trace=trace) if key else None

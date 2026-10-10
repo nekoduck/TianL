@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
-[OUTPUT]: 对外提供 World 门面（create 创世 / 写入 / 记事 / 推进时间 / 同步认知 / 原子存档与读档）
+[OUTPUT]: 对外提供 World 门面（create 创世(含出身) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档），持有 aliases 别名表
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -9,13 +9,13 @@ import os
 from pathlib import Path
 
 from . import effects, genesis, rag
-from .blackboard import Blackboard
+from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
 from .graph import ROAD, Graph
 from .ledger import Knowledge, Messenger, Truth
 
 class World:
-    def __init__(self, graph, player, clock, truth, knowledge, messenger, canon, done, taint, seed):
+    def __init__(self, graph, player, clock, truth, knowledge, messenger, canon, done, taint, seed, aliases=None):
         self.graph: Graph = graph
         self.player: Blackboard = player
         self.clock: Clock = clock
@@ -26,21 +26,23 @@ class World:
         self.done: list[str] = done         # 已结算的原著事件 id
         self.taint: set[str] = taint        # 因果涟漪：被玩家亲手触碰过的节点
         self.seed: int = seed
+        self.aliases: dict[str, str] = aliases or {}  # 别名→id：LLM 写「萧峰」「乔帮主」亦能落到乔峰
 
     # ------------------------------------------------------------
     #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试
     # ------------------------------------------------------------
     @classmethod
-    def create(cls, name: str | None = None, data: dict | None = None) -> "World":
+    def create(cls, name: str | None = None, data: dict | None = None, origin: str | None = None) -> "World":
         d = data or genesis.load()
+        birth = ORIGINS.get(origin) or next(iter(ORIGINS.values()))  # 出身：主角为何在此、为何而动
         graph = Graph(d["nodes"])
         for a, b, days in d["roads"]:
             graph.link(a, b, ROAD, days=days)
         for r in d["relations"]:
             graph.link(**r)
-        player = Blackboard({**d["player"], **({"name": name} if name else {})})
+        player = Blackboard({**d["player"], **birth, **({"name": name} if name else {})})
         world = cls(graph, player, Clock(d["start_tick"]), Truth(), Knowledge.from_truth(graph),
-                    Messenger(), d["canon"], [], set(), d["seed"])
+                    Messenger(), d["canon"], [], set(), d["seed"], d.get("aliases"))
         world.sync()
         return world
 
@@ -55,9 +57,9 @@ class World:
         return effects.apply(self, ops, origin, scope)
 
     def record(self, summary: str, where: str, applied: list, origin: str, weight: int = 1,
-               public: bool = True) -> dict:
-        """写入绝对真实账本，并把传闻投进消息队列；主角身在事发之地即为亲历者。"""
-        event = self.truth.record(self.clock.day, where, summary, applied, origin, weight)
+               public: bool = True, day: int | None = None) -> dict:
+        """写入绝对真实账本，并把传闻投进消息队列；主角身在事发之地即为亲历者。day 缺省为今日，原著事件传其排定之日。"""
+        event = self.truth.record(self.clock.day if day is None else day, where, summary, applied, origin, weight)
         event.update(public=public, witnessed=where == self.here)
         self.messenger.post(event)
         return event
@@ -87,13 +89,13 @@ class World:
                 "truth": self.truth.events, "beliefs": self.knowledge.beliefs, "known": self.knowledge.known,
                 "secrets": self.knowledge.secrets,
                 "pending": self.messenger.pending, "canon": self.canon, "done": self.done,
-                "taint": sorted(self.taint), "seed": self.seed}
+                "taint": sorted(self.taint), "seed": self.seed, "aliases": self.aliases}
 
     @classmethod
     def from_dump(cls, d: dict) -> "World":
         return cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
                    Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
-                   set(d["taint"]), d["seed"])
+                   set(d["taint"]), d["seed"], d.get("aliases"))
 
     def save(self, path, extra: dict | None = None):
         """整世界存档；extra 供上层附带自己的段落（如 Web 的回合记录），读档时被 from_dump 忽略。

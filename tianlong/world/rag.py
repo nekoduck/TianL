@@ -1,18 +1,24 @@
 """
-[INPUT]: 依赖 random.Random（种子化命运骰），依赖 World 门面的 graph / knowledge / player / clock / truth / seed
-[OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、dossier()、power_tier()、condition()（主角身况标签）
+[INPUT]: 依赖 random.Random（种子化命运骰），依赖 world/lod 的 dirt（原著前提核对）与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
+[OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、rule()（较量预裁）、heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知；
-       backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、在场武学、远近道路、命运骰，让它编织的剧情有据可依
+       backstage 给导演——此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、到时候的隐情、各方图谋、功力对比、
+       在场武学、远近道路、命运骰、节奏，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
 
+from . import lod
 from .effects import usable
+from .ledger import NEWS_SPEED
 
 TIERS = ((15, "不会武功"), (35, "三流身手"), (60, "二流好手"), (85, "一流高手"), (10**9, "绝顶高手"))
 NEWS_WINDOW = 3
 PLACES_SHOWN = 15  # 后台只列最近的若干去处；更远之地导演仍可直呼其名，距离由系统结算
+SECRET_HORIZON = 30  # 隐情的揭示事件须在一月内到期（或已发生）才交给导演——第四十八回的真相不该在第一回就摆上桌
+PERIL = 0.15         # 气血低于此比例即濒危：本回合必须收场
+FEEBLE = 5           # 功力不及此者（孩童、文弱之辈）不入较量预裁
 
 
 def power_tier(power: int) -> str:
@@ -31,6 +37,7 @@ def condition(world) -> list[dict]:
     tags = [{"text": wound, "tone": tone}, {"text": power_tier(me["power"]), "tone": "plain"}]
     if me["posture"] and me["posture"] != "站立":
         tags.append({"text": me["posture"], "tone": "plain"})
+    tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
     tags += [{"text": f"持有{i}", "tone": "plain"} for i in me["inventory"]]
     tags += [{"text": f"身负{s}", "tone": "plain"} for s in me["skills"]]
     return tags
@@ -69,7 +76,8 @@ def _believed(world, nid: str) -> str:
 
 def _toward_player(world, p: str) -> list[str]:
     sides = {p, world.graph.get(p, "faction")} - {None}
-    return [f"{e['src']}→你：{e['rel']}" if e["dst"] == "player" else f"你→{e['dst']}：{e['rel']}"
+    return [(f"{e['src']}→你：{e['rel']}" if e["dst"] == "player" else f"你→{e['dst']}：{e['rel']}")
+            + (f"（{e['note']}）" if e.get("note") else "")
             for e in world.graph.edges if {e["src"], e["dst"]} & sides and "player" in (e["src"], e["dst"])]
 
 
@@ -105,7 +113,9 @@ def build(world) -> dict:
     return {
         "time": world.clock.label(),
         "player": {"name": me["name"], "hp": f"{me['hp']}/{me['max_hp']}", "tier": power_tier(me["power"]),
-                   "posture": me["posture"], "skills": me["skills"], "inventory": carried},
+                   "posture": me["posture"], "skills": me["skills"], "inventory": carried,
+                   "origin": me["origin"], "goal": me["goal"], "conditions": me["conditions"], "threads": me["threads"],
+                   "synopsis": me["synopsis"]},
         "scene": {"name": here, "region": g.get(here, "region"), "desc": g.get(here, "desc"),
                   "state": g.get(here, "state"), "lore": g.get(here, "lore", [])},
         "features": [{"name": f, "desc": g.get(f, "desc")} for f in s["features"]],
@@ -122,22 +132,67 @@ def build(world) -> dict:
 # ============================================================
 #  导演后台：玩家看不见、但剧情必须依据的一切
 # ============================================================
-def backstage(world) -> dict:
+def rule(gap: int, fate: int) -> tuple[str, str]:
+    """较量预裁：档位差 × 命运骰 → (结局, 主角失血区间)。裁决在导演开口前由系统算定，导演只负责把它演出来。"""
+    if gap >= 2:
+        return ("侥幸脱身，未能得手", "0") if fate >= 95 else ("大败，必受重创", "25~40")
+    if gap == 1:
+        return ("险胜", "5~10") if fate >= 85 else ("僵持不下", "0~10") if fate >= 55 else ("落败受伤", "15~25")
+    if gap == 0:
+        return ("小胜", "0~5") if fate >= 55 else ("僵持不下", "0~10") if fate >= 40 else ("小败", "10~20")
+    if gap == -1:
+        return ("得胜", "0") if fate >= 20 else ("一时失手，僵持", "0~5")
+    return ("大胜，手到擒来", "0") if fate >= 5 else ("轻敌失手，仍占上风", "0~5")
+
+
+def _secret_open(world, edge: dict, canon_by_id: dict) -> bool:
+    """隐情何时可交给导演：无揭示事件者随时；有者须其揭示事件已发生，或将在一月内到期。"""
+    rb = edge.get("revealed_by")
+    if not rb or rb in world.done:
+        return True
+    ev = canon_by_id.get(rb)
+    return ev is not None and ev["day"] - world.clock.day <= SECRET_HORIZON
+
+
+def _tempo(tempo) -> str:
+    if not tempo:
+        return ""
+    line = "近来张力：" + "、".join(tempo)
+    if list(tempo[-2:]) == ["高潮", "高潮"]:
+        line += "——连番高潮，本回合宜收束或转场，不可再堆砌对峙"
+    elif list(tempo[-2:]) == ["平", "平"]:
+        line += "——久无波澜，宜起一波"
+    return line
+
+
+def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
     g, me, here = world.graph, world.player, world.here
     s = scene(world)
     hidden = [n for n in g.where(location=here) if g.get(n, "hidden") and not g.get(n, "dormant")]
     cast = set(s["people"]) | set(s["dead"]) | set(hidden) | {"player"}
+    canon_by_id = {ev["id"]: ev for ev in world.canon}
     secrets = [f"{e['src']}—{e['rel']}—{e['dst']}" for e in g.edges
-               if e.get("secret") and {e["src"], e["dst"]} & cast and not world.knowledge.knows_secret(e)]
+               if e.get("secret") and {e["src"], e["dst"]} & cast and not world.knowledge.knows_secret(e)
+               and _secret_open(world, e, canon_by_id)]
     mine = _tier_index(me["power"])
-    odds = []
+    fate = random.Random(f"{world.seed}:{world.clock.tick}").randint(1, 100)
+    odds, ruling = [], []
     for p in s["people"]:
         gap = _tier_index(g.get(p, "power", 30)) - mine
         odds.append(f"{p}：{power_tier(g.get(p, 'power', 30))}，" +
                     ("与主角相当" if gap == 0 else f"{'强' if gap > 0 else '弱'}于主角{abs(gap)}档"))
+        if g.get(p, "power", 30) >= FEEBLE:
+            outcome, loss = rule(gap, fate)
+            ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损"))
     dist = g.distances(here)
     return {
-        "fate": random.Random(f"{world.seed}:{world.clock.tick}").randint(1, 100),
+        "fate": fate,
+        "stage": {"event": stage, "dirt": lod.dirt(world, stage)} if stage else None,
+        "upcoming": [f"{'今日稍后' if n <= 0 else f'{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
+                     for ev, n in upcoming],
+        "ruling": ruling,
+        "tempo": _tempo(tempo),
+        "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if me["hp"] <= me["max_hp"] * PERIL else "",
         "hidden": [f"{n}（{g.get(n, 'type')}）：{g.get(n, 'persona') or g.get(n, 'desc')}"
                    + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "") for n in hidden],
         "secrets": secrets,
@@ -158,6 +213,23 @@ def _arts(world, cast: list[str]) -> list[str]:
         for sk in (world.player["skills"] if p == "player" else g.get(p, "skills") or []):
             owners.setdefault(sk, []).append("主角" if p == "player" else p)
     return [f"{sk}（{'、'.join(who)}）：{g.get(sk, 'desc') or ''}" for sk, who in owners.items()]
+
+
+def heard(world, locs, limit: int = 5) -> list[str]:
+    """已传到这些地方的江湖近闻（含主角的作为）：场外之人据此反应，主角的所为由此真正传开。"""
+    today, dists, out, seen = world.clock.day, {}, [], set()
+    for loc in locs:
+        if loc and loc not in dists:
+            dists[loc] = world.graph.distances(loc)
+    for e in reversed(world.truth.events):
+        if e["id"] in seen or not e.get("public", True):
+            continue
+        if any(d.get(e["where"], float("inf")) <= (today - e["day"]) * NEWS_SPEED * e["weight"] for d in dists.values()):
+            seen.add(e["id"])
+            out.append(f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}")
+            if len(out) >= limit:
+                break
+    return out[::-1]
 
 
 def dossier(world, pid: str) -> dict:

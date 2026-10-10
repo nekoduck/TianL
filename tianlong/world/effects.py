@@ -1,9 +1,11 @@
 """
 [INPUT]: 依赖 World 门面的 graph / player / knowledge / here / taint（鸭子类型）
-[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、place()（任一节点此刻所在之地）、usable()、OPS、STATUSES
+[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号→id）、
+          place()（任一节点此刻所在之地）、usable()、OPS、STATUSES
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：
        人物生死伤病、去留、恩怨、武学、主角的得失与行止、器物易手、隐情的揭开。
-       地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)
+       地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
+       一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -21,6 +23,9 @@ PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物�
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
 ITEM_FLOW = {"location", "holder", "hidden", "state"}  # 器物：定义不可改，只可流转、显隐、损耗
 OFFSCREEN = {"lod1", "chronicle"}                # 场外推演：主角不在场，碰不到主角本人
+RESOLVED_KEYS = {"location", "holder", "inventory", "skills"}  # 这些值是实体名，须经别名表归一
+NOTE_LEN = 40                                    # 关系边上的印象一句话
+STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 
 
 def _ids(op) -> list[str]:
@@ -44,13 +49,57 @@ def usable(world, item: str) -> bool:
     return not isinstance(state, dict) or (state.get("exists", True) and state.get("available", True))
 
 
+def resolve(world, name):
+    """把 LLM 笔下的称呼落到实体 id：主角名号→player，别名（萧峰、乔帮主）与去「·」写法→正名；落不到就原样返回让校验驳回。"""
+    if not isinstance(name, str) or name == "player" or world.graph.has(name):
+        return name
+    if name in (world.player["name"], "主角"):
+        return "player"
+    aliases = getattr(world, "aliases", {})
+    return aliases.get(name) or aliases.get(name.replace("·", "").replace(" ", "")) or name
+
+
+def describe(op) -> str:
+    """一条指令的人话——回告编剧"什么没成立"时用，不让它去读 key=value。"""
+    if not isinstance(op, dict):
+        return str(op)
+    kind, nid, key, v = op.get("op"), op.get("id"), op.get("key"), op.get("value")
+    who = "主角" if nid == "player" else str(nid)
+    name = lambda x: "主角" if x == "player" else str(x)
+    if kind in ("link", "unlink"):
+        return f"{name(op.get('src'))}与{name(op.get('dst'))}{'结下' if kind == 'link' else '了断'}「{op.get('rel')}」"
+    if kind == "reveal":
+        return f"揭开隐情「{op.get('src')}—{op.get('rel')}—{op.get('dst')}」"
+    if kind == "set" and key == "location":
+        return f"{who}前往{v}"
+    if kind == "set" and key == "status":
+        return f"{who}{STATUS_WORDS.get(v, v)}"
+    if kind == "set" and key == "holder":
+        return f"{nid}归{name(v)}所有"
+    if kind == "add":
+        return f"{who}的{key}{'+' if isinstance(v, (int, float)) and v >= 0 else ''}{v}"
+    if kind in ("push", "pull"):
+        verb = {"push": "获得", "pull": "失去"}[kind] if key in ("inventory", "skills") else {"push": "添上", "pull": "去掉"}[kind]
+        return f"{who}{verb}{v}"
+    if kind == "set":
+        return f"{who}的{key}变为{v}"
+    return str(op)
+
+
 # ------------------------------------------------------------
 #  规整：替 LLM 消化不影响语义的写法差异
 # ------------------------------------------------------------
 def _normalize(world, op):
     g = world.graph
+    for k in ("id", "src", "dst"):
+        if k in op:
+            op[k] = resolve(world, op[k])
     if op.get("id") == "player":
         op["key"] = PLAYER_ALIASES.get(op.get("key"), op.get("key"))
+    if op.get("key") in RESOLVED_KEYS and isinstance(op.get("value"), str):
+        op["value"] = resolve(world, op["value"])
+    if op.get("op") == "link" and "note" in op:
+        op["note"] = str(op["note"])[:NOTE_LEN] if op["note"] else None
     if op.get("op") == "set" and op.get("key") == "location" and g.kind(op.get("id")) != "item" \
             and g.kind(op.get("value")) not in ("location", None):
         op["value"] = place(world, op["value"])  # 走向某人/某物 = 走向其所在之地
@@ -144,7 +193,10 @@ def _reach(world, op, origin, scope) -> str | None:
 def _exec(world, op):
     g, kind = world.graph, op["op"]
     if kind == "link":
-        g.link(op["src"], op["dst"], op["rel"], **({"secret": True} if op.get("secret") else {}))
+        if "player" in (op["src"], op["dst"]):  # 某人对主角的关系只留最新一条：写新即覆盖旧，恩怨会演变而不会堆叠
+            g.edges = [e for e in g.edges if not (e["src"] == op["src"] and e["dst"] == op["dst"])]
+        attrs = {k: v for k, v in (("secret", op.get("secret") and True), ("note", op.get("note"))) if v}
+        g.link(op["src"], op["dst"], op["rel"], **attrs)
     elif kind == "unlink":
         g.unlink(op["src"], op["dst"], op["rel"])
     elif kind == "reveal":
@@ -169,10 +221,17 @@ def _exec(world, op):
             node[key].remove(value)
 
 
+def _moves_player(world, op) -> bool:
+    return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", world.player["name"]) \
+        and PLAYER_ALIASES.get(op.get("key"), op.get("key")) == "location"
+
+
 def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list, list]:
-    """逐条落账；返回 (已成立, [(未成立的指令, 原因)])。导演触碰过的节点记为因果污染。"""
+    """逐条落账；返回 (已成立, [(未成立的指令, 原因)])。导演触碰过的节点记为因果污染。
+    主角的移动排到最后：一回合内发生的事都发生在回合开始的所在，同伴随行、器物易手不会因主角先走一步而"不在此地"。"""
     applied, rejected = [], []
-    for op in ops or []:
+    ops = [op for op in ops or [] if not _moves_player(world, op)] + [op for op in ops or [] if _moves_player(world, op)]
+    for op in ops:
         if not isinstance(op, dict) or op.get("op") not in OPS:
             rejected.append((op, "未知指令"))
             continue

@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/graph 的 Graph（观察时读取真相）
 [OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS
-[POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道
+[POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -92,7 +92,8 @@ class Messenger:
         for eid in self.pending:
             event = truth.get(eid)
             reach = (today - event["day"]) * NEWS_SPEED * event["weight"]
-            (arrived if dist.get(event["where"], float("inf")) <= reach else waiting).append(event)
+            seen = event.get("witnessed") or dist.get(event["where"], float("inf")) <= reach  # 亲历之事不必等传闻
+            (arrived if seen else waiting).append(event)
         self.pending = [e["id"] for e in waiting]
         for event in arrived:
             knowledge.learn(event)

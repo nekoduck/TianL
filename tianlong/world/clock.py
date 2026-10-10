@@ -1,6 +1,7 @@
 """
 [INPUT]: 无外部依赖
-[OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染：parts 分段、label 成句）、day_of()（"元祐六年二月"→日序）、PER_DAY、PER_SHICHEN
+[OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染：parts 分段、label 成句 / minutes 时长措辞换算）、
+          day_of()（"元祐六年二月"→日序）、PACES（时长措辞表）、PER_DAY、PER_SHICHEN
 [POS]: world 层的全局时钟，唯一的时间真相；被 World.advance 驱动，被 lod 用来判定刷新节拍，被 genesis 用来排定原著日程
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -20,6 +21,9 @@ SHICHEN = "子丑寅卯辰巳午未申酉戌亥"
 MONTHS = ("正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "腊")
 ERAS = (("元祐", 1, 9), ("绍圣", 1, 4), ("元符", 1, 3))  # (年号, 起年, 末年)；tick=0 即元祐元年正月初一子时
 DIGITS = "〇一二三四五六七八九"
+MORNING = 4 * PER_SHICHEN  # 辰时：「一夜」歇到次日清晨
+# 时长措辞：导演只选词，分钟由系统换算——时间是世界的，不是 LLM 的。「一夜」依当下时刻算到次日辰时
+PACES = {"瞬息": 1, "片刻": 15, "一顿饭": 45, "半日": 3 * PER_SHICHEN, "一夜": None, "一日": PER_DAY}
 
 
 def _cn(n: int) -> str:
@@ -91,6 +95,13 @@ class Clock:
         day, month = self.day, self.month
         self.tick += max(0, minutes)
         return self.day - day, self.month - month
+
+    def minutes(self, pace: str) -> int:
+        """时长措辞 → 分钟。「一夜」算到次日辰时；不识的措辞视作片刻。"""
+        if pace == "一夜":
+            morning = self.day * PER_DAY + MORNING
+            return (morning if morning > self.tick else morning + PER_DAY) - self.tick
+        return PACES.get(pace) or PACES["片刻"]
 
     def parts(self, day: int | None = None) -> dict:
         """历法分段：{year: 元祐六年, date: 二月初一, hour: 辰时三刻}；给定 day 时只有年与日。"""
