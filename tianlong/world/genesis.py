@@ -1,5 +1,5 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
        处理开端未明的人物（休眠）、路程按骑马换算(PACE)、校验全部 id 引用；任何引用错误都在开局前失败，绝不带病入世
@@ -11,10 +11,10 @@ from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
 
-from .clock import DAYS_PER_MONTH, PER_DAY, day_of
+from .clock import DAYS_PER_MONTH, PER_DAY, PER_SHICHEN, day_of
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "canon"
-START_SHICHEN = 4  # 开场于辰时
+START_MINUTE = 4 * PER_SHICHEN  # 开场于辰时
 PACE = 60 / 100    # 原始路程按步行(日行六十里)估算；江湖人多骑马(日行百里)，入世时统一换算
 
 
@@ -130,6 +130,6 @@ def _compile(root: str) -> dict:
     if errors:
         raise GenesisError(f"原著数据有 {len(errors)} 处引用错误，首条：{errors[0]}")
     first = canon[0]
-    return {"seed": 1092, "start_tick": first["day"] * PER_DAY + START_SHICHEN,
+    return {"seed": 1092, "start_tick": first["day"] * PER_DAY + START_MINUTE,
             "player": {"location": first["where"]},
             "nodes": nodes, "roads": roads, "relations": relations, "canon": canon}

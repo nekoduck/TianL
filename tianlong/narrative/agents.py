@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 narrative/prompts 的四组提示词组装器，依赖 narrative/llm 的 LLMError；llm 参数鸭子类型（Gemini 或 None）
+[INPUT]: 依赖 narrative/prompts 的四组提示词组装器，依赖 narrative/llm 的 LLMError、world/clock 的 PER_DAY；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：编织剧情 + 拟定选项）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
 [POS]: narrative 层的四个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容，
        剧情后果能否落账交给 world/effects；llm 为 None 或调用失败时走朴素兜底，离线亦可运行
@@ -9,9 +9,10 @@ import logging
 
 from . import prompts
 from .llm import LLMError
+from ..world.clock import PER_DAY
 
 log = logging.getLogger("tianlong")
-MAX_ELAPSED = 12 * 30  # 单回合至多一月，长途跋涉由系统另按道路结算
+MAX_ELAPSED = PER_DAY * 30  # 单回合至多一月（分钟），长途跋涉由系统另按道路结算
 
 
 def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):

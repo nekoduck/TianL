@@ -10,6 +10,7 @@ import unittest
 
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError
+from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
 logging.disable(logging.WARNING)  # 兜底告警在测试中属预期
@@ -33,8 +34,8 @@ class StubLLM:
 
 
 def eve_of_month_after(world, day: int):
-    """把时钟拨到 day 之后那个月末的最后一个时辰：下一回合必然跨月，触发 LOD2 节拍。"""
-    world.clock.tick = (day // 30 + 1) * 30 * 12 - 1
+    """把时钟拨到 day 之后那个月末的最后一分钟：下一回合必然跨月，触发 LOD2 节拍。"""
+    world.clock.tick = (day // 30 + 1) * 30 * PER_DAY - 1
 
 
 def director(**kw):
@@ -65,7 +66,7 @@ class CanonLoopTest(unittest.TestCase):
         self.assertIn(far["id"], w.done)
         known = lambda: {w.truth.get(i)["summary"] for i in w.knowledge.known}
         self.assertNotIn(far["summary"], known())  # 姑苏远在百日之外
-        w.advance(12 * w.graph.distances(w.here)[far["where"]])
+        w.advance(PER_DAY * w.graph.distances(w.here)[far["where"]])
         w.sync()
         self.assertIn(far["summary"], known())
 
@@ -94,14 +95,18 @@ class DirectorTest(unittest.TestCase):
         start, ride = w.clock.day, w.graph.distances(w.here)["镇南王府"]
         turn = game.act("直奔镇南王府")
         self.assertEqual(turn["place"], "镇南王府")
-        self.assertEqual((ride, w.clock.day), (2, start + ride))  # 步行 3 日，骑马 2 日；导演只估了 1 时辰
+        self.assertEqual((ride, w.clock.day), (2, start + ride))  # 步行 3 日，骑马 2 日；导演只估了 1 分钟
 
-    def test_time_always_flows_when_the_player_acts(self):
+    def test_time_flows_by_action(self):
         llm = StubLLM(director(elapsed=0))
         game = Game(World.create(), llm)
-        tick = game.world.clock.tick
-        game.act("与段誉闲谈")
-        self.assertEqual(game.world.clock.tick, tick + 1)
+        w = game.world
+        tick = w.clock.tick
+        game.act("对段誉说了句话")
+        self.assertEqual(w.clock.tick, tick + 1)       # 导演估 0，系统兜底一分钟，不至于停摆
+        llm.replies = director(elapsed=90)
+        game.act("与段誉长谈")
+        self.assertEqual(w.clock.tick, tick + 1 + 90)  # 一番长谈，由导演按动作估计
 
     def test_invented_entities_rejected_and_told_to_writer(self):
         llm = StubLLM(director(effects=[

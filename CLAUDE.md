@@ -30,7 +30,7 @@ main.py - 命令行入口：python main.py [--offline] [--load 存档] [--name �
 ## 回合流水线 (engine.Game._turn)
 
 rag.build + rag.backstage → 导演(剧情节拍/后果/时辰/事件/3选项) → effects.apply(director) → Truth.record
-→ Clock.advance(max(导演估时, 道路里程)) → LOD1 推演 → LOD2 原著(按 order 依次结算：照原著/史官改写/远方小事作罢)
+→ Clock.advance(max(导演按动作估的分钟, 道路里程, 1分钟)) → LOD1 推演 → LOD2 原著(按 order 依次结算：照原著/史官改写/远方小事作罢)
 → Messenger.deliver + 观察校正 → rag.build → 编剧(正文，含未成立与新到传闻)
 
 ## 运行

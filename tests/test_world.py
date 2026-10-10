@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 from tianlong.world import genesis, lod, rag
-from tianlong.world.clock import Clock, day_of
+from tianlong.world.clock import PER_DAY, Clock, day_of
 from tianlong.world.world import World
 
 GO = lambda dest: {"op": "set", "id": "player", "key": "location", "value": dest}
@@ -56,7 +56,8 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(Clock().label(), "元祐元年正月初一 子时")
         self.assertEqual(Clock().label(day_of("绍圣元年三月")), "绍圣元年三月初一")
         self.assertEqual(day_of("元符二年三月（多年后，占位推断）"), day_of("元符二年三月"))
-        self.assertEqual(Clock(0).advance(12 * 30), (30, 1))
+        self.assertEqual(Clock(0).advance(PER_DAY * 30), (30, 1))
+        self.assertEqual(Clock(4 * 120 + 45).label(), "元祐元年正月初一 辰时三刻")  # 分钟刻度：辰时过三刻
 
 
 class PlotTest(unittest.TestCase):
@@ -147,9 +148,9 @@ class KnowledgeTest(unittest.TestCase):
         w.apply([op], "canon")
         w.record("游骥身亡", "聚贤庄", [op], "canon", 1)
         self.assertEqual(w.knowledge.view("游骥")["status"], "alive")  # 真相已变，认知未变
-        w.advance(12 * (dist - 1))
+        w.advance(PER_DAY * (dist - 1))
         self.assertNotIn("游骥身亡", [e["summary"] for e in w.sync()])
-        w.advance(12)
+        w.advance(PER_DAY)
         self.assertIn("游骥身亡", [e["summary"] for e in w.sync()])
         self.assertEqual(w.knowledge.view("游骥")["status"], "dead")
 
@@ -192,7 +193,7 @@ class LodTest(unittest.TestCase):
 
     def test_due_events_settle_in_order_never_skipping_ahead(self):
         w = World.create()
-        w.advance(12 * 40)
+        w.advance(PER_DAY * 40)
         due = lod.due_canon(w, 40, 1)
         orders = [ev["order"] for ev, _ in due]
         self.assertEqual(orders, list(range(1, len(orders) + 1)))

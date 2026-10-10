@@ -1,6 +1,6 @@
 """
 [INPUT]: 无外部依赖
-[OUTPUT]: 对外提供 Clock（时辰计数 / 跨日跨月检测 / 年号历法渲染）、day_of()（"元祐六年二月"→日序）、PER_DAY
+[OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染）、day_of()（"元祐六年二月"→日序）、PER_DAY、PER_SHICHEN
 [POS]: world 层的全局时钟，唯一的时间真相；被 World.advance 驱动，被 lod 用来判定刷新节拍，被 genesis 用来排定原著日程
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -8,9 +8,12 @@
 import re
 
 # ============================================================
-#  历法常量：一日十二时辰，一月三十日，一年十二月（简化农历）
+#  历法常量：以分钟为最小刻度——一刻十五分，一时辰八刻，一日十二时辰，一月三十日，一年十二月（简化农历）
+#  刻度足够细，说一句话与赶一程路才能各自流过合乎情理的光阴
 # ============================================================
-PER_DAY = 12
+PER_KE = 15
+PER_SHICHEN = 120
+PER_DAY = 12 * PER_SHICHEN
 DAYS_PER_MONTH = 30
 MONTHS_PER_YEAR = 12
 SHICHEN = "子丑寅卯辰巳午未申酉戌亥"
@@ -83,14 +86,18 @@ class Clock:
     def month(self) -> int:
         return self.day // DAYS_PER_MONTH
 
-    def advance(self, shichen: int) -> tuple[int, int]:
-        """推进时间，返回 (跨越的日数, 跨越的月数) —— LOD 节拍据此触发。"""
+    def advance(self, minutes: int) -> tuple[int, int]:
+        """推进若干分钟，返回 (跨越的日数, 跨越的月数) —— LOD 节拍据此触发。"""
         day, month = self.day, self.month
-        self.tick += max(0, shichen)
+        self.tick += max(0, minutes)
         return self.day - day, self.month - month
 
     def label(self, day: int | None = None) -> str:
         d = self.day if day is None else day
         m = d // DAYS_PER_MONTH
         text = f"{_year_name(m // MONTHS_PER_YEAR)}{MONTHS[m % MONTHS_PER_YEAR]}月{_day_name(d % DAYS_PER_MONTH + 1)}"
-        return text if day is not None else f"{text} {SHICHEN[self.tick % PER_DAY]}时"
+        if day is not None:
+            return text
+        minute = self.tick % PER_DAY
+        ke = minute % PER_SHICHEN // PER_KE
+        return f"{text} {SHICHEN[minute // PER_SHICHEN]}时" + (f"{DIGITS[ke]}刻" if ke else "")

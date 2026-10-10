@@ -9,10 +9,11 @@ import logging
 
 from .narrative import agents
 from .world import lod, rag
+from .world.clock import PER_DAY
 from .world.world import World
 
 log = logging.getLogger("tianlong")
-MIN_ELAPSED = 1  # 主角有所行动，光阴至少流过一个时辰——防止世界在对话中停摆
+MIN_ELAPSED = 1  # 主角有所行动，光阴至少流过一分钟——时长由导演按动作估计，系统只保证世界不在原地停摆
 
 
 def _describe(op) -> str:
@@ -43,7 +44,7 @@ class Game:
         applied, rejected = w.apply(plan["effects"], "director")
         if plan["event"]:
             w.record(plan["event"]["summary"], w.here, applied, "director", plan["event"]["weight"])
-        journey = w.graph.distances(origin).get(w.here, 0) * 12  # 远行时日由道路决定，不由 LLM 估算
+        journey = w.graph.distances(origin).get(w.here, 0) * PER_DAY  # 远行时日由道路决定，不由 LLM 估算
         days, months = w.advance(max(plan["elapsed"], journey, MIN_ELAPSED if deed else 0))
         self._offstage(days, months)
         news = [e for e in w.sync() if e["origin"] != "director"]  # 亲历之事不算传闻
