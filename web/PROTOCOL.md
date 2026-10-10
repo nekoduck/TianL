@@ -1,0 +1,117 @@
+# 天龍八部 · 前后端通信协议 `tianlong/1`
+
+> 契约正文。Python 实现：`tianlong/protocol.py`（载荷）+ `tianlong/server.py`（传输）；
+> 前端镜像：`web/js/api.js`（真实对接）与 `web/js/mock.js`（独立开发）。三者任何一处变更，先改本文。
+
+## 一、约定
+
+- 传输：HTTP + JSON（UTF-8）。每个响应体都带 `"protocol": "tianlong/1"`，前端发现版本不符即提示刷新。
+- 单机单局：服务端同一时刻只持有一卷书（一局游戏），同一时刻只处理一笔行动。
+- 文字优先：载荷里没有气血数值、坐标、内部 id 等"界面感"信息，只有可直接排版的文字；数值隐于身况标签之后。
+
+## 二、接口
+
+| 方法 | 路径 | 用途 | 成功 |
+|---|---|---|---|
+| `GET` | `/api/session` | 续读：取回当前这卷书的全部回合（刷新页面后恢复）；尚未开卷时 `session` 为 `null` | `200` 会话载荷 |
+| `POST` | `/api/session` | 开卷：以名号开始新的一局（会替换旧卷） | `201` 会话载荷 |
+| `POST` | `/api/action` | 行动：提交玩家这一回合的举动 | `200` 回合载荷 |
+
+### 开卷请求
+
+```json
+{ "name": "萧兰" }
+```
+
+`name` 可省略或为空串（以「无名」行走江湖），至多 12 字。
+
+### 行动请求（前端 → 后端）
+
+```json
+{ "action_type": "selection", "action_content": "t3-2" }
+{ "action_type": "free_text", "action_content": "趁乱溜去后山禁地，看看玉璧的传说" }
+```
+
+| 字段 | 说明 |
+|---|---|
+| `action_type` | `selection`：选择当前回合给出的选项；`free_text`：玩家自由书写 |
+| `action_content` | `selection` 时为**当前回合**某个选项的 `id`；`free_text` 时为玩家原话（1～200 字） |
+
+选项 `id` 形如 `t{回合}-{序号}`，只在它所属的那一回合有效；提交旧回合的选项会得到 `409 stale_option`。
+
+## 三、响应
+
+### 回合载荷（后端 → 前端）
+
+```json
+{
+  "protocol": "tianlong/1",
+  "turn": 3,
+  "deed": { "action_type": "selection", "action_content": "t2-1", "text": "替那书生解围" },
+  "scene": { "place": "剑湖宫·练武厅", "region": "大理·无量山" },
+  "time": { "year": "元祐六年", "date": "二月初一", "hour": "辰时三刻", "label": "元祐六年二月初一 辰时三刻" },
+  "narrative": "你一步跨到书生身前……\n龚光杰冷笑一声……",
+  "options": [
+    { "id": "t3-1", "label": "顺着少女的话讥讽龚光杰" },
+    { "id": "t3-2", "label": "扶书生退到马五德身后" },
+    { "id": "t3-3", "label": "强忍伤痛，还他一掌" }
+  ],
+  "status": [
+    { "text": "轻伤", "tone": "warn" },
+    { "text": "不会武功", "tone": "plain" },
+    { "text": "持有北冥神功卷轴", "tone": "plain" }
+  ],
+  "events": [
+    { "id": 12, "kind": "witnessed", "date": "元祐六年二月初一", "place": "剑湖宫·练武厅", "text": "龚光杰刺伤褚师弟，东宗四赛三胜。" },
+    { "id": 15, "kind": "rumor", "date": "元祐六年二月初一", "place": "大理城", "text": "镇南王府遣出数路人马，寻访离家的世子。" }
+  ]
+}
+```
+
+| 字段 | 说明 |
+|---|---|
+| `turn` | 回合序，开场为 1 |
+| `deed` | 引出本回合的玩家举动；开场回合为 `null`。`text` 是交给说书人的原话（选择时即选项文字） |
+| `scene` | 当前所在：`place` 地点（子区域以「·」相连），`region` 所属地域（可能为 `null`） |
+| `time` | 历法分段，`hour` 精确到刻；`label` 为整句，便于直接显示 |
+| `narrative` | 本回合正文，以 `\n` 分段 |
+| `options` | 说书人拟定的 3 个下一步；玩家也可无视它们，自由书写 |
+| `status` | 主角身况的文字标签，`tone` 为 `plain` / `warn`（伤势等需留意）/ `alert`（性命攸关） |
+| `events` | 本回合抵达主角的世界变动：`witnessed` 为亲眼所见（正文已写到，宜作旁注）；`rumor` 为远方延迟传来的**江湖传闻**（宜作无侵入通知，玩家查看时以信笺呈现）。`id` 全局唯一，可用于已读标记 |
+
+### 会话载荷
+
+```json
+{
+  "protocol": "tianlong/1",
+  "session": { "id": "9f1c2a7b3d4e", "hero": "萧兰" },
+  "transcript": [ /* 回合载荷，按回合先后排列；最后一个即当前回合 */ ]
+}
+```
+
+尚未开卷时：`{ "protocol": "tianlong/1", "session": null, "transcript": [] }`——这不是错误，前端据此显示扉页。
+
+### 错误载荷
+
+```json
+{ "protocol": "tianlong/1", "error": { "code": "stale_option", "message": "这个选项已随时势而去，请依眼下情形重新抉择" } }
+```
+
+| HTTP | `code` | 含义 | 前端宜 |
+|---|---|---|---|
+| 400 | `bad_request` | 请求格式不对、自由书写为空或过长、名号过长 | 提示后让玩家改写 |
+| 404 | `no_session` | 行动时尚无书卷（如服务重启后旧卷已失） | 回到扉页 |
+| 409 | `busy` | 上一笔尚未落定（一回合可能需要数十秒） | 稍候重试 |
+| 409 | `stale_option` | 选了已过期的选项 | 重新拉取会话、按最新回合重选 |
+| 413 | `bad_request` | 请求体过大 | 提示 |
+| 500 | `internal` | 服务端异常 | 允许重试 |
+
+前端另有两个本地错误码（不来自服务端）：`network`（连不上服务）、`timeout`（等待超时），以及 `version`（协议版本不符）。
+
+## 四、时序
+
+```
+打开页面 ──GET /api/session──▶ session=null → 扉页 ──POST /api/session──▶ 201（含开场回合）
+                              session≠null → 恢复全部回合（不重放打字机）
+玩家行动 ──POST /api/action──▶ 200 回合载荷 → 打字机誊写正文 → 显示新选项；若含 rumor → 传闻提示
+```

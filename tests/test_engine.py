@@ -50,7 +50,10 @@ class CanonLoopTest(unittest.TestCase):
         self.assertEqual(len(turn["options"]), 3)
         self.assertIn("无量剑第四场比剑", w.done)
         self.assertEqual(w.graph.get("褚师弟", "status"), "wounded")
-        self.assertIn("龚光杰刺伤褚师弟", "".join(turn["news"]))  # 亲历即知，作为本回合见闻送达
+        seen = [n for n in turn["news"] if n["witnessed"]]
+        self.assertIn("龚光杰刺伤褚师弟", "".join(n["text"] for n in seen))  # 亲历即知，作为本回合见闻送达
+        self.assertEqual(turn["clock"], {"year": "元祐六年", "date": "二月初一", "hour": "辰时"})
+        self.assertEqual(turn["status"][0], {"text": "安然无恙", "tone": "plain"})
 
     def test_offline_travel_follows_roads(self):
         game = Game(World.create())

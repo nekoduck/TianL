@@ -63,7 +63,7 @@ def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
 
 
 def write(llm, pack: dict, deed: str, beats: list[str], void: list[str], news: list[str]) -> str:
-    fallback = lambda: "\n".join([pack["scene"]["desc"], *beats, *(f"（传闻）{n}" for n in news)])
+    fallback = lambda: "\n".join([pack["scene"]["desc"], *beats])  # 见闻与传闻由回合载荷另行送达
     return _ask(llm, prompts.writer(pack, deed, beats, void, news), fallback, as_json=False, tokens=1200)
 
 

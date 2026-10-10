@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 random.Random（种子化命运骰），依赖 World 门面的 graph / knowledge / player / clock / truth / seed
-[OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、dossier()、power_tier()
+[OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知；
        backstage 给导演——隐匿之人、暗藏之物、未揭隐情、各方图谋、功力对比、在场武学、远近道路、命运骰，让它编织的剧情有据可依
@@ -17,6 +17,23 @@ PLACES_SHOWN = 15  # 后台只列最近的若干去处；更远之地导演仍�
 
 def power_tier(power: int) -> str:
     return next(name for cap, name in TIERS if power < cap)
+
+
+# 气血不报数字，只报身况：(气血比例下限, 措辞, 语气)；语气 plain/warn/alert 交由表现层决定着色
+WOUNDS = ((0.9, "安然无恙", "plain"), (0.6, "轻伤", "warn"), (0.3, "重伤", "warn"), (0.0, "命悬一线", "alert"))
+
+
+def condition(world) -> list[dict]:
+    """主角身况的文字标签：伤势、功力档、姿态、随身器物、所负武学——数值隐于其后。"""
+    me = world.player
+    ratio = me["hp"] / me["max_hp"]
+    wound, tone = next((text, tone) for floor, text, tone in WOUNDS if ratio >= floor)
+    tags = [{"text": wound, "tone": tone}, {"text": power_tier(me["power"]), "tone": "plain"}]
+    if me["posture"] and me["posture"] != "站立":
+        tags.append({"text": me["posture"], "tone": "plain"})
+    tags += [{"text": f"持有{i}", "tone": "plain"} for i in me["inventory"]]
+    tags += [{"text": f"身负{s}", "tone": "plain"} for s in me["skills"]]
+    return tags
 
 
 def _tier_index(power: int) -> int:

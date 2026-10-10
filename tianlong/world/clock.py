@@ -1,6 +1,6 @@
 """
 [INPUT]: 无外部依赖
-[OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染）、day_of()（"元祐六年二月"→日序）、PER_DAY、PER_SHICHEN
+[OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染：parts 分段、label 成句）、day_of()（"元祐六年二月"→日序）、PER_DAY、PER_SHICHEN
 [POS]: world 层的全局时钟，唯一的时间真相；被 World.advance 驱动，被 lod 用来判定刷新节拍，被 genesis 用来排定原著日程
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -92,12 +92,18 @@ class Clock:
         self.tick += max(0, minutes)
         return self.day - day, self.month - month
 
-    def label(self, day: int | None = None) -> str:
+    def parts(self, day: int | None = None) -> dict:
+        """历法分段：{year: 元祐六年, date: 二月初一, hour: 辰时三刻}；给定 day 时只有年与日。"""
         d = self.day if day is None else day
         m = d // DAYS_PER_MONTH
-        text = f"{_year_name(m // MONTHS_PER_YEAR)}{MONTHS[m % MONTHS_PER_YEAR]}月{_day_name(d % DAYS_PER_MONTH + 1)}"
-        if day is not None:
-            return text
-        minute = self.tick % PER_DAY
-        ke = minute % PER_SHICHEN // PER_KE
-        return f"{text} {SHICHEN[minute // PER_SHICHEN]}时" + (f"{DIGITS[ke]}刻" if ke else "")
+        out = {"year": _year_name(m // MONTHS_PER_YEAR),
+               "date": f"{MONTHS[m % MONTHS_PER_YEAR]}月{_day_name(d % DAYS_PER_MONTH + 1)}"}
+        if day is None:
+            minute = self.tick % PER_DAY
+            ke = minute % PER_SHICHEN // PER_KE
+            out["hour"] = f"{SHICHEN[minute // PER_SHICHEN]}时" + (f"{DIGITS[ke]}刻" if ke else "")
+        return out
+
+    def label(self, day: int | None = None) -> str:
+        p = self.parts(day)
+        return p["year"] + p["date"] + (f" {p['hour']}" if "hour" in p else "")

@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 world/（World、lod、rag）与 narrative/agents；llm 可为 None（离线兜底）
-[OUTPUT]: 对外提供 Game（open / act / debug），每回合返回一个纯 dict 的 Turn
+[OUTPUT]: 对外提供 Game（open / act / debug），每回合返回一个纯 dict 的 Turn：
+          time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void
 [POS]: 两层唯一的交汇点——游戏主循环：取材(RAG+后台) → 导演编织剧情与选项 → 剧情后果落账 → 按道路结算时日
        → LOD1/LOD2 场外推演 → 传闻投递 → 编剧成文。基础设施在每一步替 LLM 记忆、算账、送信
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -55,13 +56,11 @@ class Game:
                             [e["summary"] for e in news])
         self.options = plan["options"]
         w.player.remember(f"{w.clock.label()}·{w.here}：{plan['memory']}")
-        me = w.player
-        return {"time": w.clock.label(), "place": w.here, "text": text,
-                "news": [f"{'亲眼所见' if e.get('witnessed') else '江湖传闻'}｜{w.clock.label(e['day'])}·{e['where']}："
-                         f"{e['summary']}" for e in news],
-                "options": self.options, "void": void,
-                "status": f"气血 {me['hp']}/{me['max_hp']}｜{rag.power_tier(me['power'])}｜{me['posture']}"
-                          f"｜随身：{'、'.join(me['inventory']) or '无'}"}
+        return {"time": w.clock.label(), "clock": w.clock.parts(), "place": w.here,
+                "region": w.graph.get(w.here, "region"), "text": text, "options": self.options,
+                "news": [{"id": e["id"], "witnessed": bool(e.get("witnessed")), "date": w.clock.label(e["day"]),
+                          "place": e["where"], "text": e["summary"]} for e in news],
+                "status": rag.condition(w), "void": void}
 
     def _offstage(self, days: int, months: int):
         w = self.world

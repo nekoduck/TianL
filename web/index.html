@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  [INPUT]: 依赖 css/ink.css 的版式与色彩令牌，js/main.js 的启动入口
+  [OUTPUT]: 天龍八部 Web 前端的页面骨架——扉页、书眉、叙事卷、行动区、页边、传闻提示、信笺
+  [POS]: web 的唯一页面，组件在此挂载；结构即语义，样式与行为各归其位
+  [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>天龍八部</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap">
+  <link rel="stylesheet" href="css/ink.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+  <!-- 扉页：尚未开卷时 -->
+  <section id="title-page" class="title-page" hidden>
+    <div class="title-block">
+      <h1 class="title">天龍八部</h1>
+      <span class="seal" aria-hidden="true">文字沙盒</span>
+    </div>
+    <p class="edition">世纪新修版 · 元祐六年春</p>
+    <form class="name-form" autocomplete="off">
+      <label class="sr-only" for="hero">侠客名号</label>
+      <input id="hero" name="hero" maxlength="12" placeholder="侠客名号">
+      <button type="submit">开卷</button>
+    </form>
+    <p class="title-hint">留空，便以「无名」行走江湖</p>
+    <p class="title-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- 书：开卷之后 -->
+  <div id="book" class="book" hidden>
+    <header id="masthead" class="masthead">
+      <div class="locus">
+        <h2 class="place"></h2>
+        <p class="region"></p>
+      </div>
+      <p class="time"><span class="year"></span><span class="date"></span><span class="hour"></span></p>
+      <ul class="status" aria-label="身况"></ul>
+    </header>
+
+    <main class="volume">
+      <div id="story" class="story"></div>
+
+      <section id="actions" class="actions" data-state="idle" aria-label="行动">
+        <ol class="options"></ol>
+        <form class="free" autocomplete="off">
+          <label class="sr-only" for="deed">自由行动</label>
+          <input id="deed" maxlength="200" placeholder="或者，写下你想做的事……">
+          <button type="submit" disabled>落笔</button>
+        </form>
+        <p class="hint" aria-hidden="true"></p>
+        <p class="error" role="alert" hidden><span class="error-text"></span><button type="button" class="retry">再试一次</button></p>
+      </section>
+    </main>
+
+    <aside id="margin" class="margin" aria-label="页边">
+      <button type="button" class="rumor-btn" aria-label="江湖传闻">传闻<span class="rumor-count" hidden></span></button>
+      <button type="button" class="anew-btn">另起<span class="anew-tail">一卷</span></button>
+    </aside>
+  </div>
+
+  <!-- 传闻提示：无侵入，点击即展信 -->
+  <button type="button" id="ticker" class="ticker" hidden></button>
+
+  <!-- 信笺：江湖传闻 -->
+  <div id="letter" class="veil" hidden>
+    <section class="letter" role="dialog" aria-modal="true" aria-labelledby="letter-title">
+      <h2 id="letter-title" class="letter-title">江湖传闻</h2>
+      <div class="letter-body" tabindex="0"></div>
+      <button type="button" class="letter-close" aria-label="阖上信笺">阖</button>
+    </section>
+  </div>
+
+  <!-- 读屏：整段送出新回合正文，免受打字机逐字干扰 -->
+  <div id="live" class="sr-only" aria-live="polite"></div>
+</body>
+</html>

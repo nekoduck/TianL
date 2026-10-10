@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env；读取 .env 与命令行参数
-[OUTPUT]: 对外提供 main()（终端交互循环）
+[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env，tianlong/server 的 serve；读取 .env 与命令行参数
+[OUTPUT]: 对外提供 main()（终端交互循环；--web 时改为启动 Web 服务）
 [POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -36,9 +36,9 @@ def show(turn: dict):
     bar = "━" * 36
     print(f"\n{_c(bar, '2')}\n  {_c(turn['time'] + ' · ' + turn['place'], '1;33')}\n{_c(bar, '2')}")
     print(turn["text"])
-    for line in turn["news"]:
-        print(_c(f"  ☰ {line}", "36"))
-    print(_c(f"\n  {turn['status']}", "2"))
+    for n in turn["news"]:
+        print(_c(f"  ☰ {'亲眼所见' if n['witnessed'] else '江湖传闻'}｜{n['date']}·{n['place']}：{n['text']}", "36"))
+    print(_c("\n  " + "　".join(tag["text"] for tag in turn["status"]), "2"))
     for i, label in enumerate(turn["options"], 1):
         print(f"  {_c(f'[{i}]', '1;32')} {label}")
     print(_c("  （或直接输入你想做的事；/help 查看指令）", "2"))
@@ -71,6 +71,9 @@ def main(argv=None):
     ap.add_argument("--load", type=Path, help="读取存档")
     ap.add_argument("--name", help="主角名号")
     ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败、剧情后果未成立等诊断日志")
+    ap.add_argument("--web", action="store_true", help="以 Web 界面开卷（浏览器访问），而非终端")
+    ap.add_argument("--host", default="127.0.0.1", help="Web 服务监听地址")
+    ap.add_argument("--port", type=int, default=8000, help="Web 服务端口")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR, format="  [%(levelname)s] %(message)s")
     _load_dotenv()
@@ -78,6 +81,14 @@ def main(argv=None):
     llm = None if args.offline else from_env()
     if llm is None and not args.offline:
         print(_c("  未检测到 GEMINI_API_KEY，以离线模式运行。", "33"))
+    if args.web:
+        from .server import serve
+        print(f"  天龍八部已在 http://{args.host}:{args.port} 开卷（Ctrl+C 合卷）")
+        try:
+            serve(llm, args.host, args.port)
+        except KeyboardInterrupt:
+            print("\n  江湖路远，后会有期。")
+        return
     if args.load:
         world = World.load(args.load)
     else:
