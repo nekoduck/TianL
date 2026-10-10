@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env，tianlong/server 的 serve；读取 .env 与命令行参数
-[OUTPUT]: 对外提供 main()（终端交互循环；--web 时改为启动 Web 服务）
+[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
+[OUTPUT]: 对外提供 main()（终端交互循环；--web 时改为启动 Web 服务，续读 --load 存档或上次的自动存档）
 [POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -65,6 +65,29 @@ def _command(game: Game, line: str) -> Game | None:
     return game
 
 
+def _serve_web(args, llm):
+    """Web 模式：续读 --load 指定的存档，否则续读上次的自动存档；之后每回合自动存档。"""
+    from .server import AUTOSAVE, make_server
+    source = args.load or (AUTOSAVE if AUTOSAVE.exists() else None)
+    if source:
+        print(f"  正在续卷：{source}")
+    try:
+        httpd = make_server(llm, args.host, args.port, autosave=AUTOSAVE, resume=source)
+    except (ValueError, KeyError) as e:  # 坏档不覆盖：请玩家自行处置
+        print(_c(f"  存档 {source} 无法续读（{e!r}）。请移走或删除它后再开卷。", "33"))
+        return
+    session = httpd.RequestHandlerClass.hub.session
+    if session:
+        print(f"  {session.hero} 的这一卷已写到第 {len(session.transcript)} 回")
+    print(f"  天龍八部已在 http://{args.host}:{args.port} 开卷，每回合自动存入 {AUTOSAVE}（Ctrl+C 合卷）")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  江湖路远，后会有期。")
+    finally:
+        httpd.server_close()
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="天龙八部 · 文字沙盒")
     ap.add_argument("--offline", action="store_true", help="不调用大模型，全部走确定性兜底")
@@ -82,13 +105,7 @@ def main(argv=None):
     if llm is None and not args.offline:
         print(_c("  未检测到 GEMINI_API_KEY，以离线模式运行。", "33"))
     if args.web:
-        from .server import serve
-        print(f"  天龍八部已在 http://{args.host}:{args.port} 开卷（Ctrl+C 合卷）")
-        try:
-            serve(llm, args.host, args.port)
-        except KeyboardInterrupt:
-            print("\n  江湖路远，后会有期。")
-        return
+        return _serve_web(args, llm)
     if args.load:
         world = World.load(args.load)
     else:

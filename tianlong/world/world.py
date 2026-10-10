@@ -1,10 +1,11 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
-[OUTPUT]: 对外提供 World 门面（create 创世 / 写入 / 记事 / 推进时间 / 同步认知 / 存读档）
+[OUTPUT]: 对外提供 World 门面（create 创世 / 写入 / 记事 / 推进时间 / 同步认知 / 原子存档与读档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
+import os
 from pathlib import Path
 
 from . import effects, genesis, rag
@@ -94,9 +95,14 @@ class World:
                    Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
                    set(d["taint"]), d["seed"])
 
-    def save(self, path):
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        Path(path).write_text(json.dumps(self.dump(), ensure_ascii=False, indent=1), "utf-8")
+    def save(self, path, extra: dict | None = None):
+        """整世界存档；extra 供上层附带自己的段落（如 Web 的回合记录），读档时被 from_dump 忽略。
+        先写临时文件再原子替换：写到一半断电，旧档依然完好。"""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps({**self.dump(), **(extra or {})}, ensure_ascii=False, indent=1), "utf-8")
+        os.replace(tmp, path)
 
     @classmethod
     def load(cls, path) -> "World":

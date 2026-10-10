@@ -1,11 +1,12 @@
 /**
- * [INPUT]: 依赖 store（turns / pending / typing），typewriter.js 的 typewrite()，读屏播报节点 live
+ * [INPUT]: 依赖 store（turns / stream / pending / stage），typewriter.js 的 createTypewriter / paragraphs，contract.js 的 STAGES，读屏节点 live
  * [OUTPUT]: 对外提供 mountStory(el, store, live) → { skip }
- * [POS]: 叙事卷——跑团日志式向下生长：往事淡墨、当下浓墨；玩家落笔即先显影其举动与"研墨"之态；
- *        新回合交打字机誊写，亲眼所见的世界变动作为"记"附于文末
+ * [POS]: 叙事卷——跑团日志式向下生长：往事淡墨、当下浓墨；玩家落笔即先显影其举动与说书人此刻的进度（构思/推演）；
+ *        新回合一到即立抬头，正文随流式增量边到边誊，终稿落定后与之对账；亲眼所见的世界变动作为"记"附于文末
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
-import { typewrite } from '../typewriter.js';
+import { STAGES } from '../contract.js';
+import { createTypewriter, paragraphs } from '../typewriter.js';
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -22,8 +23,6 @@ function noted(tag, className, mark, text) {
   return node;
 }
 
-const paragraphs = (narrative) => narrative.split('\n').map((s) => s.trim()).filter(Boolean);
-
 /** 回合抬头：时辰必记，日期与地点只在变化时记，免得满纸重复。 */
 function stamp(turn, prev) {
   const parts = [];
@@ -35,10 +34,18 @@ function stamp(turn, prev) {
   return parts.join(' · ');
 }
 
+function annals(article, turn) {
+  const seen = turn.events.filter((e) => e.kind === 'witnessed');
+  if (!seen.length) return;
+  const list = h('ul', 'annals');
+  seen.forEach((e) => list.append(noted('li', '', '记', e.text)));
+  article.append(list);
+}
+
 export function mountStory(el, store, live) {
   let shown = 0;
   let pendingEl = null;
-  let writer = null;
+  let current = null; // 正在誊写的回合：{ turn, article, writer, consumed }
 
   function append(turn, prev) {
     pendingEl?.remove();
@@ -52,43 +59,49 @@ export function mountStory(el, store, live) {
     article.append(prose);
     el.append(article);
 
-    const seen = turn.events.filter((e) => e.kind === 'witnessed');
-    const annals = () => {
-      if (!seen.length) return;
-      const list = h('ul', 'annals');
-      seen.forEach((e) => list.append(noted('li', '', '记', e.text)));
-      article.append(list);
-    };
-
     if (!turn.fresh) {
       paragraphs(turn.narrative).forEach((p) => prose.append(h('p', '', p)));
-      annals();
+      annals(article, turn);
       return;
     }
-    live.textContent = turn.narrative; // 读屏一次读完整段，不受逐字干扰
-    const done = () => {
-      writer = null;
-      article.classList.remove('typing');
-      annals();
-      queueMicrotask(() => store.typingDone());
-    };
-    if (reducedMotion.matches) {
-      paragraphs(turn.narrative).forEach((p) => prose.append(h('p', '', p)));
-      done();
-      return;
-    }
+    const record = { turn, article, consumed: 0 };
+    record.writer = createTypewriter(prose, {
+      instant: reducedMotion.matches,
+      onDone() {
+        article.classList.remove('typing');
+        annals(article, record.turn);
+        live.textContent = record.turn.narrative; // 读屏在终稿落定后整段读出，不受逐字干扰
+        if (current === record) current = null;
+        queueMicrotask(() => store.typingDone());
+      },
+    });
+    current = record;
     article.classList.add('typing');
-    article.addEventListener('click', () => writer?.skip());
-    writer = typewrite(prose, paragraphs(turn.narrative), { onDone: done });
+    article.addEventListener('click', () => record.writer.skip());
+    if (!turn.streaming) record.writer.end(turn.narrative); // 整段到达：一次交给打字机
   }
 
-  function syncPending(pending) {
+  /** 流式途中：把尚未誊过的增量交给打字机；终稿替换了抬头时，宣告完稿。 */
+  function feed(s) {
+    if (!current) return;
+    if (typeof s.stream === 'string' && s.stream.length > current.consumed) {
+      current.writer.push(s.stream.slice(current.consumed));
+      current.consumed = s.stream.length;
+    }
+    const last = s.turns[s.turns.length - 1];
+    if (last && last !== current.turn && last.turn === current.turn.turn) {
+      current.turn = last;
+      if (!last.streaming) current.writer.end(last.narrative);
+    }
+  }
+
+  function syncPending(pending, stage) {
     if (pending && !pendingEl) {
       pendingEl = h('div', 'turn');
       const waiting = h('p', 'pending');
       const dots = h('span', 'dots');
       dots.append(h('i'), h('i'), h('i'));
-      waiting.append(dots, h('span', '', '说书人研墨中'));
+      waiting.append(dots, h('span', 'pending-text'));
       pendingEl.append(noted('p', 'deed', '你', pending.text), waiting);
       el.append(pendingEl);
       pendingEl.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'center' });
@@ -96,10 +109,13 @@ export function mountStory(el, store, live) {
       pendingEl.remove();
       pendingEl = null;
     }
+    if (pendingEl) pendingEl.querySelector('.pending-text').textContent = STAGES[stage] || STAGES.direct;
   }
 
   function render(s) {
-    if (s.turns.length < shown) { // 另起一卷
+    if (s.turns.length < shown) { // 另起一卷，或重新同步后卷子变短
+      current?.writer.cancel();
+      current = null;
       el.textContent = '';
       shown = 0;
       pendingEl = null;
@@ -108,10 +124,11 @@ export function mountStory(el, store, live) {
       const i = shown++; // 先记账再排版：排版途中可能触发新一轮 render
       append(s.turns[i], s.turns[i - 1]);
     }
-    syncPending(s.pending);
+    feed(s);
+    syncPending(s.pending, s.stage);
   }
 
   store.subscribe(render);
   render(store.get());
-  return { skip: () => writer?.skip() };
+  return { skip: () => current?.writer.skip() };
 }

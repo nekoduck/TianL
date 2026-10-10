@@ -2,7 +2,8 @@
  * [INPUT]: 依赖 contract.js 的 VERSION / ServiceError；可选依赖 sessionStorage（刷新续读）
  * [OUTPUT]: 对外提供 createMock({ latency, flaky }) → Service { kind, connect, start, act }
  * [POS]: 模拟服务，与 api.js 同形、与 tianlong/protocol.py 同载荷——前端脱离后端独立开发时的说书人；
- *        剧本覆盖界面的每一种状态：伤势标签、随身器物、亲见旁注、延迟传闻、选项过期、网络失联
+ *        剧本覆盖界面的每一种状态：伤势标签、随身器物、亲见旁注、延迟传闻、选项过期、网络失联；
+ *        给了流式监听就仿 Gemini 的节奏分块送出正文。回合先记入卷中再开讲——与服务端一样，读者半途离席，回合照样写完
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 import { VERSION, ServiceError } from './contract.js';
@@ -88,12 +89,34 @@ function compose(n, deed) {
   };
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const between = (a, b) => a + Math.random() * (b - a);
+
+/** 仿流式：构思 → 推演 → 落笔(head) → 正文分块；flaky 时三成在半途断流。 */
+async function narrate(turn, on, flaky) {
+  on.stage?.('direct');
+  await sleep(between(500, 900));
+  on.stage?.('settle');
+  await sleep(between(300, 600));
+  on.stage?.('write');
+  on.head?.({ ...turn, narrative: '' });
+  await sleep(between(400, 800)); // 首字之前的停顿
+  const text = turn.narrative;
+  for (let i = 0; i < text.length;) {
+    const size = Math.round(between(8, 26));
+    on.text?.(text.slice(i, i + size));
+    i += size;
+    if (flaky && i < text.length && Math.random() < 0.08) throw new ServiceError('network');
+    await sleep(between(180, 380));
+  }
+}
+
 // ============================================================
 //  服务：与 api.js 同形
 // ============================================================
 export function createMock({ latency = [700, 1600], flaky = false } = {}) {
   let session = restore();
-  const wait = () => new Promise((r) => setTimeout(r, latency[0] + Math.random() * (latency[1] - latency[0])));
+  const wait = () => sleep(between(latency[0], latency[1]));
   const payload = () => ({ protocol: VERSION, session: { id: session.id, hero: session.hero }, transcript: session.transcript });
 
   function persist() {
@@ -106,17 +129,18 @@ export function createMock({ latency = [700, 1600], flaky = false } = {}) {
       await wait();
       return session ? payload() : null;
     },
-    async start(name) {
-      await wait();
+    async start(name, on) {
       const hero = (name || '').trim();
       if (hero.length > 12) throw new ServiceError('bad_request', 400, '名号请勿超过12字');
       session = { id: Math.random().toString(16).slice(2, 14), hero: hero || '无名', transcript: [compose(1, null)] };
       persist();
+      if (on) await narrate(session.transcript[0], on, false);
+      else await wait();
       return payload();
     },
-    async act(action) {
-      await wait();
-      if (flaky && Math.random() < 0.3) throw new ServiceError('network');
+    async act(action, on) {
+      if (!on) await wait();
+      if (flaky && Math.random() < 0.15) throw new ServiceError('network');
       if (!session) throw new ServiceError('no_session', 404);
       const current = session.transcript[session.transcript.length - 1];
       const content = String(action?.action_content ?? '').trim();
@@ -134,6 +158,7 @@ export function createMock({ latency = [700, 1600], flaky = false } = {}) {
       const turn = compose(session.transcript.length + 1, { action_type: action.action_type, action_content: content, text });
       session.transcript.push(turn);
       persist();
+      if (on) await narrate(turn, on, flaky);
       return turn;
     },
   };

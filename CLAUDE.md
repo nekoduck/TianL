@@ -4,14 +4,14 @@ Python 3.11+ (纯标准库，零依赖) + Gemini REST (gemini-flash-latest，thi
 <directory>
 tianlong/ - 游戏本体 (2 子目录: world/ 基础设施, narrative/ 剧情层；engine.py 主循环, protocol.py 前后端契约, server.py Web 服务, cli.py 终端界面)
 data/ - 原著硬知识库 (1子目录: canon/ 世纪新修版抽取数据——183地点/242人物/98器物/119武学/235原著事件；EXTRACT_PROMPT.md 抽取规范)
-web/ - Web 表现层 (新中式极简纸书界面；PROTOCOL.md 通信协议 tianlong/1、js/ 状态层+真实/模拟服务+组件、css/ink.css)
+web/ - Web 表现层 (新中式极简纸书界面；PROTOCOL.md 通信协议 tianlong/1.1(含 SSE 流式)、js/ 状态层+真实/模拟服务+组件、css/ink.css、fonts/ 自托管楷体子集)
 tests/ - 离线验证 (剧情落账、地理器物归属、世界物理、延迟传播、隐情揭示、污染判定、跨回合延续、通信协议与 HTTP 服务)
 </directory>
 
 <config>
 main.py - 命令行入口：python main.py [--offline] [--load 存档] [--name 名号] [--verbose] [--web [--host H] [--port P]]
 .env - 本地密钥 GEMINI_API_KEY=… (已 gitignore，可选 GEMINI_MODEL)
-.gitignore - 忽略 .env、saves/、__pycache__
+.gitignore - 忽略 .env、saves/（Web 每回合自动存档于 saves/autosave.json，终端亦可 --load）、__pycache__
 </config>
 
 ## 宪法
@@ -28,7 +28,8 @@ main.py - 命令行入口：python main.py [--offline] [--load 存档] [--name �
 7. **兜底即离线。** 每个 Agent 都有朴素 fallback；`llm=None` 时游戏照常运转，测试据此运行。
 8. **依赖方向。** `world/` 永不 import `narrative/`；narrative 只读 rag、只交 effects。
 9. **内核不知道界面。** 引擎回合产物是结构化纯 dict（历法分段、身况文字标签、亲见与传闻）；终端与 Web 都只是它的读者。
-   Web 经 `protocol.py`（载荷）+ `server.py`（传输）对外，契约正文是 `web/PROTOCOL.md`，前端 `api.js` 与 `mock.js` 是它的两面镜子。
+   Web 经 `protocol.py`（载荷）+ `server.py`（传输）对外，契约正文是 `web/PROTOCOL.md`，前端 `api.js` 与 `mock.js` 是它的两面镜子；
+   引擎以可选监听逐步报告进度与正文增量，传输层据此 SSE 推送——内核仍不知道 HTTP 的存在。
 
 ## 回合流水线 (engine.Game._turn)
 
@@ -41,7 +42,7 @@ rag.build + rag.backstage → 导演(剧情节拍/后果/时辰/事件/3选项) 
 ```
 python main.py                       # 需要 GEMINI_API_KEY（环境变量或 .env）
 python main.py --offline             # 不调用模型
-python main.py --web                 # Web 界面：浏览器打开 http://127.0.0.1:8000
+python main.py --web                 # Web 界面：浏览器打开 http://127.0.0.1:8000；重启自动续读上次那一卷
 python -m http.server -d web 8001    # 前端独立开发：打开 http://127.0.0.1:8001/?mock 用模拟说书人
 python -m unittest discover -s tests -t .
 ```

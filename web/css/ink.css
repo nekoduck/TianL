@@ -1,9 +1,19 @@
 /**
- * [INPUT]: 由 index.html 引入；依赖系统中文衬线/楷体字族与可选的 Noto Serif SC 网络字体
+ * [INPUT]: 由 index.html 引入；依赖 fonts/ 的霞鹜文楷子集（自托管）、Noto Serif SC 网络字体与系统中文字体作回落
  * [OUTPUT]: 新中式极简的全部视觉——色彩令牌(纸白/墨黑/水墨灰，点缀暗朱砂/淡天青)、书页版式、组件样式、微交互、夜读配色、窄屏适配
  * [POS]: web 的唯一样式表；组件只挂语义类名，视觉决定全部收在这里
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+
+/* ============================================================
+   字：楷体自托管（霞鹜文楷常用字子集，OFL）；本机装了全量版则优先用本机的
+   ============================================================ */
+@font-face {
+  font-family: "LXGW WenKai";
+  src: local("LXGW WenKai"), local("LXGWWenKai-Regular"), url("../fonts/lxgw-wenkai-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
 
 /* ============================================================
    令牌：纸、墨、两点朱青
@@ -20,7 +30,7 @@
   --rule-red: color-mix(in srgb, var(--cinnabar) 28%, transparent);
 
   --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --kai: "Kaiti SC", "STKaiti", "KaiTi", "BiauKai", var(--serif);
+  --kai: "LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", "BiauKai", var(--serif);
   --measure: 34em;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .27 0 0 0 0 .2 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -259,7 +269,7 @@ button:disabled { cursor: default; }
   transform: translateY(6px); transition: transform .45s ease;
 }
 .veil.open .letter { transform: none; }
-.letter-title { margin: 0; margin-block-end: 1.4rem; font-size: 1.2rem; font-weight: 600; letter-spacing: .45em; color: var(--ink); }
+.letter-title { margin: 0; margin-block-end: 1.4rem; font-size: 1.3rem; font-weight: 400; letter-spacing: .45em; color: var(--ink); }
 .letter-body {
   flex: 1; min-block-size: 0; overflow-x: auto; overflow-y: hidden; outline: none;
   font-size: 1.02rem; line-height: var(--pitch); letter-spacing: .12em;

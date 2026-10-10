@@ -1,12 +1,13 @@
 """
 [INPUT]: 依赖 engine 回合产物 Turn（纯 dict）的字段约定：time/clock/place/region/text/options/news/status
-[OUTPUT]: 对外提供 VERSION、ProtocolError、present()（Turn → 回合载荷）、session_payload()、resolve()（玩家行动 → 引擎原话）、hero_name()（开卷名号校验）
+[OUTPUT]: 对外提供 VERSION、ProtocolError、present()（Turn → 回合载荷）、relay()（引擎进度 → 流式事件）、session_payload()、
+          resolve()（玩家行动 → 引擎原话）、hero_name()（开卷名号校验）
 [POS]: 前后端契约的 Python 实现——向外把引擎回合翻译成协议载荷，向内把协议行动翻译回引擎原话；
        契约正文见 web/PROTOCOL.md，web/js/api.js 与 web/js/mock.js 是它在前端的两面镜子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-VERSION = "tianlong/1"
+VERSION = "tianlong/1.1"  # 次版本只做向后兼容的增补（1.1：流式推送）；客户端只比对主版本
 ACTION_TYPES = ("selection", "free_text")
 MAX_TEXT = 200
 MAX_NAME = 12
@@ -40,6 +41,18 @@ def present(turn: dict, n: int, deed: dict | None) -> dict:
         "events": [{"id": e["id"], "kind": "witnessed" if e["witnessed"] else "rumor",
                     "date": e["date"], "place": e["place"], "text": e["text"]} for e in turn["news"]],
     }
+
+
+def relay(send, n: int, deed: dict | None):
+    """引擎监听 → 协议流式事件：stage{stage} · head(回合载荷，narrative 为空串) · text{delta}；done 由传输层补上。"""
+    def on(kind: str, data):
+        if kind == "stage":
+            send("stage", {"stage": data})
+        elif kind == "head":
+            send("head", present(data, n, deed))
+        elif kind == "text":
+            send("text", {"delta": data})
+    return on
 
 
 def session_payload(sid: str | None, hero: str | None, transcript: list[dict]) -> dict:

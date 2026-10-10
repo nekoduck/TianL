@@ -1,8 +1,10 @@
 """
 [INPUT]: 依赖 http.server 的 ThreadingHTTPServer / SimpleHTTPRequestHandler、threading.Lock、engine.Game、world.World、protocol
-[OUTPUT]: 对外提供 make_server()（构建本地 Web 服务）、serve()（阻塞运行）、Hub（单机单局的会话中枢）
+[OUTPUT]: 对外提供 make_server()（构建本地 Web 服务，可续卷、可自动存档）、Hub（单机单局的会话中枢）、Session、AUTOSAVE
 [POS]: 传输层——把 protocol 的载荷挂到 HTTP 上，并托管 web/ 静态前端；不含游戏逻辑，也不解释协议字段。
-       路由：GET /api/session 续读 · POST /api/session 开卷 · POST /api/action 行动 · 其余路径为静态文件
+       路由：GET /api/session 续读 · POST /api/session 开卷 · POST /api/action 行动 · 其余路径为静态文件；
+       请求头 Accept 含 text/event-stream 时，开卷与行动改以 SSE 逐步推送（stage → head → text… → done）。
+       每回合落定即自动存档（与终端 /save 同一格式，外加 web 段），服务重启后续卷
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -18,35 +20,63 @@ from .protocol import ProtocolError
 from .world.world import World
 
 WEB = Path(__file__).resolve().parents[1] / "web"
+AUTOSAVE = Path("saves/autosave.json")
 MAX_BODY = 16 * 1024
 log = logging.getLogger("tianlong")
 
 
 # ============================================================
-#  会话：一卷书 = 一局游戏 + 它的全部回合载荷（刷新页面即可续读）
+#  会话：一卷书 = 一局游戏 + 它的全部回合载荷（刷新页面、重启服务皆可续读）
 # ============================================================
 class Session:
-    def __init__(self, hero: str | None, llm):
-        self.id = uuid.uuid4().hex[:12]
-        self.hero = hero or "无名"
-        self.game = Game(World.create(hero), llm)
-        self.transcript = [protocol.present(self.game.open(), 1, None)]
+    def __init__(self, game: Game, hero: str, transcript: list[dict], sid: str | None = None):
+        self.game, self.hero, self.transcript = game, hero, transcript
+        self.id = sid or uuid.uuid4().hex[:12]
+        if transcript:  # 续卷时让引擎记得眼前的三条去路
+            game.options = [o["label"] for o in transcript[-1]["options"]]
+
+    @classmethod
+    def begin(cls, hero: str | None, llm, send=None) -> "Session":
+        """开卷：新建世界并写出开场回合；send 存在则边写边送。"""
+        session = cls(Game(World.create(hero), llm), hero or "无名", [])
+        on = protocol.relay(send, 1, None) if send else None
+        session.transcript.append(protocol.present(session.game.open(on), 1, None))
+        return session
+
+    @classmethod
+    def resume(cls, path, llm) -> "Session":
+        """续卷：读存档——Web 自动存档带回合记录；终端 /save 的存档没有，就补写一个开场。"""
+        data = json.loads(Path(path).read_text("utf-8"))
+        game = Game(World.from_dump(data), llm)
+        web = data.get("web") or {}
+        session = cls(game, game.world.player["name"], list(web.get("transcript") or []),
+                      (web.get("session") or {}).get("id"))
+        if not session.transcript:
+            session.transcript.append(protocol.present(game.open(), 1, None))
+        return session
 
     def payload(self) -> dict:
         return protocol.session_payload(self.id, self.hero, self.transcript)
 
-    def act(self, body) -> dict:
+    def act(self, body, send=None) -> dict:
         deed, text = protocol.resolve(body, self.transcript[-1])
-        turn = protocol.present(self.game.act(text), len(self.transcript) + 1, deed)
+        n = len(self.transcript) + 1
+        on = protocol.relay(send, n, deed) if send else None
+        turn = protocol.present(self.game.act(text, on), n, deed)
         self.transcript.append(turn)
         return turn
+
+    def save(self, path):
+        """与终端 /save 同一格式（World.dump），外加 web 段：终端可直接 --load，Web 可整卷续读。"""
+        self.game.world.save(path, {"web": {"session": {"id": self.id, "hero": self.hero},
+                                            "transcript": self.transcript}})
 
 
 class Hub:
     """单机单局：同一时刻只有一卷书，且同一时刻只能落一笔——回合涉及多次大模型调用，绝不并发改写世界。"""
 
-    def __init__(self, llm):
-        self.llm, self.session, self.lock = llm, None, Lock()
+    def __init__(self, llm, autosave: Path | None = None, session: Session | None = None):
+        self.llm, self.autosave, self.session, self.lock = llm, autosave, session, Lock()
 
     def _exclusive(self, fn):
         if not self.lock.acquire(blocking=False):
@@ -56,22 +86,65 @@ class Hub:
         finally:
             self.lock.release()
 
-    def current(self, _body=None) -> dict:
+    def _persist(self):
+        if self.autosave and self.session:
+            try:
+                self.session.save(self.autosave)
+            except OSError as e:  # 存不下不该让这一回合作废
+                log.warning("自动存档失败：%s", e)
+
+    def current(self, _body=None, _send=None) -> dict:
         """续读。尚未开卷不是错误：session 为 null、transcript 为空。"""
         return self.session.payload() if self.session else protocol.session_payload(None, None, [])
 
-    def start(self, body) -> dict:
+    def start(self, body, send=None) -> dict:
         hero = protocol.hero_name(body)
 
         def begin():
-            self.session = Session(hero, self.llm)
+            self.session = Session.begin(hero, self.llm, send)
+            self._persist()
             return self.session.payload()
         return self._exclusive(begin)
 
-    def act(self, body) -> dict:
+    def act(self, body, send=None) -> dict:
         if self.session is None:
             raise ProtocolError(404, "no_session", "这一卷已经合上，请重新开卷")
-        return self._exclusive(lambda: self.session.act(body))
+
+        def step():
+            turn = self.session.act(body, send)
+            self._persist()
+            return turn
+        return self._exclusive(step)
+
+
+# ============================================================
+#  SSE：首个事件出发时才开流——开流之前的错误仍是普通 JSON 错误，开流之后化为 error 事件
+# ============================================================
+class _Stream:
+    def __init__(self, handler: "Handler"):
+        self.h, self.open, self.alive = handler, False, True
+
+    def send(self, event: str, data: dict):
+        if not self.open:
+            self.h.send_response(200)
+            self.h.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.h.end_headers()
+            self.h.close_connection = True
+            self.open = True
+        if not self.alive:
+            return
+        frame = f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode("utf-8")
+        try:
+            self.h.wfile.write(frame)
+            self.h.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            self.alive = False  # 读者离席：回合照常写完、照常存档，回来续读即可
+
+    def fail(self, err: ProtocolError):
+        if self.open:
+            self.send("error", err.payload())
+        else:
+            self.h._send(err.status, err.payload())
 
 
 # ============================================================
@@ -96,6 +169,8 @@ class Handler(SimpleHTTPRequestHandler):
         route = routes.get(self.path.split("?", 1)[0])
         if route is None:
             return self._send(404, ProtocolError(404, "not_found", "没有这条路").payload())
+        if "text/event-stream" in (self.headers.get("Accept") or ""):
+            return self._stream(route[1])
         self._api(*route)
 
     def _body(self):
@@ -116,6 +191,16 @@ class Handler(SimpleHTTPRequestHandler):
             log.exception("回合处理失败")
             self._send(500, ProtocolError(500, "internal", "说书人一时失神，请再试一次").payload())
 
+    def _stream(self, fn):
+        out = _Stream(self)
+        try:
+            out.send("done", fn(self._body(), out.send))  # done 与同一请求的非流式响应体一字不差
+        except ProtocolError as e:
+            out.fail(e)
+        except Exception:
+            log.exception("回合处理失败")
+            out.fail(ProtocolError(500, "internal", "说书人一时失神，请再试一次"))
+
     def _send(self, status: int, obj: dict):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -125,18 +210,16 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store")  # 本地开发：改了前端刷新即见
+        self.send_header("Cache-Control", "no-store")  # 本地开发：改了前端刷新即见；流式响应也不得缓存
         super().end_headers()
 
     def log_message(self, fmt, *args):
         log.debug("%s %s", self.address_string(), fmt % args)
 
 
-def make_server(llm, host: str = "127.0.0.1", port: int = 8000) -> ThreadingHTTPServer:
-    handler = type("BoundHandler", (Handler,), {"hub": Hub(llm)})
+def make_server(llm, host: str = "127.0.0.1", port: int = 8000, autosave: Path | None = None,
+                resume: Path | None = None) -> ThreadingHTTPServer:
+    """resume 为存档路径时先续卷；autosave 为路径时每回合落定即存档。"""
+    session = Session.resume(resume, llm) if resume else None
+    handler = type("BoundHandler", (Handler,), {"hub": Hub(llm, autosave, session)})
     return ThreadingHTTPServer((host, port), handler)
-
-
-def serve(llm, host: str = "127.0.0.1", port: int = 8000):
-    with make_server(llm, host, port) as httpd:
-        httpd.serve_forever()

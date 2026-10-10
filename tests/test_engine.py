@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 tianlong.engine 的 Game，tianlong.world 的 World 与 data/canon 原著世界；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——开场原著在主角眼前上演、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
-          跋涉时日由道路结算、新造实体被驳回并回告编剧、史官改写被扰动的大事
+          跋涉时日由道路结算、新造实体被驳回并回告编剧、史官改写被扰动的大事、流式进度依序报告、编剧半途失声
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住与校准
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -31,6 +31,20 @@ class StubLLM:
     def text(self, system, user, max_tokens=0):
         self.writer_prompts.append(user)
         return "（正文）"
+
+
+class StreamLLM(StubLLM):
+    """能流式的桩：按 chunks 逐块产出；chunks 中的异常在该处抛出，模拟半途断流。"""
+
+    def __init__(self, replies: dict, chunks: list):
+        super().__init__(replies)
+        self.chunks = chunks
+
+    def stream(self, system, user, max_tokens=0):
+        for c in self.chunks:
+            if isinstance(c, Exception):
+                raise c
+            yield c
 
 
 def eve_of_month_after(world, day: int):
@@ -139,6 +153,28 @@ class DirectorTest(unittest.TestCase):
         self.assertEqual(w.graph.get("段誉", "status"), "alive")  # 越出相关者
         self.assertLess(w.player["power"], 100)                  # 场外碰不到主角
         self.assertIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])
+
+
+class StreamingTest(unittest.TestCase):
+    def test_progress_is_reported_in_order(self):
+        llm = StreamLLM(director(), ["剑光", "一闪，", "\n满堂寂然。"])
+        events = []
+        turn = Game(World.create(), llm).act("看", on=lambda kind, data: events.append((kind, data)))
+        kinds = [k for k, _ in events]
+        self.assertEqual(kinds, ["stage", "stage", "stage", "head", "text", "text", "text"])
+        self.assertEqual([d for k, d in events if k == "stage"], ["direct", "settle", "write"])
+        head = events[3][1]
+        self.assertEqual((head["text"], head["options"]), ("", ["一", "二", "三"]))  # 落笔前，除正文外都已定
+        self.assertEqual(turn["text"], "剑光一闪，\n满堂寂然。")
+
+    def test_writer_falling_silent_midway_keeps_what_was_written(self):
+        llm = StreamLLM(director(), ["前半句已写成，", LLMError("断流")])
+        turn = Game(World.create(), llm).act("看", on=lambda *_: None)
+        self.assertEqual(turn["text"], "前半句已写成，")
+
+    def test_without_listener_nothing_streams(self):
+        llm = StreamLLM(director(), [AssertionError("不该流式")])
+        self.assertEqual(Game(World.create(), llm).act("看")["text"], "（正文）")
 
 
 if __name__ == "__main__":

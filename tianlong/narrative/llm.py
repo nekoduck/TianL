@@ -1,7 +1,8 @@
 """
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
-[OUTPUT]: 对外提供 Gemini（text / json 两种调用）、LLMError、from_env()
-[POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看
+[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
+[POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
+       stream 走 streamGenerateContent?alt=sse，供编剧边写边送
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -10,12 +11,33 @@ import re
 import urllib.error
 import urllib.request
 
-ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}"
 DEFAULT_MODEL = "gemini-flash-latest"
+NET_ERRORS = (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError)
 
 
 class LLMError(Exception):
     pass
+
+
+def _texts(data: dict) -> str:
+    try:
+        return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+    except (KeyError, IndexError, TypeError):
+        return ""
+
+
+def sse_texts(lines, usage: dict):
+    """把 SSE 字节行解成文本增量；每块的 usageMetadata 累计值写入 usage["total"]（取最后一次）。"""
+    for raw in lines:
+        line = raw.decode("utf-8").strip() if isinstance(raw, bytes) else raw.strip()
+        if not line.startswith("data:"):
+            continue
+        data = json.loads(line[5:].strip())
+        usage["total"] = data.get("usageMetadata", {}).get("totalTokenCount", usage.get("total", 0))
+        text = _texts(data)
+        if text:
+            yield text
 
 
 class Gemini:
@@ -23,7 +45,8 @@ class Gemini:
         self.key, self.model, self.timeout = key, model, timeout
         self.tokens = 0  # 累计消耗，用于自查成本
 
-    def _call(self, system: str, user: str, *, as_json: bool, max_tokens: int, temperature: float) -> str:
+    def _request(self, method: str, system: str, user: str, *, as_json: bool, max_tokens: int,
+                 temperature: float) -> urllib.request.Request:
         config = {"maxOutputTokens": max_tokens, "temperature": temperature,
                   "thinkingConfig": {"thinkingBudget": 0}}
         if as_json:
@@ -31,18 +54,22 @@ class Gemini:
         body = {"systemInstruction": {"parts": [{"text": system}]},
                 "contents": [{"role": "user", "parts": [{"text": user}]}],
                 "generationConfig": config}
-        req = urllib.request.Request(ENDPOINT.format(model=self.model), data=json.dumps(body).encode(),
-                                     headers={"Content-Type": "application/json", "X-goog-api-key": self.key})
+        return urllib.request.Request(ENDPOINT.format(model=self.model, method=method), data=json.dumps(body).encode(),
+                                      headers={"Content-Type": "application/json", "X-goog-api-key": self.key})
+
+    def _call(self, system: str, user: str, *, as_json: bool, max_tokens: int, temperature: float) -> str:
+        req = self._request("generateContent", system, user, as_json=as_json, max_tokens=max_tokens,
+                            temperature=temperature)
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 data = json.load(resp)
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+        except NET_ERRORS as e:
             raise LLMError(f"请求失败：{e}") from e
         self.tokens += data.get("usageMetadata", {}).get("totalTokenCount", 0)
-        try:
-            return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
-        except (KeyError, IndexError) as e:
-            raise LLMError(f"响应无内容：{str(data)[:200]}") from e
+        text = _texts(data)
+        if not text:
+            raise LLMError(f"响应无内容：{str(data)[:200]}")
+        return text
 
     def text(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.9) -> str:
         return self._call(system, user, as_json=False, max_tokens=max_tokens, temperature=temperature).strip()
@@ -57,6 +84,19 @@ class Gemini:
         if not isinstance(data, dict):
             raise LLMError("期望 JSON 对象")
         return data
+
+    def stream(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.9):
+        """逐块产出正文增量；任何网络或解析失败都化为 LLMError（调用方据已得多少决定如何收场）。"""
+        req = self._request("streamGenerateContent?alt=sse", system, user, as_json=False, max_tokens=max_tokens,
+                            temperature=temperature)
+        usage = {}
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                yield from sse_texts(resp, usage)
+        except NET_ERRORS as e:
+            raise LLMError(f"流式请求中断：{e}") from e
+        finally:
+            self.tokens += usage.get("total", 0)
 
 
 def from_env() -> Gemini | None:

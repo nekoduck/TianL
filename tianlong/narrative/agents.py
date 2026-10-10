@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 narrative/prompts 的四组提示词组装器，依赖 narrative/llm 的 LLMError、world/clock 的 PER_DAY；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：编织剧情 + 拟定选项）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
+[OUTPUT]: 对外提供 direct()（导演：编织剧情 + 拟定选项）、write()（编剧，可经 on_text 边写边送）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
 [POS]: narrative 层的四个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容，
        剧情后果能否落账交给 world/effects；llm 为 None 或调用失败时走朴素兜底，离线亦可运行
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -62,9 +62,25 @@ def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
             "memory": str(r.get("memory") or beats[0])[:60]}
 
 
-def write(llm, pack: dict, deed: str, beats: list[str], void: list[str], news: list[str]) -> str:
+def write(llm, pack: dict, deed: str, beats: list[str], void: list[str], news: list[str], on_text=None) -> str:
+    """编剧。给了 on_text 且模型能流式，就边写边送；半途失声时已写出的即为正文，一字未得才走兜底。"""
+    prompt = prompts.writer(pack, deed, beats, void, news)
     fallback = lambda: "\n".join([pack["scene"]["desc"], *beats])  # 见闻与传闻由回合载荷另行送达
-    return _ask(llm, prompts.writer(pack, deed, beats, void, news), fallback, as_json=False, tokens=1200)
+    if on_text and hasattr(llm, "stream"):
+        parts = []
+        try:
+            for delta in llm.stream(*prompt, max_tokens=1200):
+                parts.append(delta)
+                on_text(delta)
+            return "".join(parts).strip()
+        except LLMError as e:
+            log.warning("编剧流式中断（已得 %d 段）：%s", len(parts), e)
+            if parts:
+                return "".join(parts).strip()
+    text = _ask(llm, prompt, fallback, as_json=False, tokens=1200)
+    if on_text:
+        on_text(text)  # 不能流式时，整段作一次送出，调用方无须区分
+    return text
 
 
 # ============================================================
