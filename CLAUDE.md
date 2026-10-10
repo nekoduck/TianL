@@ -12,6 +12,7 @@ tests/ - 离线验证 (剧情落账、地理器物归属、世界物理、延迟
 main.py - 命令行入口：python main.py [--offline] [--load 存档] [--name 名号] [--verbose] [--web [--host H] [--port P]]
 .env - 本地密钥 GEMINI_API_KEY=… (已 gitignore，可选 GEMINI_MODEL)
 .gitignore - 忽略 .env、saves/、__pycache__
+DESIGN_REVIEW.md - 2026-10-10 内核设计评审：真实对局证据、根因定位、分优先级改造方案（P0 账本诚实/原著入场/日程分层 → P1 时间裁决/记忆分层 → P2 LLM 工程/戏剧调度）
 </config>
 
 ## 宪法
