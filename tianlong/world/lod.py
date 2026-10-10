@@ -2,7 +2,7 @@
 [INPUT]: 依赖 world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
 [OUTPUT]: 对外提供 tiers()、lod1_scope()、absorb()、due_canon()、dirt()、broken()、settle()
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、何时刷新、是否被污染），
-       把需要 LLM 的工作以"任务"形式交给 engine，并把 LLM 的结构化结果经 effects 策略过滤后落账
+       把需要 LLM 的工作以"任务"形式交给 engine，并把场外 Agent 的创造经 effects 物化为真相
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -24,12 +24,12 @@ def lod1_scope(world) -> tuple[list[str], set[str]]:
 
 
 def absorb(world, reports: list[dict], scope: set[str]) -> list[dict]:
-    """LOD1 战报落账：变更只经 lod1 策略执行，被拒的指令静默丢弃；战报本身成为真相并开始传播。"""
+    """LOD1 战报落账：创造经 effects 物化（违背世界物理的部分不成立）；战报本身成为真相并开始传播。"""
     events = []
     for r in reports:
         applied, _ = world.apply(r.get("effects", []), "lod1", scope)
-        where = r.get("where") if r.get("where") in scope else None
-        if where:
+        where = r.get("where")
+        if world.graph.kind(where) == "location":
             events.append(world.record(f"{r.get('event', '')}：{r.get('result', '')}", where, applied, "lod1"))
     return events
 

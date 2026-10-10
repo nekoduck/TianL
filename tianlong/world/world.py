@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/ 下 graph、clock、blackboard、ledger、effects、rules 全部基础设施
+[INPUT]: 依赖 world/ 下 graph、clock、blackboard、ledger、effects、rag 全部基础设施
 [OUTPUT]: 对外提供 World 门面（创世 / 写入 / 记事 / 推进时间 / 同步认知 / 存读档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -7,7 +7,7 @@
 import json
 from pathlib import Path
 
-from . import effects, rules
+from . import effects, rag
 from .blackboard import Blackboard
 from .clock import Clock
 from .graph import ROAD, Graph
@@ -72,7 +72,7 @@ class World:
         return news
 
     def _observe(self):
-        s = rules.scene(self)
+        s = rag.scene(self)
         seen = [self.here] + s["people"] + s["dead"] + s["features"] + s["items"]
         for nid, belief in self.knowledge.beliefs.items():  # 以为在此、实则不在的人：下落不明
             if belief.get("location") == self.here and nid not in seen and self.graph.kind(nid) == "person":
@@ -85,13 +85,14 @@ class World:
     def dump(self) -> dict:
         return {"graph": self.graph.dump(), "player": self.player.data, "tick": self.clock.tick,
                 "truth": self.truth.events, "beliefs": self.knowledge.beliefs, "known": self.knowledge.known,
+                "secrets": self.knowledge.secrets,
                 "pending": self.messenger.pending, "canon": self.canon, "done": self.done,
                 "taint": sorted(self.taint), "seed": self.seed}
 
     @classmethod
     def from_dump(cls, d: dict) -> "World":
         return cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
-                   Knowledge(d["beliefs"], d["known"]), Messenger(d["pending"]), d["canon"], d["done"],
+                   Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
                    set(d["taint"]), d["seed"])
 
     def save(self, path):

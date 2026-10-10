@@ -1,8 +1,8 @@
 """
-[INPUT]: 依赖 narrative/prompts 的五组提示词组装器，依赖 narrative/llm 的 LLMError；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 parse()（动作解析）、direct()（导演）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
-[POS]: narrative 层的五个 Agent——每个都是「组装→调用→校验→兜底」四步；llm 为 None 或调用失败时走确定性兜底，
-       故离线模式与在线模式共用同一条代码路径。Agent 只产出文本或"提案"，从不直接触碰 World
+[INPUT]: 依赖 narrative/prompts 的四组提示词组装器，依赖 narrative/llm 的 LLMError；llm 参数鸭子类型（Gemini 或 None）
+[OUTPUT]: 对外提供 direct()（导演：裁定+创造）、write()（编剧）、simulate()（LOD1 推演）、chronicle()（LOD2 史官）
+[POS]: narrative 层的四个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容，
+       内容是否成立交给 world/effects 的世界物理；llm 为 None 或调用失败时走朴素兜底，离线亦可运行
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -11,10 +11,7 @@ from . import prompts
 from .llm import LLMError
 
 log = logging.getLogger("tianlong")
-
-VERB_HINTS = {"go": "去往赴走回奔", "talk": "说问聊谈拜请", "fight": "打攻杀斗战劈", "take": "拿取捡拾收",
-              "examine": "看察查观翻摸磕拜跪", "study": "练读学研修参", "rest": "歇睡坐休息调"}
-DIVERSITY = ("talk", "examine", "take", "study", "go", "fight", "rest")  # 兜底选项的方向优先级
+MAX_ELAPSED = 12 * 30  # 单回合至多一月，长途跋涉由系统另按道路结算
 
 
 def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):
@@ -23,71 +20,62 @@ def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):
     try:
         return llm.json(*prompt, max_tokens=tokens) if as_json else llm.text(*prompt, max_tokens=tokens)
     except LLMError as e:
-        log.warning("LLM 调用失败，走确定性兜底：%s", e)
+        log.warning("LLM 调用失败，走兜底：%s", e)
         return fallback()
 
 
-def _keyword_match(text: str, actions: list[dict]) -> int:
-    best, score = -1, 0
-    for i, a in enumerate(actions):
-        s = (2 if a["target"] and a["target"] in text else 0) + any(ch in text for ch in VERB_HINTS[a["verb"]])
-        if s > score and (a["target"] is None or s >= 2):
-            best, score = i, s
-    return best
-
-
-def _diverse(actions: list[dict]) -> list[int]:
-    picks = []
-    for verb in DIVERSITY:
-        picks += [i for i, a in enumerate(actions) if a["verb"] == verb][:1]
-    return picks
+def _dicts(xs) -> list[dict]:
+    return [x for x in xs or [] if isinstance(x, dict)]
 
 
 # ============================================================
-#  LOD0
+#  LOD0：导演（裁定 + 创造）
 # ============================================================
-def parse(llm, text: str, actions: list[dict]) -> dict:
-    """自由文本 → 合法行动之一（或 emote）。LLM 只能挑序号，不能发明目标。"""
-    r = _ask(llm, prompts.parser(text, actions), lambda: {"i": _keyword_match(text, actions)}, tokens=150)
-    i = r.get("i")
-    intent = dict(actions[i]) if isinstance(i, int) and 0 <= i < len(actions) else \
-        {"verb": "emote", "target": None, "label": "自行其是"}
-    intent["manner"] = str(r.get("manner") or text)[:60]
-    return intent
+def _plain_director(pack: dict, deed: str) -> dict:
+    """离线兜底：只会走路与旁观的朴素说书人。"""
+    exits = [e["name"] for e in pack["exits"]]
+    dest = next((e for e in exits if e in deed), None)
+    beats = [f"你动身前往{dest}。"] if dest else [f"你{deed}。" if deed else "你凝神四顾。"]
+    return {"beats": beats, "elapsed": 1 if deed else 0, "event": None, "memory": beats[0],
+            "effects": [{"op": "set", "id": "player", "key": "location", "value": dest}] if dest else [],
+            "options": _plain_options(pack)}
 
 
-def direct(llm, pack: dict, act: str, facts: list[str], actions: list[dict]) -> dict:
-    """导演：节拍 + 从合法行动中挑 3 个方向迥异的选项。"""
-    fallback = lambda: {"beats": facts, "options": []}
-    r = _ask(llm, prompts.director(pack, act, facts, actions), fallback, tokens=600)
-    beats = [str(b) for b in r.get("beats") or [] if b][:5] or facts or ["你凝神四顾。"]
-    picks: dict[int, str] = {}
-    for o in r.get("options") or []:
-        i = o.get("i") if isinstance(o, dict) else None
-        if isinstance(i, int) and 0 <= i < len(actions) and i not in picks:
-            picks[i] = str(o.get("label") or actions[i]["label"])[:20]
-    for i in _diverse(actions):  # LLM 给不足 3 个合法选项时，由系统补齐
-        if len(picks) >= 3:
-            break
-        picks.setdefault(i, actions[i]["label"])
-    return {"beats": beats, "options": [{**actions[i], "label": label} for i, label in list(picks.items())[:3]]}
+def _plain_options(pack: dict) -> list[str]:
+    opts = [f"与{p['name']}攀谈" for p in pack["people"][:2]] + [f"前往{e['name']}" for e in pack["exits"]]
+    return (opts + ["歇息片刻", "四下察看"])[:3]
 
 
-def write(llm, pack: dict, act: str, facts: list[str], beats: list[str]) -> str:
-    fallback = lambda: "\n".join([pack["scene"]["desc"], *beats])
-    return _ask(llm, prompts.writer(pack, act, facts, beats), fallback, as_json=False, tokens=1200)
+def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
+    r = _ask(llm, prompts.director(pack, gm, deed or "初来乍到，环顾四周"),
+             lambda: _plain_director(pack, deed), tokens=1500)
+    beats = [str(b) for b in r.get("beats") or [] if b][:6] or ["你凝神四顾。"]
+    elapsed = r.get("elapsed")
+    event = r.get("event") if isinstance(r.get("event"), dict) and r["event"].get("summary") else None
+    options = [str(o)[:20] for o in r.get("options") or [] if o][:3]
+    return {"beats": beats,
+            "effects": _dicts(r.get("effects")),
+            "elapsed": max(0, min(MAX_ELAPSED, elapsed)) if isinstance(elapsed, int) else 1,
+            "event": event and {"summary": str(event["summary"])[:80], "weight": 2 if event.get("weight") == 2 else 1},
+            "options": options + _plain_options(pack)[len(options):],
+            "memory": str(r.get("memory") or beats[0])[:60]}
+
+
+def write(llm, pack: dict, deed: str, beats: list[str], void: list[str], news: list[str]) -> str:
+    fallback = lambda: "\n".join([pack["scene"]["desc"], *beats, *(f"（传闻）{n}" for n in news)])
+    return _ask(llm, prompts.writer(pack, deed, beats, void, news), fallback, as_json=False, tokens=1200)
 
 
 # ============================================================
-#  LOD1 / LOD2：只产出结构化提案，落账与权限过滤在 world/lod + world/effects
+#  LOD1 / LOD2：场外创造，物化与物理校验在 world/lod + world/effects
 # ============================================================
 def simulate(llm, time: str, days: int, actors: list[dict]) -> list[dict]:
-    r = _ask(llm, prompts.simulator(time, days, actors), lambda: {"reports": []}, tokens=400)
-    return [x for x in r.get("reports") or [] if isinstance(x, dict)][:2]
+    r = _ask(llm, prompts.simulator(time, days, actors), lambda: {"reports": []}, tokens=800)
+    return _dicts(r.get("reports"))[:2]
 
 
 def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool) -> dict:
     fallback = lambda: {"happens": not broken, "summary": ev["summary"], "effects": ev["effects"]}
-    r = _ask(llm, prompts.chronicler(ev, reasons, actors), fallback, tokens=500)
+    r = _ask(llm, prompts.chronicler(ev, reasons, actors), fallback, tokens=800)
     return {"happens": bool(r.get("happens")), "summary": str(r.get("summary") or ev["summary"])[:120],
-            "effects": [x for x in r.get("effects") or [] if isinstance(x, dict)]}
+            "effects": _dicts(r.get("effects"))}

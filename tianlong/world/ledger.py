@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/graph 的 Graph（观察时读取真相）
-[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本）、Messenger（消息延迟队列）、PUBLIC_KEYS
+[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS
 [POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -27,12 +27,13 @@ class Truth:
 
 
 # ============================================================
-#  玩家认知账本：信念（node → 公开属性）+ 已知事件
+#  玩家认知账本：信念（node → 公开属性）+ 已知事件 + 已知隐情（secret 边）
 # ============================================================
 class Knowledge:
-    def __init__(self, beliefs: dict | None = None, known: list | None = None):
+    def __init__(self, beliefs: dict | None = None, known: list | None = None, secrets: list | None = None):
         self.beliefs: dict[str, dict] = beliefs or {}
         self.known: list[int] = known or []
+        self.secrets: list[list[str]] = secrets or []
 
     @classmethod
     def from_truth(cls, graph) -> "Knowledge":
@@ -46,6 +47,13 @@ class Knowledge:
 
     def knows(self, nid: str) -> bool:
         return nid in self.beliefs
+
+    def reveal(self, src: str, dst: str, rel: str):
+        if [src, dst, rel] not in self.secrets:
+            self.secrets.append([src, dst, rel])
+
+    def knows_secret(self, edge: dict) -> bool:
+        return [edge["src"], edge["dst"], edge["rel"]] in self.secrets
 
     def observe(self, graph, ids):
         """亲眼所见：直接以真相覆盖信念。"""
@@ -61,6 +69,10 @@ class Knowledge:
         for op in event["effects"]:
             if op["op"] == "set" and op.get("id") != "player" and op["key"] in PUBLIC_KEYS:
                 self.beliefs.setdefault(op["id"], {})[op["key"]] = op["value"]
+            elif op["op"] == "create" and not op["attrs"].get("hidden"):
+                self.beliefs[op["id"]] = {k: v for k, v in op["attrs"].items() if k in PUBLIC_KEYS}
+            elif op["op"] == "reveal":
+                self.reveal(op["src"], op["dst"], op["rel"])
 
 
 # ============================================================

@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，narrative/llm 的 from_env；读取 .env 与命令行参数
 [OUTPUT]: 对外提供 main()（终端交互循环）
-[POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、3 个动态选项与自由输入
+[POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
@@ -70,7 +70,7 @@ def main(argv=None):
     ap.add_argument("--offline", action="store_true", help="不调用大模型，全部走确定性兜底")
     ap.add_argument("--load", type=Path, help="读取存档")
     ap.add_argument("--name", help="主角名号")
-    ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败等诊断日志")
+    ap.add_argument("--verbose", action="store_true", help="输出 LLM 失败、创造未成立等诊断日志")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR, format="  [%(levelname)s] %(message)s")
     _load_dotenv()
