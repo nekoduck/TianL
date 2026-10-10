@@ -3,6 +3,7 @@ Python 3.11+ (纯标准库，零依赖) + Gemini REST (gemini-flash-latest，thi
 
 <directory>
 tianlong/ - 游戏本体 (2 子目录: world/ 基础设施, narrative/ 剧情层；engine.py 主循环, cli.py 终端界面)
+data/ - 原著硬知识库 (EXTRACT_PROMPT.md 抽取提示词；待返回的 00_index~08_canon JSON，经导入校验后取代 seed.json)
 tests/ - 离线验证 (剧情落账、地理器物归属、世界物理、延迟传播、隐情揭示、污染判定、跨回合延续)
 </directory>
 
