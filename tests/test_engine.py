@@ -3,14 +3,17 @@
 [OUTPUT]: unittest 用例——原著在主角眼前一回合一桩交导演上演且可被主角阻断、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
           跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判、新造实体被驳回且账本不记未成立之事、
           众目之下的事入江湖账本、史官改写被扰动的大事、
-          流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房、编剧半途失声保留已写、无监听不流式
+          流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房(分隔线被拆在两块之间也不漏一个等号)、编剧半途失声保留已写、无监听不流式、
+          回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
+import json
 import logging
 import unittest
 
+from tianlong import cli
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError
 from tianlong.world import access
@@ -124,7 +127,7 @@ class DirectorTest(unittest.TestCase):
         turn = game.act("替段誉解围")
         self.assertEqual(turn["options"], ["替段誉挡下一掌", "偷看钟灵的布囊", "向左子穆讨教剑法"])
         llm.replies = {**director(), "小说家": WRITER}
-        game.act("1")  # 选项即原话，交回导演
+        game.act(turn["options"][0])  # 选项即原话，交回导演
         self.assertIn("【主角此刻】替段誉挡下一掌", llm.writer_prompts[-1])
         self.assertIn("段誉→你：结为知交（你替他解了围）", llm.writer_prompts[-1])
         self.assertIn("你替段誉解围，与他结交", llm.writer_prompts[-1])  # 前情记的是编剧核实过的梗概
@@ -206,6 +209,29 @@ class DirectorTest(unittest.TestCase):
         self.assertEqual(w.graph.get("段誉", "status"), "alive")  # 越出相关者
         self.assertLess(w.player["power"], 100)                  # 场外碰不到主角
         self.assertIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])
+
+
+class AtomicTurnTest(unittest.TestCase):
+    def test_a_turn_that_breaks_midway_never_happened(self):
+        class Breaks(StubLLM):
+            def text(self, system, user, max_tokens=0):
+                raise RuntimeError("编剧落笔时出了岔子")  # 不是网络错误：兜底接不住，回合只能作废
+        llm = Breaks(director(effects=[{"op": "set", "id": "player", "key": "location", "value": "剑湖宫"},
+                                       {"op": "add", "id": "player", "key": "hp", "value": -30}]))
+        game = Game(World.create(), llm)
+        before = json.dumps(game.world.dump(), ensure_ascii=False)
+        with self.assertRaises(RuntimeError):
+            game.act("冲出大厅")
+        self.assertEqual(json.dumps(game.world.dump(), ensure_ascii=False), before)  # 世界回到回合开始之时
+        self.assertEqual((game.world.here, game.world.player["hp"], game.last_text), ("剑湖宫·练武厅", 100, ""))
+
+    def test_number_shortcuts_belong_to_the_terminal(self):
+        game = Game(World.create())
+        game.open()
+        self.assertEqual(cli._pick(game, "1"), game.options[0])                    # 终端：打 1 即第一个选项
+        self.assertEqual((cli._pick(game, "①"), cli._pick(game, "9")), ("①", "9"))  # 全角或越界之数仍是原话
+        game.act("①")                                                              # 内核照收原话，不再因它崩溃
+        self.assertTrue(game.world.player["journal"][-1].endswith("你①。"))
 
 
 class StreamingTest(unittest.TestCase):

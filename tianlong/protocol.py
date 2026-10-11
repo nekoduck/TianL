@@ -1,13 +1,13 @@
 """
 [INPUT]: 依赖 engine 回合产物 Turn（纯 dict）的字段约定：time/clock/place/region/text/options/news/status
 [OUTPUT]: 对外提供 VERSION、ProtocolError、present()（Turn → 回合载荷）、relay()（引擎进度 → 流式事件）、session_payload()、
-          resolve()（玩家行动 → 引擎原话）、hero_name()（开卷名号校验）
+          resolve()（玩家行动 → 引擎原话；写明所应答的卷与回合时须与眼下一致）、hero_name()（开卷名号校验）
 [POS]: 前后端契约的 Python 实现——向外把引擎回合翻译成协议载荷，向内把协议行动翻译回引擎原话；
        契约正文见 web/PROTOCOL.md，web/js/api.js 与 web/js/mock.js 是它在前端的两面镜子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-VERSION = "tianlong/1.1"  # 次版本只做向后兼容的增补（1.1：流式推送）；客户端只比对主版本
+VERSION = "tianlong/1.2"  # 次版本只做向后兼容的增补（1.1：流式推送；1.2：行动写明卷与回合）；客户端只比对主版本
 ACTION_TYPES = ("selection", "free_text")
 MAX_TEXT = 200
 MAX_NAME = 12
@@ -64,11 +64,14 @@ def session_payload(sid: str | None, hero: str | None, transcript: list[dict]) -
 # ============================================================
 #  向内：协议行动 → 引擎原话（选项即原话）
 # ============================================================
-def resolve(body, current: dict) -> tuple[dict, str]:
-    """校验行动并解出交给引擎的原话；返回 (deed, 原话)。selection 必须指向当前回合的选项。"""
+def resolve(body, current: dict, sid: str | None = None) -> tuple[dict, str]:
+    """校验行动并解出交给引擎的原话；返回 (deed, 原话)。selection 必须指向当前回合的选项；
+    行动若写明所应答的卷(session)与回合(turn)，须与眼下一致——刷新、另开一卷、超时重试之后的旧笔，不会落在翻过的书页上。"""
     if not isinstance(body, dict) or body.get("action_type") not in ACTION_TYPES \
             or not isinstance(body.get("action_content"), str):
         raise ProtocolError(400, "bad_request", "行动须含 action_type（selection 或 free_text）与文本 action_content")
+    if ("session" in body and body["session"] != sid) or ("turn" in body and body["turn"] != current["turn"]):
+        raise ProtocolError(409, "stale_turn", "书页已经翻过，请依眼下情形重新落笔")
     kind, content = body["action_type"], body["action_content"].strip()
     if kind == "selection":
         text = next((o["label"] for o in current["options"] if o["id"] == content), None)
@@ -84,7 +87,9 @@ def resolve(body, current: dict) -> tuple[dict, str]:
 
 
 def hero_name(body) -> str | None:
-    name = body.get("name") if isinstance(body, dict) else None
+    if not isinstance(body, dict):
+        raise ProtocolError(400, "bad_request", "开卷请求须为 JSON 对象")
+    name = body.get("name")
     if name is not None and not isinstance(name, str):
         raise ProtocolError(400, "bad_request", "名号须为文字")
     name = (name or "").strip()

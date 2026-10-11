@@ -1,10 +1,12 @@
 """
 [INPUT]: 依赖 tianlong.protocol / tianlong.server 与离线引擎（llm=None）；经 urllib 走真实 HTTP
 [OUTPUT]: unittest 用例——回合载荷形状、行动解析(选择/自由书写/过期/越界)、开卷与续读、忙碌互斥、错误载荷、静态前端托管、
-          SSE 流式(事件次序、done 与非流式同体、开流前错误仍为 JSON)、Gemini SSE 解析、自动存档与续卷(含终端存档互通)
+          SSE 流式(事件次序、done 与非流式同体、开流前错误仍为 JSON、开流前读者离席不打断回合)、Gemini SSE 解析、自动存档与续卷(含终端存档互通、续卷记得上回合末段)、
+          只收同源 JSON(跨站请求 403)、行动写明卷与回合(过期 409 stale_turn)、Content-Length 校验
 [POS]: tests 的契约验证：web/PROTOCOL.md 的每一条，在 Python 实现上都有一个对应的断言
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import http.client
 import json
 import logging
 import tempfile
@@ -18,7 +20,7 @@ from tianlong import protocol
 from tianlong.engine import Game
 from tianlong.narrative.llm import sse_texts
 from tianlong.protocol import ProtocolError
-from tianlong.server import Session, make_server
+from tianlong.server import Session, _Stream, make_server
 from tianlong.world.world import World
 
 logging.disable(logging.WARNING)
@@ -122,14 +124,58 @@ class ServerTest(unittest.TestCase):
     def test_malformed_requests(self):
         status, _, raw = self.call("POST", "/api/session", None)
         self.assertEqual(status, 201)  # 无名开卷
-        req = urllib.request.Request(self.base + "/api/action", data=b"{oops", method="POST")
+        req = urllib.request.Request(self.base + "/api/action", data=b"{oops", method="POST",
+                                     headers={"Content-Type": "application/json"})
         with self.assertRaises(urllib.error.HTTPError) as ctx:
             urllib.request.urlopen(req, timeout=10)
         self.assertEqual(json.loads(ctx.exception.read())["error"]["code"], "bad_request")
-        status, body = self.api("POST", "/api/session", {"name": "名" * 13})
-        self.assertEqual((status, body["error"]["code"]), (400, "bad_request"))
+        for body in ({"name": "名" * 13}, [1, 2, 3]):                        # 名号过长；开卷请求不是对象
+            status, reply = self.api("POST", "/api/session", body)
+            self.assertEqual((status, reply["error"]["code"]), (400, "bad_request"))
         status, body = self.api("GET", "/api/nowhere")
-        self.assertEqual(status, 404)
+        self.assertEqual((status, body["error"]["code"]), (404, "not_found"))
+        for length in ("abc", "-1"):                                        # 长度不是数或为负：400，不挂起
+            conn = http.client.HTTPConnection("127.0.0.1", self.httpd.server_address[1], timeout=10)
+            conn.putrequest("POST", "/api/action")
+            conn.putheader("Content-Type", "application/json")
+            conn.putheader("Content-Length", length)
+            conn.endheaders()
+            res = conn.getresponse()
+            self.assertEqual((res.status, json.loads(res.read())["error"]["code"]), (400, "bad_request"))
+            conn.close()
+
+    def test_only_this_page_may_write(self):
+        cases = [({"Content-Type": "application/json", "Origin": "http://evil.example"}, 403),   # 别家网页
+                 ({"Content-Type": "text/plain"}, 403),                                          # no-cors 写不出 JSON
+                 ({"Content-Type": "application/json", "Origin": self.base}, 201)]               # 本页
+        for headers, status in cases:
+            req = urllib.request.Request(self.base + "/api/session", data=b'{"name": "\u593a\u820d"}', method="POST",
+                                         headers=headers)
+            try:
+                with urllib.request.urlopen(req, timeout=30) as res:
+                    got = res.status
+            except urllib.error.HTTPError as e:
+                got = e.code
+                self.assertEqual(json.loads(e.read())["error"]["code"], "forbidden")
+            self.assertEqual(got, status, headers)
+
+    def test_an_action_must_answer_the_page_on_screen(self):
+        status, body = self.api("POST", "/api/session", {"name": "萧兰"})
+        sid = body["session"]["id"]
+        for stale in ({"session": "别的一卷", "turn": 1}, {"session": sid, "turn": 5}):
+            status, reply = self.api("POST", "/api/action", {"action_type": "free_text", "action_content": "走", **stale})
+            self.assertEqual((status, reply["error"]["code"]), (409, "stale_turn"))
+        status, turn = self.api("POST", "/api/action", {"action_type": "free_text", "action_content": "走",
+                                                        "session": sid, "turn": 1})
+        self.assertEqual((status, turn["turn"]), (200, 2))
+
+    def test_a_reader_leaving_before_the_first_event_does_not_stop_the_turn(self):
+        class Gone:  # 开流之前读者就断了线：写响应头即抛 ConnectionAbortedError（Windows 刷新页面时的样子）
+            close_connection = False
+            def send_response(self, *_): raise ConnectionAbortedError
+        out = _Stream(Gone())
+        out.send("stage", {"stage": "direct"})        # 不抛错，回合得以照常写完、存档
+        self.assertEqual((out.open, out.alive), (True, False))
 
     def test_static_front_end(self):
         status, ctype, raw = self.call("GET", "/")
@@ -219,6 +265,7 @@ class AutosaveTest(unittest.TestCase):
             again = make_server(None, "127.0.0.1", 0, autosave=path, resume=path)  # 服务重启
             hub = again.RequestHandlerClass.hub
             self.assertEqual([t["turn"] for t in hub.current()["transcript"]], [1, 2])
+            self.assertEqual(hub.session.game.last_text, hub.current()["transcript"][-1]["narrative"])  # 续卷记得上回合末段
             self.assertEqual(hub.act({"action_type": "free_text", "action_content": "歇息"})["turn"], 3)
             again.server_close()
 

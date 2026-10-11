@@ -3,6 +3,7 @@
 [OUTPUT]: 对外提供 make_server()（构建本地 Web 服务，可续卷、可自动存档）、Hub（单机单局的会话中枢）、Session、AUTOSAVE
 [POS]: 传输层——把 protocol 的载荷挂到 HTTP 上，并托管 web/ 静态前端；不含游戏逻辑，也不解释协议字段。
        路由：GET /api/session 续读 · POST /api/session 开卷 · POST /api/action 行动 · 其余路径为静态文件；
+       POST 只收同源、声明为 JSON 的请求——别的网页无从替玩家开卷落笔（跨站的 JSON 请求须先预检，本服务从不应允）；
        请求头 Accept 含 text/event-stream 时，开卷与行动改以 SSE 逐步推送（stage → head → text… → done）。
        每回合落定即自动存档（与终端 /save 同一格式，外加 web 段），服务重启后续卷
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,6 +14,7 @@ import uuid
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
+from urllib.parse import urlsplit
 
 from . import protocol
 from .engine import Game
@@ -32,8 +34,8 @@ class Session:
     def __init__(self, game: Game, hero: str, transcript: list[dict], sid: str | None = None):
         self.game, self.hero, self.transcript = game, hero, transcript
         self.id = sid or uuid.uuid4().hex[:12]
-        if transcript:  # 续卷时让引擎记得眼前的三条去路
-            game.options = [o["label"] for o in transcript[-1]["options"]]
+        if transcript:  # 续卷时让编剧接着上回合的末段落笔
+            game.last_text = transcript[-1]["narrative"]
 
     @classmethod
     def begin(cls, hero: str | None, llm, send=None) -> "Session":
@@ -59,7 +61,7 @@ class Session:
         return protocol.session_payload(self.id, self.hero, self.transcript)
 
     def act(self, body, send=None) -> dict:
-        deed, text = protocol.resolve(body, self.transcript[-1])
+        deed, text = protocol.resolve(body, self.transcript[-1], self.id)
         n = len(self.transcript) + 1
         on = protocol.relay(send, n, deed) if send else None
         turn = protocol.present(self.game.act(text, on), n, deed)
@@ -125,20 +127,18 @@ class _Stream:
         self.h, self.open, self.alive = handler, False, True
 
     def send(self, event: str, data: dict):
-        if not self.open:
-            self.h.send_response(200)
-            self.h.send_header("Content-Type", "text/event-stream; charset=utf-8")
-            self.h.end_headers()
-            self.h.close_connection = True
-            self.open = True
-        if not self.alive:
-            return
-        frame = f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode("utf-8")
         try:
-            self.h.wfile.write(frame)
-            self.h.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
-            self.alive = False  # 读者离席：回合照常写完、照常存档，回来续读即可
+            if not self.open:
+                self.open = True
+                self.h.send_response(200)
+                self.h.send_header("Content-Type", "text/event-stream; charset=utf-8")
+                self.h.end_headers()
+                self.h.close_connection = True
+            if self.alive:
+                self.h.wfile.write(f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode("utf-8"))
+                self.h.wfile.flush()
+        except OSError:  # 读者离席（断开、重置、中止，开流前后皆然）：回合照常写完、照常存档，回来续读即可
+            self.alive = False
 
     def fail(self, err: ProtocolError):
         if self.open:
@@ -169,12 +169,25 @@ class Handler(SimpleHTTPRequestHandler):
         route = routes.get(self.path.split("?", 1)[0])
         if route is None:
             return self._send(404, ProtocolError(404, "not_found", "没有这条路").payload())
+        if not self._own_page():
+            return self._send(403, ProtocolError(403, "forbidden", "只收本页发来的笔墨").payload())
         if "text/event-stream" in (self.headers.get("Accept") or ""):
             return self._stream(route[1])
         self._api(*route)
 
+    def _own_page(self) -> bool:
+        """同源且声明为 JSON：浏览器跨站发来的请求必带别家的 Origin；表单与 no-cors 请求又写不出 application/json。"""
+        origin = self.headers.get("Origin")
+        same = origin is None or urlsplit(origin).netloc == self.headers.get("Host")
+        return same and (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() == "application/json"
+
     def _body(self):
-        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            raise ProtocolError(400, "bad_request", "Content-Length 不是数字") from None
+        if length < 0:
+            raise ProtocolError(400, "bad_request", "Content-Length 不能为负")
         if length > MAX_BODY:
             raise ProtocolError(413, "bad_request", "这一笔写得太长了")
         try:

@@ -4,7 +4,7 @@ Python 3.11+ (纯标准库，零依赖) + Gemini REST (gemini-flash-latest，thi
 <directory>
 tianlong/ - 游戏本体 (2 子目录: world/ 基础设施, narrative/ 剧情层；engine.py 主循环, protocol.py 前后端契约, server.py Web 服务, cli.py 终端界面)
 data/ - 原著硬知识库 (2子目录: canon/ 世纪新修版抽取数据——202地点/222道路(原路+修伪捷径+补走廊)/179有向关口/242人物/98器物/119武学/235原著事件, reports/ 通行补丁的校验与问题清单；EXTRACT_PROMPT.md 抽取规范, ACCESS_PROMPT.md 通行补充规范)
-web/ - Web 表现层 (新中式极简纸书界面；PROTOCOL.md 通信协议 tianlong/1.1(含 SSE 流式)、js/ 状态层+真实/模拟服务+组件、css/ink.css、fonts/ 自托管楷体子集)
+web/ - Web 表现层 (新中式极简纸书界面；PROTOCOL.md 通信协议 tianlong/1.2(含 SSE 流式、行动写明卷与回合)、js/ 状态层+真实/模拟服务+组件、css/ink.css、fonts/ 自托管楷体子集)
 tests/ - 离线验证 (剧情落账、地理器物归属、世界物理、通行与暗路、延迟传播、隐情揭示、污染判定、跨回合延续、通信协议与 HTTP 服务)
 </directory>
 

@@ -7,7 +7,7 @@ Web 表现层。新中式极简：页面即一本数字纸书——纸白、墨�
 依赖方向：main → store → (api | mock) → contract；ui/* 只读 store、只经 store 的动作改状态，彼此不相识。
 
 成员清单
-PROTOCOL.md: 前后端通信协议 tianlong/1.1 的契约正文——三个接口、行动请求、回合/会话/错误载荷、错误码与前端应对、SSE 流式(stage/head/text/done/error)、时序与修订；三处实现(protocol.py/api.js/mock.js)以它为准
+PROTOCOL.md: 前后端通信协议 tianlong/1.2 的契约正文——三个接口、同源 JSON、行动请求(可写明所应答的卷与回合)、回合/会话/错误载荷、错误码与前端应对、SSE 流式(stage/head/text/done/error)、时序与修订；三处实现(protocol.py/api.js/mock.js)以它为准
 index.html: 唯一页面骨架——扉页、书眉、叙事卷、行动区、页边、传闻小笺、信笺、读屏播报节点；结构即语义
 css/ink.css: 全部视觉——自托管楷体 @font-face、色彩令牌与夜读配色、宽屏三栏(竖排书眉·正文·竖排页边)/窄屏顶栏、墨迹晕开、焦点互斥、八行红格信笺、减弱动效
 js/main.js: 入口与装配——择服务(?mock 用模拟，?mock=flaky 模拟失联；ES Modules 须经 http 托管)、挂组件、扉页⇄书页转场、另起一卷二次确认、全局键位

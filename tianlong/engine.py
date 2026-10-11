@@ -1,14 +1,16 @@
 """
 [INPUT]: 依赖 world/（World、lod、rag、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
-[OUTPUT]: 对外提供 Game（open / act / debug），每回合返回一个纯 dict 的 Turn：
+[OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / debug），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文外的整回合) → text(正文增量)
 [POS]: 两层唯一的交汇点——游戏主循环：先了远方到期的原著(场外推演可闻江湖近闻) → 此地到期的一桩原著交给导演作本回合主干 → 导演编织节拍/后果/时长/选项
        → 原著照常落账，或因主角扰动而由导演的后果作准 → 导演后果落账 → 时长按措辞与道路结算 → LOD1 场外推演与新到期的远方原著
        → 传闻投递 → 编剧成文并写下真实梗概 → 事件门槛判定是否入江湖账本 → 近事溢出则折叠梗概。
-       基础设施在每一步替 LLM 记忆、算账、裁决、送信；账本只记已成立之事
+       基础设施在每一步替 LLM 记忆、算账、裁决、送信；账本只记已成立之事。
+       一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import json
 import logging
 
 from .narrative import agents
@@ -47,16 +49,23 @@ class Game:
     def open(self, on=None) -> dict:
         return self._turn("", on)
 
-    def act(self, line: str, on=None) -> dict:
-        line = line.strip()
-        if line.isdigit() and 1 <= int(line) <= len(self.options):
-            line = self.options[int(line) - 1]
-        return self._turn(line, on)
+    def act(self, deed: str, on=None) -> dict:
+        """玩家原话照收（选项即原话）；"打 1 选第一项"之类的快捷写法是终端的事，不在内核里猜。"""
+        return self._turn(deed.strip(), on)
 
     # ------------------------------------------------------------
-    #  一个回合
+    #  一个回合：原子的——要么整个成立，要么不曾发生
     # ------------------------------------------------------------
     def _turn(self, deed: str, on=None) -> dict:
+        before = json.dumps(self.world.dump(), ensure_ascii=False), self.options, self.last_text, self.tempo
+        try:
+            return self._play(deed, on)
+        except Exception:
+            dump, self.options, self.last_text, self.tempo = before
+            self.world = World.from_dump(json.loads(dump))
+            raise
+
+    def _play(self, deed: str, on=None) -> dict:
         """on(kind, data)：stage 报进度，head 在落笔前送出除正文外的整回合，text 随编剧送出正文增量。"""
         emit = on or (lambda kind, data: None)
         w = self.world

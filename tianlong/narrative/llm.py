@@ -2,20 +2,21 @@
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
 [OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
-       stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据
+       stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据。
+       一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON）都化为 LLMError，交上层兜底——绝不让一回合半途炸开
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import http.client
 import json
 import os
 import re
 import time
-import urllib.error
 import urllib.request
 from pathlib import Path
 
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}"
 DEFAULT_MODEL = "gemini-flash-latest"
-NET_ERRORS = (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError)
+NET_ERRORS = (OSError, http.client.HTTPException, ValueError)  # 连不上、超时、断流(IncompleteRead)、回包不是 JSON：一律化为 LLMError
 
 
 class LLMError(Exception):

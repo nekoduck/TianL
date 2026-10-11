@@ -1,7 +1,8 @@
 """
 [INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，world/blackboard 的 ORIGINS，narrative/llm 的 from_env，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
 [OUTPUT]: 对外提供 main()（终端交互循环：选名号与出身、开卷、自由输入；--web 时改为启动 Web 服务，续读 --load 存档或上次的自动存档；--trace 记录大模型调用）
-[POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入
+[POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入；
+       "打数字选第几项"是终端独有的快捷写法(只认半角数字)，内核只收原话；读档失败只提示、不丢下眼前这一局
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
@@ -19,6 +20,7 @@ from .world.world import World
 QUICKSAVE = Path("saves/quick.json")
 HELP = "指令：数字选择选项｜直接输入你想做的事｜/save [路径]｜/load [路径]｜/me 玩家黑板｜/debug 双账本对照｜/quit"
 TTY = sys.stdout.isatty()
+UNREADABLE = (OSError, ValueError, KeyError, TypeError)  # 找不到、不是 JSON、缺字段、形状不对：都是"读不了这份档"
 
 
 def _c(text: str, code: str) -> str:
@@ -31,6 +33,17 @@ def _load_dotenv(path=Path(".env")):
             if "=" in line and not line.lstrip().startswith("#"):
                 k, v = line.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip('"\''))
+
+
+def _pick(game: Game, line: str) -> str:
+    """终端快捷写法：半角数字即眼前第几个选项；其余一律当原话。"""
+    if line.isascii() and line.isdigit() and 1 <= int(line) <= len(game.options):
+        return game.options[int(line) - 1]
+    return line
+
+
+def _unreadable(path, e: Exception) -> str:
+    return f"  存档 {path} 无法读取（{type(e).__name__}：{str(e)[:80]}）"
 
 
 def show(turn: dict):
@@ -55,7 +68,11 @@ def _command(game: Game, line: str) -> Game | None:
         game.world.save(path)
         print(f"  已存档至 {path}")
     elif cmd == "/load":
-        game = Game(World.load(path), game.llm)
+        try:
+            game = Game(World.load(path), game.llm)
+        except UNREADABLE as e:  # 读不了就留在眼前这一局，不崩、不丢
+            print(_c(_unreadable(path, e), "33"))
+            return game
         show(game.open())
     elif cmd == "/me":
         print(json.dumps(game.world.player.snapshot(), ensure_ascii=False, indent=1))
@@ -82,8 +99,8 @@ def _serve_web(args, llm):
         print(f"  正在续卷：{source}")
     try:
         httpd = make_server(llm, args.host, args.port, autosave=AUTOSAVE, resume=source)
-    except (ValueError, KeyError) as e:  # 坏档不覆盖：请玩家自行处置
-        print(_c(f"  存档 {source} 无法续读（{e!r}）。请移走或删除它后再开卷。", "33"))
+    except UNREADABLE as e:  # 坏档不覆盖：请玩家自行处置
+        print(_c(_unreadable(source, e) + "。请移走或删除它后再开卷。", "33"))
         return
     session = httpd.RequestHandlerClass.hub.session
     if session:
@@ -118,7 +135,11 @@ def main(argv=None):
     if args.web:
         return _serve_web(args, llm)
     if args.load:
-        world = World.load(args.load)
+        try:
+            world = World.load(args.load)
+        except UNREADABLE as e:
+            print(_c(_unreadable(args.load, e), "33"))
+            return
     else:
         name = args.name or input("  侠客名号（回车默认「无名」）：").strip()
         world = World.create(name or None, origin=args.origin or _choose_origin())
@@ -137,5 +158,5 @@ def main(argv=None):
             if game is None:
                 break
             continue
-        show(game.act(line))
+        show(game.act(_pick(game, line)))
     print("\n  江湖路远，后会有期。")
