@@ -1,14 +1,15 @@
 """
-[INPUT]: 依赖 world/（World、lod、rag、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
-[OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / debug），每回合返回一个纯 dict 的 Turn：
+[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
+[OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
-          可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文外的整回合) → text(正文增量)
-[POS]: 两层唯一的交汇点——游戏主循环：先了远方到期的原著(场外推演可闻江湖近闻) → 此地到期的一桩原著交给导演作本回合主干 → 导演编织节拍/后果/时长/选项
-       → 原著照常落账，或因主角扰动而由导演的后果作准 → 导演后果落账 → 时长按措辞与道路结算 → LOD1 场外推演与新到期的远方原著
-       → 传闻投递 → 编剧成文并写下真实梗概 → 事件门槛判定是否入江湖账本 → 近事溢出则折叠梗概。
-       基础设施在每一步替 LLM 记忆、算账、裁决、送信；账本只记已成立之事——此地原著前提已破便不照演；
-       主角做完便走的事，以亲历之人、事发之日、事发之地入账；编剧没写梗概时，以意图与系统核实过的后果代记，绝不拿导演的节拍充数。
-       一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
+          可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
+[POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
+       授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → 焦点检索与后台 → 导演逐拍提议
+       → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
+       → 时长按措辞与道路结算 → 传闻投递 → 编剧只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
+       → 选项过出口检查、对象记入 menu 作下一回合的授意 → 事件门槛判定入江湖账本 → 近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出交后台折叠梗概。
+       节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
+       编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -173,16 +174,21 @@ class Game:
 
     @staticmethod
     def _enact(world, plan, aim, staged, day0, rules, drop=None):
-        """一份提议在一个世界上演出：此地原著照常(且前提未破)则系统落账、盖今日之戳，否则导演的后果作准；再逐拍裁决。"""
+        """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
+        被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
         world.turn["minutes"] = world.clock.minutes(plan["pace"])
-        if staged:
-            if plan["canon"]["unfolds"] and not lod.broken(world, staged):
-                lod.settle(world, staged, staged, "canon", day=day0)
+        broken = staged and lod.broken(world, staged)  # 前提以回合开始时为准：主角这一举之前，原著本该如何
+
+        def canon():
+            if not staged:
+                return
+            if plan["canon"]["unfolds"] and not broken:
+                lod.settle(world, staged, staged, "canon", day=day0, witnessed=True)  # 主角眼前上演，随即离开也是亲历
             else:
                 lod.settle(world, staged, {"happens": False}, "director", day=day0)
                 if not plan["canon"]["unfolds"]:
                     world.taint.update(staged["actors"])
-        return adjudicate.judge(world, plan, aim, drop=drop, **rules)
+        return adjudicate.judge(world, plan, aim, drop=drop, then=canon, **rules)
 
     def _close(self, ruling, page, memory):
         """回合收尾：近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出则交后台折叠梗概。"""

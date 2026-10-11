@@ -22,7 +22,7 @@ KILL = re.compile(r"杀死|杀了|刺死|打死|劈死|砍死|击杀|害死|杀�
 DIE = re.compile(r"身亡|毙命|气绝|殒命|丧命|断气|死于|一命呜呼")                                 # 不及物：死者在动词之前
 DRAIN = re.compile(r"吸尽|吸干|吸走|吸取|吸去|吸了|吸夺|夺人功力|(?:内力|真气|功力)[^，。；！？]{0,6}(?:尽失|全失|被吸|溃堤|倒灌|流泻|涌入你|源源不绝地涌入)|化去.{0,2}(?:内力|功力)")
 FREE = re.compile(r"救出|救下|斩断.{0,4}(?:绳|索|锁)|割断.{0,4}(?:绳|索)|松绑|解开.{0,3}(?:绳|索|绑)|放走|放了")
-BIND = re.compile(r"擒住|擒下|擒获|生擒|绑了|绑住|捆住|押走|扣下|扣为人质|挟为人质|劫走")
+BIND = re.compile(r"擒住|擒下|擒获|生擒|绑了|绑住|捆住|押走|押着|扣下|扣为人质|挟为人质|劫走|劫持|掳走|掳去|掳了|掳在|掳")
 ACT = re.compile(r"^[^，。；！？“”「」的之与和及、]{0,4}?(?:道|说|喝|笑|叫|怒|答|问|喊|叹|哼|呼|嚷|骂|应声|点头|摇头|拱手|抱拳|冷|厉|急|颤|惊|扑|抢|拔|挥|掠|跃|奔|跪|拜|递|接|攥|握|抓|跑|立在|站在|坐在|望|瞧|伸|抬|转身|回身|迎上|迎了)")
 REMOTE = re.compile(r"远远|远处|遥遥|传来|想起|忆起|回想|记得|昔日|当日|曾经|曾|据说|听说|传闻|传言|若是|倘若|如果|只怕|担心|料想|心想|念及|挂念|不知|下落|生死未卜")
 NEGATE = re.compile(r"未能|未曾|不曾|没有|没能|险些|几乎|差点|欲要|正欲|正要|想要|将要|似要|不敢|不肯|岂能|休想|妄图|企图")
@@ -173,11 +173,14 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
     for p, a, b in ents:  # 死者须紧挨着致死之词：「龚光杰刺死褚师弟」死的是褚师弟，「左子穆惊呼，容子矩早已气绝」死的是容子矩
         if ((kill and 0 <= a - kill.end() <= 4) or (die and 0 <= die.start() - b <= 8)) and p not in view.dead:
             out.append(Finding("kill", i, p, f"第{i}拍写{p}身亡，账上{p}却仍活着"))
-    for p in people:
+    bind = BIND.search(sent)
+    for p, a, b in ents:
         if FREE.search(sent) and p in view.captive:
             out.append(Finding("free", i, p, f"第{i}拍写{p}获救，账上{p}却仍受制于人"))
-        if BIND.search(sent) and p not in view.captive and p not in view.dead:
-            out.append(Finding("bind", i, p, f"第{i}拍写{p}被擒，账上却没有这层拘押"))
+        # 被擒者紧跟在擒拿之词后（「擒住钟灵」），或以「被」字句在前（「钟灵被神农帮众掳走」）
+        if bind and (0 <= a - bind.end() <= 4 or ("被" in sent[b:bind.start()] and 0 <= bind.start() - b <= 12)) \
+                and p not in view.captive and p not in view.dead:
+            out.append(Finding("bind", i, p, f"第{i}拍写{p}被擒，账上却没有这层拘押：写 link 扣为人质或囚禁"))
     follow = bool(mine and FOLLOW.search(sent) and view.moved)
     if follow:
         company = people + (sorted(view.here_start) if GROUP.search(sent) else [])

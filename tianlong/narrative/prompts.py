@@ -1,9 +1,11 @@
 """
-[INPUT]: 消费 world/rag 的 build()（玩家视锥，出路注明关口之类）、backstage()（导演后台：此地上演的原著/近事/预裁/隐情/关口/暗路/节奏）、dossier()（场外档案），均为纯 dict；
-         读 world/clock 的 PACES 作时长措辞表
-[OUTPUT]: 对外提供 render() / render_backstage() / PLOT_GUIDE（含"effects 即真相"） / TENSIONS 与 director / writer / recap / simulator / chronicler 五组 (system, user) 组装器（场外两组可附江湖近闻）
-[POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，
-       并以 PLOT_GUIDE 教它把剧情后果落账到既有世界；此地原著前提已破时明告导演不得照演；改文风、改叙事纲领只动这一个文件
+[INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/出路注明关口之类）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
+         dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
+[OUTPUT]: 对外提供 render() / render_backstage() / PLOT_GUIDE（逐拍挂后果、10 指令、spawn 场景实体） / THREATS / TENSIONS 与
+          director / repair / writer / recap / simulator / chronicler 六组 (system, user) 组装器（场外两组可附江湖近闻）
+[POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
+       导演只写到此刻为止、不拟选项、标出本幕之问，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
+       编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；改文风、改叙事纲领只动这一个文件
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json

@@ -47,6 +47,13 @@ class SituationTest(unittest.TestCase):
         self.assertEqual((self.w.here, self.w.graph.get("段誉", "location")), ("无量山", "无量山"))
         self.assertIn("段誉", situation.party(self.w))
 
+    def test_a_companion_can_catch_up_in_a_later_beat(self):
+        r = judge(self.w, plan(("player", "你夺门而出", [GO("无量山")]),
+                               ("段誉", "段誉随后跟上", [{"op": "link", "src": "段誉", "dst": "player", "rel": "随行"}])))
+        self.assertEqual((r.hard, self.w.graph.get("段誉", "location")), ([], "无量山"))
+        self.assertEqual([f.kind for f in judge(self.w, plan(("乔峰", "乔峰与你结伴", [{"op": "link", "src": "乔峰", "dst": "player", "rel": "随行"}]))).hard],
+                         ["void", "absent"])                                          # 不在身边的人跟不上来
+
     def test_a_written_but_unrecorded_companion_is_ratified(self):
         r = judge(self.w, plan(("player", "你拉着段誉奔出大厅", [GO("无量山")])))      # 漏写随行：照拍文追认
         self.assertEqual(r.hard, [])

@@ -1,11 +1,12 @@
 """
-[INPUT]: 依赖 narrative/prompts 的五组提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：节拍/后果/时长措辞/原著去留/张力/3 自由选项）、write()（编剧：正文/真实梗概/可传之事，给 on_text 即边写边送）、
+[INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
+[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,ops}/本幕之问/场景实体/时长措辞/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
+          write()（编剧：正文 + 梗概/选项(文字｜对象)/伏笔/可传之事，给 on_text 即边写边送）、plain_options()（离线朴素选项）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
-[POS]: narrative 层的五个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
-       （单个字串当清单、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
-       剧情后果能否落账交给 world/effects，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行。
-       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记——账本从不拿导演未经核实的节拍充数
+[POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
+       （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
+       后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行。
+       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -22,6 +23,7 @@ HOLD = re.compile(r"\n[ \t]*={0,2}$")  # 流式正文末尾疑似分隔线的开
 FIELD = re.compile(r"^[\s*#>\-—=]*(梗概|传言|伏笔|选项)[\s*]*[:：][\s*]*(.*)$")  # 半角冒号、markdown 粗体都认
 SPLIT = re.compile(r"[、，,；;／/|\n]+")  # 选项被写成一句时的分隔
 NO = {"false", "no", "否", "不", "0", "none", "null", ""}
+SCRAP = 60  # 流式半途被截断、正文又不足此数：只言片语，须以已成立之事续成
 
 
 def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):
@@ -173,23 +175,29 @@ def _show(on_text, acc: str, sent: int) -> int | None:
 
 def write(llm, pack: dict, frame: dict, on_text=None) -> dict:
     """编剧成文，并写下本回合实际成立之事的梗概（它同时看见节拍与未成立，是唯一有资格记账的人）。
-    给了 on_text 且模型能流式，就边写边送；半途失声时已写出的即为正文，一字未得才走兜底。"""
+    给了 on_text 且模型能流式，就边写边送；半途失声时已写出的即为正文，只得只言片语则以已成立之事续成，一字未得才走兜底。"""
     prompt = prompts.writer(pack, frame)
     fallback = lambda: "\n".join([pack["scene"]["desc"], *frame["beats"], *frame.get("notes", []), *(f"（{v}）" for v in frame["void"])])
     if on_text and hasattr(llm, "stream"):
-        parts, sent = [], 0
+        parts, sent, cut = [], 0, False
         try:
             for delta in llm.stream(*prompt, max_tokens=1800):
                 parts.append(delta)
                 if sent is not None:
                     sent = _show(on_text, "".join(parts), sent)
         except LLMError as e:
+            cut = True
             log.warning("编剧流式中断（已得 %d 段）：%s", len(parts), e)
         raw = "".join(parts)
+        page = _page(raw)
+        if cut and raw.strip() and len(page["text"]) < SCRAP:  # 只得只言片语（多半被安全策略拦腰截断）：以已成立之事续成正文
+            rest = fallback()
+            on_text("\n" + rest)
+            return {**page, "text": (page["text"] + "\n" + rest).strip()}
         if raw.strip():  # 一字未得（断在开头，或被安全策略整段拦下）才走下面的兜底
             if sent is not None and sent < len(raw.rstrip()):
                 on_text(raw.rstrip()[sent:])  # 流尽而不见分隔线：扣下的尾巴放行
-            return _page(raw)
+            return page
     page = _page(_ask(llm, prompt, fallback, as_json=False, tokens=1800))
     if on_text:
         on_text(page["text"])  # 不能流式时，整段作一次送出，调用方无须区分

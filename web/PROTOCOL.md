@@ -1,12 +1,12 @@
-# 天龍八部 · 前后端通信协议 `tianlong/1.2`
+# 天龍八部 · 前后端通信协议 `tianlong/1.3`
 
 > 契约正文。Python 实现：`tianlong/protocol.py`（载荷）+ `tianlong/server.py`（传输）；
 > 前端镜像：`web/js/api.js`（真实对接）与 `web/js/mock.js`（独立开发）。三者任何一处变更，先改本文。
 
 ## 一、约定
 
-- 传输：HTTP + JSON（UTF-8）；开卷与行动另可走 SSE 流式（见第四节）。每个响应体都带 `"protocol": "tianlong/1.2"`。
-- 版本：次版本只做向后兼容的增补，**客户端只比对主版本**（`tianlong/1` 与 `tianlong/1.2` 彼此相通），主版本不符即提示刷新。
+- 传输：HTTP + JSON（UTF-8）；开卷与行动另可走 SSE 流式（见第四节）。每个响应体都带 `"protocol": "tianlong/1.3"`。
+- 版本：次版本只做向后兼容的增补，**客户端只比对主版本**（`tianlong/1` 与 `tianlong/1.3` 彼此相通），主版本不符即提示刷新。
 - 单机单局：服务端同一时刻只持有一卷书（一局游戏），同一时刻只处理一笔行动。
 - 同源：`POST` 只收本页发来、`Content-Type: application/json` 的请求；别家网页（带别家 `Origin`）或写不出 JSON 的跨站表单一律 `403 forbidden`。
 - 存档：服务端每回合落定即自动存档；服务重启后续读到的仍是同一卷书。
@@ -52,7 +52,7 @@
 
 ```json
 {
-  "protocol": "tianlong/1.2",
+  "protocol": "tianlong/1.3",
   "turn": 3,
   "deed": { "action_type": "selection", "action_content": "t2-1", "text": "替那书生解围" },
   "scene": { "place": "剑湖宫·练武厅", "region": "大理·无量山" },
@@ -82,7 +82,7 @@
 | `scene` | 当前所在：`place` 地点（子区域以「·」相连），`region` 所属地域（可能为 `null`） |
 | `time` | 历法分段，`hour` 精确到刻；`label` 为整句，便于直接显示 |
 | `narrative` | 本回合正文，以 `\n` 分段 |
-| `options` | 说书人拟定的 3 个下一步；玩家也可无视它们，自由书写 |
+| `options` | 说书人拟定、系统验收过的 3 个下一步（对象够得着、不说破隐情、有人刚开口则必有一项回应他）；玩家也可无视它们，自由书写 |
 | `status` | 主角身况的文字标签，`tone` 为 `plain` / `warn`（伤势等需留意）/ `alert`（性命攸关） |
 | `events` | 本回合抵达主角的世界变动：`witnessed` 为亲眼所见（正文已写到，宜作旁注）；`rumor` 为远方延迟传来的**江湖传闻**（宜作无侵入通知，玩家查看时以信笺呈现）。`id` 全局唯一，可用于已读标记 |
 
@@ -90,18 +90,18 @@
 
 ```json
 {
-  "protocol": "tianlong/1.2",
+  "protocol": "tianlong/1.3",
   "session": { "id": "9f1c2a7b3d4e", "hero": "萧兰" },
   "transcript": [ /* 回合载荷，按回合先后排列；最后一个即当前回合 */ ]
 }
 ```
 
-尚未开卷时：`{ "protocol": "tianlong/1.2", "session": null, "transcript": [] }`——这不是错误，前端据此显示扉页。
+尚未开卷时：`{ "protocol": "tianlong/1.3", "session": null, "transcript": [] }`——这不是错误，前端据此显示扉页。
 
 ### 错误载荷
 
 ```json
-{ "protocol": "tianlong/1.2", "error": { "code": "stale_option", "message": "这个选项已随时势而去，请依眼下情形重新抉择" } }
+{ "protocol": "tianlong/1.3", "error": { "code": "stale_option", "message": "这个选项已随时势而去，请依眼下情形重新抉择" } }
 ```
 
 | HTTP | `code` | 含义 | 前端宜 |
@@ -134,7 +134,7 @@ event: stage
 data: {"stage":"write"}           ← 落笔
 
 event: head
-data: { 回合载荷，唯 narrative 为空串 }   ← 除正文外此回合已全部落定
+data: { 回合载荷，narrative 为空串、options 为空数组 }   ← 除正文与选项外此回合已全部落定
 
 event: text
 data: {"delta":"练武厅内剑气森森，"}      ← 正文增量，可有多条；依次拼接即为正文
@@ -164,6 +164,8 @@ data: { 与同一请求的非流式响应体一字不差 }  ← 开卷为会话�
 ```
 
 ## 修订
+
+- 1.3：选项在落账之后、正文写成之后才拟定并经规则验收，故 `head` 的 `options` 为空数组，选项随 `done` 放出（前端本就"誊毕方放选项"，无须改动）。
 
 - 1.2：行动可写明所应答的卷与回合（`session` / `turn`），不符即 `409 stale_turn`；`POST` 只收同源 JSON（`403 forbidden`）；
   `Content-Length` 非法、开卷请求不是对象一律 `400`；一回合中途失败则整回合作废（服务端回滚），重试不会重复落账；

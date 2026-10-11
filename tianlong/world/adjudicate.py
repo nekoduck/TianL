@@ -92,12 +92,14 @@ def _secrets(world) -> list[tuple[str, str, str]]:
 
 
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
-          no_interrupt: bool = False, drop: dict | None = None) -> Ruling:
+          no_interrupt: bool = False, drop: dict | None = None, then=None) -> Ruling:
     """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力；cast：此地原著的相关者（可作打断的来源）；
-    drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）。"""
+    drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
+    then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
+    world.turn["present"] = around0  # 回合开始时身边之人：主角先走一步，他们仍可在后面的拍里跟上
     power0 = {p: g.get(p, "power") for p in around0}
     for spec in copy.deepcopy(plan.get("spawn") or []):
         nid, why = situation.spawn(world, spec, set(embargo))
@@ -129,6 +131,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         shown.append(beat)
         if beat.get("to") == "player" and beat.get("who") not in (None, "player"):
             r.addressed.append(beat["who"])
+    if then:
+        then()
     _examine(world, r, shown, here0, inv0, around0, power0)
     _question(world, r, cast, no_interrupt and 0 not in drop)
     r.notes = list(world.turn.get("notes", []))

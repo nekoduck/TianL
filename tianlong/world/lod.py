@@ -150,7 +150,7 @@ def verdict(world, ev: dict, tier: int) -> tuple[str, list[str]]:
     return ("chronicle" if ev["weight"] >= 2 else "canon"), reasons
 
 
-def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None) -> dict | None:
+def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None, witnessed: bool | None = None) -> dict | None:
     """结算一桩原著事件。outcome: {happens, summary, effects}；干净事件直接传入 ev 本身。
     真相盖原著排定之日的日戳——主角亲眼所见的那一桩则盖今日(day)：迟到才演的戏，传闻不该已在路上走了十天。"""
     world.done.append(ev["id"])
@@ -162,4 +162,4 @@ def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None) 
     if summary is None:
         return None
     return world.record(summary, ev["where"], applied, origin, ev["weight"], ev.get("public", True),
-                        day=ev["day"] if day is None else day)
+                        day=ev["day"] if day is None else day, witnessed=witnessed)

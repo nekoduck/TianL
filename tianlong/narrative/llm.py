@@ -1,15 +1,17 @@
 """
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
-[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
+[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL，含收尾缘由 finishReason）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
        stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据。
-       一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON）都化为 LLMError，交上层兜底——绝不让一回合半途炸开
+       一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON、被安全策略半途截断）都化为 LLMError，交上层兜底——绝不让一回合半途炸开；
+       用量与 trace 加锁：场外推演、梗概折叠与编剧并行调用
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import http.client
 import json
 import os
 import re
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -38,6 +40,7 @@ def sse_texts(lines, usage: dict):
             continue
         data = json.loads(line[5:].strip())
         usage["total"] = data.get("usageMetadata", {}).get("totalTokenCount", usage.get("total", 0))
+        usage["finish"] = (data.get("candidates") or [{}])[0].get("finishReason") or usage.get("finish")
         text = _texts(data)
         if text:
             yield text
@@ -47,14 +50,18 @@ class Gemini:
     def __init__(self, key: str, model: str = DEFAULT_MODEL, timeout: int = 60, trace=None):
         self.key, self.model, self.timeout = key, model, timeout
         self.tokens = 0  # 累计消耗，用于自查成本
-        self.trace = Path(trace) if trace else None  # 每次调用一行 JSONL：提示词、回答、用量、耗时
+        self.trace = Path(trace) if trace else None  # 每次调用一行 JSONL：提示词、回答、用量、耗时、收尾缘由
+        self._lock = threading.Lock()  # 场外推演、梗概折叠与编剧并行：用量与 trace 一笔一锁
 
-    def _log(self, system: str, user: str, text: str, used: int, t0: float):
-        if self.trace:
-            self.trace.parent.mkdir(parents=True, exist_ok=True)
-            with self.trace.open("a", encoding="utf-8") as f:
-                f.write(json.dumps({"model": self.model, "secs": round(time.time() - t0, 1), "tokens": used,
-                                    "system": system, "user": user, "raw": text}, ensure_ascii=False) + "\n")
+    def _log(self, system: str, user: str, text: str, used: int, t0: float, finish=None):
+        with self._lock:
+            self.tokens += used
+            if self.trace:
+                self.trace.parent.mkdir(parents=True, exist_ok=True)
+                with self.trace.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({"model": self.model, "secs": round(time.time() - t0, 1), "tokens": used,
+                                        "finish": finish, "system": system, "user": user, "raw": text},
+                                       ensure_ascii=False) + "\n")
 
     def _request(self, method: str, system: str, user: str, *, as_json: bool, max_tokens: int,
                  temperature: float) -> urllib.request.Request:
@@ -78,11 +85,10 @@ class Gemini:
         except NET_ERRORS as e:
             raise LLMError(f"请求失败：{e}") from e
         used = data.get("usageMetadata", {}).get("totalTokenCount", 0)
-        self.tokens += used
         text = _texts(data)
+        self._log(system, user, text, used, t0, (data.get("candidates") or [{}])[0].get("finishReason"))
         if not text:
             raise LLMError(f"响应无内容：{str(data)[:200]}")
-        self._log(system, user, text, used, t0)
         return text
 
     def text(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.9) -> str:
@@ -112,8 +118,9 @@ class Gemini:
         except NET_ERRORS as e:
             raise LLMError(f"流式请求中断：{e}") from e
         finally:
-            self.tokens += usage.get("total", 0)
-            self._log(system, user, "".join(parts), usage.get("total", 0), t0)
+            self._log(system, user, "".join(parts), usage.get("total", 0), t0, usage.get("finish"))
+        if usage.get("finish") not in (None, "STOP", "MAX_TOKENS"):  # 安全策略等半途截断：交上层判断已写出的够不够用
+            raise LLMError(f"流式输出被截断：{usage['finish']}")
 
 
 def from_env(trace=None) -> Gemini | None:

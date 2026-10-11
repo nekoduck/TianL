@@ -1,7 +1,8 @@
 """
 [INPUT]: 依赖 copy 做深拷贝
-[OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事/两层叙事记忆）、ORIGINS、JOURNAL_CAP
-[POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相。
+[OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆）、ORIGINS、JOURNAL_CAP
+[POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相；
+       quests/study/hooks/turn 由系统(situation、growth、engine)维护，导演写不动。
        气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。
        记忆分两层：journal 是近事(工作记忆)，满 JOURNAL_CAP 行即挤出最早 FOLD 行交上层折叠进 synopsis(情节梗概)，上下文有界而记忆无界
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

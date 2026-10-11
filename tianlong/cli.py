@@ -65,6 +65,7 @@ def _command(game: Game, line: str) -> Game | None:
     if cmd == "/quit":
         return None
     if cmd == "/save":
+        game.flush()  # 后台折叠中的梗概先汇合，存下的才是完整的记忆
         game.world.save(path)
         print(f"  已存档至 {path}")
     elif cmd == "/load":

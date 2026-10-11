@@ -60,7 +60,7 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=()) 
     def fine(text, ids) -> bool:
         return bool(text) and not lexicon.leaks(text) and not lexicon.secret_hits(text, secrets, tab) \
             and all(_reachable(world, i, text, ids) for i in ids) and text not in [t for t, _ in picked] \
-            and not (ids and any(set(ids) == set(o) and t[:2] == text[:2] for t, o in picked))
+            and not (ids and any(set(ids) == set(o) for _, o in picked))  # 三项各有所指：同一对象只留一项
 
     for o in options:
         text = str(o.get("text") or "").strip()

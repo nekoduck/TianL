@@ -1,11 +1,15 @@
 """
-[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/graph 的 ROAD，依赖 World 门面的 graph / player / knowledge / here / taint（鸭子类型）
-[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号→id）、
-          place()（任一节点此刻所在之地）、usable()、OPS、STATUSES
-[POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：
-       人物生死伤病、去留、恩怨、武学、主角的得失与行止、器物易手、隐情与暗路的揭开。
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / party / join / part / follow / captors / track（情境层与连带）、
+         world/growth 的 study / drain / DRAINERS（数值规则）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/器物近似名→id）、
+          place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
+[POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
+       人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
-       一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）；
+       数值归规则：导演不得直接增减功力或凭空授武学——研习写 study、吸功写 drain，多少由 growth 算；
+       在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
+       一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
+       随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
@@ -208,9 +212,7 @@ def _physics(world, op) -> str | None:
 
     if kind == "arrive":
         nid = op.get("id")
-        if g.kind(nid) != "person":
-            return f"「{nid}」不是人，无从到来"
-        return f"{nid}已死" if g.get(nid, "status") == "dead" else None
+        return None if g.kind(nid) == "person" else f"「{nid}」不是人，无从到来"  # 死者亦可：遗体被人抬来
     if kind in ("study", "drain"):
         return _growth(world, op)
 
@@ -357,8 +359,10 @@ def _self(world, op) -> str | None:
 
 
 def _bond(world, op) -> str | None:
-    """导演结恩怨、定随行、写拘押：另一端是人的，须在主角身边（或正与主角同行）——不在场的人结不下新的关系。"""
-    g, close = world.graph, situation.around(world) | set(situation.party(world))
+    """导演结恩怨、定随行、写拘押：另一端是人的，须在主角身边（或正与主角同行，或回合开始时还在身边——主角先走一步，他随后跟上）；
+    不在场的人结不下新的关系。"""
+    g = world.graph
+    close = situation.around(world) | set(situation.party(world)) | set(getattr(world, "turn", {}).get("present", ()))
     for end in (op["src"], op["dst"]):
         if end != "player" and g.kind(end) == "person" and end not in close:
             if op["op"] == "unlink" and op["rel"] == situation.FOLLOW:
@@ -399,6 +403,8 @@ def _exec(world, op, origin):
         turn.setdefault("movers", {}).setdefault(op["id"], MOVERS.get(origin, origin))
     if kind == "link" and op["rel"] == situation.FOLLOW and op["dst"] == "player":
         _note(world, situation.join(world, op["src"]))
+        if op["src"] not in situation.around(world):  # 主角已先走一步：随行者跟到主角身边
+            g.set(op["src"], "location", world.here)
     elif kind == "unlink" and op["rel"] == situation.FOLLOW:
         situation.part(world, op["src"])
     elif kind == "link":

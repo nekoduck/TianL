@@ -2,7 +2,7 @@
 [INPUT]: 依赖 tianlong.engine 的 Game，tianlong.world 的 World 与 data/canon 原著世界；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——原著在主角眼前一回合一桩交导演上演且可被主角阻断、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
           跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判、新造实体被驳回且账本不记未成立之事、
-          众目之下的事入江湖账本、史官改写被扰动的大事、
+          众目之下的事入江湖账本、史官改写被扰动的大事、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
           流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房(分隔线被拆在两块之间也不漏一个等号)、编剧半途失声保留已写、无监听不流式、
           回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
@@ -341,7 +341,11 @@ class StreamingTest(unittest.TestCase):
     def test_writer_falling_silent_midway_keeps_what_was_written(self):
         llm = StreamLLM(director(), ["前半句已写成，", LLMError("断流")])
         turn = Game(World.create(), llm).act("看", on=lambda *_: None)
-        self.assertEqual(turn["text"], "前半句已写成，")
+        self.assertTrue(turn["text"].startswith("前半句已写成，\n"))  # 已写的保留
+        self.assertIn("甲", turn["text"])                             # 只言片语：以已成立之事续成，读者不至于只看到半句
+        long = "前半句已写成，" * 10
+        llm = StreamLLM(director(), [long, LLMError("断流")])
+        self.assertEqual(Game(World.create(), llm).act("看", on=lambda *_: None)["text"], long)  # 写够了便是正文
 
     def test_without_listener_nothing_streams(self):
         llm = StreamLLM(director(), [AssertionError("不该流式")])

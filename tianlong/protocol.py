@@ -7,7 +7,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-VERSION = "tianlong/1.2"  # 次版本只做向后兼容的增补（1.1：流式推送；1.2：行动写明卷与回合）；客户端只比对主版本
+VERSION = "tianlong/1.3"  # 次版本只做向后兼容的增补（1.1：流式推送；1.2：行动写明卷与回合；1.3：选项随 done 放出，head 的 options 为空）；客户端只比对主版本
 ACTION_TYPES = ("selection", "free_text")
 MAX_TEXT = 200
 MAX_NAME = 12
