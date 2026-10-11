@@ -1,11 +1,12 @@
 """
-[INPUT]: 依赖 World 门面的 graph / player / knowledge / here / taint（鸭子类型）
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/graph 的 ROAD，依赖 World 门面的 graph / player / knowledge / here / taint（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号→id）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：
-       人物生死伤病、去留、恩怨、武学、主角的得失与行止、器物易手、隐情的揭开。
+       人物生死伤病、去留、恩怨、武学、主角的得失与行止、器物易手、隐情与暗路的揭开。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
-       一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）
+       一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）；
+       主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -13,8 +14,11 @@
 #  指令集（只作用于既有实体）
 #    set/add/push/pull : 改人物、门派、器物流转或主角(id="player")的属性；地点与景物只可改 state
 #    link/unlink       : 增删关系边（恩怨、结义、师承……可带 secret）
-#    reveal            : 让主角得知一条既有隐情
+#    reveal            : 让主角得知一条既有隐情，或发现一条暗路（src/dst 为暗路两端的地点）
 # ============================================================
+from . import access
+from .graph import ROAD
+
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal"}
 STATUSES = {"alive", "wounded", "dead"}
 FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp"}
@@ -68,6 +72,8 @@ def describe(op) -> str:
     name = lambda x: "主角" if x == "player" else str(x)
     if kind in ("link", "unlink"):
         return f"{name(op.get('src'))}与{name(op.get('dst'))}{'结下' if kind == 'link' else '了断'}「{op.get('rel')}」"
+    if kind == "reveal" and op.get("rel") == ROAD:
+        return f"发现{op.get('src')}与{op.get('dst')}之间的暗路"
     if kind == "reveal":
         return f"揭开隐情「{op.get('src')}—{op.get('rel')}—{op.get('dst')}」"
     if kind == "set" and key == "location":
@@ -98,6 +104,10 @@ def _normalize(world, op):
         op["key"] = PLAYER_ALIASES.get(op.get("key"), op.get("key"))
     if op.get("key") in RESOLVED_KEYS and isinstance(op.get("value"), str):
         op["value"] = resolve(world, op["value"])
+    if op.get("op") == "reveal" and g.kind(op.get("src")) == g.kind(op.get("dst")) == "location":
+        road = g.road(op["src"], op["dst"])  # 两地之间的揭露即发现暗路：落到道路边本身，不论 LLM 把 rel 写作什么
+        if road:
+            op.update(src=road["src"], dst=road["dst"], rel=ROAD)
     if op.get("op") == "link" and "note" in op:
         op["note"] = str(op["note"])[:NOTE_LEN] if op["note"] else None
     if op.get("op") == "set" and op.get("key") == "location" and g.kind(op.get("id")) != "item" \
@@ -115,6 +125,11 @@ def _physics(world, op) -> str | None:
             return "关系边缺字段"
         if not all(i == "player" or g.has(i) for i in _ids(op)):
             return "关系端点不在世界中"
+        if op["rel"] == ROAD and kind != "reveal":
+            return "道路属于地理，由系统掌管"
+        if kind == "reveal" and op["rel"] == ROAD:  # 发现暗路：两地之间须有道路，且道路藏着暗路
+            road = g.road(op["src"], op["dst"])
+            return None if road and access.hidden(road) else "两地之间并无暗路"
         if kind == "reveal" and not any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"]
                                         for e in g.edges):
             return "要揭露的隐情并不存在"
@@ -140,11 +155,8 @@ def _physics(world, op) -> str | None:
             return f"非法状态:{value}"
         if g.get(nid, "status") == "dead" and value != "dead":
             return f"{nid}已死，死者不能复生"
-    if kind == "set" and key == "location" and value is not None:
-        if g.kind(value) != "location":
-            return f"世上没有「{value}」这个地方"
-        if nid == "player" and value not in g.distances(world.here):
-            return f"{value}与此地不相通"
+    if kind == "set" and key == "location" and (value is not None or nid == "player") and g.kind(value) != "location":
+        return f"世上没有「{value}」这个地方"  # 主角去得了去不了，由 apply 交 access 按路线裁定
     if kind == "set" and key == "holder" and value is not None and value != "player" and g.kind(value) != "person":
         return f"「{value}」不是人，无法持有器物"
     if kind in ("push", "pull") and key == "skills" and g.kind(value) != "skill":
@@ -184,8 +196,8 @@ def _reach(world, op, origin, scope) -> str | None:
             return "场外推演不得改动主角本人"
         if scope is not None and nid not in scope and where not in scope:
             return f"{nid}不在推演区域内"
-        if origin == "lod1" and op.get("key") == "location" and op["value"] not in {n for n, _ in g.roads(where)}:
-            return "一日之内只能移动到相邻地点"
+        if origin == "lod1" and op.get("key") == "location" and op["value"] not in access.steps(world, where):
+            return "一日之内只能移动到相邻且走得通的地点"
         return None
     return f"未知来源:{origin}"
 
@@ -243,6 +255,14 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
         if reason:
             rejected.append((op, reason))
             continue
+        if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，前半程照走，后半程回告编剧
+            route, why = access.walk(world, op["value"])
+            if why:
+                rejected.append(({**op}, why))
+                if len(route) < 2:
+                    continue
+                op["value"] = route[-1]
+            access.learn(world, route)
         _exec(world, op)
         applied.append(op)
         if origin == "director":

@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
-[OUTPUT]: 对外提供 World 门面（create 创世(含出身) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档），持有 aliases 别名表
+[OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档），持有 aliases 别名表
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -38,6 +38,8 @@ class World:
         graph = Graph(d["nodes"])
         for a, b, days in d["roads"]:
             graph.link(a, b, ROAD, days=days)
+        for a, b, gate in d.get("gates", []):  # 有向关口挂在道路边上，以去向为键
+            graph.road(a, b).setdefault("gates", {})[b] = gate
         for r in d["relations"]:
             graph.link(**r)
         player = Blackboard({**d["player"], **birth, **({"name": name} if name else {})})

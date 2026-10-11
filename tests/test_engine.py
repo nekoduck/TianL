@@ -1,16 +1,19 @@
 """
 [INPUT]: 依赖 tianlong.engine 的 Game，tianlong.world 的 World 与 data/canon 原著世界；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——原著在主角眼前一回合一桩交导演上演且可被主角阻断、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
-          跋涉时日由道路结算、时长由措辞换算、同伴随行不被误判、新造实体被驳回且账本不记未成立之事、众目之下的事入江湖账本、史官改写被扰动的大事、
+          跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判、新造实体被驳回且账本不记未成立之事、
+          众目之下的事入江湖账本、史官改写被扰动的大事、
           流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房、编剧半途失声保留已写、无监听不流式
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import copy
 import logging
 import unittest
 
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError
+from tianlong.world import access
 from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
@@ -30,7 +33,7 @@ class StubLLM:
             self.director_prompts.append(user)
         for key, reply in self.replies.items():
             if key in system:
-                return reply
+                return copy.deepcopy(reply)  # 如真模型：每次都是新解析出的 JSON，落账时的规整不会改到预设
         raise LLMError("无预设")
 
     def text(self, system, user, max_tokens=0):
@@ -128,13 +131,24 @@ class DirectorTest(unittest.TestCase):
         self.assertIn("无量剑比剑被一名外客搅乱", [e["summary"] for e in game.world.truth.events])  # 众目之下结交，江湖有传
 
     def test_journey_time_from_roads_not_llm(self):
-        llm = StubLLM(director(effects=[{"op": "set", "id": "player", "key": "location", "value": "镇南王府"}]))
+        llm = StubLLM(director(effects=[{"op": "set", "id": "player", "key": "location", "value": "大理城"}]))
         game = Game(World.create(), llm)
         w = game.world
-        start, ride = w.clock.day, w.graph.distances(w.here)["镇南王府"]
-        turn = game.act("直奔镇南王府")
-        self.assertEqual(turn["place"], "镇南王府")
+        start, ride = w.clock.day, access.distances(w, w.here)["大理城"]
+        turn = game.act("直奔大理城")
+        self.assertEqual(turn["place"], "大理城")
         self.assertEqual((ride, w.clock.day), (2, start + ride))  # 步行 3 日，骑马 2 日；导演只说了"瞬息"
+
+    def test_the_gate_at_the_door_becomes_the_next_scene(self):
+        llm = StubLLM(director(effects=[{"op": "set", "id": "player", "key": "location", "value": "镇南王府"}]))
+        game = Game(World.create(), llm)
+        turn = game.act("直奔镇南王府")
+        self.assertEqual(turn["place"], "大理城")                                                # 王府门前止步
+        self.assertIn("主角前往镇南王府——行至大理城便止步，往镇南王府是一道关（守卫）", llm.writer_prompts[-1])  # 编剧知道为何止步
+        self.assertIn("镇南王府（0日·守卫）", llm.writer_prompts[-1])                            # 出路注明关口
+        turn = game.act("求见王府")
+        self.assertIn("往镇南王府（守卫）：王府守卫核认来人", llm.director_prompts[-1])           # 导演开口前看见门前之关
+        self.assertEqual((turn["place"], turn["void"]), ("镇南王府", []))                         # 由导演兑现，过关入府
 
     def test_time_flows_by_pace_words_not_numbers(self):
         llm = StubLLM(director(pace="瞬息"))

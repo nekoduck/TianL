@@ -1,0 +1,5028 @@
+{
+  "passed": true,
+  "scope": "JSON结构、字数、索引、直接邻接、弱连通、显式blocked下的事件移动拓扑可达、硬前提历史状态见证。",
+  "counts": {
+    "locations": 202,
+    "access": 179,
+    "original_roads": 191,
+    "patched_roads": 219,
+    "remove": 17,
+    "add": 45,
+    "change": 4,
+    "new_locations": 19,
+    "events": 235,
+    "explicit_person_movements": 605,
+    "connected_components": 1,
+    "requires_triples": 8
+  },
+  "errors": [],
+  "hard_requirement_witnesses": [
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·谷外树林",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "万劫谷·地道",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·石屋",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·地道",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·药室",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·药室",
+      "to": "万劫谷·地道",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·钟氏卧室",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    },
+    {
+      "from": "万劫谷·钟氏卧室",
+      "to": "万劫谷·地道",
+      "requires": [
+        "万劫谷·地道",
+        "state",
+        {
+          "exists": true,
+          "accessible": true
+        }
+      ],
+      "satisfied_after": "巴天石华赫艮掘地道"
+    }
+  ],
+  "one_way_reverse_checks": [
+    {
+      "from": "无量山·山崖",
+      "to": "无量山·谷底",
+      "reverse_record": true
+    },
+    {
+      "from": "无量山·谷底",
+      "to": "无量山·山崖",
+      "reverse_record": true
+    },
+    {
+      "from": "雁门关·石壁",
+      "to": "雁门关·谷底",
+      "reverse_record": true
+    },
+    {
+      "from": "雁门关·谷底",
+      "to": "雁门关·石壁",
+      "reverse_record": true
+    },
+    {
+      "from": "兴州道旁悬崖",
+      "to": "兴州道旁悬空处",
+      "reverse_record": true
+    },
+    {
+      "from": "兴州道旁悬空处",
+      "to": "兴州道旁悬崖",
+      "reverse_record": true
+    },
+    {
+      "from": "兴州道旁悬崖",
+      "to": "兴州道旁深谷",
+      "reverse_record": true
+    },
+    {
+      "from": "兴州道旁深谷",
+      "to": "兴州道旁悬崖",
+      "reverse_record": true
+    },
+    {
+      "from": "万仙大会山谷·雪覆断涧",
+      "to": "雪峰·落脚雪坡",
+      "reverse_record": true
+    },
+    {
+      "from": "雪峰·落脚雪坡",
+      "to": "万仙大会山谷·雪覆断涧",
+      "reverse_record": true
+    }
+  ],
+  "movement_failures": [],
+  "movement_checks": [
+    {
+      "event": "容子矩毒伤毙命",
+      "order": 3,
+      "person": "容子矩",
+      "from": "无量山",
+      "to": "剑湖宫·练武厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "钟灵以闪电貂御敌",
+      "order": 4,
+      "person": "钟灵",
+      "from": "剑湖宫·练武厅",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "钟灵以闪电貂御敌",
+      "order": 4,
+      "person": "段誉",
+      "from": "剑湖宫·练武厅",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉赴万劫谷求解药",
+      "order": 6,
+      "person": "段誉",
+      "from": "无量山",
+      "to": "无量后山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "干葛私奔",
+      "order": 7,
+      "person": "干光豪",
+      "from": "剑湖宫·练武厅",
+      "to": "无量后山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "干葛私奔",
+      "order": 7,
+      "person": "葛光佩",
+      "from": "剑湖宫·练武厅",
+      "to": "无量后山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉坠入无量山谷",
+      "order": 8,
+      "person": "段誉",
+      "from": "无量后山",
+      "to": "无量山·谷底",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉发现琅嬛福地",
+      "order": 9,
+      "person": "段誉",
+      "from": "无量山·谷底",
+      "to": "琅嬛福地·玉像石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "甘宝宝托段誉向段家求援",
+      "order": 11,
+      "person": "段誉",
+      "from": "琅嬛福地·玉像石室",
+      "to": "万劫谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉借乘黑玫瑰",
+      "order": 12,
+      "person": "段誉",
+      "from": "万劫谷",
+      "to": "木婉清居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉借乘黑玫瑰",
+      "order": 12,
+      "person": "来福儿",
+      "from": "万劫谷",
+      "to": "木婉清居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清杀干葛追敌",
+      "order": 13,
+      "person": "木婉清",
+      "from": "木婉清居所",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清杀干葛追敌",
+      "order": 13,
+      "person": "干光豪",
+      "from": "无量后山",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清杀干葛追敌",
+      "order": 13,
+      "person": "葛光佩",
+      "from": "无量后山",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清杀干葛追敌",
+      "order": 13,
+      "person": "段誉",
+      "from": "木婉清居所",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清射杀平婆婆",
+      "order": 14,
+      "person": "平婆婆",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清射杀平婆婆",
+      "order": 14,
+      "person": "瑞婆婆",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "黑玫瑰跃涧坠亡",
+      "order": 15,
+      "person": "木婉清",
+      "from": "无量山",
+      "to": "无量山·山崖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "黑玫瑰跃涧坠亡",
+      "order": 15,
+      "person": "段誉",
+      "from": "无量山",
+      "to": "无量山·山崖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "南海鳄神扣木婉清待徒",
+      "order": 17,
+      "person": "南海鳄神",
+      "from": "无量山",
+      "to": "无量山·山崖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "南海鳄神扣木婉清待徒",
+      "order": 17,
+      "person": "段誉",
+      "from": "无量山·山崖",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "司空玄自尽无量剑改隶",
+      "order": 18,
+      "person": "辛双清",
+      "from": "剑湖宫·练武厅",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "司空玄自尽无量剑改隶",
+      "order": 18,
+      "person": "左子穆",
+      "from": "剑湖宫·练武厅",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "无量洞拘禁段誉",
+      "order": 19,
+      "person": "郁光标",
+      "from": "剑湖宫·练武厅",
+      "to": "无量洞·囚室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "无量洞拘禁段誉",
+      "order": 19,
+      "person": "钱光胜",
+      "from": "剑湖宫·练武厅",
+      "to": "无量洞·囚室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "无量洞拘禁段誉",
+      "order": 19,
+      "person": "段誉",
+      "from": "无量山",
+      "to": "无量洞·囚室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉吞朱蛤得抗毒体质",
+      "order": 21,
+      "person": "段誉",
+      "from": "无量洞·囚室",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉脱囚吸无量门人内力",
+      "order": 22,
+      "person": "郁光标",
+      "from": "无量洞·囚室",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉脱囚吸无量门人内力",
+      "order": 22,
+      "person": "钱光胜",
+      "from": "无量洞·囚室",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉脱囚吸无量门人内力",
+      "order": 22,
+      "person": "段誉",
+      "from": "无量山",
+      "to": "无量山·山崖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "高昇泰",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "朱丹臣",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "褚万里",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "古笃诚",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "傅思归",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "叶二娘",
+      "from": "大理城",
+      "to": "无量山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高昇泰等救左子穆幼子",
+      "order": 23,
+      "person": "叶二娘",
+      "from": "无量山",
+      "to": "大理城",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清赴玉虚观",
+      "order": 25,
+      "person": "段誉",
+      "from": "无量山·山崖",
+      "to": "玉虚观",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清赴玉虚观",
+      "order": 25,
+      "person": "木婉清",
+      "from": "无量山·山崖",
+      "to": "玉虚观",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清赴玉虚观",
+      "order": 25,
+      "person": "云中鹤",
+      "from": "无量山",
+      "to": "玉虚观",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉携母与木婉清回府",
+      "order": 26,
+      "person": "段誉",
+      "from": "玉虚观",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉携母与木婉清回府",
+      "order": 26,
+      "person": "木婉清",
+      "from": "玉虚观",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉携母与木婉清回府",
+      "order": 26,
+      "person": "刀白凤",
+      "from": "玉虚观",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉携母与木婉清回府",
+      "order": 26,
+      "person": "段正明",
+      "from": "大理皇宫",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "木婉清身世揭开",
+      "order": 27,
+      "person": "秦红棉",
+      "from": "木婉清居所",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清被囚石屋",
+      "order": 28,
+      "person": "段延庆",
+      "from": "大理城",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清被囚石屋",
+      "order": 28,
+      "person": "段誉",
+      "from": "镇南王府",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清被囚石屋",
+      "order": 28,
+      "person": "木婉清",
+      "from": "镇南王府",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清被囚石屋",
+      "order": 28,
+      "person": "钟万仇",
+      "from": "万劫谷",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "黄眉僧以棋拖住段延庆",
+      "order": 29,
+      "person": "黄眉僧",
+      "from": "拈花寺",
+      "to": "万劫谷·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "黄眉僧以棋拖住段延庆",
+      "order": 29,
+      "person": "段延庆",
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "巴天石华赫艮掘地道",
+      "order": 30,
+      "person": "巴天石",
+      "from": "大理城",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "巴天石华赫艮掘地道",
+      "order": 30,
+      "person": "华赫艮",
+      "from": "大理城",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "巴天石华赫艮掘地道",
+      "order": 30,
+      "person": "范骅",
+      "from": "大理城",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "巴天石华赫艮掘地道",
+      "order": 30,
+      "person": "钟灵",
+      "from": "无量山",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清脱离石屋",
+      "order": 31,
+      "person": "钟灵",
+      "from": "万劫谷·地道",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清脱离石屋",
+      "order": 31,
+      "person": "巴天石",
+      "from": "万劫谷·地道",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉木婉清脱离石屋",
+      "order": 31,
+      "person": "华赫艮",
+      "from": "万劫谷·地道",
+      "to": "万劫谷·石屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "段誉",
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "黄眉僧",
+      "from": "万劫谷·大厅",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "崔百泉",
+      "from": "镇南王府",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "钟万仇",
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "南海鳄神",
+      "from": "无量山·山崖",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "叶二娘",
+      "from": "大理城",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "云中鹤",
+      "from": "玉虚观",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "万劫谷地道群人失内力",
+      "order": 32,
+      "person": "钟灵",
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·地道",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "钟灵身世向段家明示",
+      "order": 33,
+      "person": "甘宝宝",
+      "from": "万劫谷",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "钟灵身世向段家明示",
+      "order": 33,
+      "person": "段誉",
+      "from": "万劫谷·地道",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慧真慧观报告玄悲遇害",
+      "order": 34,
+      "person": "慧真",
+      "from": "陆凉州",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慧真慧观报告玄悲遇害",
+      "order": 34,
+      "person": "慧观",
+      "from": "陆凉州",
+      "to": "镇南王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉异种内力失调送天龙寺",
+      "order": 35,
+      "person": "段正明",
+      "from": "镇南王府",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉异种内力失调送天龙寺",
+      "order": 35,
+      "person": "段誉",
+      "from": "镇南王府",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉异种内力失调送天龙寺",
+      "order": 35,
+      "person": "本因",
+      "from": "天龙寺",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明出家群僧习六脉",
+      "order": 36,
+      "person": "本观",
+      "from": "天龙寺",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明出家群僧习六脉",
+      "order": 36,
+      "person": "本相",
+      "from": "天龙寺",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明出家群僧习六脉",
+      "order": 36,
+      "person": "本参",
+      "from": "天龙寺",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "枯荣焚六脉图段誉记剑",
+      "order": 37,
+      "person": "鸠摩智",
+      "from": "大轮寺",
+      "to": "天龙寺·牟尼堂",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "鸠摩智",
+      "from": "天龙寺·牟尼堂",
+      "to": "天龙寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "段誉",
+      "from": "天龙寺·牟尼堂",
+      "to": "天龙寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "段正明",
+      "from": "天龙寺·牟尼堂",
+      "to": "天龙寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "本参",
+      "from": "天龙寺·牟尼堂",
+      "to": "天龙寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "段誉",
+      "from": "天龙寺",
+      "to": "陆凉州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智擒段誉离天龙寺",
+      "order": 38,
+      "person": "鸠摩智",
+      "from": "天龙寺",
+      "to": "陆凉州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智押段誉抵姑苏",
+      "order": 39,
+      "person": "鸠摩智",
+      "from": "陆凉州",
+      "to": "苏州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智押段誉抵姑苏",
+      "order": 39,
+      "person": "段誉",
+      "from": "陆凉州",
+      "to": "苏州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智押段誉抵姑苏",
+      "order": 39,
+      "person": "崔百泉",
+      "from": "万劫谷·地道",
+      "to": "苏州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智押段誉抵姑苏",
+      "order": 39,
+      "person": "过彦之",
+      "from": "虎牢关",
+      "to": "苏州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿碧引众人至琴韵小筑",
+      "order": 40,
+      "person": "鸠摩智",
+      "from": "苏州",
+      "to": "琴韵小筑",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿碧引众人至琴韵小筑",
+      "order": 40,
+      "person": "段誉",
+      "from": "苏州",
+      "to": "琴韵小筑",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿碧引众人至琴韵小筑",
+      "order": 40,
+      "person": "崔百泉",
+      "from": "苏州",
+      "to": "琴韵小筑",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿碧引众人至琴韵小筑",
+      "order": 40,
+      "person": "过彦之",
+      "from": "苏州",
+      "to": "琴韵小筑",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿碧引众人至琴韵小筑",
+      "order": 40,
+      "person": "阿朱",
+      "from": "听香水榭",
+      "to": "琴韵小筑",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧救段誉脱离鸠摩智",
+      "order": 41,
+      "person": "段誉",
+      "from": "琴韵小筑",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧救段誉脱离鸠摩智",
+      "order": 41,
+      "person": "阿朱",
+      "from": "琴韵小筑",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧救段誉脱离鸠摩智",
+      "order": 41,
+      "person": "阿碧",
+      "from": "琴韵小筑",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧携段誉登曼陀山庄",
+      "order": 42,
+      "person": "段誉",
+      "from": "太湖",
+      "to": "曼陀山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧携段誉登曼陀山庄",
+      "order": 42,
+      "person": "阿朱",
+      "from": "太湖",
+      "to": "曼陀山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "朱碧携段誉登曼陀山庄",
+      "order": 42,
+      "person": "阿碧",
+      "from": "太湖",
+      "to": "曼陀山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王夫人留段誉做花匠",
+      "order": 43,
+      "person": "王夫人",
+      "from": "曼陀山庄",
+      "to": "曼陀山庄·茶花园",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王夫人留段誉做花匠",
+      "order": 43,
+      "person": "段誉",
+      "from": "曼陀山庄",
+      "to": "曼陀山庄·茶花园",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉初见王语嫣",
+      "order": 44,
+      "person": "段誉",
+      "from": "曼陀山庄·茶花园",
+      "to": "曼陀山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣离庄寻慕容复",
+      "order": 45,
+      "person": "王语嫣",
+      "from": "曼陀山庄",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣离庄寻慕容复",
+      "order": 45,
+      "person": "段誉",
+      "from": "曼陀山庄",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣离庄寻慕容复",
+      "order": 45,
+      "person": "阿朱",
+      "from": "曼陀山庄",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣离庄寻慕容复",
+      "order": 45,
+      "person": "阿碧",
+      "from": "曼陀山庄",
+      "to": "太湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "王语嫣",
+      "from": "太湖",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "段誉",
+      "from": "太湖",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "阿朱",
+      "from": "太湖",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "阿碧",
+      "from": "太湖",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "姚伯当",
+      "from": "秦家寨",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "司马林",
+      "from": "青城山",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "听香水榭揭破诸保昆卧底",
+      "order": 46,
+      "person": "诸保昆",
+      "from": "青城山",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "包不同驱散水榭来客",
+      "order": 47,
+      "person": "包不同",
+      "from": "金风庄",
+      "to": "听香水榭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "包不同驱散水榭来客",
+      "order": 47,
+      "person": "王语嫣",
+      "from": "听香水榭",
+      "to": "无锡",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "包不同驱散水榭来客",
+      "order": 47,
+      "person": "包不同",
+      "from": "听香水榭",
+      "to": "无锡",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋取走小无相庚册",
+      "order": 48,
+      "person": "丁春秋",
+      "from": "星宿海",
+      "to": "琅嬛玉洞",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋取走小无相庚册",
+      "order": 48,
+      "person": "王夫人",
+      "from": "曼陀山庄·茶花园",
+      "to": "琅嬛玉洞",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋取走小无相庚册",
+      "order": 48,
+      "person": "鸠摩智",
+      "from": "琴韵小筑",
+      "to": "琅嬛玉洞",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "松鹤楼相遇结义",
+      "order": 51,
+      "person": "乔峰",
+      "from": "中原",
+      "to": "松鹤楼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "松鹤楼相遇结义",
+      "order": 51,
+      "person": "段誉",
+      "from": "听香水榭",
+      "to": "松鹤楼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "乔峰",
+      "from": "松鹤楼",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "段誉",
+      "from": "松鹤楼",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "包不同",
+      "from": "无锡",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "风波恶",
+      "from": "玄霜庄",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "吴长风",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "宋长老",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "陈孤雁",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "奚山河",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "包不同",
+      "from": "杏子林",
+      "to": "江南",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林初斗慕容家将",
+      "order": 52,
+      "person": "风波恶",
+      "from": "杏子林",
+      "to": "江南",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丐帮传功执法长老获释",
+      "order": 53,
+      "person": "白世镜",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丐帮传功执法长老获释",
+      "order": 53,
+      "person": "吕章",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丐帮传功执法长老获释",
+      "order": 53,
+      "person": "全冠清",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丐帮传功执法长老获释",
+      "order": 53,
+      "person": "蒋舵主",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丐帮传功执法长老获释",
+      "order": 53,
+      "person": "李春来",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰以己血赦四长老",
+      "order": 54,
+      "person": "刘竹庄",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "谭公赠阿朱冰蟾膏",
+      "order": 55,
+      "person": "谭公",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "谭公赠阿朱冰蟾膏",
+      "order": 55,
+      "person": "阿朱",
+      "from": "听香水榭",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "徐冲霄",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "康敏",
+      "from": "康敏家",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "单正",
+      "from": "泰山单家",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "智光",
+      "from": "止观寺",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "赵钱孙",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "杏子林揭示契丹身世",
+      "order": 56,
+      "person": "谭婆",
+      "from": "中原",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "赫连铁树",
+      "from": "西夏",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "努儿海",
+      "from": "西夏",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "徐冲霄",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "白世镜",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "吕章",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "吴长风",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "宋长老",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "陈孤雁",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏以悲酥清风擒丐帮",
+      "order": 58,
+      "person": "奚山河",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉救王语嫣出杏林",
+      "order": 59,
+      "person": "王语嫣",
+      "from": "无锡",
+      "to": "杏子林",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉救王语嫣出杏林",
+      "order": 59,
+      "person": "段誉",
+      "from": "杏子林",
+      "to": "碾坊",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉救王语嫣出杏林",
+      "order": 59,
+      "person": "王语嫣",
+      "from": "杏子林",
+      "to": "碾坊",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "李延宗给段誉悲酥解药",
+      "order": 62,
+      "person": "慕容复",
+      "from": "江南",
+      "to": "碾坊",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮乔峰救群丐",
+      "order": 63,
+      "person": "阿朱",
+      "from": "杏子林",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮乔峰救群丐",
+      "order": 63,
+      "person": "阿碧",
+      "from": "听香水榭",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮乔峰救群丐",
+      "order": 63,
+      "person": "段誉",
+      "from": "碾坊",
+      "to": "天宁寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀乔三槐夫妇",
+      "order": 64,
+      "person": "萧远山",
+      "from": "少室山",
+      "to": "乔三槐家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山重伤玄苦",
+      "order": 65,
+      "person": "萧远山",
+      "from": "乔三槐家",
+      "to": "少林寺·玄苦禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "玄苦临终乔峰蒙嫌",
+      "order": 66,
+      "person": "乔峰",
+      "from": "杏子林",
+      "to": "少林寺·玄苦禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "玄苦临终乔峰蒙嫌",
+      "order": 66,
+      "person": "虚清",
+      "from": "少林寺",
+      "to": "少林寺·玄苦禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "玄苦临终乔峰蒙嫌",
+      "order": 66,
+      "person": "虚湛",
+      "from": "少林寺",
+      "to": "少林寺·玄苦禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "玄苦临终乔峰蒙嫌",
+      "order": 66,
+      "person": "虚渊",
+      "from": "少林寺",
+      "to": "少林寺·玄苦禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱盗易筋经受掌伤",
+      "order": 67,
+      "person": "阿朱",
+      "from": "天宁寺",
+      "to": "少林寺·菩提院",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱盗易筋经受掌伤",
+      "order": 67,
+      "person": "乔峰",
+      "from": "少林寺·玄苦禅房",
+      "to": "少林寺·菩提院",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱盗易筋经受掌伤",
+      "order": 67,
+      "person": "玄慈",
+      "from": "少林寺",
+      "to": "少林寺·菩提院",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰救阿朱送客店",
+      "order": 68,
+      "person": "乔峰",
+      "from": "少林寺·菩提院",
+      "to": "英雄大会客店",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰救阿朱送客店",
+      "order": 68,
+      "person": "阿朱",
+      "from": "少林寺·菩提院",
+      "to": "英雄大会客店",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰携阿朱赴聚贤庄",
+      "order": 69,
+      "person": "乔峰",
+      "from": "英雄大会客店",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰携阿朱赴聚贤庄",
+      "order": 69,
+      "person": "阿朱",
+      "from": "英雄大会客店",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰携阿朱赴聚贤庄",
+      "order": 69,
+      "person": "薛慕华",
+      "from": "薛慕华居所",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰携阿朱赴聚贤庄",
+      "order": 69,
+      "person": "游骥",
+      "from": "聚贤庄",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰携阿朱赴聚贤庄",
+      "order": 69,
+      "person": "游驹",
+      "from": "聚贤庄",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "聚贤庄群雄大战",
+      "order": 70,
+      "person": "玄难",
+      "from": "少林寺",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "聚贤庄群雄大战",
+      "order": 70,
+      "person": "玄寂",
+      "from": "少林寺",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "聚贤庄群雄大战",
+      "order": 70,
+      "person": "赵钱孙",
+      "from": "杏子林",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "聚贤庄群雄大战",
+      "order": 70,
+      "person": "单正",
+      "from": "杏子林",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "聚贤庄群雄大战",
+      "order": 70,
+      "person": "单叔山",
+      "from": "泰山单家",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游氏兄弟失盾自尽",
+      "order": 71,
+      "person": "游坦之",
+      "from": "聚贤庄",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "单伯山单仲山战死",
+      "order": 72,
+      "person": "单伯山",
+      "from": "泰山单家",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "单伯山单仲山战死",
+      "order": 72,
+      "person": "单仲山",
+      "from": "泰山单家",
+      "to": "聚贤庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "萧远山",
+      "from": "少林寺·玄苦禅房",
+      "to": "聚贤庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "乔峰",
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "单小山",
+      "from": "泰山单家",
+      "to": "聚贤庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "阿朱",
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "乔峰",
+      "from": "聚贤庄",
+      "to": "汝州山洞",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "萧远山",
+      "from": "聚贤庄",
+      "to": "汝州山洞",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山救乔峰出聚贤庄",
+      "order": 73,
+      "person": "阿朱",
+      "from": "聚贤庄",
+      "to": "聚贤庄·后院",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之母殉夫",
+      "order": 74,
+      "person": "游坦之",
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之母殉夫",
+      "order": 74,
+      "person": "游坦之",
+      "from": "聚贤庄",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "薛慕华治愈阿朱",
+      "order": 75,
+      "person": "薛慕华",
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄·后院",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "薛慕华治愈阿朱",
+      "order": 75,
+      "person": "阿朱",
+      "from": "聚贤庄·后院",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰赴雁门关与阿朱重逢",
+      "order": 76,
+      "person": "乔峰",
+      "from": "汝州山洞",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰赴雁门关与阿朱重逢",
+      "order": 76,
+      "person": "阿朱",
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀徐冲霄",
+      "order": 77,
+      "person": "萧远山",
+      "from": "汝州山洞",
+      "to": "卫辉",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀徐冲霄",
+      "order": 77,
+      "person": "徐冲霄",
+      "from": "天宁寺",
+      "to": "卫辉",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀谭公等沉船",
+      "order": 78,
+      "person": "萧远山",
+      "from": "卫辉",
+      "to": "卫辉·船舱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀谭公等沉船",
+      "order": 78,
+      "person": "谭公",
+      "from": "杏子林",
+      "to": "卫辉·船舱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀谭公等沉船",
+      "order": 78,
+      "person": "谭婆",
+      "from": "杏子林",
+      "to": "卫辉·船舱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀谭公等沉船",
+      "order": 78,
+      "person": "赵钱孙",
+      "from": "聚贤庄·大厅",
+      "to": "卫辉·船舱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "泰山单家遭纵火灭门",
+      "order": 79,
+      "person": "萧远山",
+      "from": "卫辉·船舱",
+      "to": "泰山单家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "泰山单家遭纵火灭门",
+      "order": 79,
+      "person": "单正",
+      "from": "聚贤庄·大厅",
+      "to": "泰山单家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "泰山单家遭纵火灭门",
+      "order": 79,
+      "person": "单叔山",
+      "from": "聚贤庄·大厅",
+      "to": "泰山单家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光交契丹崖文说生父名",
+      "order": 80,
+      "person": "智光",
+      "from": "杏子林",
+      "to": "止观寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光交契丹崖文说生父名",
+      "order": 80,
+      "person": "乔峰",
+      "from": "雁门关·石壁",
+      "to": "止观寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光交契丹崖文说生父名",
+      "order": 80,
+      "person": "阿朱",
+      "from": "雁门关·石壁",
+      "to": "止观寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光服毒自尽",
+      "order": 81,
+      "person": "智光",
+      "from": "止观寺",
+      "to": "智光禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光服毒自尽",
+      "order": 81,
+      "person": "乔峰",
+      "from": "止观寺",
+      "to": "智光禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "智光服毒自尽",
+      "order": 81,
+      "person": "阿朱",
+      "from": "止观寺",
+      "to": "智光禅房",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰阿朱相恋约塞外",
+      "order": 82,
+      "person": "乔峰",
+      "from": "智光禅房",
+      "to": "天台山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰阿朱相恋约塞外",
+      "order": 82,
+      "person": "阿朱",
+      "from": "智光禅房",
+      "to": "天台山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮白世镜被康敏误导",
+      "order": 83,
+      "person": "阿朱",
+      "from": "天台山",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮白世镜被康敏误导",
+      "order": 83,
+      "person": "康敏",
+      "from": "杏子林",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱扮白世镜被康敏误导",
+      "order": 83,
+      "person": "乔峰",
+      "from": "天台山",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱将梵文经交乔峰保管",
+      "order": 84,
+      "person": "阿朱",
+      "from": "康敏家",
+      "to": "信阳酒馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱将梵文经交乔峰保管",
+      "order": 84,
+      "person": "乔峰",
+      "from": "康敏家",
+      "to": "信阳酒馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正淳救阿紫认旧物",
+      "order": 86,
+      "person": "段正淳",
+      "from": "镇南王府",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正淳救阿紫认旧物",
+      "order": 86,
+      "person": "阿紫",
+      "from": "星宿海",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正淳救阿紫认旧物",
+      "order": 86,
+      "person": "乔峰",
+      "from": "信阳酒馆",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正淳救阿紫认旧物",
+      "order": 86,
+      "person": "阿朱",
+      "from": "信阳酒馆",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "段延庆",
+      "from": "万劫谷·大厅",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "褚万里",
+      "from": "无量山",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "段正淳",
+      "from": "小镜湖",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "朱丹臣",
+      "from": "无量山",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "范骅",
+      "from": "万劫谷·地道",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "褚万里战段延庆身亡",
+      "order": 87,
+      "person": "华赫艮",
+      "from": "万劫谷·石屋",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰解段正淳之围",
+      "order": 88,
+      "person": "段正淳",
+      "from": "小镜湖·竹屋",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰解段正淳之围",
+      "order": 88,
+      "person": "段延庆",
+      "from": "小镜湖·竹屋",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰解段正淳之围",
+      "order": 88,
+      "person": "南海鳄神",
+      "from": "万劫谷·地道",
+      "to": "小镜湖",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰解段正淳之围",
+      "order": 88,
+      "person": "段延庆",
+      "from": "小镜湖",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰解段正淳之围",
+      "order": 88,
+      "person": "南海鳄神",
+      "from": "小镜湖",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱偷听自认身世",
+      "order": 89,
+      "person": "阿朱",
+      "from": "小镜湖",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱代父赴青石桥",
+      "order": 90,
+      "person": "阿朱",
+      "from": "小镜湖·竹屋",
+      "to": "小镜湖·青石桥",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿朱代父赴青石桥",
+      "order": 90,
+      "person": "乔峰",
+      "from": "小镜湖",
+      "to": "小镜湖·青石桥",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "康敏迷倒咬伤段正淳",
+      "order": 92,
+      "person": "段正淳",
+      "from": "小镜湖",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "康敏迷倒咬伤段正淳",
+      "order": 92,
+      "person": "乔峰",
+      "from": "小镜湖·青石桥",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "康敏迷倒咬伤段正淳",
+      "order": 92,
+      "person": "阿紫",
+      "from": "小镜湖",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀白世镜",
+      "order": 93,
+      "person": "萧远山",
+      "from": "泰山单家",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山杀白世镜",
+      "order": 93,
+      "person": "白世镜",
+      "from": "天宁寺",
+      "to": "康敏家",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫折磨康敏致死",
+      "order": 95,
+      "person": "段正淳",
+      "from": "康敏家",
+      "to": "小镜湖·竹屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫折磨康敏致死",
+      "order": 95,
+      "person": "阿紫",
+      "from": "康敏家",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫折磨康敏致死",
+      "order": 95,
+      "person": "乔峰",
+      "from": "康敏家",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫设计摘星子受伤",
+      "order": 96,
+      "person": "摘星子",
+      "from": "星宿海",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫设计摘星子受伤",
+      "order": 96,
+      "person": "摩云子",
+      "from": "星宿海",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫设计摘星子受伤",
+      "order": 96,
+      "person": "追风子",
+      "from": "星宿海",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫设计摘星子受伤",
+      "order": 96,
+      "person": "出尘子",
+      "from": "星宿海",
+      "to": "晋阳",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫暗算乔峰反受重伤",
+      "order": 97,
+      "person": "乔峰",
+      "from": "晋阳",
+      "to": "雪地客店",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫暗算乔峰反受重伤",
+      "order": 97,
+      "person": "阿紫",
+      "from": "晋阳",
+      "to": "雪地客店",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰抱阿紫北行求参",
+      "order": 98,
+      "person": "乔峰",
+      "from": "雪地客店",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰抱阿紫北行求参",
+      "order": 98,
+      "person": "阿紫",
+      "from": "雪地客店",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰遇阿骨打居女真部落",
+      "order": 99,
+      "person": "乔峰",
+      "from": "塞外",
+      "to": "女真部落",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰遇阿骨打居女真部落",
+      "order": 99,
+      "person": "阿紫",
+      "from": "塞外",
+      "to": "女真部落",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰结识围猎中的辽帝",
+      "order": 100,
+      "person": "乔峰",
+      "from": "女真部落",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰结识围猎中的辽帝",
+      "order": 100,
+      "person": "耶律洪基",
+      "from": "辽国皇宫",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰参加辽帝围猎",
+      "order": 101,
+      "person": "乔峰",
+      "from": "塞外",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰参加辽帝围猎",
+      "order": 101,
+      "person": "耶律洪基",
+      "from": "塞外",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰参加辽帝围猎",
+      "order": 101,
+      "person": "耶律莫哥",
+      "from": "塞外",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰参加辽帝围猎",
+      "order": 101,
+      "person": "室里",
+      "from": "塞外",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "耶律重元父子举兵",
+      "order": 102,
+      "person": "耶律重元",
+      "from": "辽国皇宫",
+      "to": "上京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "耶律重元父子举兵",
+      "order": 102,
+      "person": "耶律涅鲁古",
+      "from": "辽国皇宫",
+      "to": "上京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰平辽乱擒杀叛党",
+      "order": 103,
+      "person": "耶律重元",
+      "from": "上京",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰平辽乱擒杀叛党",
+      "order": 103,
+      "person": "耶律涅鲁古",
+      "from": "上京",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰受封南院大王",
+      "order": 104,
+      "person": "乔峰",
+      "from": "辽国军营",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰受封南院大王",
+      "order": 104,
+      "person": "耶律洪基",
+      "from": "辽国军营",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰受封南院大王",
+      "order": 104,
+      "person": "阿紫",
+      "from": "女真部落",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰受封南院大王",
+      "order": 104,
+      "person": "乔峰",
+      "from": "南京",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰受封南院大王",
+      "order": 104,
+      "person": "阿紫",
+      "from": "南京",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之以石灰袭乔峰失败",
+      "order": 105,
+      "person": "游坦之",
+      "from": "中原",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之以石灰袭乔峰失败",
+      "order": 105,
+      "person": "乔峰",
+      "from": "南院大王府",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之以石灰袭乔峰失败",
+      "order": 105,
+      "person": "阿紫",
+      "from": "南院大王府",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫拘游坦之戴铁罩",
+      "order": 106,
+      "person": "阿紫",
+      "from": "南京",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫拘游坦之戴铁罩",
+      "order": 106,
+      "person": "游坦之",
+      "from": "南京",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫拘游坦之戴铁罩",
+      "order": 106,
+      "person": "室里",
+      "from": "辽国军营",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之拾易筋经油包",
+      "order": 107,
+      "person": "游坦之",
+      "from": "南院大王府",
+      "to": "南京",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之显图习神足经",
+      "order": 108,
+      "person": "游坦之",
+      "from": "南京",
+      "to": "南院大王府·偏殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之显图习神足经",
+      "order": 108,
+      "person": "阿紫",
+      "from": "南院大王府",
+      "to": "南院大王府·偏殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之夺慧净冰蚕",
+      "order": 109,
+      "person": "游坦之",
+      "from": "南院大王府·偏殿",
+      "to": "悯忠寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之夺慧净冰蚕",
+      "order": 109,
+      "person": "慧净",
+      "from": "少林寺",
+      "to": "悯忠寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之吸冰蚕成寒毒内力",
+      "order": 110,
+      "person": "游坦之",
+      "from": "悯忠寺",
+      "to": "南院大王府·偏殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫离南京返中原",
+      "order": 111,
+      "person": "阿紫",
+      "from": "南院大王府·偏殿",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫离南京返中原",
+      "order": 111,
+      "person": "游坦之",
+      "from": "南院大王府·偏殿",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋收游坦之抓慧净",
+      "order": 112,
+      "person": "丁春秋",
+      "from": "琅嬛玉洞",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋收游坦之抓慧净",
+      "order": 112,
+      "person": "慧净",
+      "from": "悯忠寺",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "游坦之",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "邓百川",
+      "from": "青云庄",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "公冶乾",
+      "from": "赤霞庄",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "包不同",
+      "from": "江南",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "风波恶",
+      "from": "江南",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "玄痛",
+      "from": "少林寺",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "玄难",
+      "from": "聚贤庄·大厅",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之伤慕容家将与玄痛",
+      "order": 113,
+      "person": "虚竹",
+      "from": "少林寺",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "薛慕华",
+      "from": "聚贤庄·后院",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "康广陵",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "范百龄",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "苟读",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "吴领军",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "冯阿三",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "石清风",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "函谷八友误斗后合议",
+      "order": 114,
+      "person": "李傀儡",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋逼八友与诸客入车",
+      "order": 116,
+      "person": "丁春秋",
+      "from": "中原",
+      "to": "薛慕华居所",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋逼八友与诸客入车",
+      "order": 116,
+      "person": "丁春秋",
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "丁春秋",
+      "from": "擂鼓山",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "苏星河",
+      "from": "擂鼓山",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "段誉",
+      "from": "天宁寺",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "虚竹",
+      "from": "薛慕华居所",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "慕容复",
+      "from": "碾坊",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "王语嫣",
+      "from": "碾坊",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "鸠摩智",
+      "from": "琅嬛玉洞",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "段延庆",
+      "from": "中原",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "叶二娘",
+      "from": "万劫谷·地道",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "南海鳄神",
+      "from": "中原",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "玄难",
+      "from": "薛慕华居所",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "康广陵",
+      "from": "薛慕华居所",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "诸客抵擂鼓山会棋",
+      "order": 117,
+      "person": "薛慕华",
+      "from": "薛慕华居所",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆传音助破珍珑",
+      "order": 119,
+      "person": "虚竹",
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山·木屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹助苏星河反卷火柱",
+      "order": 122,
+      "person": "虚竹",
+      "from": "擂鼓山·木屋",
+      "to": "擂鼓山·棋局场",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "苏星河传虚竹疗伤法",
+      "order": 123,
+      "person": "苏星河",
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山·木屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "苏星河传虚竹疗伤法",
+      "order": 123,
+      "person": "虚竹",
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山·木屋",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "虚竹",
+      "from": "擂鼓山·木屋",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "邓百川",
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "公冶乾",
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "包不同",
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "风波恶",
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "康广陵",
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "薛慕华",
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹治伤并下山寻同门",
+      "order": 125,
+      "person": "虚竹",
+      "from": "擂鼓山",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复反弹三笑毒粉",
+      "order": 126,
+      "person": "慕容复",
+      "from": "擂鼓山·棋局场",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复反弹三笑毒粉",
+      "order": 126,
+      "person": "丁春秋",
+      "from": "擂鼓山·棋局场",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复反弹三笑毒粉",
+      "order": 126,
+      "person": "游坦之",
+      "from": "薛慕华居所",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "全冠清结交游坦之",
+      "order": 129,
+      "person": "全冠清",
+      "from": "杏子林",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "慕容复",
+      "from": "中原",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "王语嫣",
+      "from": "擂鼓山·棋局场",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "邓百川",
+      "from": "擂鼓山",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "公冶乾",
+      "from": "擂鼓山",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "包不同",
+      "from": "擂鼓山",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "风波恶",
+      "from": "擂鼓山",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "乌老大",
+      "from": "西域",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "端木元",
+      "from": "赤焰洞",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容一行闯万仙大会",
+      "order": 130,
+      "person": "桑土公",
+      "from": "碧磷洞",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉救王语嫣出围",
+      "order": 131,
+      "person": "段誉",
+      "from": "擂鼓山·棋局场",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛首领结盟反灵鹫",
+      "order": 132,
+      "person": "不平道人",
+      "from": "中原",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛首领结盟反灵鹫",
+      "order": 132,
+      "person": "卓不凡",
+      "from": "长白山",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛首领结盟反灵鹫",
+      "order": 132,
+      "person": "崔绿华",
+      "from": "中原",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之夺丐帮帮主",
+      "order": 134,
+      "person": "游坦之",
+      "from": "中原",
+      "to": "君山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之夺丐帮帮主",
+      "order": 134,
+      "person": "全冠清",
+      "from": "中原",
+      "to": "君山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "卓不凡杀逃会区岛主",
+      "order": 135,
+      "person": "区岛主",
+      "from": "西域",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之向阿紫学习腐尸毒",
+      "order": 136,
+      "person": "游坦之",
+      "from": "君山",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹救布袋女童",
+      "order": 137,
+      "person": "虚竹",
+      "from": "中原",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹救布袋女童",
+      "order": 137,
+      "person": "天山童姥",
+      "from": "灵鹫宫",
+      "to": "万仙大会山谷",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹救布袋女童",
+      "order": 137,
+      "person": "虚竹",
+      "from": "万仙大会山谷",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹救布袋女童",
+      "order": 137,
+      "person": "天山童姥",
+      "from": "万仙大会山谷",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "李秋水夺指环断童姥腿",
+      "order": 140,
+      "person": "李秋水",
+      "from": "西夏皇宫",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥传虚竹天山折梅手",
+      "order": 141,
+      "person": "天山童姥",
+      "from": "天山",
+      "to": "西夏",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥传虚竹天山折梅手",
+      "order": 141,
+      "person": "虚竹",
+      "from": "天山",
+      "to": "西夏",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹童姥藏身西夏冰库",
+      "order": 142,
+      "person": "虚竹",
+      "from": "西夏",
+      "to": "西夏皇宫·冰库底层",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹童姥藏身西夏冰库",
+      "order": 142,
+      "person": "天山童姥",
+      "from": "西夏",
+      "to": "西夏皇宫·冰库底层",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥掳梦姑与虚竹幽会",
+      "order": 143,
+      "person": "李清露",
+      "from": "西夏皇宫",
+      "to": "西夏皇宫·冰库底层",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "李秋水寻至冰库血战",
+      "order": 146,
+      "person": "李秋水",
+      "from": "天山",
+      "to": "西夏皇宫·冰库底层",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥指定虚竹继灵鹫宫",
+      "order": 147,
+      "person": "天山童姥",
+      "from": "西夏皇宫·冰库底层",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥指定虚竹继灵鹫宫",
+      "order": 147,
+      "person": "虚竹",
+      "from": "西夏皇宫·冰库底层",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥指定虚竹继灵鹫宫",
+      "order": 147,
+      "person": "李秋水",
+      "from": "西夏皇宫·冰库底层",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥指定虚竹继灵鹫宫",
+      "order": 147,
+      "person": "余婆婆",
+      "from": "灵鹫宫",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "童姥指定虚竹继灵鹫宫",
+      "order": 147,
+      "person": "符敏仪",
+      "from": "灵鹫宫",
+      "to": "天山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "乌老大",
+      "from": "万仙大会山谷",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "安洞主",
+      "from": "西域",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "钦岛主",
+      "from": "西域",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "端木元",
+      "from": "万仙大会山谷",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "桑土公",
+      "from": "万仙大会山谷",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "哈大霸",
+      "from": "西域",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "云岛主",
+      "from": "海南岛",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "余婆婆",
+      "from": "天山",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "洞岛叛众攻入灵鹫宫",
+      "order": 150,
+      "person": "符敏仪",
+      "from": "天山",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹制卓不凡救宫人",
+      "order": 151,
+      "person": "虚竹",
+      "from": "天山",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹制卓不凡救宫人",
+      "order": 151,
+      "person": "卓不凡",
+      "from": "万仙大会山谷",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹参悟灵鹫石壁武学",
+      "order": 153,
+      "person": "虚竹",
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹参悟灵鹫石壁武学",
+      "order": 153,
+      "person": "梅剑",
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹参悟灵鹫石壁武学",
+      "order": 153,
+      "person": "兰剑",
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹参悟灵鹫石壁武学",
+      "order": 153,
+      "person": "竹剑",
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹参悟灵鹫石壁武学",
+      "order": 153,
+      "person": "菊剑",
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "虚竹",
+      "from": "灵鹫宫·石室",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "段誉",
+      "from": "万仙大会山谷",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "梅剑",
+      "from": "灵鹫宫·石室",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "兰剑",
+      "from": "灵鹫宫·石室",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "竹剑",
+      "from": "灵鹫宫·石室",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "菊剑",
+      "from": "灵鹫宫·石室",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "梅剑",
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "兰剑",
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "竹剑",
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹段誉结义赴少林",
+      "order": 154,
+      "person": "菊剑",
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "神山上人",
+      "from": "清凉寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "神音",
+      "from": "清凉寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "观心",
+      "from": "大相国寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "道清",
+      "from": "普渡寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "融智",
+      "from": "净影寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "鸠摩智",
+      "from": "擂鼓山·棋局场",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "玄慈",
+      "from": "少林寺·菩提院",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "玄寂",
+      "from": "聚贤庄·大厅",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "神山率诸僧赴少林责问",
+      "order": 155,
+      "person": "觉贤",
+      "from": "东林寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹与鸠摩智比武",
+      "order": 156,
+      "person": "虚竹",
+      "from": "少林寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹坦承破戒少林议处",
+      "order": 157,
+      "person": "慧轮",
+      "from": "少林寺",
+      "to": "少林寺·大雄宝殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "易大彪遇害托招亲榜",
+      "order": 158,
+      "person": "慕容复",
+      "from": "万仙大会山谷",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "易大彪遇害托招亲榜",
+      "order": 158,
+      "person": "公冶乾",
+      "from": "万仙大会山谷",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋慕容复争斗至寺前",
+      "order": 159,
+      "person": "丁春秋",
+      "from": "中原",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋慕容复争斗至寺前",
+      "order": 159,
+      "person": "慕容复",
+      "from": "中原",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋慕容复争斗至寺前",
+      "order": 159,
+      "person": "阿紫",
+      "from": "中原",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋慕容复争斗至寺前",
+      "order": 159,
+      "person": "游坦之",
+      "from": "中原",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之挟丐帮赴少林",
+      "order": 160,
+      "person": "全冠清",
+      "from": "君山",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之挟丐帮赴少林",
+      "order": 160,
+      "person": "吕章",
+      "from": "天宁寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之挟丐帮赴少林",
+      "order": 160,
+      "person": "吴长风",
+      "from": "天宁寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之挟丐帮赴少林",
+      "order": 160,
+      "person": "陈孤雁",
+      "from": "天宁寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之挟丐帮赴少林",
+      "order": 160,
+      "person": "奚山河",
+      "from": "天宁寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰燕云十八骑到少林",
+      "order": 162,
+      "person": "乔峰",
+      "from": "南京",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰虚竹段誉会合结义",
+      "order": 163,
+      "person": "虚竹",
+      "from": "少林寺·大雄宝殿",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰虚竹段誉会合结义",
+      "order": 163,
+      "person": "段誉",
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复伤段誉与段正淳",
+      "order": 164,
+      "person": "段正淳",
+      "from": "小镜湖·竹屋",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复伤段誉与段正淳",
+      "order": 164,
+      "person": "南海鳄神",
+      "from": "擂鼓山·棋局场",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复伤段誉与段正淳",
+      "order": 164,
+      "person": "王语嫣",
+      "from": "万仙大会山谷",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容博阻慕容复自尽",
+      "order": 167,
+      "person": "慕容博",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧远山现身承认多案",
+      "order": 168,
+      "person": "萧远山",
+      "from": "康敏家",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹父母身份揭开",
+      "order": 169,
+      "person": "玄慈",
+      "from": "少林寺·大雄宝殿",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹父母身份揭开",
+      "order": 169,
+      "person": "叶二娘",
+      "from": "擂鼓山·棋局场",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹受刑被逐少林",
+      "order": 170,
+      "person": "玄寂",
+      "from": "少林寺·大雄宝殿",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容博袖中指伤崔过",
+      "order": 173,
+      "person": "崔百泉",
+      "from": "琴韵小筑",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容博袖中指伤崔过",
+      "order": 173,
+      "person": "过彦之",
+      "from": "琴韵小筑",
+      "to": "少林寺·山门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧慕两家逐入藏经阁",
+      "order": 176,
+      "person": "萧远山",
+      "from": "少林寺·山门",
+      "to": "少林寺·藏经阁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧慕两家逐入藏经阁",
+      "order": 176,
+      "person": "乔峰",
+      "from": "少林寺·山门",
+      "to": "少林寺·藏经阁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧慕两家逐入藏经阁",
+      "order": 176,
+      "person": "慕容博",
+      "from": "少林寺·山门",
+      "to": "少林寺·藏经阁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧慕两家逐入藏经阁",
+      "order": 176,
+      "person": "慕容复",
+      "from": "少林寺·山门",
+      "to": "少林寺·藏经阁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "萧慕两家逐入藏经阁",
+      "order": 176,
+      "person": "鸠摩智",
+      "from": "少林寺·大雄宝殿",
+      "to": "少林寺·藏经阁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "二老疗伤皈依扫地僧",
+      "order": 179,
+      "person": "扫地老僧",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "二老疗伤皈依扫地僧",
+      "order": 179,
+      "person": "萧远山",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "二老疗伤皈依扫地僧",
+      "order": 179,
+      "person": "慕容博",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "二老疗伤皈依扫地僧",
+      "order": 179,
+      "person": "乔峰",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "二老疗伤皈依扫地僧",
+      "order": 179,
+      "person": "慕容复",
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋吴长老擒下全冠清",
+      "order": 180,
+      "person": "吴长风",
+      "from": "少林寺·山门",
+      "to": "少室山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋吴长老擒下全冠清",
+      "order": 180,
+      "person": "宋长老",
+      "from": "天宁寺",
+      "to": "少室山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋吴长老擒下全冠清",
+      "order": 180,
+      "person": "全冠清",
+      "from": "少林寺·山门",
+      "to": "少室山",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之杀宋长老与随从",
+      "order": 181,
+      "person": "游坦之",
+      "from": "少林寺·山门",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之杀宋长老与随从",
+      "order": 181,
+      "person": "阿紫",
+      "from": "少林寺·山门",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之杀宋长老与随从",
+      "order": 181,
+      "person": "宋长老",
+      "from": "少室山",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之杀宋长老与随从",
+      "order": 181,
+      "person": "段誉",
+      "from": "少林寺·山门",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "游坦之杀宋长老与随从",
+      "order": 181,
+      "person": "钟灵",
+      "from": "万劫谷·地道",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰虚竹救段誉钟灵",
+      "order": 182,
+      "person": "乔峰",
+      "from": "少林寺",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰虚竹救段誉钟灵",
+      "order": 182,
+      "person": "虚竹",
+      "from": "少林寺·山门",
+      "to": "宋境乡村",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "丁春秋留少林受看管",
+      "order": 183,
+      "person": "丁春秋",
+      "from": "少林寺·山门",
+      "to": "少林寺",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "段誉",
+      "from": "宋境乡村",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "木婉清",
+      "from": "万劫谷·石屋",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "钟灵",
+      "from": "宋境乡村",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "巴天石",
+      "from": "万劫谷·石屋",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "朱丹臣",
+      "from": "小镜湖·竹屋",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "乔峰",
+      "from": "宋境乡村",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉一行赴西夏招亲",
+      "order": 184,
+      "person": "虚竹",
+      "from": "宋境乡村",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "吐蕃勇士拦路内力被吸",
+      "order": 185,
+      "person": "段誉",
+      "from": "西夏宾馆",
+      "to": "西夏",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "吐蕃勇士拦路内力被吸",
+      "order": 185,
+      "person": "虚竹",
+      "from": "西夏宾馆",
+      "to": "西夏",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "吐蕃勇士拦路内力被吸",
+      "order": 185,
+      "person": "宗赞王子",
+      "from": "吐蕃",
+      "to": "西夏",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复推段誉入枯井",
+      "order": 186,
+      "person": "慕容复",
+      "from": "少林寺",
+      "to": "西夏枯井",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复推段誉入枯井",
+      "order": 186,
+      "person": "段誉",
+      "from": "西夏",
+      "to": "西夏枯井",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复推段誉入枯井",
+      "order": 186,
+      "person": "王语嫣",
+      "from": "少林寺·山门",
+      "to": "西夏枯井",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智失控坠井",
+      "order": 188,
+      "person": "鸠摩智",
+      "from": "少林寺·藏经阁",
+      "to": "西夏枯井",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智悔悟归吐蕃",
+      "order": 190,
+      "person": "鸠摩智",
+      "from": "西夏枯井",
+      "to": "吐蕃",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智悔悟归吐蕃",
+      "order": 190,
+      "person": "慕容复",
+      "from": "西夏枯井",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智悔悟归吐蕃",
+      "order": 190,
+      "person": "段誉",
+      "from": "西夏枯井",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "鸠摩智悔悟归吐蕃",
+      "order": 190,
+      "person": "王语嫣",
+      "from": "西夏枯井",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "李清露",
+      "from": "西夏皇宫·冰库底层",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "虚竹",
+      "from": "西夏",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "赫连铁树",
+      "from": "杏子林",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "慕容复",
+      "from": "西夏宾馆",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "段誉",
+      "from": "西夏宾馆",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "包不同",
+      "from": "万仙大会山谷",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "乔峰",
+      "from": "西夏宾馆",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "西夏公主三问择婿",
+      "order": 191,
+      "person": "木婉清",
+      "from": "西夏宾馆",
+      "to": "西夏石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "段誉",
+      "from": "西夏石室",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "木婉清",
+      "from": "西夏石室",
+      "to": "西夏宾馆",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "段誉",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "木婉清",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "钟灵",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "巴天石",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "朱丹臣",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉闻父难离西夏",
+      "order": 193,
+      "person": "王语嫣",
+      "from": "西夏宾馆",
+      "to": "双凤驿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王夫人布置路上陷阱",
+      "order": 194,
+      "person": "王夫人",
+      "from": "琅嬛玉洞",
+      "to": "王夫人山庄·木柱陷阱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王夫人陷阱误捕段誉",
+      "order": 195,
+      "person": "段誉",
+      "from": "双凤驿",
+      "to": "王夫人山庄·木柱陷阱",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "醉人蜂制住段誉随行者",
+      "order": 196,
+      "person": "王语嫣",
+      "from": "双凤驿",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "醉人蜂制住段誉随行者",
+      "order": 196,
+      "person": "木婉清",
+      "from": "双凤驿",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "醉人蜂制住段誉随行者",
+      "order": 196,
+      "person": "钟灵",
+      "from": "双凤驿",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "醉人蜂制住段誉随行者",
+      "order": 196,
+      "person": "巴天石",
+      "from": "双凤驿",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "醉人蜂制住段誉随行者",
+      "order": 196,
+      "person": "朱丹臣",
+      "from": "双凤驿",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "段延庆",
+      "from": "擂鼓山·棋局场",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "南海鳄神",
+      "from": "少林寺·山门",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "云中鹤",
+      "from": "万劫谷·地道",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "段正淳",
+      "from": "少林寺·山门",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "刀白凤",
+      "from": "镇南王府",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "秦红棉",
+      "from": "镇南王府",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "阮星竹",
+      "from": "小镜湖",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "甘宝宝",
+      "from": "镇南王府",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "古笃诚",
+      "from": "无量山",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "华赫艮",
+      "from": "小镜湖·竹屋",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "范骅",
+      "from": "小镜湖·竹屋",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "傅思归",
+      "from": "无量山",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "崔百泉",
+      "from": "少林寺·山门",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "红沙滩段家被擒古笃诚死",
+      "order": 197,
+      "person": "过彦之",
+      "from": "少林寺·山门",
+      "to": "红沙滩",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "段延庆",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "南海鳄神",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "云中鹤",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "段正淳",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "刀白凤",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "秦红棉",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "阮星竹",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "甘宝宝",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "王夫人",
+      "from": "王夫人山庄·木柱陷阱",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段延庆押段家入王夫人山庄",
+      "order": 199,
+      "person": "慕容复",
+      "from": "西夏石室",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复拜段延庆为义父",
+      "order": 200,
+      "person": "包不同",
+      "from": "西夏石室",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复杀包不同失家臣",
+      "order": 201,
+      "person": "邓百川",
+      "from": "万仙大会山谷",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复杀包不同失家臣",
+      "order": 201,
+      "person": "公冶乾",
+      "from": "中原",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "慕容复杀包不同失家臣",
+      "order": 201,
+      "person": "风波恶",
+      "from": "万仙大会山谷",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "南海鳄神救段誉被杀",
+      "order": 202,
+      "person": "段誉",
+      "from": "王夫人山庄·木柱陷阱",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "华赫艮",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "范骅",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "傅思归",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "崔百泉",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "过彦之",
+      "from": "红沙滩",
+      "to": "王夫人山庄·大厅",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "慕容复",
+      "from": "王夫人山庄·大厅",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉退慕容复解众人毒",
+      "order": 207,
+      "person": "段延庆",
+      "from": "王夫人山庄·大厅",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣父系向段誉说明",
+      "order": 209,
+      "person": "段誉",
+      "from": "王夫人山庄·大厅",
+      "to": "王夫人山庄",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "段誉",
+      "from": "王夫人山庄",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "段正明",
+      "from": "天龙寺",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "高泰明",
+      "from": "大理城",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "华赫艮",
+      "from": "王夫人山庄·大厅",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "范骅",
+      "from": "王夫人山庄·大厅",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "巴天石",
+      "from": "王夫人山庄",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段正明禅位段誉登基",
+      "order": 211,
+      "person": "朱丹臣",
+      "from": "王夫人山庄",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高太皇太后去世赵煦亲政",
+      "order": 212,
+      "person": "高太皇太后",
+      "from": "汴梁皇宫",
+      "to": "崇庆殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "高太皇太后去世赵煦亲政",
+      "order": 212,
+      "person": "赵煦",
+      "from": "汴梁皇宫",
+      "to": "崇庆殿",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹用游坦之眼治阿紫",
+      "order": 213,
+      "person": "虚竹",
+      "from": "西夏石室",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹用游坦之眼治阿紫",
+      "order": 213,
+      "person": "阿紫",
+      "from": "宋境乡村",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "虚竹用游坦之眼治阿紫",
+      "order": 213,
+      "person": "游坦之",
+      "from": "宋境乡村",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "赵煦贬苏轼奖内侍",
+      "order": 214,
+      "person": "赵煦",
+      "from": "崇庆殿",
+      "to": "汴梁皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "赵煦贬苏轼奖内侍",
+      "order": 214,
+      "person": "苏轼",
+      "from": "汴梁",
+      "to": "汴梁皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "赵煦贬苏轼奖内侍",
+      "order": 214,
+      "person": "范祖禹",
+      "from": "汴梁",
+      "to": "汴梁皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "赵煦贬苏轼奖内侍",
+      "order": 214,
+      "person": "苏轼",
+      "from": "汴梁皇宫",
+      "to": "定州",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫复明回南京求乔峰",
+      "order": 215,
+      "person": "阿紫",
+      "from": "灵鹫宫",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫复明回南京求乔峰",
+      "order": 215,
+      "person": "乔峰",
+      "from": "西夏石室",
+      "to": "南院大王府",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "辽帝命乔峰率军侵宋",
+      "order": 216,
+      "person": "耶律洪基",
+      "from": "南京",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "辽帝命乔峰率军侵宋",
+      "order": 216,
+      "person": "乔峰",
+      "from": "南院大王府",
+      "to": "辽国军营",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰毒发北门被捕",
+      "order": 217,
+      "person": "阿紫",
+      "from": "南院大王府",
+      "to": "南京·北门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰毒发北门被捕",
+      "order": 217,
+      "person": "乔峰",
+      "from": "辽国军营",
+      "to": "南京·北门",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫潜水脱身传警",
+      "order": 218,
+      "person": "阿紫",
+      "from": "南京·北门",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰被重镣锁入王府铁笼",
+      "order": 219,
+      "person": "乔峰",
+      "from": "南京·北门",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰被重镣锁入王府铁笼",
+      "order": 219,
+      "person": "辽御营都指挥使",
+      "from": "南院大王府",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "全冠清被丐帮处死",
+      "order": 220,
+      "person": "吴长风",
+      "from": "少室山",
+      "to": "中原",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "虚竹",
+      "from": "灵鹫宫",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "段誉",
+      "from": "大理皇宫",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "阿紫",
+      "from": "中原",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "吴长风",
+      "from": "中原",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "乌老大",
+      "from": "灵鹫宫",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "巴天石",
+      "from": "大理皇宫",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "群雄合力劫牢救乔峰",
+      "order": 221,
+      "person": "朱丹臣",
+      "from": "大理皇宫",
+      "to": "南院大王府·铁笼",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰辞丐帮主拒打狗棒",
+      "order": 222,
+      "person": "乔峰",
+      "from": "南院大王府·铁笼",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰辞丐帮主拒打狗棒",
+      "order": 222,
+      "person": "吴长风",
+      "from": "南院大王府·铁笼",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰辞丐帮主拒打狗棒",
+      "order": 222,
+      "person": "虚竹",
+      "from": "南院大王府·铁笼",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰虚竹精简降龙十八掌",
+      "order": 224,
+      "person": "段誉",
+      "from": "南院大王府·铁笼",
+      "to": "塞外",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋守关将拒群雄入雁门",
+      "order": 225,
+      "person": "乔峰",
+      "from": "塞外",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋守关将拒群雄入雁门",
+      "order": 225,
+      "person": "段誉",
+      "from": "塞外",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "宋守关将拒群雄入雁门",
+      "order": 225,
+      "person": "虚竹",
+      "from": "塞外",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉虚竹擒辽帝迫停战",
+      "order": 226,
+      "person": "耶律洪基",
+      "from": "辽国军营",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "乔峰折箭自尽",
+      "order": 227,
+      "person": "阿紫",
+      "from": "南院大王府·铁笼",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫还眼抱乔峰坠谷",
+      "order": 228,
+      "person": "阿紫",
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫还眼抱乔峰坠谷",
+      "order": 228,
+      "person": "游坦之",
+      "from": "灵鹫宫",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫还眼抱乔峰坠谷",
+      "order": 228,
+      "person": "段誉",
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫还眼抱乔峰坠谷",
+      "order": 228,
+      "person": "虚竹",
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "阿紫还眼抱乔峰坠谷",
+      "order": 228,
+      "person": "乔峰",
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "雁门守将开关群雄分别",
+      "order": 229,
+      "person": "段誉",
+      "from": "雁门关·石壁",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "雁门守将开关群雄分别",
+      "order": 229,
+      "person": "虚竹",
+      "from": "雁门关·石壁",
+      "to": "雁门关",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "雁门守将开关群雄分别",
+      "order": 229,
+      "person": "虚竹",
+      "from": "雁门关",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "雁门守将开关群雄分别",
+      "order": 229,
+      "person": "段誉",
+      "from": "雁门关",
+      "to": "善巨郡",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "王语嫣",
+      "from": "王夫人山庄",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "段誉",
+      "from": "善巨郡",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "巴天石",
+      "from": "南院大王府·铁笼",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "晓蕾",
+      "from": "西夏皇宫",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "梅剑",
+      "from": "少林寺·山门",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "兰剑",
+      "from": "少林寺·山门",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "竹剑",
+      "from": "少林寺·山门",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣等探不老长春谷",
+      "order": 230,
+      "person": "菊剑",
+      "from": "少林寺·山门",
+      "to": "长春谷外山岭",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣推倒神仙玉像",
+      "order": 231,
+      "person": "王语嫣",
+      "from": "长春谷外山岭",
+      "to": "琅嬛福地·玉像石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣推倒神仙玉像",
+      "order": 231,
+      "person": "段誉",
+      "from": "长春谷外山岭",
+      "to": "琅嬛福地·玉像石室",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣回到慕容复身边",
+      "order": 232,
+      "person": "王语嫣",
+      "from": "琅嬛福地·玉像石室",
+      "to": "慕容复土坟",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣回到慕容复身边",
+      "order": 232,
+      "person": "慕容复",
+      "from": "中原",
+      "to": "慕容复土坟",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "王语嫣回到慕容复身边",
+      "order": 232,
+      "person": "阿碧",
+      "from": "天宁寺",
+      "to": "慕容复土坟",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉免盐税拓盐路",
+      "order": 233,
+      "person": "段誉",
+      "from": "琅嬛福地·玉像石室",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉免盐税拓盐路",
+      "order": 233,
+      "person": "黄眉僧",
+      "from": "万劫谷·地道",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "木婉清",
+      "from": "王夫人山庄",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "钟灵",
+      "from": "王夫人山庄",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "晓蕾",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "梅剑",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "兰剑",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "竹剑",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "菊剑",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "巴天石",
+      "from": "长春谷外山岭",
+      "to": "大理皇宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "梅剑",
+      "from": "大理皇宫",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "兰剑",
+      "from": "大理皇宫",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "竹剑",
+      "from": "大理皇宫",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "段誉封三妃并遣返四剑",
+      "order": 234,
+      "person": "菊剑",
+      "from": "大理皇宫",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    },
+    {
+      "event": "少年帮主赴灵鹫获两绝技",
+      "order": 235,
+      "person": "丐帮少年帮主",
+      "from": "中原",
+      "to": "灵鹫宫",
+      "reachable_with_blocked_removed": true
+    }
+  ],
+  "limitations": [
+    "拓扑可达允许使用受限边；没有证明每个角色当时取得许可、发现秘密或完成how中的动作。",
+    "14没有时间或条件分支字段；阶段守备、断链、冰堵、末回垂链由how与原著剧情共同裁定。",
+    "索引与状态见证不证明全部原著人物移动；08没有逐步记录完整旅程。",
+    "日数是步行尺度的游戏估算；水路不能因此改为实际徒步通行。",
+    "按50回检索并核对受限通路候选，不宣称事实穷尽或逐字人工通读认证。",
+    "保留原数据的事实疑点；图连通不能解决地点误写或人物已死仍被使用。"
+  ]
+}

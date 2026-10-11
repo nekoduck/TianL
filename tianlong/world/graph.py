@@ -1,13 +1,24 @@
 """
 [INPUT]: 依赖 heapq 做 Dijkstra
-[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图距离/跳数(尊重地点 state 的通断)、按属性查询）
-[POS]: world 层的内存图数据库，世界客观状态的唯一载体；Truth 账本只记"发生过什么"，"现在是什么"永远在这里
+[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图：出路/道路边/距离/路线(可由调用方逐步过滤)、按属性查询）、matches()、ROAD
+[POS]: world 层的内存图数据库，世界客观状态的唯一载体；Truth 账本只记"发生过什么"，"现在是什么"永远在这里。
+       道路边可携带有向关口 gates（以去向为键），图只负责存与走，关口如何放行由 world/access 经 through 过滤器裁定
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import heapq
-from collections import deque
 
-ROAD = "road"  # 道路是一种特殊的无向边，携带 days 权重
+ROAD = "road"  # 道路是一种特殊的无向边，携带 days 权重，可带 gates：{去向: 通行条件}
+
+
+def matches(cur, want) -> bool:
+    """属性是否满足期望——原著前提与通行前提共用的口径：列表须含之；期望为字典时逐项相符，
+    缺省的开关(exists/accessible…)视为 true（与 open 同一口径，地点 state 写成一句话即视为畅通）；其余须相等。"""
+    if isinstance(cur, list) and not isinstance(want, list):
+        return want in cur
+    if isinstance(want, dict):
+        cur = cur if isinstance(cur, dict) else {}
+        return all(cur.get(k, True) == v for k, v in want.items())
+    return cur == want
 
 
 class Graph:
@@ -53,43 +64,55 @@ class Graph:
         return [e for e in self.edges if e["rel"] != ROAD and nid in (e["src"], e["dst"])]
 
     # ------------------------------------------------------------
-    #  道路拓扑：距离（日）与跳数——消息延迟与 LOD 分层的度量衡
+    #  道路拓扑：距离（日）与路线——消息延迟、LOD 分层与跋涉的度量衡
+    #  through(a, b, edge) -> bool 逐步过滤：不给即纯地理（传闻、分层），给了即某人眼中可走的路（主角、场外人物）
     # ------------------------------------------------------------
     def open(self, loc: str) -> bool:
-        """地点的 state 若声明 exists/accessible 为 false（地道塌毁、机关封闭），其道路即断。"""
+        """地点的 state 若声明 exists/accessible 为 false（地道未通、机关封闭），其道路即断。"""
         state = self.get(loc, "state")
         return not isinstance(state, dict) or (state.get("exists", True) and state.get("accessible", True))
 
-    def roads(self, loc: str) -> list[tuple[str, int]]:
+    def road(self, a: str, b: str) -> dict | None:
+        """a 与 b 之间的道路边（不论存储朝向）。"""
+        return next((e for e in self.edges if e["rel"] == ROAD and {e["src"], e["dst"]} == {a, b}), None)
+
+    def ways(self, loc: str, through=None) -> list[tuple[str, dict]]:
+        """loc 出发的每一步：(去向, 道路边)；去向封闭或被 through 拦下者不计。"""
         out = []
         for e in self.edges:
             if e["rel"] == ROAD and loc in (e["src"], e["dst"]):
                 other = e["dst"] if e["src"] == loc else e["src"]
-                if self.open(other):
-                    out.append((other, e["days"]))
+                if self.open(other) and (through is None or through(loc, other, e)):
+                    out.append((other, e))
         return out
 
-    def distances(self, src: str) -> dict[str, int]:
-        dist, heap = {src: 0}, [(0, src)]
+    def roads(self, loc: str, through=None) -> list[tuple[str, int]]:
+        return [(other, e["days"]) for other, e in self.ways(loc, through)]
+
+    def _dijkstra(self, src: str, through=None) -> tuple[dict[str, int], dict[str, str]]:
+        dist, prev, heap = {src: 0}, {}, [(0, src)]
         while heap:
             d, loc = heapq.heappop(heap)
             if d > dist[loc]:
                 continue
-            for nxt, days in self.roads(loc):
+            for nxt, days in self.roads(loc, through):
                 if d + days < dist.get(nxt, 1 << 30):
-                    dist[nxt] = d + days
+                    dist[nxt], prev[nxt] = d + days, loc
                     heapq.heappush(heap, (d + days, nxt))
-        return dist
+        return dist, prev
 
-    def hops(self, src: str) -> dict[str, int]:
-        seen, queue = {src: 0}, deque([src])
-        while queue:
-            loc = queue.popleft()
-            for nxt, _ in self.roads(loc):
-                if nxt not in seen:
-                    seen[nxt] = seen[loc] + 1
-                    queue.append(nxt)
-        return seen
+    def distances(self, src: str, through=None) -> dict[str, int]:
+        return self._dijkstra(src, through)[0]
+
+    def path(self, src: str, dst: str, through=None) -> list[str] | None:
+        """src 到 dst 的最短路线（含两端）；不可达为 None。"""
+        dist, prev = self._dijkstra(src, through)
+        if dst not in dist:
+            return None
+        route = [dst]
+        while route[-1] != src:
+            route.append(prev[route[-1]])
+        return route[::-1]
 
     # ------------------------------------------------------------
     #  持久化

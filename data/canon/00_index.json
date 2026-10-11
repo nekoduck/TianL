@@ -2306,6 +2306,126 @@
       "aliases": [],
       "src": "第49回",
       "normalized_label": true
+    },
+    {
+      "id": "澜沧江边高崖",
+      "aliases": [],
+      "src": "第4回",
+      "normalized_label": true
+    },
+    {
+      "id": "万劫谷·谷外树林",
+      "aliases": [],
+      "src": "第2回",
+      "normalized_label": true
+    },
+    {
+      "id": "万劫谷·钟氏卧室",
+      "aliases": [],
+      "src": "第9回",
+      "normalized_label": true
+    },
+    {
+      "id": "琴韵小筑·锦瑟居",
+      "aliases": [],
+      "src": "第11回",
+      "normalized_label": true
+    },
+    {
+      "id": "灵鹫宫·独尊厅",
+      "aliases": [],
+      "src": "第38回",
+      "normalized_label": true
+    },
+    {
+      "id": "万仙大会山谷·雪峰",
+      "aliases": [],
+      "src": "第35回",
+      "normalized_label": true,
+      "inferred": true
+    },
+    {
+      "id": "万仙大会山谷·雪覆断涧",
+      "aliases": [],
+      "src": "第36回",
+      "normalized_label": true,
+      "inferred": true
+    },
+    {
+      "id": "南院大王府·地道",
+      "aliases": [],
+      "src": "第50回",
+      "normalized_label": true
+    },
+    {
+      "id": "南京·西门",
+      "aliases": [],
+      "src": "第50回",
+      "normalized_label": true
+    },
+    {
+      "id": "雁门关·谷底",
+      "aliases": [],
+      "src": "第50回",
+      "normalized_label": true
+    },
+    {
+      "id": "慕容家庄后",
+      "aliases": [],
+      "src": "第33回",
+      "normalized_label": true,
+      "inferred": true
+    },
+    {
+      "id": "慕容博墓",
+      "aliases": [],
+      "src": "第33回",
+      "normalized_label": true,
+      "inferred": true
+    },
+    {
+      "id": "慕容博墓·临掘地道",
+      "aliases": [],
+      "src": "第33回",
+      "normalized_label": true,
+      "inferred": true
+    },
+    {
+      "id": "兴州道上山口",
+      "aliases": [],
+      "src": "第44回",
+      "normalized_label": true
+    },
+    {
+      "id": "兴州道上山口·关外山径",
+      "aliases": [],
+      "src": "第44回",
+      "normalized_label": true
+    },
+    {
+      "id": "兴州道旁悬崖",
+      "aliases": [],
+      "src": "第45回",
+      "normalized_label": true
+    },
+    {
+      "id": "兴州道旁悬空处",
+      "aliases": [],
+      "src": "第45回",
+      "normalized_label": true
+    },
+    {
+      "id": "兴州道旁深谷",
+      "aliases": [],
+      "src": "第45回",
+      "normalized_label": true
+    },
+    {
+      "id": "雪峰·落脚雪坡",
+      "aliases": [],
+      "src": "第36回",
+      "normalized_label": true,
+      "inferred": true
     }
   ],
   "factions": [

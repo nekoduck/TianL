@@ -1,0 +1,2436 @@
+{
+  "checked_count": 122,
+  "expected_original_zero_roads": 122,
+  "scope": "保留的区域节点属于粗粒度地理接入；不能据parent再自动添加直连道路。",
+  "roads": [
+    {
+      "original_index": 0,
+      "road": [
+        "剑湖宫",
+        "无量山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "无量山是山域统称。此边只表示剑湖宫接入山域，不证明可直达山域内各谷。",
+      "src": "第1回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 1,
+      "road": [
+        "剑湖宫·练武厅",
+        "剑湖宫",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第1回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "剑湖宫·练武厅",
+          "to": "剑湖宫",
+          "src": "第1回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 2,
+      "road": [
+        "无量后山",
+        "无量山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "无量山是山域统称。此边表示后山接入；不能绕过山崖直接到谷底。",
+      "src": "第2回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 3,
+      "road": [
+        "无量山·山崖",
+        "无量后山",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第2回通向山崖可到临崖处；山崖至谷底另有定向坠落或后设攀链条件。保留此上山侧接入。",
+      "src": "第2回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "无量后山",
+          "to": "无量山·山崖",
+          "src": "第2回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 4,
+      "road": [
+        "无量山·谷底",
+        "无量后山",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改经山崖或剧情后设垂链",
+      "reason": "第2回谷底不能经后山普通小径抵达。第50回垂链是后设时序例外，不能倒推开端自由上下。",
+      "src": "第2回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 5,
+      "road": [
+        "无量玉壁",
+        "无量山·谷底",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第1回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 6,
+      "road": [
+        "琅嬛福地",
+        "无量山·谷底",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为湖畔隐蔽石门入口；须按原文补发现隐门及开门方法，不能当普通洞口。",
+      "src": "第2回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "琅嬛福地",
+          "to": "无量山·谷底",
+          "src": "第2回",
+          "inferred": true
+        },
+        {
+          "from": "无量山·谷底",
+          "to": "琅嬛福地",
+          "src": "第2回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 7,
+      "road": [
+        "琅嬛福地·玉像石室",
+        "琅嬛福地",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；按石室实际顺序重接",
+      "reason": "第2回入口、铜镜后室与玉像石室有先后次序；洞府统称不能绕过入口隐门。",
+      "src": "第2回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 8,
+      "road": [
+        "琅嬛福地·书房",
+        "琅嬛福地",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改由玉像石室一侧接入",
+      "reason": "第2回书房位于洞内更深处；洞府中枢直接连书房会绕过前面的入口与玉像石室。",
+      "src": "第2回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 9,
+      "road": [
+        "琅嬛福地·石级隧道",
+        "琅嬛福地",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改接玉像石室一侧",
+      "reason": "第2回出洞石级有明确所在。洞府中枢直接连隧道会绕过入洞隐门及内部通路。",
+      "src": "第2回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 10,
+      "road": [
+        "无量洞",
+        "无量山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "无量洞接入无量山区域。此边不取代囚室门锁和具体逃出路线。",
+      "src": "第5回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "无量洞",
+          "to": "无量山",
+          "src": "第5回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 11,
+      "road": [
+        "无量洞·囚室",
+        "无量洞",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明确小屋从外上锁，囚者出入受门锁与看守限制。",
+      "src": "第5回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "无量洞·囚室",
+          "to": "无量洞",
+          "src": "第5回",
+          "inferred": false
+        },
+        {
+          "from": "无量洞",
+          "to": "无量洞·囚室",
+          "src": "第5回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 12,
+      "road": [
+        "万劫谷·谷口",
+        "万劫谷",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明确谷口刻字与机关暗号。保留入口边，并覆盖可核实的侧入路线。",
+      "src": "第2回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "万劫谷·谷口",
+          "to": "万劫谷",
+          "src": "第2回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 13,
+      "road": [
+        "万劫谷·大厅",
+        "万劫谷",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第8回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 14,
+      "road": [
+        "万劫谷·石屋",
+        "万劫谷",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为被囚石屋。门口、石壁与救援地道须分别核对，不能从中枢无条件入室。",
+      "src": "第7回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "万劫谷·石屋",
+          "to": "万劫谷",
+          "src": "第9回",
+          "inferred": false
+        },
+        {
+          "from": "万劫谷",
+          "to": "万劫谷·石屋",
+          "src": "第9回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 15,
+      "road": [
+        "万劫谷·药室",
+        "万劫谷",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第8回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 16,
+      "road": [
+        "万劫谷·地道",
+        "万劫谷",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；按挖通后的地道端点重接",
+      "reason": "地道从谷外挖入石屋等处。谷中枢直接接地道会虚造地面入口，并混淆尚未挖通阶段。",
+      "src": "第9回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 17,
+      "road": [
+        "大理皇宫",
+        "大理城",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "皇家宫城与普通城内道路有出入区别。门禁须用原文方式补入14，不能仅凭皇宫名称虚设硬前提。",
+      "src": "第6回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "大理城",
+          "to": "大理皇宫",
+          "src": "第8回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 18,
+      "road": [
+        "镇南王府",
+        "大理城",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "镇南王府有正式接待和府中护卫；具体门禁以原文为准，不能把所有内室都设锁。",
+      "src": "第6回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "大理城",
+          "to": "镇南王府",
+          "src": "第7回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 19,
+      "road": [
+        "镇南王府·书房",
+        "镇南王府",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第9回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 20,
+      "road": [
+        "玉虚观",
+        "大理城",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第6回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "玉虚观",
+          "to": "大理城",
+          "src": "第6回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 21,
+      "road": [
+        "天龙寺",
+        "大理城",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "天龙寺虽登记属于大理城，皇家寺院位于城郊山地；0日是同地区概括。",
+      "src": "第8回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 22,
+      "road": [
+        "天龙寺·牟尼堂",
+        "天龙寺",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "牟尼堂用于皇家高僧研习绝学；需按人物实际入堂情节说明通报、引领与在场限制。",
+      "src": "第10回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "天龙寺·牟尼堂",
+          "to": "天龙寺",
+          "src": "第10回",
+          "inferred": false
+        },
+        {
+          "from": "天龙寺",
+          "to": "天龙寺·牟尼堂",
+          "src": "第10回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 23,
+      "road": [
+        "天龙寺·菩提树下",
+        "天龙寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第48回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 24,
+      "road": [
+        "拈花寺",
+        "大理城",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第8回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 25,
+      "road": [
+        "身戒寺",
+        "陆凉州",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "陆凉州是州域；登记只证明身戒寺在该州，不证明寺门就在州城路口。",
+      "src": "第9回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 26,
+      "road": [
+        "太湖",
+        "江南",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "江南是大区域，太湖是湖域。0日表示区域归属，不能当步行到太湖的实测距离。",
+      "src": "第11回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 27,
+      "road": [
+        "燕子坞",
+        "太湖",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明确燕子坞须舟楫往来，外人难辨路径。太湖与坞间须水路及识路条件。",
+      "src": "第11回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "燕子坞",
+          "to": "太湖",
+          "src": "第11回",
+          "inferred": true
+        },
+        {
+          "from": "太湖",
+          "to": "燕子坞",
+          "src": "第11回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 28,
+      "road": [
+        "参合庄",
+        "燕子坞",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "燕子坞是慕容诸洲的区域统称。此边仅表示参合庄接入；外部入坞仍须舟行识路。",
+      "src": "第11回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "参合庄",
+          "to": "燕子坞",
+          "src": "第40回",
+          "inferred": false
+        },
+        {
+          "from": "燕子坞",
+          "to": "参合庄",
+          "src": "第40回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 29,
+      "road": [
+        "还施水阁",
+        "参合庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为慕容藏谱处，需据取阅情节核对许可；不能把藏谱自动等同始终锁门。",
+      "src": "第11回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "参合庄",
+          "to": "还施水阁",
+          "src": "第12回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 30,
+      "road": [
+        "琴韵小筑",
+        "燕子坞",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记琴韵小筑临水，须核对到洲水路，不能以燕子坞统称绕过舟行。",
+      "src": "第11回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "琴韵小筑",
+          "to": "燕子坞",
+          "src": "第11回",
+          "inferred": true
+        },
+        {
+          "from": "燕子坞",
+          "to": "琴韵小筑",
+          "src": "第11回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 31,
+      "road": [
+        "听香水榭",
+        "燕子坞",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记听香水榭为独立小洲。第14回段誉离洲确实乘舟，须水路条件。",
+      "src": "第14回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "听香水榭",
+          "to": "燕子坞",
+          "src": "第13回",
+          "inferred": true
+        },
+        {
+          "from": "燕子坞",
+          "to": "听香水榭",
+          "src": "第13回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 32,
+      "road": [
+        "听香水榭·厨房",
+        "听香水榭",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第13回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 33,
+      "road": [
+        "曼陀山庄",
+        "太湖",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明确曼陀山庄禁入与酷刑背景；须舟行登庄，强闯风险按原文写入14。",
+      "src": "第12回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "曼陀山庄",
+          "to": "太湖",
+          "src": "第12回",
+          "inferred": false
+        },
+        {
+          "from": "太湖",
+          "to": "曼陀山庄",
+          "src": "第12回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 34,
+      "road": [
+        "琅嬛玉洞",
+        "曼陀山庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为王家藏谱处。需据王语嫣与慕容复取阅情况核对，不可凭藏书名称设唯一武学锁。",
+      "src": "第12回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "琅嬛玉洞",
+          "to": "曼陀山庄",
+          "src": "第40回",
+          "inferred": true
+        },
+        {
+          "from": "曼陀山庄",
+          "to": "琅嬛玉洞",
+          "src": "第40回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 35,
+      "road": [
+        "松鹤楼",
+        "无锡",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第14回松鹤楼在无锡城街道中，属于城内短路；未见进楼门禁。",
+      "src": "第14回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 36,
+      "road": [
+        "杏子林",
+        "无锡",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第14—18回人物由无锡近郊进入杏子林。打狗阵是林内临时围攻，不给此道路设置永久阵法。",
+      "src": "第14回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 37,
+      "road": [
+        "少林寺",
+        "少室山",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第18回少林门禁森严，女客被拒。须保留通报、易容或绕寺后潜入等实际方式。",
+      "src": "第18回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 38,
+      "road": [
+        "少林寺·菩提院",
+        "少林寺",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第18回院外有伏僧，院内有守经僧；乔峰引开伏僧翻墙入院，离院曾遭三高僧截击。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "少林寺·菩提院",
+          "to": "少林寺",
+          "src": "第18回",
+          "inferred": false
+        },
+        {
+          "from": "少林寺",
+          "to": "少林寺·菩提院",
+          "src": "第18回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 39,
+      "road": [
+        "少林寺·玄苦禅房",
+        "少林寺",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改接证道院",
+      "reason": "第18回玄苦所在屋宇位于证道院。寺院中枢直达禅房会绕过证道院的守备和通道。",
+      "src": "第18回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 40,
+      "road": [
+        "少林寺·大雄宝殿",
+        "少林寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 41,
+      "road": [
+        "少林寺·藏经阁",
+        "少林寺",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明写有人潜入偷阅武谱。具体值守与潜入方式须以藏经阁情节证据补入14。",
+      "src": "第43回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "少林寺·藏经阁",
+          "to": "少林寺",
+          "src": "第42回",
+          "inferred": true
+        },
+        {
+          "from": "少林寺",
+          "to": "少林寺·藏经阁",
+          "src": "第43回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 42,
+      "road": [
+        "少林寺·戒律院",
+        "少林寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第42回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 43,
+      "road": [
+        "乔三槐家",
+        "少室山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "少室山是山域，乔家在山阳山坡。0日按局部移动概括，不证明到全山各点都零耗时。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 44,
+      "road": [
+        "聚贤庄·大厅",
+        "聚贤庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第19—20回围攻乔峰期间要津有人把守。保留短路，how明确阶段，不能永久封闭大厅。",
+      "src": "第20回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "聚贤庄·大厅",
+          "to": "聚贤庄",
+          "src": "第20回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 45,
+      "road": [
+        "聚贤庄·后院",
+        "聚贤庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第20回阿朱被留问讯，伤愈改扮薛神医离庄。该限制有剧情阶段，不能限制所有来客。",
+      "src": "第20回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "聚贤庄·后院",
+          "to": "聚贤庄",
+          "src": "第20回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 46,
+      "road": [
+        "雁门关·石壁",
+        "雁门关",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第20—21回石壁在临谷山侧，人物绕岭往返，且附近有失足坠谷风险。",
+      "src": "第20回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "雁门关·石壁",
+          "to": "雁门关",
+          "src": "第21回",
+          "inferred": false
+        },
+        {
+          "from": "雁门关",
+          "to": "雁门关·石壁",
+          "src": "第20回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 47,
+      "road": [
+        "止观寺",
+        "天台山",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第21回天台山径险峻、曲折、难辨；朴者引路入寺，二人之后也能沿山径返回。",
+      "src": "第21回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "止观寺",
+          "to": "天台山",
+          "src": "第21回",
+          "inferred": true
+        },
+        {
+          "from": "天台山",
+          "to": "止观寺",
+          "src": "第21回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 48,
+      "road": [
+        "康敏家",
+        "信阳",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第21回康敏家在信阳城西。主人出门接客，现场陷害不等同长期道路禁行。",
+      "src": "第21回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 49,
+      "road": [
+        "小镜湖·方竹林",
+        "小镜湖",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第22回方竹林在小镜湖西岸；登记为湖畔局部短路，未见竹林入口机关。",
+      "src": "第22回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 50,
+      "road": [
+        "小镜湖·竹屋",
+        "小镜湖",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第22—23回竹屋在湖畔方竹林。人物到屋外报讯及入屋，未见固定禁行机关。",
+      "src": "第22回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 51,
+      "road": [
+        "小镜湖·青石桥",
+        "小镜湖",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "第22回青石桥绕路比木桥多五六十里；现边只证明桥在湖区，不能代表入湖主路总距离。",
+      "src": "第22回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 52,
+      "road": [
+        "南院大王府",
+        "南京",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "王府是官府驻地。只核对原文的具体守备与来客方式，不凭名称强制身份属性。",
+      "src": "第44回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "南院大王府",
+          "to": "南京",
+          "src": "第49回",
+          "inferred": false
+        },
+        {
+          "from": "南京",
+          "to": "南院大王府",
+          "src": "第50回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 53,
+      "road": [
+        "南院大王府·偏殿",
+        "南院大王府",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第29回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 54,
+      "road": [
+        "南院大王府·铁笼",
+        "南院大王府",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记是后来加重镣囚人的铁笼。需按囚禁前后状态补方向条件，不能在开端永久blocked。",
+      "src": "第50回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "南院大王府·铁笼",
+          "to": "南院大王府",
+          "src": "第50回",
+          "inferred": true
+        },
+        {
+          "from": "南院大王府",
+          "to": "南院大王府·铁笼",
+          "src": "第50回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 55,
+      "road": [
+        "白马桥",
+        "南京",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第49回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 56,
+      "road": [
+        "擂鼓山·棋局场",
+        "擂鼓山",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第31回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 57,
+      "road": [
+        "擂鼓山·木屋",
+        "擂鼓山",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改经棋局场及木屋入口",
+      "reason": "登记木屋供无崖子隐居。山域直达屋内会绕过珍珑与木屋入口，须据分段原文重接。",
+      "src": "第31回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 58,
+      "road": [
+        "缥缈峰",
+        "天山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "天山是大山系，缥缈峰是其中高峰。此边仅作接入概括，不代表全山任意点可直上。",
+      "src": "第1回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "缥缈峰",
+          "to": "天山",
+          "src": "第34回",
+          "inferred": true
+        },
+        {
+          "from": "天山",
+          "to": "缥缈峰",
+          "src": "第34回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 59,
+      "road": [
+        "灵鹫宫",
+        "缥缈峰",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除或重接；不得绕过铁索桥",
+      "reason": "登记灵鹫宫在缥缈峰上，铁索桥是进宫通路。峰中枢直连宫内会形成绕过断崖的捷径。",
+      "src": "第37回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 60,
+      "road": [
+        "灵鹫宫·铁索桥",
+        "灵鹫宫",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "保留铁索桥端；与峰端实线衔接",
+      "reason": "单独把桥挂为宫内叶子不能约束入宫。须使桥处于进宫路径，并由14说明双向通行条件。",
+      "src": "第37回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "灵鹫宫·铁索桥",
+          "to": "灵鹫宫",
+          "src": "第38回",
+          "inferred": false
+        },
+        {
+          "from": "灵鹫宫",
+          "to": "灵鹫宫·铁索桥",
+          "src": "第37回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 61,
+      "road": [
+        "兴州",
+        "西夏",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "西夏是国家，兴州是都城。0日表示国家与都城归属，不能把国境当都城路口。",
+      "src": "第36回",
+      "final_action": "修改日数",
+      "final_days": 4,
+      "access_directions": [
+        {
+          "from": "兴州",
+          "to": "西夏",
+          "src": "第37回",
+          "inferred": true
+        },
+        {
+          "from": "西夏",
+          "to": "兴州",
+          "src": "第36回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 62,
+      "road": [
+        "西夏皇宫",
+        "兴州",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记皇宫用于藏身及招亲；潜入和正式召入不同，须分别按剧情方式补14。",
+      "src": "第36回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "西夏皇宫",
+          "to": "兴州",
+          "src": "第37回",
+          "inferred": true
+        },
+        {
+          "from": "兴州",
+          "to": "西夏皇宫",
+          "src": "第46回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 63,
+      "road": [
+        "西夏皇宫·冰库",
+        "西夏皇宫",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记冰库有重门且不易发现。需说明发现、开门及下行方式，并给反向条件。",
+      "src": "第36回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "西夏皇宫·冰库",
+          "to": "西夏皇宫",
+          "src": "第37回",
+          "inferred": true
+        },
+        {
+          "from": "西夏皇宫",
+          "to": "西夏皇宫·冰库",
+          "src": "第36回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 64,
+      "road": [
+        "西夏皇宫·招亲厅",
+        "西夏皇宫",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "招亲时有宫女引领与问答流程。限制限于该流程，不能要求所有时期都完成招亲。",
+      "src": "第46回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 65,
+      "road": [
+        "西夏宾馆",
+        "兴州",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第46回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 66,
+      "road": [
+        "西夏古庙",
+        "兴州",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "第45回9870已确认众人入城后另出城借宿古庙。距城长度未写，0日只作城郊短路概括。",
+      "src": "第45回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 67,
+      "road": [
+        "西夏枯井",
+        "西夏古庙",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为困人的枯井。坠入与脱井方向不同，须14分别列出，不能默认自由攀返。",
+      "src": "第45回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 68,
+      "road": [
+        "大雪山",
+        "吐蕃",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "吐蕃是国家区域，大雪山是山域。此边为区域概括，具体步行距离未在登记中确认。",
+      "src": "第10回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 69,
+      "road": [
+        "大轮寺",
+        "大雪山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "大雪山是山域。大轮寺登记于其中，但没有据此确认寺院和任一山口的实际距离。",
+      "src": "第10回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 70,
+      "road": [
+        "红沙滩",
+        "双凤驿",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "现有登记红沙滩属双凤驿周边；0日是否只是驿外局部步行，原文距离尚待该段核对。",
+      "src": "第47回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 71,
+      "road": [
+        "王夫人山庄·木柱陷阱",
+        "王夫人山庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记明确木柱陷阱。落入与脱出方向不同，须核对机关和剧情中的解困方式。",
+      "src": "第48回",
+      "final_action": "修改日数",
+      "final_days": 1,
+      "access_directions": [
+        {
+          "from": "王夫人山庄·木柱陷阱",
+          "to": "王夫人山庄",
+          "src": "第47回",
+          "inferred": true
+        },
+        {
+          "from": "王夫人山庄",
+          "to": "王夫人山庄·木柱陷阱",
+          "src": "第47回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 72,
+      "road": [
+        "不老长春谷",
+        "善巨郡",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "现有01已标不老长春谷为传闻未证实。0日不能证明凡人可入，应核对谷外山岭与入谷规矩。",
+      "src": "第50回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 73,
+      "road": [
+        "清凉寺",
+        "五台山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "五台山是山域，清凉寺位于其中。0日是局部接入概括，不代表所有山径均无距离。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 74,
+      "road": [
+        "东林寺",
+        "庐山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "庐山是山域，东林寺位于其中。0日是局部接入概括，不代表全山能瞬时穿越。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 75,
+      "road": [
+        "汴梁皇宫",
+        "汴梁",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "皇家宫城有实际进出方式；具体许可、守备与剧情例外须用末回证据核对。",
+      "src": "第49回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "汴梁",
+          "to": "汴梁皇宫",
+          "src": "第49回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 76,
+      "road": [
+        "崇庆殿",
+        "汴梁皇宫",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第49回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "汴梁皇宫",
+          "to": "崇庆殿",
+          "src": "第49回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 77,
+      "road": [
+        "五指山",
+        "海南岛",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "海南岛是大岛，五指山是岛内山域。0日表示归属，不能直接当海岸到山中的距离。",
+      "src": "第33回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 78,
+      "road": [
+        "赤焰洞",
+        "五指山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "赤焰洞只登记属于五指山。0日表示山域内接入，未证明具体山路长度或守备。",
+      "src": "第33回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 79,
+      "road": [
+        "王夫人山庄·大厅",
+        "王夫人山庄",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第48回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 80,
+      "road": [
+        "智光禅房",
+        "止观寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第21回智光主动请二人到禅房，朴者推门引入；未见需要另设隐门或强制通关。",
+      "src": "第21回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 81,
+      "road": [
+        "泰山单家",
+        "泰山",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "泰山是山域，单家是附近住处。0日表示同地区接入，不能把整座泰山当院门口。",
+      "src": "第21回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 82,
+      "road": [
+        "青凤阁",
+        "西夏皇宫",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "青凤阁为公主居处与候问地点。须据招亲场景核对宫女引领，不能从宫中枢任意入阁。",
+      "src": "第46回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "西夏皇宫",
+          "to": "青凤阁",
+          "src": "第46回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 83,
+      "road": [
+        "悯忠寺",
+        "南京",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第28回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 84,
+      "road": [
+        "少林寺·证道院",
+        "少林寺",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第18回证道院在寺院极西，搜捕时门与通道均被占守。先入院才能到玄苦禅房。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "少林寺·证道院",
+          "to": "少林寺",
+          "src": "第18回",
+          "inferred": false
+        },
+        {
+          "from": "少林寺",
+          "to": "少林寺·证道院",
+          "src": "第18回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 85,
+      "road": [
+        "少林寺·药王院",
+        "少林寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 86,
+      "road": [
+        "少林寺·舍利院",
+        "少林寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 87,
+      "road": [
+        "镇南王府·云锦楼",
+        "镇南王府",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第12回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 88,
+      "road": [
+        "圣慈宫",
+        "大理皇宫",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第6回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 93,
+      "road": [
+        "无量山",
+        "澜沧江",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "按合并方案，此边概括普通山脚江岸，非第4回临江高崖；反入洞府须另经隧道受限边。",
+      "src": "第1回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 95,
+      "road": [
+        "万劫谷",
+        "木婉清居所",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除；改接谷外可走端点",
+      "reason": "木婉清居所通万劫谷周边，不应直接连谷内中枢，绕过谷口机关与可核实侧入路线。",
+      "src": "第3回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 106,
+      "road": [
+        "苏州",
+        "太湖",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "苏州与太湖是城域和湖域接入。0日不表示可由城内步行到湖中岛庄。",
+      "src": "第3回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 108,
+      "road": [
+        "太湖",
+        "青云庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有道路把青云庄直接接太湖；庄园登岸方式未逐条确认，只可保留水路推断并标inferred。",
+      "src": "第13回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "太湖",
+          "to": "青云庄",
+          "src": "第13回",
+          "inferred": true
+        },
+        {
+          "from": "青云庄",
+          "to": "太湖",
+          "src": "第13回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 109,
+      "road": [
+        "太湖",
+        "赤霞庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有道路把赤霞庄直接接太湖；庄园登岸方式未逐条确认，只可保留水路推断并标inferred。",
+      "src": "第15回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "太湖",
+          "to": "赤霞庄",
+          "src": "第15回",
+          "inferred": true
+        },
+        {
+          "from": "赤霞庄",
+          "to": "太湖",
+          "src": "第15回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 110,
+      "road": [
+        "太湖",
+        "金风庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有道路把金风庄直接接太湖；庄园登岸方式未逐条确认，只可保留水路推断并标inferred。",
+      "src": "第15回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "太湖",
+          "to": "金风庄",
+          "src": "第15回",
+          "inferred": true
+        },
+        {
+          "from": "金风庄",
+          "to": "太湖",
+          "src": "第15回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 111,
+      "road": [
+        "太湖",
+        "玄霜庄",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有道路把玄霜庄直接接太湖；庄园登岸方式未逐条确认，只可保留水路推断并标inferred。",
+      "src": "第15回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "太湖",
+          "to": "玄霜庄",
+          "src": "第15回",
+          "inferred": true
+        },
+        {
+          "from": "玄霜庄",
+          "to": "太湖",
+          "src": "第15回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 115,
+      "road": [
+        "聚贤庄",
+        "英雄大会客店",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "改为1日",
+      "reason": "第19回客店至东北聚贤庄有七十里；现有0日与明确距离不符，步行估为一日。",
+      "src": "第19回",
+      "final_action": "修改日数",
+      "final_days": 1,
+      "access_directions": []
+    },
+    {
+      "original_index": 149,
+      "road": [
+        "卫辉·船舱",
+        "卫辉",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留0日；14按停岸、半沉、全沉限定通行",
+      "reason": "第21回可从岸登离；第39回8647玄垢、玄石在船身半沉时抢入。全沉后关闭普通登离，不能虚构潜水入舱。",
+      "src": "第21、39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "卫辉·船舱",
+          "to": "卫辉",
+          "src": "第21回",
+          "inferred": true
+        },
+        {
+          "from": "卫辉",
+          "to": "卫辉·船舱",
+          "src": "第39回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 151,
+      "road": [
+        "许家集",
+        "英雄大会客店",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第18回客店延医故事发生于许家集，0日可作镇集内部接入；七十里的是客店到聚贤庄。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 154,
+      "road": [
+        "上京",
+        "辽国皇宫",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "上京是城域，皇宫是宫城。0日可作城内短路，但出入守备须结合第27回场景核对。",
+      "src": "第27回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "上京",
+          "to": "辽国皇宫",
+          "src": "第27回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 158,
+      "road": [
+        "西夏皇宫·冰库底层",
+        "西夏皇宫·冰库",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "冰库底层必须经冰库内部层级抵达。正向与离开方式均需原文核对，不能从皇宫中枢另通底层。",
+      "src": "第36回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "西夏皇宫·冰库底层",
+          "to": "西夏皇宫·冰库",
+          "src": "第37回",
+          "inferred": false
+        },
+        {
+          "from": "西夏皇宫·冰库",
+          "to": "西夏皇宫·冰库底层",
+          "src": "第36回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 159,
+      "road": [
+        "灵鹫宫·石室",
+        "灵鹫宫",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记为刻武学的石室。需据发现及开门情节核对秘密通路，不能由石室名称自行推定机关。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "灵鹫宫·石室",
+          "to": "灵鹫宫",
+          "src": "第39回",
+          "inferred": true
+        },
+        {
+          "from": "灵鹫宫",
+          "to": "灵鹫宫·石室",
+          "src": "第39回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 160,
+      "road": [
+        "少林寺·山门",
+        "少林寺",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第18回守山门的虚清拒绝女客。正式来客先通报；第40回有开放例外，不能永久封女客。",
+      "src": "第18回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "少林寺·山门",
+          "to": "少林寺",
+          "src": "第43回",
+          "inferred": false
+        },
+        {
+          "from": "少林寺",
+          "to": "少林寺·山门",
+          "src": "第18回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 163,
+      "road": [
+        "君山",
+        "洞庭湖",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "君山是洞庭湖内岛山，现有湖中连接不能按步行解释，须舟行或实际渡水方法。",
+      "src": "第41回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "君山",
+          "to": "洞庭湖",
+          "src": "第41回",
+          "inferred": true
+        },
+        {
+          "from": "洞庭湖",
+          "to": "君山",
+          "src": "第41回",
+          "inferred": true
+        }
+      ]
+    },
+    {
+      "original_index": 164,
+      "road": [
+        "西夏石室",
+        "青凤阁",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "现有登记石室是隔帘询问的暗室。需据招亲时进入、跌落及脱出情节核对各方向。",
+      "src": "第46回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "西夏石室",
+          "to": "青凤阁",
+          "src": "第46回",
+          "inferred": true
+        },
+        {
+          "from": "青凤阁",
+          "to": "西夏石室",
+          "src": "第46回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 165,
+      "road": [
+        "慕容复土坟",
+        "宋境乡村",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第50回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 168,
+      "road": [
+        "曼陀山庄·茶花园",
+        "曼陀山庄",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第12回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "曼陀山庄·茶花园",
+          "to": "曼陀山庄",
+          "src": "第12回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 169,
+      "road": [
+        "碾坊·阁楼",
+        "碾坊",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第17回阁楼用虚架木梯；梯被推倒须重架，亦有攀水轮和破窗路线。正常架梯时不额外设锁。",
+      "src": "第17回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "碾坊·阁楼",
+          "to": "碾坊",
+          "src": "第17回",
+          "inferred": false
+        },
+        {
+          "from": "碾坊",
+          "to": "碾坊·阁楼",
+          "src": "第17回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 170,
+      "road": [
+        "汝州山洞",
+        "汝州",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "第20回洞前道路有无容足险壁与八处险峡；长索或轻功可往返，不能标永久单向死路。",
+      "src": "第20回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "汝州山洞",
+          "to": "汝州",
+          "src": "第20回",
+          "inferred": false
+        },
+        {
+          "from": "汝州",
+          "to": "汝州山洞",
+          "src": "第20回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 171,
+      "road": [
+        "梁县",
+        "汝州",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "梁县登记在汝州辖内，县与州域不可直接等同；第20回只说到梁县，未给两地实测距离。",
+      "src": "第20回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 172,
+      "road": [
+        "大相国寺",
+        "汴梁",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 173,
+      "road": [
+        "普渡寺",
+        "江南",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "江南是区域，普渡寺是寺院。登记只有所在区域，不能据0日断言实体道路长短。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 174,
+      "road": [
+        "净影寺",
+        "长安",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第39回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 175,
+      "road": [
+        "少林寺·达摩院",
+        "少林寺",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "现有01登记为同一实体内的短路；未据普通房间身份虚设门禁。",
+      "src": "第29回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 176,
+      "road": [
+        "信阳酒馆",
+        "信阳",
+        0
+      ],
+      "category": "实体内短路",
+      "decision": "保留0日",
+      "reason": "第22回酒馆为信阳街市营业处，属城内短路；未见道路门禁。",
+      "src": "第22回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 177,
+      "road": [
+        "长春谷外山岭",
+        "善巨郡",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "善巨郡是郡域，长春谷外山岭是其中地形。0日只表示归属，未证明任意郡内起点可达。",
+      "src": "第50回",
+      "final_action": "修改日数",
+      "final_days": 1,
+      "access_directions": [
+        {
+          "from": "长春谷外山岭",
+          "to": "善巨郡",
+          "src": "第50回",
+          "inferred": true
+        },
+        {
+          "from": "善巨郡",
+          "to": "长春谷外山岭",
+          "src": "第50回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 178,
+      "road": [
+        "琅嬛福地·铜镜后室",
+        "琅嬛福地",
+        0
+      ],
+      "category": "错误包含形成捷径",
+      "decision": "删除或改作洞府入口段",
+      "reason": "铜镜后室为洞内实际空间，不能把洞府统称当任意房间通行口；须与第2回入口顺序合并。",
+      "src": "第50回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 183,
+      "road": [
+        "云州",
+        "中原",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "中原与云州是大区域、州域。0日是区域归属，不能使秦家寨经中原零日转接全图。",
+      "src": "第13回",
+      "final_action": "删除",
+      "final_days": null,
+      "access_directions": []
+    },
+    {
+      "original_index": 184,
+      "road": [
+        "陕西",
+        "中原",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "中原与陕西都是区域。此边没有可步行的同名实体端点，也没有实测距离。",
+      "src": "第13回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 185,
+      "road": [
+        "秦家寨",
+        "云州",
+        0
+      ],
+      "category": "区域概括连接",
+      "decision": "保留接入语义；禁止按区域归属生成无条件捷径",
+      "reason": "云州是州域，秦家寨登记在其中。0日只表示归属，不能当州内任意位置到寨门的路程。",
+      "src": "第13回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": []
+    },
+    {
+      "original_index": 186,
+      "road": [
+        "薛慕华居所·地窖",
+        "薛慕华居所",
+        0
+      ],
+      "category": "地理/时序待核",
+      "decision": "保留登记；待原文核对后决定日数或时序",
+      "reason": "现有01只记地窖供伤者停留；是否隐蔽入口或救人地道，须核对第30回，不凭地窖名称造机关。",
+      "src": "第30回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "薛慕华居所·地窖",
+          "to": "薛慕华居所",
+          "src": "第30回",
+          "inferred": false
+        },
+        {
+          "from": "薛慕华居所",
+          "to": "薛慕华居所·地窖",
+          "src": "第30回",
+          "inferred": false
+        }
+      ]
+    },
+    {
+      "original_index": 187,
+      "road": [
+        "南京·北门",
+        "南京",
+        0
+      ],
+      "category": "需门禁/险径/水路",
+      "decision": "保留实际邻接；按证据补14方向条件",
+      "reason": "北门是城门。第49回围捕时有阶段性守军；平时城内到门前不应强制突围条件。",
+      "src": "第49回",
+      "final_action": "保留",
+      "final_days": 0,
+      "access_directions": [
+        {
+          "from": "南京·北门",
+          "to": "南京",
+          "src": "第49回",
+          "inferred": false
+        },
+        {
+          "from": "南京",
+          "to": "南京·北门",
+          "src": "第49回",
+          "inferred": false
+        }
+      ]
+    }
+  ]
+}

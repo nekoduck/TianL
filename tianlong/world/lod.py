@@ -1,11 +1,13 @@
 """
-[INPUT]: 依赖 world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
+[INPUT]: 依赖 world/graph 的 matches（前提核对口径），world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
 [OUTPUT]: 对外提供 tiers()、lod1_scope()、absorb()、split_due()、upcoming()、verdict()、dirt()、broken()、settle()
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、何事到期、是否被污染），
        把需要 LLM 的工作以"任务"形式交给 engine：远方到期原著场外结算，此地到期原著一回合一桩交导演作主干；
        场外剧情的后果经 effects 落账为真相，并盖原著排定之日的日戳
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+
+from .graph import matches
 
 NEAR = 1  # 一日路程之内皆为近处：0 日路相连的山门、洞府同属一簇，不以跳数计
 
@@ -67,13 +69,8 @@ def upcoming(world, skip: set[str] = frozenset(), within: int = 7, limit: int = 
     return out[:limit]
 
 
-def _holds(world, nid: str, key: str, want) -> bool:
-    cur = world.graph.get(nid, key)
-    return want in cur if isinstance(cur, list) and not isinstance(want, list) else cur == want
-
-
 def _unmet(world, ev: dict) -> list[tuple]:
-    unmet = [(nid, key, want) for nid, key, want in ev["requires"] if not _holds(world, nid, key, want)]
+    unmet = [(nid, key, want) for nid, key, want in ev["requires"] if not matches(world.graph.get(nid, key), want)]
     if ev["where"] != world.here:  # 场外之事的隐含前提：正与主角同在一处的人分身不得——同伴随行，他的原著便在别处断了
         unmet += [(a, "location", ev["where"]) for a in ev["actors"] if world.graph.get(a, "location") == world.here]
     return unmet

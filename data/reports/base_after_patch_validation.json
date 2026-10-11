@@ -1,0 +1,167 @@
+{
+  "passed": false,
+  "scope": "结构、引用、长度、道路、锚点、隐情映射、顺序与requires回放；不证明原著事实穷尽或所有推断正确。",
+  "counts": {
+    "persons": 242,
+    "locations": 202,
+    "factions": 55,
+    "items": 98,
+    "skills": 119,
+    "events": 235,
+    "roads": 219,
+    "relations": 191
+  },
+  "checks": {
+    "global_id_unique": true,
+    "road_components": 1,
+    "replayed_events": 235,
+    "requires_failures": 0,
+    "anchor_count": 18,
+    "late_skill_checks": 7,
+    "error_count": 16,
+    "warning_count": 6
+  },
+  "errors": [
+    {
+      "code": "PARENT_ROAD",
+      "context": "无量山·谷底",
+      "detail": "无量后山"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "琅嬛福地·玉像石室",
+      "detail": "琅嬛福地"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "琅嬛福地·书房",
+      "detail": "琅嬛福地"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "琅嬛福地·石级隧道",
+      "detail": "琅嬛福地"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "万劫谷·地道",
+      "detail": "万劫谷"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "少林寺",
+      "detail": "少室山"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "少林寺·玄苦禅房",
+      "detail": "少林寺"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "擂鼓山·木屋",
+      "detail": "擂鼓山"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "灵鹫宫",
+      "detail": "缥缈峰"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "西夏皇宫·招亲厅",
+      "detail": "西夏皇宫"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "不老长春谷",
+      "detail": "善巨郡"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "云州",
+      "detail": "塞外"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "雁门关·谷底",
+      "detail": "雁门关"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "慕容博墓",
+      "detail": "慕容家庄后"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "兴州道上山口",
+      "detail": "西夏"
+    },
+    {
+      "code": "PARENT_ROAD",
+      "context": "兴州道旁悬崖",
+      "detail": "西夏"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "李秋水之妹",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "丐帮少年帮主",
+      "detail": [
+        "age",
+        "location",
+        "status"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "秦姓寨主",
+      "detail": [
+        "status",
+        "location"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "黎老汉",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "心观",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    },
+    {
+      "code": "UNKNOWN_INITIAL_STATE",
+      "context": "金刀杨老令公",
+      "detail": [
+        "status",
+        "location",
+        "age"
+      ]
+    }
+  ],
+  "limitations": [
+    "日期是抽取者推断；转成游戏日数不增加其史实可信度。",
+    "没有用户实际导入校验器，未检验该外部程序。",
+    "来源excerpt为定位证据，未逐字段证明文学事实。",
+    "initial_state_confirmed=false的枚举占位必须禁用自动开端活动。"
+  ]
+}

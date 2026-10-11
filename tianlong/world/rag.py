@@ -1,15 +1,16 @@
 """
-[INPUT]: 依赖 random.Random（种子化命运骰），依赖 world/lod 的 dirt（原著前提核对）与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
+[INPUT]: 依赖 random.Random（种子化命运骰），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）
+         与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、rule()（较量预裁）、heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知；
        backstage 给导演——此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、到时候的隐情、各方图谋、功力对比、
-       在场武学、远近道路、命运骰、节奏，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
+       在场武学、此地出发的关口、近处未被发现的暗路、主角走得到的去处、命运骰、节奏，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
 
-from . import lod
+from . import access, lod
 from .effects import usable
 from .ledger import NEWS_SPEED
 
@@ -123,7 +124,7 @@ def build(world) -> dict:
         "people": people,
         "dead": s["dead"],
         "relations": _relation_lines(world, s["people"] + s["dead"], visible),
-        "exits": [{"name": loc, "days": days} for loc, days in g.roads(here)],
+        "exits": access.exits(world),
         "news": news,
         "journal": me["journal"],
     }
@@ -184,7 +185,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
         if g.get(p, "power", 30) >= FEEBLE:
             outcome, loss = rule(gap, fate)
             ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损"))
-    dist = g.distances(here)
+    dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
         "fate": fate,
         "stage": {"event": stage, "dirt": lod.dirt(world, stage)} if stage else None,
@@ -202,6 +203,8 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]
                    if g.get(i, "grants")],
         "arts": _arts(world, ["player", *s["people"]]),
+        "passes": access.passes(world),
+        "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
     }
 
@@ -239,4 +242,4 @@ def dossier(world, pid: str) -> dict:
     return {"name": pid, "title": g.get(pid, "title"), "status": g.get(pid, "status"), "location": loc,
             "faction": g.get(pid, "faction"), "agenda": g.get(pid, "agenda"), "mood": g.get(pid, "mood"),
             "tier": power_tier(g.get(pid, "power", 30)), "persona": g.get(pid, "persona"),
-            "exits": [n for n, _ in g.roads(loc)] if loc else []}
+            "exits": access.steps(world, loc) if loc else []}

@@ -1,0 +1,799 @@
+{
+  "chapters_checked": 50,
+  "scope": "按50回检索并核对受限通路候选；未命中不等于没有遗漏。",
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "一 青衫磊落险峰行",
+      "start_line": 53,
+      "end_line": 269,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 1,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 1
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 2,
+      "title": "二 玉壁月华明",
+      "start_line": 270,
+      "end_line": 480,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 2,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 13
+        }
+      ],
+      "access_primary_count": 12
+    },
+    {
+      "chapter": 3,
+      "title": "三 马疾香幽",
+      "start_line": 481,
+      "end_line": 688,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 3,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 2
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 4,
+      "title": "四 崖高人远",
+      "start_line": 689,
+      "end_line": 939,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 4,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 2
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 5,
+      "title": "五 微步縠纹生",
+      "start_line": 940,
+      "end_line": 1146,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 5,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 3
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 6,
+      "title": "六 谁家子弟谁家院",
+      "start_line": 1147,
+      "end_line": 1342,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 6,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 1
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 7,
+      "title": "七 无计悔多情",
+      "start_line": 1343,
+      "end_line": 1537,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 7,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 3
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 8,
+      "title": "八 虎啸龙吟",
+      "start_line": 1538,
+      "end_line": 1735,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 8,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 3
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 9,
+      "title": "九 换巢鸾凤",
+      "start_line": 1736,
+      "end_line": 2000,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 9,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 9
+        }
+      ],
+      "access_primary_count": 9
+    },
+    {
+      "chapter": 10,
+      "title": "十 剑气碧烟横",
+      "start_line": 2001,
+      "end_line": 2197,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 10,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 2
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 11,
+      "title": "十一 向来痴",
+      "start_line": 2198,
+      "end_line": 2407,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 11,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 6
+        }
+      ],
+      "access_primary_count": 6
+    },
+    {
+      "chapter": 12,
+      "title": "十二 从此醉",
+      "start_line": 2408,
+      "end_line": 2646,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 12,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 4
+        }
+      ],
+      "access_primary_count": 4
+    },
+    {
+      "chapter": 13,
+      "title": "十三 水榭听香 指点群豪戏",
+      "start_line": 2647,
+      "end_line": 2888,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "01_13",
+          "chapter": 13,
+          "scope": "按本回正文定位受限通路，复核现有地点、道路与事件；非逐字穷尽证明。",
+          "access_count": 10
+        }
+      ],
+      "access_primary_count": 4
+    },
+    {
+      "chapter": 14,
+      "title": "十四 剧饮千杯男儿事",
+      "start_line": 2889,
+      "end_line": 3086,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 14,
+          "result": "确认太湖舟行须会划桨；杏子林打狗阵与太湖火船囚禁无独立登记内外节点。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 15,
+      "title": "十五 杏子林中 商略平生义",
+      "start_line": 3087,
+      "end_line": 3327,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 15,
+          "result": "确认祈连山黑风洞囚禁仅在回忆中出现；独木桥争道无登记地点，不造新路。"
+        }
+      ],
+      "access_primary_count": 6
+    },
+    {
+      "chapter": 16,
+      "title": "十六 昔时因",
+      "start_line": 3328,
+      "end_line": 3563,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 16,
+          "result": "确认雁门崖跳谷叙述；本回未给谷底上行方法，交后文核对。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 17,
+      "title": "十七 今日意",
+      "start_line": 3564,
+      "end_line": 3777,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 17,
+          "result": "确认碾坊虚架木梯、水轮出入与破窗入楼；战斗阶段守备不设永久武学锁。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 18,
+      "title": "十八 胡汉恩仇 须倾英雄泪",
+      "start_line": 3778,
+      "end_line": 4100,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 18,
+          "result": "确认天宁寺把守、少林女客禁令、寺后潜入、证道院搜捕与菩提院守经。"
+        }
+      ],
+      "access_primary_count": 9
+    },
+    {
+      "chapter": 19,
+      "title": "十九 虽万千人吾往矣",
+      "start_line": 4101,
+      "end_line": 4342,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 19,
+          "result": "确认聚贤庄各处要津把守，并确认客店至庄七十里；大会入场非具名邀请制。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 20,
+      "title": "二十 悄立雁门 绝壁无余字",
+      "start_line": 4343,
+      "end_line": 4491,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 20,
+          "result": "确认长索救乔峰脱庄、汝州八处险峡、雁门盘查与绕岭、阿朱易容离庄。"
+        }
+      ],
+      "access_primary_count": 5
+    },
+    {
+      "chapter": 21,
+      "title": "二十一 千里茫茫若梦",
+      "start_line": 4492,
+      "end_line": 4770,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 21,
+          "result": "确认雁门反向绕岭、卫辉沉船、天台险径与朴者引路；智光禅房由本人邀入。"
+        },
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第21、39回",
+          "summary": "核对卫辉停岸木船、半沉时进入、踩洞后离船；用how限定阶段。"
+        },
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第21、39回",
+          "summary": "核对卫辉停岸木船、半沉时进入、踩洞后离船；用how限定阶段。"
+        }
+      ],
+      "access_primary_count": 4
+    },
+    {
+      "chapter": 22,
+      "title": "二十二 双眸粲粲如星",
+      "start_line": 4771,
+      "end_line": 5074,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 22,
+          "result": "确认小镜湖木桥折断、青石桥绕远与草深窄径；铜镜取物未构成人行秘道。"
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 23,
+      "title": "二十三 塞上牛羊空许约",
+      "start_line": 5075,
+      "end_line": 5305,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 23,
+          "result": "确认萧峰沿小径返信阳；韩家祠堂明写没有守卫，未列受限道路。"
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 24,
+      "title": "二十四 烛畔鬓云有旧盟",
+      "start_line": 5306,
+      "end_line": 5583,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 24,
+          "result": "康敏家药酒与绑缚属于人物控制；穿墙小洞只容手臂，未构成人行通路。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 25,
+      "title": "二十五 莽苍踏雪行",
+      "start_line": 5584,
+      "end_line": 5874,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 25,
+          "result": "确认长白山深雪难行、陷雪冻死风险与迷路；未强制某种登记武学。"
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 26,
+      "title": "二十六 赤手屠熊搏虎",
+      "start_line": 5875,
+      "end_line": 5993,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "14_26",
+          "chapter": 26,
+          "result": "确认阿骨打熟悉雪林并领人三天入营；初夏猎熊路线泥泞，不设永久冬雪封路。"
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 27,
+      "title": "二十七 金戈荡寇鏖兵",
+      "start_line": 5994,
+      "end_line": 6227,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 27,
+          "summary": "核对辽帝御营接引、叛军占宫拘禁及返京庆功；辽宫入口须经上京。"
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 28,
+      "title": "二十八 草木残生颅铸铁",
+      "start_line": 6228,
+      "end_line": 6432,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 28,
+          "summary": "核对佑圣宫拷打、偏殿与悯忠寺菜园潜行；发现旧库宫殿归属错误，未虚构寺庙禁入。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 29,
+      "title": "二十九 虫豸凝寒掌作冰",
+      "start_line": 6433,
+      "end_line": 6676,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 29,
+          "summary": "核对游坦之溪中漂流、丐帮毒蛇阵、往柳宗镇求医；未把临时交战毒阵写成固定道路。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 30,
+      "title": "三十 挥洒缚豪英",
+      "start_line": 6677,
+      "end_line": 6916,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 30,
+          "summary": "核对薛家地窖石臼、桂树、石板、火药机关及围庄封锁；入口和出口分别列条件。"
+        }
+      ],
+      "access_primary_count": 6
+    },
+    {
+      "chapter": 31,
+      "title": "三十一 输赢成败 又争由人算",
+      "start_line": 6917,
+      "end_line": 7132,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 31,
+          "summary": "核对山道转步行、珍珑择客、木屋劈壁与隔壁；木屋改接棋局场。"
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 32,
+      "title": "三十二 且自逍遥没谁管",
+      "start_line": 7133,
+      "end_line": 7364,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 32,
+          "summary": "核对木屋破洞往返、丁春秋潜入下毒及苏星河阵法旧事；未把传功信物设为入屋硬门槛。"
+        }
+      ],
+      "access_primary_count": 1
+    },
+    {
+      "chapter": 33,
+      "title": "三十三 奈天昏地暗 斗转星移",
+      "start_line": 7365,
+      "end_line": 7549,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 33,
+          "summary": "核对参合庄地窖旧事、慕容博墓掘道、误入万仙大会受围；未将临掘墓道冒称既存秘道。"
+        }
+      ],
+      "access_primary_count": 7
+    },
+    {
+      "chapter": 34,
+      "title": "三十四 风骤紧 缥缈峰头云乱",
+      "start_line": 7550,
+      "end_line": 7756,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 34,
+          "summary": "核对洞岛供奉者蒙眼上峰、奉令下峰、揭布酷刑及安洞主潜探。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 35,
+      "title": "三十五 红颜弹指老 刹那芳华",
+      "start_line": 7757,
+      "end_line": 7985,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 35,
+          "summary": "核对大会旁雪峰三道卡、虚竹负童姥入林躲避；雪峰与天山缥缈峰分开。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 36,
+      "title": "三十六 梦里真真语真幻",
+      "start_line": 7986,
+      "end_line": 8173,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 36,
+          "summary": "核对雪覆断涧单向坠落、兴州与宫墙潜入、荒字号双门及三层石阶；冰库底层可往返。"
+        }
+      ],
+      "access_primary_count": 6
+    },
+    {
+      "chapter": 37,
+      "title": "三十七 同一笑 到头万事俱空",
+      "start_line": 8174,
+      "end_line": 8341,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 37,
+          "summary": "核对巨冰封库、融冰积水缺气、破冰出宫、十八天险及接天桥断链。"
+        }
+      ],
+      "access_primary_count": 7
+    },
+    {
+      "chapter": 38,
+      "title": "三十八 糊涂醉 情长计短",
+      "start_line": 8342,
+      "end_line": 8541,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "27_39",
+          "chapter": 38,
+          "summary": "核对断链借力过涧、石道入堡、独尊厅巨岩门及四婢移岩；新增独尊厅。"
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 39,
+      "title": "三十九 解不了 名缰系嗔贪",
+      "start_line": 8542,
+      "end_line": 8717,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第21、39回",
+          "summary": "核对卫辉停岸木船、半沉时进入、踩洞后离船；用how限定阶段。"
+        },
+        {
+          "source_candidate": "27_39",
+          "chapter": 39,
+          "summary": "核对假山暗口、机括暗器地道、推岩石室与主人许可；练图功力不足不是入室硬门槛。"
+        },
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第21、39回",
+          "summary": "核对卫辉停岸木船、半沉时进入、踩洞后离船；用how限定阶段。"
+        }
+      ],
+      "access_primary_count": 3
+    },
+    {
+      "chapter": 40,
+      "title": "四十 却试问 几时把痴心断",
+      "start_line": 8718,
+      "end_line": 8957,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 40,
+          "summary": "补证燕子坞水路引路与曼陀山庄藏书暗门；未将功簿柜锁作为独立道路。"
+        }
+      ],
+      "access_primary_count": 4
+    },
+    {
+      "chapter": 41,
+      "title": "四十一 燕云十八飞骑 奔腾如虎风烟举",
+      "start_line": 8958,
+      "end_line": 9168,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 41,
+          "summary": "确认少林山前罗汉大阵；玄慈邀请萧峰入殿属于临时许可。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 42,
+      "title": "四十二 老魔小丑 岂堪一击 胜之不武",
+      "start_line": 9169,
+      "end_line": 9413,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 42,
+          "summary": "确认百余僧结阵禁止家臣与十八骑上山；核实藏经阁值守及夜间潜入。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 43,
+      "title": "四十三 王霸雄图 血海深恨 尽归尘土",
+      "start_line": 9414,
+      "end_line": 9611,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 43,
+          "summary": "确认藏经阁四名守僧与破窗强入；玄寂后准群雄入寺。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 44,
+      "title": "四十四 念枉求美眷 良缘安在",
+      "start_line": 9612,
+      "end_line": 9822,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 44,
+          "summary": "确认吐蕃临时封山口；具体关口无登记地点，列入问题。"
+        },
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第44回",
+          "summary": "核对赴西夏线路、近兴州山口、四过四不过与制伏守卫后的开放。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 45,
+      "title": "四十五 枯井底 污泥处",
+      "start_line": 9823,
+      "end_line": 10043,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 45,
+          "summary": "确认枯井坠入与巨石封口；道旁无名悬崖救人另列问题。"
+        },
+        {
+          "source_candidate": "44_45_extra",
+          "src": "第45回",
+          "summary": "核对密林悬崖、跳崖抓救、松枝悬空与谷底坠落；区分古庙和枯井。"
+        }
+      ],
+      "access_primary_count": 7
+    },
+    {
+      "chapter": 46,
+      "title": "四十六 酒罢问君三语",
+      "start_line": 10044,
+      "end_line": 10300,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 46,
+          "summary": "确认枯井搬石与绳索脱身；核实呈帖入宫、三石门和幽兰涧钢索。"
+        }
+      ],
+      "access_primary_count": 5
+    },
+    {
+      "chapter": 47,
+      "title": "四十七 为谁开 茶花满路",
+      "start_line": 10301,
+      "end_line": 10466,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 47,
+          "summary": "确认草海木屋灯油木柱药料诱蜂；陷阱与另购山庄并非同址。"
+        }
+      ],
+      "access_primary_count": 2
+    },
+    {
+      "chapter": 48,
+      "title": "四十八 王孙落魄 怎生消得 杨枝玉露",
+      "start_line": 10467,
+      "end_line": 10741,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 48,
+          "summary": "确认山庄外守望与段誉受缚；天龙寺知客转述枯荣闭关，不推为全寺禁入。"
+        }
+      ],
+      "access_primary_count": 0
+    },
+    {
+      "chapter": 49,
+      "title": "四十九 敝屣荣华 浮云生死 此身何惧",
+      "start_line": 10742,
+      "end_line": 10942,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 49,
+          "summary": "确认王府围兵、变装出边门、南京北门封城与插矛登墙；白马桥投水脱逃无水道端点。"
+        }
+      ],
+      "access_primary_count": 5
+    },
+    {
+      "chapter": 50,
+      "title": "五十 教单于折箭 六军辟易 奋英雄怒",
+      "start_line": 10943,
+      "end_line": 11276,
+      "checked": true,
+      "records": [
+        {
+          "source_candidate": "40_50",
+          "chapter": 50,
+          "summary": "确认铁笼重镣、救援地道、西门封堵、雁门拒关绕山、长春谷险径传闻及无量山后期铁链。"
+        }
+      ],
+      "access_primary_count": 21
+    }
+  ]
+}

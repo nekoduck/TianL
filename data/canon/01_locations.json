@@ -946,9 +946,9 @@
   },
   {
     "id": "西夏枯井",
-    "parent": "西夏古庙",
-    "region": "西域·西夏",
-    "desc": "井底泥污，段誉等遭困其内。",
+    "parent": null,
+    "region": "西夏·兴州郊外",
+    "desc": "宾馆外一带路旁的枯井，井底有污泥，井口曾被巨石封堵。",
     "lore": [],
     "state": null,
     "src": "第45回"
@@ -1063,9 +1063,9 @@
   },
   {
     "id": "王夫人山庄·木柱陷阱",
-    "parent": "王夫人山庄",
-    "region": "大理",
-    "desc": "刻字木柱内藏醉人蜂与迷药。",
+    "parent": null,
+    "region": "南归途中·草海",
+    "desc": "草海木屋的刻字柱内藏药料，药油与药粉的气味引屋外醉人蜂入内。",
     "lore": [],
     "state": {
       "exists": false,
@@ -1281,7 +1281,7 @@
   {
     "id": "秦家寨",
     "parent": "云州",
-    "region": "中原·云州",
+    "region": "塞外·云州",
     "desc": "姚伯当执掌的山寨，众头领均学五虎断门刀。",
     "lore": [],
     "state": null,
@@ -1651,15 +1651,15 @@
     "id": "琅嬛福地·铜镜后室",
     "parent": "琅嬛福地",
     "region": "大理·无量山",
-    "desc": "满壁铜镜，李秋水旧居的后室。",
+    "desc": "入口后首间石室满壁铜镜；斜置铜镜后的暗门通往玉像室。",
     "lore": [],
     "state": null,
-    "src": "第50回"
+    "src": "第2回"
   },
   {
     "id": "云州",
-    "parent": "中原",
-    "region": "中原·云州",
+    "parent": "塞外",
+    "region": "塞外·云州",
     "desc": "秦家寨所处州郡，正文未详述城内景观。",
     "lore": [],
     "state": null,
@@ -1691,5 +1691,229 @@
     "lore": [],
     "state": null,
     "src": "第49回"
+  },
+  {
+    "id": "澜沧江边高崖",
+    "parent": null,
+    "region": "大理·无量山附近",
+    "desc": "一面临江、三面深谷的高崖，木婉清与段誉在此避敌。",
+    "lore": [],
+    "state": null,
+    "src": "第4回"
+  },
+  {
+    "id": "万劫谷·谷外树林",
+    "parent": null,
+    "region": "大理·万劫谷",
+    "desc": "谷外密林，树洞入口与救援地道入口设在这里。",
+    "lore": [],
+    "state": null,
+    "src": "第2回"
+  },
+  {
+    "id": "万劫谷·钟氏卧室",
+    "parent": "万劫谷",
+    "region": "大理·万劫谷",
+    "desc": "钟万仇夫妇的卧室，救援地道西北支线从地板下通入。",
+    "lore": [],
+    "state": null,
+    "src": "第9回"
+  },
+  {
+    "id": "琴韵小筑·锦瑟居",
+    "parent": "琴韵小筑",
+    "region": "江南·太湖",
+    "desc": "四面临水的宴客处，地板可翻下，下面能预置小船。",
+    "lore": [],
+    "state": null,
+    "src": "第11回"
+  },
+  {
+    "id": "灵鹫宫·独尊厅",
+    "parent": "灵鹫宫",
+    "region": "天山·缥缈峰",
+    "desc": "巨石砌成的大厅，门口有可无声移来的巨岩机关。",
+    "lore": [],
+    "state": null,
+    "src": "第38回"
+  },
+  {
+    "id": "万仙大会山谷·雪峰",
+    "parent": "万仙大会山谷",
+    "region": "西北·近西夏",
+    "desc": "大会山谷旁的无名雪峰，虚竹负童姥入林避追兵。",
+    "lore": [],
+    "state": null,
+    "src": "第35回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "万仙大会山谷·雪覆断涧",
+    "parent": "万仙大会山谷·雪峰",
+    "region": "西北·近西夏",
+    "desc": "雪峰上被积雪覆盖的断涧，虚竹与童姥曾从此坠落。",
+    "lore": [],
+    "state": null,
+    "src": "第36回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "南院大王府·地道",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "华赫艮耗十余日挖至铁笼底，出口在王府外残屋。",
+    "lore": [
+      "开端未挖，须在末回救援剧情中先掘通后通行。"
+    ],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "南京·西门",
+    "parent": "南京",
+    "region": "辽·南京",
+    "desc": "救援群雄冲出南京的城门，辽军可封闭堵截。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "雁门关·谷底",
+    "parent": "雁门关",
+    "region": "塞北",
+    "desc": "关外石壁下的深谷，尖石嶙峋，云雾封蔽。",
+    "lore": [],
+    "state": null,
+    "src": "第50回"
+  },
+  {
+    "id": "慕容家庄后",
+    "parent": "燕子坞",
+    "region": "江南·燕子坞",
+    "desc": "慕容家庄后的僻静处，三公在此寻找墓址并临时掘道。",
+    "lore": [],
+    "state": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "慕容博墓",
+    "parent": "慕容家庄后",
+    "region": "江南·燕子坞",
+    "desc": "慕容博的墓圹，三公掘入后打开棺材，发现棺内无尸。",
+    "lore": [],
+    "state": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "慕容博墓·临掘地道",
+    "parent": "慕容家庄后",
+    "region": "江南·燕子坞",
+    "desc": "华赫艮等从庄后秘密新掘的地道，掘通后可进入墓圹。",
+    "lore": [],
+    "state": null,
+    "src": "第33回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
+  },
+  {
+    "id": "兴州道上山口",
+    "parent": "西夏",
+    "region": "西夏·兴州近郊",
+    "desc": "赴兴州途中的陡峭山口，两峰夹峙，山径仅容一骑。",
+    "lore": [
+      "宗赞王子派两名武士封关阻拦求亲者。",
+      "段誉吸尽守卫内力后，众人通过。"
+    ],
+    "state": null,
+    "src": "第44回",
+    "normalized_label": true
+  },
+  {
+    "id": "兴州道上山口·关外山径",
+    "parent": "兴州道上山口",
+    "region": "西夏·兴州近郊",
+    "desc": "接近封关武士的关外窄径，受伤退回者从此下山。",
+    "lore": [],
+    "state": null,
+    "src": "第44回",
+    "normalized_label": true
+  },
+  {
+    "id": "兴州道旁悬崖",
+    "parent": "西夏",
+    "region": "西夏·兴州近郊",
+    "desc": "过山口数里，绕山坳入密林所见悬崖；崖上孤松伸向深谷。",
+    "lore": [
+      "悬崖不能纵马上去。",
+      "王语嫣跳崖，三恶人救她时一同悬挂。"
+    ],
+    "state": null,
+    "src": "第45回",
+    "normalized_label": true
+  },
+  {
+    "id": "兴州道旁悬空处",
+    "parent": "兴州道旁悬崖",
+    "region": "西夏·兴州近郊",
+    "desc": "临谷松枝下的悬空位置，四人靠钢杖与手臂相连暂时悬住。",
+    "lore": [
+      "虚竹登松抓杖，将四人逐一提回。"
+    ],
+    "state": null,
+    "src": "第45回",
+    "normalized_label": true
+  },
+  {
+    "id": "兴州道旁深谷",
+    "parent": "兴州道旁悬崖",
+    "region": "西夏·兴州近郊",
+    "desc": "崖下数十丈深谷，谷底尖石密布。",
+    "lore": [
+      "吐蕃矮胖子中掌后坠谷撞石。"
+    ],
+    "state": null,
+    "src": "第45回",
+    "normalized_label": true
+  },
+  {
+    "id": "雪峰·落脚雪坡",
+    "parent": "万仙大会山谷·雪峰",
+    "region": "西北·近西夏",
+    "desc": "雪峰下方的积雪山坡，慕容复等在此接住坠下的虚竹与童姥。",
+    "lore": [],
+    "state": null,
+    "src": "第36回",
+    "inferred": true,
+    "inferred_fields": [
+      "id",
+      "parent",
+      "region"
+    ]
   }
 ]

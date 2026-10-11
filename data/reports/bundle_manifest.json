@@ -1,0 +1,76 @@
+{
+  "format": "UTF-8 JSON",
+  "source_sha256": "87f840d000b9cc7a41109529908dbad013db8e18299d557400ef2bdfb2c1dcea",
+  "counts": {
+    "locations": 202,
+    "access": 179,
+    "original_roads": 191,
+    "patched_roads": 219,
+    "remove": 17,
+    "add": 45,
+    "change": 4,
+    "new_locations": 19,
+    "events": 235,
+    "explicit_person_movements": 605,
+    "connected_components": 1,
+    "requires_triples": 8
+  },
+  "apply_order": [
+    "将00_index.json、01_locations.json、14_access.json、15_roads_patch.json同时放入data/canon。",
+    "02_roads.json保留原文件；加载时先remove，再add，再change，每个补丁只应用一次。",
+    "读取14的有向条件；requires由系统判定，how中的许可、发现与阶段由剧情裁定。",
+    "不要根据01的parent自动生成直接道路。"
+  ],
+  "validation_status": "新通路校验通过；旧校验器的父子直连规则产生预期冲突，原始失败已保留。",
+  "source_text_included": false,
+  "files": [
+    {
+      "path": "data/canon/00_index.json",
+      "sha256": "152e7c0916cc51c7346d112c2938e6186e995ef7d1a58d34cf96db2fa0f753be"
+    },
+    {
+      "path": "data/canon/01_locations.json",
+      "sha256": "b2ec90110a5c590653f67a9380619e0b435f48796583a38499f20e04e94aea52"
+    },
+    {
+      "path": "data/canon/14_access.json",
+      "sha256": "b7ae4e8a616223a4cc4f3d316043dfba5dde19dfa65d2d90c695568404369995"
+    },
+    {
+      "path": "data/canon/15_roads_patch.json",
+      "sha256": "7a262caf400f8e505ec19ac3e0621906345e71b1e86183eb4783649c072fccb4"
+    },
+    {
+      "path": "reports/bundle_validation.json",
+      "sha256": "af8aee4fb6283c9381bc35644cd5dbc5bb3c08fef662d85f634f37540c957343"
+    },
+    {
+      "path": "reports/access_validation.json",
+      "sha256": "1ebaa185757707008dab0fcbac2b2954463d52572121194c75d60060aea8cd3d"
+    },
+    {
+      "path": "reports/base_after_patch_validation.json",
+      "sha256": "2526cc6455850508e1f259c23b45cab784d3b98683e9632f2b265714f6ed16b8"
+    },
+    {
+      "path": "reports/issues.json",
+      "sha256": "7bf28f050afe07470f6f2c67daca11185db8b889be40ecf6d95126367cf7b30b"
+    },
+    {
+      "path": "reports/source_evidence.json",
+      "sha256": "bf4fbe34062f1b4ca082658436c0561281bad56fb42b28447b1ff0ccadc5a5ba"
+    },
+    {
+      "path": "reports/candidate_evidence_history.json",
+      "sha256": "01e6bb76094e06c4c0554efa25e2667aa4074f7e5ee6b5b066b58409b82323e5"
+    },
+    {
+      "path": "reports/zero_roads_audit.json",
+      "sha256": "32ddd25bfad9631d0c52733f176859b7f7745ad6367f9ad9a6e11435c22a90fe"
+    },
+    {
+      "path": "reports/chapter_coverage.json",
+      "sha256": "2479786c51115857adba1f393aa350d8a3166d80d55f833477d3398ab5a780f3"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/（World、lod、rag、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
+[INPUT]: 依赖 world/（World、lod、rag、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act / debug），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文外的整回合) → text(正文增量)
@@ -12,7 +12,7 @@
 import logging
 
 from .narrative import agents
-from .world import lod, rag
+from .world import access, lod, rag
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -78,7 +78,7 @@ class Game:
                 w.taint.update(staged["actors"])
                 log.info("原著「%s」因主角扰动未照常发生：%s", staged["id"], plan["canon"]["why"])
         applied, rejected = w.apply(plan["effects"], "director")
-        journey = w.graph.distances(origin).get(w.here, 0) * PER_DAY         # 远行时日由道路决定，不由 LLM 估算
+        journey = access.distances(w, origin).get(w.here, 0) * PER_DAY       # 远行时日由主角走得通的道路决定，不由 LLM 估算
         days, _ = w.advance(max(w.clock.minutes(plan["pace"]), journey))     # 时长由措辞换算，不由 LLM 报数
         self._offstage(days)
         arrived = w.sync()

@@ -1,0 +1,4193 @@
+{
+  "source_file": "用户提供的世纪新修版全文TXT",
+  "source_original_encoding": "GB18030",
+  "source_sha256": "87f840d000b9cc7a41109529908dbad013db8e18299d557400ef2bdfb2c1dcea",
+  "line_numbering": "全文解码后的1起算行号；未附小说全文。",
+  "scope": "定位和裁定记录；反向证据仍须结合inferred与最终how读取。",
+  "access": [
+    {
+      "from": "无量后山",
+      "to": "无量山·山崖",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "无量剑禁外人接近瀑布高崖，段誉遭追赶闯入",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            288,
+            289
+          ],
+          "reason": "无量剑禁外人接近瀑布高崖，段誉遭追赶闯入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量山·山崖",
+      "to": "无量山·谷底",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "段誉坠落由古松缓冲后沿崖缝下攀；末回也可沿长铁链滑下",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            289,
+            295
+          ],
+          "reason": "段誉坠崖被古松承住，再沿崖缝攀爬滑至谷底",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第50回",
+          "lines": [
+            11242,
+            11243
+          ],
+          "reason": "后期无量洞吊好长铁链，众人可沿链滑下湖畔",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量山·谷底",
+      "to": "无量山·山崖",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "前期无可攀援；末回无量洞挂妥长铁链后可攀上",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11243,
+            11243
+          ],
+          "reason": "前期无可攀援；末回无量洞挂妥长铁链后可攀上",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第50回",
+          "lines": [
+            11243,
+            11243
+          ],
+          "reason": "后期无量洞吊好长铁链后，可攀链上峰",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量山·谷底",
+      "to": "琅嬛福地",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "按剑影找到巨岩，除藤清沙后推转，钻洞推开两门",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            325,
+            331
+          ],
+          "reason": "按剑影找到巨岩，除藤清沙后推转，钻洞推开两门",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琅嬛福地",
+      "to": "无量山·谷底",
+      "src": "第2回",
+      "inferred": true,
+      "hidden": true,
+      "final_how": "由洞府入口循暗道出洞，推转岩门返回湖畔",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            325,
+            331
+          ],
+          "reason": "由洞府入口循暗道出洞，推转岩门返回湖畔",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琅嬛福地·铜镜后室",
+      "to": "琅嬛福地·玉像石室",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "段誉发现斜镜反光照出壁缝，推开暗门沿石级下行",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            336,
+            340
+          ],
+          "reason": "循铜镜反光发现壁缝，推开石门，沿石级进入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第2回",
+          "lines": [
+            336,
+            337
+          ],
+          "reason": "段誉发现斜镜反光照出壁缝，推开暗门沿石级下行",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琅嬛福地·玉像石室",
+      "to": "琅嬛福地·铜镜后室",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "推开石门，沿石级返回铜镜后室",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            336,
+            340
+          ],
+          "reason": "从玉像室沿石级下行，经石门回铜镜室",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第50回",
+          "lines": [
+            11245,
+            11245
+          ],
+          "reason": "推开石门，沿石级返回铜镜后室",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琅嬛福地·石级隧道",
+      "to": "澜沧江",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "爬出仅容身的洞口，手足并用攀上江岸乱石",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            379,
+            382
+          ],
+          "reason": "爬出仅容身的洞口，手足并用攀上江岸乱石",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "澜沧江",
+      "to": "琅嬛福地·石级隧道",
+      "src": "第2回",
+      "inferred": true,
+      "hidden": true,
+      "final_how": "认准江面上十余丈的洞口，攀岩入洞后下石级",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            379,
+            382
+          ],
+          "reason": "认准江面上十余丈的洞口，攀岩入洞后下石级",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量山",
+      "to": "澜沧江边高崖",
+      "src": "第4回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "木婉清借马越深涧；追兵另攀下深谷再登对崖",
+      "anchors": [
+        {
+          "src": "第4回",
+          "lines": [
+            690,
+            721
+          ],
+          "reason": "木婉清借马越深涧；追兵另攀下深谷再登对崖",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第4回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "澜沧江边高崖",
+      "to": "无量山",
+      "src": "第4回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "南海鳄神沿崖下跃；旁人须攀崖下谷另寻山路",
+      "anchors": [
+        {
+          "src": "第4回",
+          "lines": [
+            690,
+            721
+          ],
+          "reason": "南海鳄神沿崖下跃；旁人须攀崖下谷另寻山路",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第4回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "剑湖宫·练武厅",
+      "to": "剑湖宫",
+      "src": "第1回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "左子穆拦阻期间，钟灵放貂迫退持剑弟子后携段誉离开",
+      "anchors": [
+        {
+          "src": "第1回",
+          "lines": [
+            151,
+            158
+          ],
+          "reason": "左子穆拦阻期间，钟灵放貂迫退持剑弟子后携段誉离开",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第1回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量洞",
+      "to": "无量洞·囚室",
+      "src": "第5回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "囚室由弟子看守，须让看守开门才能进入",
+      "anchors": [
+        {
+          "src": "第5回",
+          "lines": [
+            1046,
+            1119
+          ],
+          "reason": "囚室由弟子看守，须让看守开门才能进入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第5回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量洞·囚室",
+      "to": "无量洞",
+      "src": "第5回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "门窗封锁时须脱困；段誉吸去七名弟子内力逃出",
+      "anchors": [
+        {
+          "src": "第5回",
+          "lines": [
+            1046,
+            1119
+          ],
+          "reason": "门窗封锁时须脱困；段誉吸去七名弟子内力逃出",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第5回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无量洞",
+      "to": "无量山",
+      "src": "第5回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "拘禁期间须避守门弟子；段誉趁混乱钻草丛逃走",
+      "anchors": [
+        {
+          "src": "第5回",
+          "lines": [
+            1117,
+            1121
+          ],
+          "reason": "拘禁期间须避守门弟子；段誉趁混乱钻草丛逃走",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第5回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "木婉清居所",
+      "src": "第3回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "王家围屋期间，段誉被抓后获准入内，守卫随时可拦人",
+      "anchors": [
+        {
+          "src": "第3回",
+          "lines": [
+            497,
+            553
+          ],
+          "reason": "王家围屋期间，段誉被抓后获准入内，守卫随时可拦人",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第3回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "木婉清居所",
+      "to": "万劫谷·谷外树林",
+      "src": "第3回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "围攻时须突破庄内外敌人；木婉清退敌后带段誉乘马离开",
+      "anchors": [
+        {
+          "src": "第3回",
+          "lines": [
+            497,
+            553
+          ],
+          "reason": "围攻时须突破庄内外敌人；木婉清退敌后带段誉乘马离开",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第3回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "澜沧江",
+      "to": "万劫谷·谷外树林",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "扶善人渡铁索，踏桥板渡江，再循钟灵所指路径",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            383,
+            386
+          ],
+          "reason": "扶善人渡铁索，踏桥板渡江，再循钟灵所指路径",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "澜沧江",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "循林外路径到善人渡，扶铁索踏桥板返回江对岸",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            383,
+            386
+          ],
+          "reason": "循林外路径到善人渡，扶铁索踏桥板返回江对岸",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "万劫谷·谷口",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "右数第四株松树，拨草入树洞，提铁环掀板下石级",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            385,
+            386
+          ],
+          "reason": "右数第四株松树，拨草入树洞，提铁环掀板下石级",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷口",
+      "to": "万劫谷·谷外树林",
+      "src": "第2回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "循石级回树洞，托开木板，钻出草掩的树洞",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            385,
+            386
+          ],
+          "reason": "循石级回树洞，托开木板，钻出草掩的树洞",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷口",
+      "to": "万劫谷",
+      "src": "第2回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "敲誓树段字三下候引见；姓段者须避开钟万仇",
+      "anchors": [
+        {
+          "src": "第2回",
+          "lines": [
+            387,
+            393
+          ],
+          "reason": "敲誓树段字三下候引见；姓段者须避开钟万仇",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第2回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "万劫谷",
+      "src": "第7回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "段延庆不钻树洞，绕谷旁斜坡，循熟悉路径入谷后",
+      "anchors": [
+        {
+          "src": "第7回",
+          "lines": [
+            1490,
+            1492
+          ],
+          "reason": "段延庆不钻树洞，绕谷旁斜坡，循熟悉路径入谷后",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第7回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷",
+      "to": "万劫谷·谷外树林",
+      "src": "第7回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿段延庆绕入的谷旁斜坡退出，须认得曲折路径",
+      "anchors": [
+        {
+          "src": "第7回",
+          "lines": [
+            1490,
+            1492
+          ],
+          "reason": "沿段延庆绕入的谷旁斜坡退出，须认得曲折路径",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第7回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷",
+      "to": "万劫谷·石屋",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "囚禁时须越树墙、避守关者，再由外面推开封门巨石",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1759,
+            1766
+          ],
+          "reason": "囚禁时须越树墙、避守关者，再由外面推开封门巨石",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·石屋",
+      "to": "万劫谷",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "封门时内侧无法推开；须待外人移石，或改走已掘地道",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1759,
+            1766
+          ],
+          "reason": "封门时内侧无法推开；须待外人移石，或改走已掘地道",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷",
+      "to": "万劫谷·钟氏卧室",
+      "src": "第9回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "私访须避钟万仇；段正淳改从地道托板窥入卧室",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1929,
+            1954
+          ],
+          "reason": "私访须避钟万仇；段正淳改从地道托板窥入卧室",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·谷外树林",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "认准通往林外的支道，移开入口树枝后爬出",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1929,
+            1933
+          ],
+          "reason": "认准树枝掩盖的入口，移枝后俯身爬入已掘通地道",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·谷外树林",
+      "to": "万劫谷·地道",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "认准树枝掩盖的入口，移枝后俯身爬入已掘通地道",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1929,
+            1933
+          ],
+          "reason": "沿支道爬至林外出口，移开掩盖入口的树枝",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·石屋",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "石屋下方掘通后，掀开覆口石板进入",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1773,
+            1785
+          ],
+          "reason": "石屋下方掘通后，掀开覆口石板进入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·石屋",
+      "to": "万劫谷·地道",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "发现地板下已掘通的洞口，掀石板俯身钻入",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1773,
+            1785
+          ],
+          "reason": "发现地板下已掘通的洞口，掀石板俯身钻入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·药室",
+      "src": "第8回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "挖通后由地下钻入药室，须避开钟家人",
+      "anchors": [
+        {
+          "src": "第8回",
+          "lines": [
+            1715,
+            1735
+          ],
+          "reason": "挖通后由地下钻入药室，须避开钟家人",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第8回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·药室",
+      "to": "万劫谷·地道",
+      "src": "第8回",
+      "inferred": true,
+      "hidden": true,
+      "final_how": "发现地下已挖出的洞口，俯身钻入狭窄地道",
+      "anchors": [
+        {
+          "src": "第8回",
+          "lines": [
+            1715,
+            1735
+          ],
+          "reason": "发现地下已挖出的洞口，俯身钻入狭窄地道",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第8回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·地道",
+      "to": "万劫谷·钟氏卧室",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "沿西北支道到尽头，托起床室地板进入",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1933,
+            1954
+          ],
+          "reason": "沿西北支道到尽头，托起床室地板进入",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万劫谷·钟氏卧室",
+      "to": "万劫谷·地道",
+      "src": "第9回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "掀起地板入洞，再放回盖板，沿西北支道爬出",
+      "anchors": [
+        {
+          "src": "第9回",
+          "lines": [
+            1933,
+            1954
+          ],
+          "reason": "掀起地板入洞，再放回盖板，沿西北支道爬出",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第9回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "大理城",
+      "to": "大理皇宫",
+      "src": "第8回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "段氏亲属与臣下由内侍通报入宫；外人须获准",
+      "anchors": [
+        {
+          "src": "第8回",
+          "lines": [
+            1542,
+            1542
+          ],
+          "reason": "段氏亲属与臣下由内侍通报入宫；外人须获准",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第8回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "大理城",
+      "to": "镇南王府",
+      "src": "第7回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "王府守卫核认来人；刀白凤等家人可直接通过",
+      "anchors": [
+        {
+          "src": "第7回",
+          "lines": [
+            1440,
+            1440
+          ],
+          "reason": "王府守卫核认来人；刀白凤等家人可直接通过",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第7回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "玉虚观",
+      "to": "大理城",
+      "src": "第6回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "四恶来袭、护卫驻守期间，出观须避开交战双方",
+      "anchors": [
+        {
+          "src": "第6回",
+          "lines": [
+            1219,
+            1223
+          ],
+          "reason": "四恶来袭、护卫驻守期间，出观须避开交战双方",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第6回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "天龙寺",
+      "to": "天龙寺·牟尼堂",
+      "src": "第10回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "方丈带路并请示堂内高僧，得应允后推门入内",
+      "anchors": [
+        {
+          "src": "第10回",
+          "lines": [
+            2025,
+            2027
+          ],
+          "reason": "方丈带路并请示堂内高僧，得应允后推门入内",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第10回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "天龙寺·牟尼堂",
+      "to": "天龙寺",
+      "src": "第10回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "敌人封门交战时须避开火焰刀；也可由堂外树林撤离",
+      "anchors": [
+        {
+          "src": "第10回",
+          "lines": [
+            2191,
+            2193
+          ],
+          "reason": "敌人封门交战时须避开火焰刀；也可由堂外树林撤离",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第10回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "燕子坞",
+      "src": "第11回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乘舟入荷塘芦苇间水道，须熟悉路径或有人引路",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2251,
+            2275
+          ],
+          "reason": "乘舟入荷塘芦苇间水道，须熟悉路径或有人引路",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "燕子坞",
+      "to": "太湖",
+      "src": "第11回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "乘舟沿熟悉水道出坞；荷叶浮萍会随风改变标记",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2251,
+            2275
+          ],
+          "reason": "乘舟沿熟悉水道出坞；荷叶浮萍会随风改变标记",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "燕子坞",
+      "to": "琴韵小筑",
+      "src": "第11回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "阿碧以舟相送，穿荷叶芦苇水道抵达琴韵小筑",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2251,
+            2275
+          ],
+          "reason": "阿碧以舟相送，穿荷叶芦苇水道抵达琴韵小筑",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琴韵小筑",
+      "to": "燕子坞",
+      "src": "第11回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "登舟循来路出琴韵小筑，须能认清曲折水道",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2251,
+            2275
+          ],
+          "reason": "登舟循来路出琴韵小筑，须能认清曲折水道",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "燕子坞",
+      "to": "听香水榭",
+      "src": "第13回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "乘舟到阿朱所居小洲；敌人占庄时须先查明情形",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2650,
+            2655
+          ],
+          "reason": "乘舟到阿朱所居小洲；敌人占庄时须先查明情形",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "听香水榭",
+      "to": "燕子坞",
+      "src": "第13回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "乘舟离开小洲，循水道返回燕子坞其他庄园",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2650,
+            2655
+          ],
+          "reason": "乘舟离开小洲，循水道返回燕子坞其他庄园",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "燕子坞",
+      "to": "参合庄",
+      "src": "第40回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "参合庄藏在荷菱深处，鸠摩智雇官差乘船引路",
+      "anchors": [
+        {
+          "src": "第40回",
+          "lines": [
+            8730,
+            8730
+          ],
+          "reason": "乘舟循荷塘菱荡水路入庄，需熟路者引导",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第40回",
+          "lines": [
+            8730,
+            8730
+          ],
+          "reason": "参合庄藏在荷菱深处，鸠摩智雇官差乘船引路",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "参合庄",
+      "to": "燕子坞",
+      "src": "第40回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "鸠摩智藏身王夫人大船离庄，须有舟船并能航行",
+      "anchors": [
+        {
+          "src": "第40回",
+          "lines": [
+            8730,
+            8730
+          ],
+          "reason": "乘舟循庄外水道出行，须识别荷塘菱荡间路径",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第40回",
+          "lines": [
+            8732,
+            8733
+          ],
+          "reason": "鸠摩智藏身王夫人大船离庄，须有舟船并能航行",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "参合庄",
+      "to": "还施水阁",
+      "src": "第12回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "王语嫣获准看书；鸠摩智依旧约索入，被朱碧拒绝",
+      "anchors": [
+        {
+          "src": "第12回",
+          "lines": [
+            2539,
+            2539
+          ],
+          "reason": "须经慕容家许可；王语嫣获准看书，鸠摩智遭拒",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第12回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "曼陀山庄",
+      "src": "第12回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乘舟登岸；陌生男子须获邀，擅入者遭王夫人严惩",
+      "anchors": [
+        {
+          "src": "第12回",
+          "lines": [
+            2448,
+            2453
+          ],
+          "reason": "乘舟登岸；陌生男子须获邀，擅入者遭王夫人严惩",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第12回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "曼陀山庄",
+      "to": "太湖",
+      "src": "第12回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "登舟离庄；被扣者须避婢仆与王夫人的快船追赶",
+      "anchors": [
+        {
+          "src": "第12回",
+          "lines": [
+            2638,
+            2638
+          ],
+          "reason": "登舟离庄；被扣者须避婢仆与王夫人的快船追赶",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第12回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "曼陀山庄·茶花园",
+      "to": "曼陀山庄",
+      "src": "第12回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "被罚种花期间不得乱走；段誉趁无人看管赴王语嫣处",
+      "anchors": [
+        {
+          "src": "第12回",
+          "lines": [
+            2498,
+            2520
+          ],
+          "reason": "被罚种花期间不得乱走；段誉趁无人看管赴王语嫣处",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第12回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琴韵小筑·锦瑟居",
+      "to": "太湖",
+      "src": "第11回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "阿朱拨瑟发信号，男仆开翻板；逃者须预置小船承接",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2380,
+            2387
+          ],
+          "reason": "阿朱拨瑟发信号，男仆开翻板；逃者须预置小船承接",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "琴韵小筑·锦瑟居",
+      "src": "第11回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乘船靠岸登梯；崔百泉、过彦之落水后由梯阶爬回",
+      "anchors": [
+        {
+          "src": "第11回",
+          "lines": [
+            2383,
+            2384
+          ],
+          "reason": "乘船靠岸登梯；崔百泉、过彦之落水后由梯阶爬回",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第11回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "青云庄",
+      "src": "第13回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "青云庄",
+      "to": "太湖",
+      "src": "第13回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "赤霞庄",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3127
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "赤霞庄",
+      "to": "太湖",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同一通路反向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3127
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "金风庄",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3112
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "金风庄",
+      "to": "太湖",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同一通路反向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3112
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "玄霜庄",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3112
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "玄霜庄",
+      "to": "太湖",
+      "src": "第15回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+      "anchors": [
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "由庄乘舟返回太湖，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第13回",
+          "lines": [
+            2875,
+            2885
+          ],
+          "reason": "沿现有太湖水路乘舟到庄，具体靠岸路线原著未详",
+          "source_candidate": "01_13",
+          "candidate_original_src": "第13回",
+          "direction_basis": "同一通路反向证据"
+        },
+        {
+          "src": "第15回",
+          "lines": [
+            3112
+          ],
+          "reason": "此回确认庄名与庄主；原文未详述庄址及太湖靠岸路线，水路保留推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第15回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "太湖",
+      "to": "无锡",
+      "src": "第14回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "段誉学会划桨后，依阿碧指点向马迹山划去，午前抵无锡。",
+      "anchors": [
+        {
+          "src": "第14回",
+          "lines": [
+            2891,
+            2903,
+            2904
+          ],
+          "reason": "正文明写太湖行舟、指路及无锡抵达。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第14回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无锡",
+      "to": "太湖",
+      "src": "第14回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "须备舟并会划桨，可沿段誉来时水路驶入太湖。",
+      "anchors": [
+        {
+          "src": "第14回",
+          "lines": [
+            2891,
+            2904
+          ],
+          "reason": "出湖路线明确；反向航行据同一路线推定。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第14回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "碾坊",
+      "to": "碾坊·阁楼",
+      "src": "第17回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "木梯须架到楼板；梯被推倒时先重架，武士也曾从窗口跃入。",
+      "anchors": [
+        {
+          "src": "第17回",
+          "lines": [
+            3582,
+            3584,
+            3592,
+            3600,
+            3604
+          ],
+          "reason": "阁楼依靠虚架木梯；段誉推梯阻敌，另有破窗入口。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第17回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "碾坊·阁楼",
+      "to": "碾坊",
+      "src": "第17回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "沿架好的木梯下楼；段誉也曾攀住水轮，随轮下降。",
+      "anchors": [
+        {
+          "src": "第17回",
+          "lines": [
+            3609,
+            3610,
+            3645,
+            3744
+          ],
+          "reason": "原文明确下楼、攀水轮和失手摔落。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第17回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·山门",
+      "to": "少林寺",
+      "src": "第43回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "平日须通报，女客曾被拒；大会后玄寂准群雄入寺",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3962,
+            4049,
+            4050
+          ],
+          "reason": "守山门的虚清明确拒绝女客。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第43回",
+          "lines": [
+            9457,
+            9460
+          ],
+          "reason": "玄寂邀丐帮同往寺内；群雄随后进寺，不能永久禁绝全部外客。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第43回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺",
+      "to": "少林寺·证道院",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰远随应召老僧找到证道院，绕到屋后，避人伏在窗下。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3928,
+            3930,
+            3931,
+            3957,
+            3968
+          ],
+          "reason": "乔峰不知寺内殿院位置，跟随应召老僧找到证道院。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·证道院",
+      "to": "少林寺",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "搜捕时通道有人守；乔峰待夜深，借树木遮蔽，穿寺向东。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3973,
+            3975,
+            3980,
+            3981,
+            3982,
+            3983,
+            3984
+          ],
+          "reason": "各处通道及前后门被占住，乔峰避开西面守备。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·证道院",
+      "to": "少林寺·玄苦禅房",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰等群僧离开，听见玄苦招呼，才到门口叩见入房。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3931,
+            3941,
+            3942,
+            3943,
+            3944,
+            3945
+          ],
+          "reason": "玄苦所在屋宇属于证道院，先获本人招呼再入内。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·玄苦禅房",
+      "to": "少林寺·证道院",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "搜捕时乔峰藏在床板下，等群僧离开，才推门出房。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3971,
+            3972,
+            3973,
+            3979,
+            3980
+          ],
+          "reason": "被围时不宜直接出房；乔峰实际藏床避搜。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺",
+      "to": "少林寺·菩提院",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰弹石引开树后伏僧，翻墙入院；阿朱改扮守经僧人混入。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3982,
+            3983,
+            3984,
+            3985,
+            3990,
+            3991,
+            4040
+          ],
+          "reason": "院外有伏僧，院内有守经僧，人物通过方式明确。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·菩提院",
+      "to": "少林寺",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "群僧包围时，乔峰挡住三高僧掌力，携阿朱飞身上屋脱离。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3999,
+            4001,
+            4019,
+            4024,
+            4027,
+            4028,
+            4040
+          ],
+          "reason": "阿朱无法直接逃出，乔峰接掌上屋；不得写作单向死路。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "无锡",
+      "to": "天宁寺",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "西夏占寺时，阿朱等冒称乔峰和慕容复，等通报后被迎入寺。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3792,
+            3794,
+            3815,
+            3816,
+            3817,
+            3818,
+            3819,
+            3822,
+            3842
+          ],
+          "reason": "占寺期间寺口十多武士把守，并曾盘问来客。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "天宁寺",
+      "to": "无锡",
+      "src": "第18回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "西夏占寺时，段誉等趁守军中毒救人；被缚者先获解毒脱缚。",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3842,
+            3843,
+            3845,
+            3849,
+            3850,
+            3851,
+            3865,
+            3871
+          ],
+          "reason": "占寺与中毒是剧情阶段；获释、守军失能后可出寺。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄",
+      "src": "第20回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "围攻乔峰时各处要津有人守；黑衣人以长索携他越过屋顶脱围。",
+      "anchors": [
+        {
+          "src": "第19回",
+          "lines": [
+            4215
+          ],
+          "reason": "第19回列守备，第20回给出实际离庄方式。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第20回",
+          "lines": [
+            4348,
+            4349,
+            4350,
+            4351
+          ],
+          "reason": "第19回列守备，第20回给出实际离庄方式。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "聚贤庄·后院",
+      "to": "聚贤庄",
+      "src": "第20回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "阿朱被留问讯时，伤愈制住薛慕华，改扮他后走出聚贤庄。",
+      "anchors": [
+        {
+          "src": "第20回",
+          "lines": [
+            4395,
+            4404,
+            4406,
+            4408,
+            4409,
+            4411
+          ],
+          "reason": "阿朱在庄中受留问讯，靠冒充薛神医离开。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "汝州",
+      "to": "汝州山洞",
+      "src": "第20回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "黑衣人抱乔峰攀险壁，以长索缠树横越八处险峡，再下深谷入洞。",
+      "anchors": [
+        {
+          "src": "第20回",
+          "lines": [
+            4354,
+            4355,
+            4357,
+            4368,
+            4375
+          ],
+          "reason": "山洞实际入口经过无容足险壁和八处险峡。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "汝州山洞",
+      "to": "汝州",
+      "src": "第20回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰伤愈后跃峡逾谷，翻山越岭出山，黑衣人也曾纵跃离谷。",
+      "anchors": [
+        {
+          "src": "第20回",
+          "lines": [
+            4367,
+            4371,
+            4375
+          ],
+          "reason": "正文明确黑衣人与伤愈乔峰均能上行，不可标绝对blocked。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关",
+      "to": "雁门关·石壁",
+      "src": "第20回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰绕关西高岭，察看北面地势，再奔行下岭，至临深谷石壁。",
+      "anchors": [
+        {
+          "src": "第20回",
+          "lines": [
+            4377,
+            4378,
+            4379,
+            4380,
+            4381,
+            4382,
+            4383
+          ],
+          "reason": "石壁位于关外临谷山侧，需绕岭下行。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第20回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关·石壁",
+      "to": "雁门关",
+      "src": "第21回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "乔峰与阿朱折向南，从山岭间绕过雁门关，返回关内。",
+      "anchors": [
+        {
+          "src": "第20回",
+          "lines": [
+            4382,
+            4424,
+            4427
+          ],
+          "reason": "第20回证实临谷风险；第21回明写二人经山岭南返。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第21回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第21回",
+          "lines": [
+            4494
+          ],
+          "reason": "第20回证实临谷风险；第21回明写二人经山岭南返。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第21回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "天台山",
+      "to": "止观寺",
+      "src": "第21回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "山径险峻曲折，难辨方向；乔峰与阿朱由朴者和尚引路到寺。",
+      "anchors": [
+        {
+          "src": "第21回",
+          "lines": [
+            4599,
+            4602,
+            4603,
+            4604,
+            4605,
+            4606,
+            4632
+          ],
+          "reason": "山径限制明确，领路者不会武功，不能强制特定武学。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第21回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "止观寺",
+      "to": "天台山",
+      "src": "第21回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "萧峰与阿朱沿曲折险径离寺，向天台县城返回。",
+      "anchors": [
+        {
+          "src": "第21回",
+          "lines": [
+            4605,
+            4680,
+            4682
+          ],
+          "reason": "正文明确二人离寺返县城，同一险径的双向限制据地形推定。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第21回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "信阳",
+      "to": "小镜湖",
+      "src": "第22回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "按酒保指点走窄径；木桥折断时，萧峰借残板跃到对岸。",
+      "anchors": [
+        {
+          "src": "第22回",
+          "lines": [
+            4875,
+            4877,
+            4879,
+            4880,
+            4885
+          ],
+          "reason": "现有大节点道路包含木桥与草深窄径；木桥无登记id。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第22回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "小镜湖",
+      "to": "信阳",
+      "src": "第23回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "回程须辨认草深窄径；木桥已断时须另找过河办法。",
+      "anchors": [
+        {
+          "src": "第22回",
+          "lines": [
+            4880,
+            4885
+          ],
+          "reason": "萧峰返回信阳，反向过断桥具体方法未写，故标推定。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第23回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第23回",
+          "lines": [
+            5279,
+            5285
+          ],
+          "reason": "萧峰返回信阳，反向过断桥具体方法未写，故标推定。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第23回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "塞外",
+      "to": "长白山",
+      "src": "第25回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "冬季积雪数尺；萧峰以高强武功抱阿紫入山，仍须辨别方向。",
+      "anchors": [
+        {
+          "src": "第25回",
+          "lines": [
+            5868,
+            5869,
+            5870,
+            5871
+          ],
+          "reason": "这是冬季条件；正文明确入山后迷路。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第25回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "长白山",
+      "to": "塞外",
+      "src": "第26回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "冬季返程须辨路；萧峰等候雪停，想凭日月星辰找方向。",
+      "anchors": [
+        {
+          "src": "第25回",
+          "lines": [
+            5868,
+            5869,
+            5870,
+            5871
+          ],
+          "reason": "萧峰折回后迷路；第26回给出等待天气与辨向办法。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第26回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第26回",
+          "lines": [
+            5877
+          ],
+          "reason": "萧峰折回后迷路；第26回给出等待天气与辨向办法。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第26回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "塞外",
+      "to": "女真部落",
+      "src": "第26回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "雪林中须熟悉地势；阿骨打引萧峰向东走三天，抵达族人营帐。",
+      "anchors": [
+        {
+          "src": "第26回",
+          "lines": [
+            5891,
+            5892,
+            5893,
+            5895
+          ],
+          "reason": "阿骨打熟路，在风雪中领人入营；同族许可不是唯一硬前提。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第26回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "女真部落",
+      "to": "塞外",
+      "src": "第26回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "冬季离营经过雪林，须熟悉地势或请熟路者引路。",
+      "anchors": [
+        {
+          "src": "第25回",
+          "lines": [
+            5871
+          ],
+          "reason": "反向雪林地形限制据入营路线推定；初夏出猎不适用冬雪条件。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第26回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第26回",
+          "lines": [
+            5892,
+            5901,
+            5902,
+            5903
+          ],
+          "reason": "反向雪林地形限制据入营路线推定；初夏出猎不适用冬雪条件。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第26回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "上京",
+      "to": "辽国皇宫",
+      "src": "第27回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "萧峰平乱受封，随辽帝返京后获邀入宫赴宴",
+      "anchors": [
+        {
+          "src": "第27回",
+          "lines": [
+            6025,
+            6178
+          ],
+          "reason": "6025及6066明写叛军占宫拘禁；6173—6178写返上京与宫中庆功。入宫许可按获宴资格推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第27回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "塞外",
+      "to": "辽国军营",
+      "src": "第27回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "萧峰应辽帝之邀，由室里率亲兵护送进入御营",
+      "anchors": [
+        {
+          "src": "第27回",
+          "lines": [
+            5998,
+            6013
+          ],
+          "reason": "5998由室里通报，6006—6007亲兵吹角、军队让路、辽帝迎接；非无条件入御营。普遍准入规则为推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第27回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "上京",
+      "to": "辽国军营",
+      "src": "第27回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "进入御营须由军方接引；萧峰由室里率亲兵护送",
+      "anchors": [
+        {
+          "src": "第27回",
+          "lines": [
+            5998,
+            6013
+          ],
+          "reason": "第二条已存营地入口也须纳入准入规则，否则可经上京绕入；上京入口位置与准入推广属推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第27回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "薛慕华居所",
+      "to": "中原",
+      "src": "第30回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "丁春秋围庄时须脱离星宿派封锁；少林六僧逃出后被抓回",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6913,
+            6914
+          ],
+          "reason": "条件仅在丁春秋围庄时成立；6913明确六僧逃出不远被抓回。既不要求丁春秋死亡，也不禁止其他时期自由离庄。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "薛慕华居所",
+      "to": "薛慕华居所·地窖",
+      "src": "第30回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "冯阿三舂臼移树，转臼开石板；勿拉点火铁环，弯腰入地道",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6754,
+            6771
+          ],
+          "reason": "6754—6763现场发现机关：左二石臼舂米移桂树，右一石臼右转三圈、左转六圈半开石板。6760—6762误拉铁环后以尿浸湿药线避爆。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "薛慕华居所·地窖",
+      "to": "薛慕华居所",
+      "src": "第30回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "从内扳机括移开石板，沿地道上行；围攻时用火炮掩护",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6771,
+            6849
+          ],
+          "reason": "6771证明内侧可扳机括控制石板与桂树；6840—6849先遭炸攻，后开启石板，以火炮掩护出洞。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "擂鼓山·棋局场",
+      "to": "擂鼓山·木屋",
+      "src": "第31回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "苏星河请解珍珑者入内，虚竹劈开板壁并撞破隔壁",
+      "anchors": [
+        {
+          "src": "第31回",
+          "lines": [
+            7058,
+            7075
+          ],
+          "reason": "7058破局后受请；7063—7075木屋无门，先劈板壁后撞隔壁。条件为主人择客，不是只许会某武学或须持指环。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第31回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "擂鼓山·木屋",
+      "to": "擂鼓山·棋局场",
+      "src": "第32回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "从劈破的板壁洞口出来；苏星河曾移木板遮住洞口",
+      "anchors": [
+        {
+          "src": "第32回",
+          "lines": [
+            7135,
+            7165
+          ],
+          "reason": "7135虚竹出木屋，7165苏星河与虚竹从破洞再入并移木板挡洞。返向不要求重解珍珑。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第32回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "天山",
+      "to": "缥缈峰",
+      "src": "第34回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "供奉者奉命蒙眼上峰；反叛群豪另强攻各天险",
+      "anchors": [
+        {
+          "src": "第34回",
+          "lines": [
+            7691,
+            7747
+          ],
+          "reason": "7691—7696明写供奉、蒙眼、偷看酷刑及奉命下峰；7747安洞主秘密回峰探查。规则仅用于童姥管治时期。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第34回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "缥缈峰",
+      "to": "天山",
+      "src": "第34回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "供奉者奉令下峰才解蒙眼布；交战期间须避关卡",
+      "anchors": [
+        {
+          "src": "第34回",
+          "lines": [
+            7692,
+            7696
+          ],
+          "reason": "7696明确缴物后奉命下峰，到峰下才取布。返向存在独立规矩，不能默认自由。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第34回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "缥缈峰",
+      "to": "灵鹫宫·铁索桥",
+      "src": "第37回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "宫人经十八天险上峰，过断魂崖、碎骨岩、百丈涧抵接天桥",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8331,
+            8336
+          ],
+          "reason": "8331—8336明写十八天险及宫人上峰顺序；铁索桥就是接天桥。这里只编码到桥前的山路，不重复跨涧条件。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫·铁索桥",
+      "to": "缥缈峰",
+      "src": "第37回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "原路下峰经过十八天险；交战时须避开守兵",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8331,
+            8336
+          ],
+          "reason": "程青霜曾循峰路下山报讯；返向沿同一道路为地理推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫·铁索桥",
+      "to": "灵鹫宫",
+      "src": "第38回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "铁链完好时踏索过涧；链断时虚竹执断链卷住对岸断链荡过",
+      "anchors": [
+        {
+          "src": "第38回",
+          "lines": [
+            8344,
+            8351
+          ],
+          "reason": "8336解释正常踏索；8345—8347明确断桥时的例外通法，8350—8351由桥后石道至堡门。不得把修复铁链设为唯一硬前提。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第38回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·铁索桥",
+      "src": "第37回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "经仙愁门回接天桥；铁链连通时踏索过涧，链断须另设办法",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8335,
+            8338
+          ],
+          "reason": "8336明写桥连百丈涧与仙愁门，是宫人必经要道。返向结构为推断；39回群豪与虚竹下峰证明返向最终可行，未明写修桥时刻。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·独尊厅",
+      "src": "第38回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "穿过两道庭院进厅；巨岩封门时须四婢开机关移开",
+      "anchors": [
+        {
+          "src": "第38回",
+          "lines": [
+            8351,
+            8514
+          ],
+          "reason": "8351入厅；8462—8466确认巨岩封独尊厅门；8514四婢开机关移岩让九部女子入厅。此机关不在石室秘道。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第38回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫·独尊厅",
+      "to": "灵鹫宫",
+      "src": "第38回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "四婢开机关移开巨岩后出厅；慕容复趁门开离去",
+      "anchors": [
+        {
+          "src": "第38回",
+          "lines": [
+            8462,
+            8522
+          ],
+          "reason": "8462卓不凡欲走却被巨岩困住；8468断腕；8514移岩；8522慕容复趁门开出厅。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第38回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫",
+      "to": "灵鹫宫·石室",
+      "src": "第39回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "四婢移假山开地道，沿途停暗器，再推岩入室；须主人许可",
+      "anchors": [
+        {
+          "src": "第39回",
+          "lines": [
+            8561,
+            8572
+          ],
+          "reason": "8561假山移开才见入口，四婢沿途按隐蔽机括停暗器；8563推岩入石室；8564须主人许可。8568—8572练图风险不能转成入室武学硬门槛。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第39回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "灵鹫宫·石室",
+      "to": "灵鹫宫",
+      "src": "第39回",
+      "inferred": true,
+      "hidden": true,
+      "final_how": "虚竹与四婢沿地道回宫；经过隐蔽机括处须停暗器",
+      "anchors": [
+        {
+          "src": "第39回",
+          "lines": [
+            8561,
+            8574
+          ],
+          "reason": "8574五人从地道出来回大厅；逆行时同样停暗器是明确标记的推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第39回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏",
+      "to": "兴州",
+      "src": "第36回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "正常入城须过城门；虚竹夜间避巡骑，跃河翻墙潜入",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8063,
+            8066
+          ],
+          "reason": "8063—8065明确夜间越河翻墙，城内铁甲骑兵巡逻。只限制夜间秘密潜入；白日合法入城并无本文证据可封锁。风险截捕为推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第36回",
+          "lines": [
+            8044,
+            8061
+          ],
+          "reason": "事实：进入西夏国境后仍赶路练功，第五日傍晚才抵兴州。现有西夏—兴州零日是归属边，会压缩此段旅行；本建议不据此声称二日便到兴州。",
+          "source_candidate": "snow_delta",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州",
+      "to": "西夏",
+      "src": "第37回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "正常出城须过城门；虚竹夜间提两团坚冰翻城而出",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8255,
+            8256
+          ],
+          "reason": "8255明确虚竹翻城，城头守卒未及看清。只限制同类夜间秘密出城；不据此阻断白日正常城门通行。风险为推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州",
+      "to": "西夏皇宫",
+      "src": "第46回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "求亲者呈帖获邀入宫；虚竹亦曾候巡兵走过翻墙潜入",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8068,
+            8071
+          ],
+          "reason": "8068—8071御前护卫多队交叉巡查，童姥指点准确时机，虚竹翻墙入宫。许可入宫另有合法途径，不得硬要求某武学。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第46回",
+          "lines": [
+            10075,
+            10148
+          ],
+          "reason": "求亲者呈名帖获礼部迎入；迟到者曾逾墙潜入",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第46回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫",
+      "to": "兴州",
+      "src": "第37回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "获准者随引导出宫；虚竹曾夜间携两人越墙逃离",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8251,
+            8255
+          ],
+          "reason": "8252—8253明确越墙及四护卫追赶；8255城内大道在墙外。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫",
+      "to": "西夏皇宫·冰库",
+      "src": "第36回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "拉开沉重外门，再推开复门，穿过左侧窄道入冰库",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8072,
+            8079
+          ],
+          "reason": "8072—8075明确石屋、双木门、麻袋旁窄道。它是荒字号冰库，不是秘密机关门；8079说明宫中另有七库，按顺序取冰。被发现风险为推断。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫·冰库",
+      "to": "西夏皇宫",
+      "src": "第37回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "虚竹推开两重木门出库；童姥以巨冰堵门时须先排除阻塞",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8190,
+            8251
+          ],
+          "reason": "8191—8192童姥投巨冰封门；8246缺新气；8251虚竹推双门出库。先排除阻塞的流程是逻辑推断，原文未写他如何移冰。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫·冰库",
+      "to": "西夏皇宫·冰库底层",
+      "src": "第36回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "穿过冰块间隙，循屋角洞口石阶，经第二层下至第三层",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8075,
+            8077
+          ],
+          "reason": "8076—8077明确有连续石阶和三层冰窖。不是坠入式单向通路，不能把反向设为blocked。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫·冰库底层",
+      "to": "西夏皇宫·冰库",
+      "src": "第37回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "沿石阶上行；虚竹破冰后提童姥与李秋水返回第一层",
+      "anchors": [
+        {
+          "src": "第37回",
+          "lines": [
+            8234,
+            8251
+          ],
+          "reason": "8234—8248融水、缺气、再冻结；8250—8251虚竹冲穴破冰后上行第一层。正常时期有石阶，不硬要求破冰功夫。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第37回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万仙大会山谷",
+      "to": "万仙大会山谷·雪峰",
+      "src": "第35回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "虚竹负女童向西北雪峰入林上山；峰下各路随后布三道卡",
+      "anchors": [
+        {
+          "src": "第35回",
+          "lines": [
+            7785,
+            7804
+          ],
+          "reason": "7785—7789从大会现场向西北上峰，洞岛众每路设三卡；7795山腰已积雪。节点名为定位标签；不是天山缥缈峰。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第35回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万仙大会山谷·雪峰",
+      "to": "万仙大会山谷",
+      "src": "第35回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "峰下各路设三道卡；下山须避过洞岛群豪围捕",
+      "anchors": [
+        {
+          "src": "第35回",
+          "lines": [
+            7789,
+            7804
+          ],
+          "reason": "7789与7804明确山下封锁使雪峰成绝路。逆向出逃可避卡只是通行方案推断；不把围捕永久化。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第35回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万仙大会山谷·雪峰",
+      "to": "万仙大会山谷·雪覆断涧",
+      "src": "第36回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "虚竹负童姥沿雪坡上奔，断涧被积雪覆盖，踏雪可能坠落",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8022,
+            8027
+          ],
+          "reason": "8022—8027追逐沿斜坡三里有余到积雪断涧。断涧并非隐门或被发现的秘密通路，hidden=false。",
+          "source_candidate": "27_39",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "曼陀山庄",
+      "to": "琅嬛玉洞",
+      "src": "第40回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "外人不得擅入藏书处；窥见丁春秋扭机括开墙色暗门可潜入",
+      "anchors": [
+        {
+          "src": "第40回",
+          "lines": [
+            8734,
+            8747
+          ],
+          "reason": "丁春秋扭动机括，开启漆成墙色的暗门入藏书暗房",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "琅嬛玉洞",
+      "to": "曼陀山庄",
+      "src": "第40回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "鸠摩智由暗门退出藏书暗房后越墙离庄",
+      "anchors": [
+        {
+          "src": "第40回",
+          "lines": [
+            8747,
+            8747
+          ],
+          "reason": "鸠摩智由暗门退出藏书暗房后越墙离庄",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第40回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺",
+      "to": "少林寺·藏经阁",
+      "src": "第43回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "借阅佛经可获准；慕容博夜潜偷谱或破窗制僧",
+      "anchors": [
+        {
+          "src": "第43回",
+          "lines": [
+            9465,
+            9478
+          ],
+          "reason": "借阅佛经可获准；慕容博夜潜偷谱或破窗制僧",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第43回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺·藏经阁",
+      "to": "少林寺",
+      "src": "第42回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "慕容博偷取武谱后避开值守，携书返回住处",
+      "anchors": [
+        {
+          "src": "第42回",
+          "lines": [
+            9242,
+            9251
+          ],
+          "reason": "慕容博偷取武谱后避开值守，携书返回住处",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第42回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "少室山",
+      "to": "少林寺·山门",
+      "src": "第42回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "大会封路时僧众结阵拦路；须获准，或另由寺后潜入",
+      "anchors": [
+        {
+          "src": "第42回",
+          "lines": [
+            9381,
+            9381
+          ],
+          "reason": "大会封路时少林僧结阵拦路；玄寂改令后群雄上山",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第42回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏皇宫",
+      "to": "青凤阁",
+      "src": "第46回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "公主邀请后，赫连铁树引宾客穿御花园入阁",
+      "anchors": [
+        {
+          "src": "第46回",
+          "lines": [
+            10094,
+            10151
+          ],
+          "reason": "公主邀请后，赫连铁树引宾客穿御花园入阁",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第46回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "青凤阁",
+      "to": "西夏石室",
+      "src": "第46回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "宫女开三道石门引路，宾客踏钢索过幽兰涧入洞",
+      "anchors": [
+        {
+          "src": "第46回",
+          "lines": [
+            10166,
+            10187
+          ],
+          "reason": "宫女开三道石门引路，宾客踏钢索过幽兰涧入洞",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第46回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏石室",
+      "to": "青凤阁",
+      "src": "第46回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "宫女开石门并指路，宾客循原路退回凝香堂",
+      "anchors": [
+        {
+          "src": "第46回",
+          "lines": [
+            10214,
+            10274
+          ],
+          "reason": "宫女开石门并指路，宾客循原路退回凝香堂",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第46回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏宾馆",
+      "to": "西夏枯井",
+      "src": "第45回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "慕容复由宾馆掳人至路旁；段誉被推入井，井底污泥缓冲",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": [
+            9935,
+            10006
+          ],
+          "reason": "段誉被推入枯井，王语嫣投井；井底污泥缓冲",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "西夏枯井",
+      "to": "西夏宾馆",
+      "src": "第46回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "乡农移开井口巨石后攀绳出井，再循路回宾馆；慕容复攀壁",
+      "anchors": [
+        {
+          "src": "第46回",
+          "lines": [
+            10106,
+            10134
+          ],
+          "reason": "乡农搬开井口巨石后，众人攀绳出井，慕容复攀壁",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第46回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "王夫人山庄",
+      "to": "王夫人山庄·木柱陷阱",
+      "src": "第47回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "草海木屋另在南归途中；须先抵木屋，勿点药油或弄破刻柱",
+      "anchors": [
+        {
+          "src": "第47回",
+          "lines": [
+            10333,
+            10419
+          ],
+          "reason": "草海木屋另设于旅途；入屋须避开灯油与刻柱诱蜂",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第47回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "王夫人山庄·木柱陷阱",
+      "to": "王夫人山庄",
+      "src": "第47回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "段誉在草海被醉人蜂麻倒，遭捆缚运至另购山庄",
+      "anchors": [
+        {
+          "src": "第47回",
+          "lines": [
+            10374,
+            10397
+          ],
+          "reason": "段誉在草海被醉人蜂麻倒，遭捆缚押至另购山庄",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第47回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京",
+      "to": "南院大王府",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "围府期间戒备严密，阿紫等改扮说客进入",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10946,
+            10958
+          ],
+          "reason": "围府期间戒备严密，阿紫等改扮说客进入",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府",
+      "to": "南京",
+      "src": "第49回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "围府期间萧峰点倒巡兵，换盔甲从边门混出",
+      "anchors": [
+        {
+          "src": "第49回",
+          "lines": [
+            10900,
+            10924
+          ],
+          "reason": "围府期间萧峰点倒巡兵，换盔甲从边门混出",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第49回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府",
+      "to": "南院大王府·铁笼",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "御营都指挥使下令押入铁笼，亲兵以重链铁铐锁住",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10945,
+            10946
+          ],
+          "reason": "御营都指挥使下令押入铁笼，亲兵以重链铁铐锁住",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府·铁笼",
+      "to": "南院大王府",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "拘禁时粗栏重镣及矛手封阻；须获释开笼，否则另由地道脱困",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10945,
+            10963
+          ],
+          "reason": "重镣粗栏及矛手封阻，萧峰只能另由笼底地道脱困",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府·铁笼",
+      "to": "南院大王府·地道",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": true,
+      "final_how": "华赫艮掘道至笼底，阿紫断铁链后将萧峰拉下",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10961,
+            10964
+          ],
+          "reason": "华赫艮掘道至笼底，阿紫断铁链后将萧峰拉下",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府·地道",
+      "to": "南院大王府·铁笼",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "华赫艮挖通地道后抵达笼底，向上伸手接人",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10963,
+            10964
+          ],
+          "reason": "华赫艮挖通地道后抵达笼底，向上伸手接人",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南院大王府·地道",
+      "to": "南京",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "众人循地道爬行百余丈，从王府外残败瓦屋钻出",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10964,
+            10971
+          ],
+          "reason": "众人循地道爬行百余丈，从王府外残败瓦屋钻出",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京",
+      "to": "南院大王府·地道",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": true,
+      "final_how": "华赫艮从府外残屋掘通笼底，救援者秘密进出",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10963,
+            10971
+          ],
+          "reason": "华赫艮从府外残屋掘通笼底，救援者秘密进出",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京",
+      "to": "南京·北门",
+      "src": "第49回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "辽帝封城时矛兵阻路，萧峰插矛借力跃上城头",
+      "anchors": [
+        {
+          "src": "第49回",
+          "lines": [
+            10921,
+            10931
+          ],
+          "reason": "辽帝封城时矛兵阻路，萧峰插矛借力跃上城头",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第49回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京·北门",
+      "to": "南京",
+      "src": "第49回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "辽帝封城时禁绝出入，萧峰被擒后由石级下城",
+      "anchors": [
+        {
+          "src": "第49回",
+          "lines": [
+            10900,
+            10938
+          ],
+          "reason": "辽帝封城时禁绝出入，萧峰被擒后由石级下城",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第49回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京",
+      "to": "南京·西门",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "群雄假扮辽兵制造混乱，乘城门开启冲出",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10971,
+            11002
+          ],
+          "reason": "群雄假扮辽兵制造混乱，乘城门开启冲出",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京·西门",
+      "to": "南京",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "西门遭辽军封堵时，段誉虚竹合力杀开血路入城",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10999,
+            11008
+          ],
+          "reason": "西门遭辽军封堵时，段誉虚竹合力杀开血路入城",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "南京·西门",
+      "to": "雁门关",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "先突破南京西门及追军，群雄昼夜西行赶至关前",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11009,
+            11108
+          ],
+          "reason": "先突破南京西门及追军，群雄昼夜西行赶至关前",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关",
+      "to": "南京·西门",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "南京戒严时须待守军放行；群雄曾强攻西门救人",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            10999,
+            11010
+          ],
+          "reason": "南京戒严时须待守军放行；群雄曾强攻西门救人",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关",
+      "to": "晋阳",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "宋将闭关疑奸细，须缴兵刃受检；群雄终绕山南归",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11108,
+            11206
+          ],
+          "reason": "宋将闭关疑奸细，须缴兵刃受检；群雄终绕山南归",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "晋阳",
+      "to": "雁门关",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "宋军把守关门，出关须获准；关旁险山可绕行",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11114,
+            11206
+          ],
+          "reason": "宋军把守关门，出关须获准；关旁险山可绕行",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关·石壁",
+      "to": "雁门关·谷底",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "阿紫与游坦之投崖；萧远山昔坠树得生，仍非正常道路",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11199,
+            11203
+          ],
+          "reason": "阿紫抱萧峰尸身坠谷，游坦之随后跳下",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雁门关·谷底",
+      "to": "雁门关·石壁",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "常人不能逆攀；萧远山曾幸存，脱谷方法未载",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11202,
+            11207
+          ],
+          "reason": "深谷尖石嶙峋，原著无人由谷底攀返此崖口",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "善巨郡",
+      "to": "长春谷外山岭",
+      "src": "第50回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "众人弃马步行，攀藤拉索上岭；疲乏兵卒留后",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11223,
+            11225
+          ],
+          "reason": "众人弃马步行，攀藤拉索上岭；疲乏兵卒留后",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        },
+        {
+          "src": "第50回",
+          "lines": [
+            11222,
+            11226
+          ],
+          "reason": "从郡北行登山，弃马步行攀藤拉索；一日仅为步行游戏估值。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "长春谷外山岭",
+      "to": "善巨郡",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "众人循险陡山道下山，须步行并攀藤拉索",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11224,
+            11241
+          ],
+          "reason": "众人循险陡山道下山，须步行并攀藤拉索",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "长春谷外山岭",
+      "to": "不老长春谷",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "深涧截断前路，众人未入谷；后续入谷路线不明",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11225,
+            11232
+          ],
+          "reason": "深涧截断前路，众人未入谷；后续入谷路线不明",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "不老长春谷",
+      "to": "长春谷外山岭",
+      "src": "第50回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "采燕客称谷人攀松树长藤荡出，此说未证实",
+      "anchors": [
+        {
+          "src": "第50回",
+          "lines": [
+            11232,
+            11234
+          ],
+          "reason": "采燕客称谷人攀松树长藤荡出，此说未证实",
+          "source_candidate": "40_50",
+          "candidate_original_src": "第50回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "燕子坞",
+      "to": "慕容家庄后",
+      "src": "第33回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "三公夜间暗查慕容家庄，找出庄后僻静隐秘的墓址",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7460,
+            7465
+          ],
+          "reason": "事实：7460—7462写奉命前赴苏州燕子坞，连续夜间穿房入舍暗查；7465墓在庄后，僻静难找。推断：把未明庄名的庄后概括接到燕子坞。",
+          "source_candidate": "tomb",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "慕容家庄后",
+      "to": "慕容博墓·临掘地道",
+      "src": "第33回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "华赫艮等先秘密掘成地道，再从庄后进入新掘通路",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7465,
+            7467
+          ],
+          "reason": "事实：7465三人秘密打地道并掘进墓圹。通路是当场新掘，未写发现既存秘道，故hidden=false。先掘通写how，不虚构系统state。",
+          "source_candidate": "tomb",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "慕容博墓·临掘地道",
+      "to": "慕容博墓",
+      "src": "第33回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "三公将地道掘进墓圹，从新开的口子入墓并打开空棺",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7465,
+            7467
+          ],
+          "reason": "事实：7465先掘进墓圹，7467说明空棺无尸。墓节点指墓圹内部；到墓前祭拜不必进入墓圹。",
+          "source_candidate": "tomb",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "慕容博墓",
+      "to": "慕容博墓·临掘地道",
+      "src": "第33回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿已经掘通的地道退出墓圹；原文未详述回程",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7465,
+            7469
+          ],
+          "reason": "事实：三公进入墓圹后，范骅后来向段誉等转述。推断：由临掘地道退出；原文未写回程，不假称已明写。",
+          "source_candidate": "tomb",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "慕容博墓·临掘地道",
+      "to": "慕容家庄后",
+      "src": "第33回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "沿临掘地道原路退回庄后；原文未详述回程",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7465,
+            7469
+          ],
+          "reason": "推断：地道开口通庄后，原路返回为最小补足。无证据显示出口单向阻断。",
+          "source_candidate": "tomb",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道上山口·关外山径",
+      "to": "兴州道上山口",
+      "src": "第44回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "宗赞封关时准女、僧、老过；段誉制伏守卫或清明后开放",
+      "anchors": [
+        {
+          "src": "第44回",
+          "lines": "9784、9791—9811",
+          "reason": "一行渐近兴州；陡径仅容一骑，两武士封关。准女、僧、老，不准年轻俗家男子。段誉吸尽内力后众人通过。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第44回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道上山口",
+      "to": "兴州道上山口·关外山径",
+      "src": "第44回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "须沿陡峭窄径退下，仅容一骑。",
+      "anchors": [
+        {
+          "src": "第44回",
+          "lines": "9788—9792、9794—9795、9806",
+          "reason": "受伤者迎面退回；败者滚下山道。两峰壁立，后人被坐骑挡住。把窄径反向作为险径是推断。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第44回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道上山口",
+      "to": "兴州道旁悬崖",
+      "src": "第45回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "过关数里，绕山坳入密林；临崖须下马步行。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9826—9830",
+          "reason": "过关数里后听到叫声，转山坳入密林。段誉因悬崖奇险，下马奔上。返程沿同路是推断。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道旁悬崖",
+      "to": "兴州道上山口",
+      "src": "第45回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "临崖不能纵马，须步行退回密林，再返山口。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9826—9830",
+          "reason": "过关数里后听到叫声，转山坳入密林。段誉因悬崖奇险，下马奔上。返程沿同路是推断。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道旁悬崖",
+      "to": "兴州道旁悬空处",
+      "src": "第45回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "王语嫣跳崖，云中鹤抓腕；三恶人以钢杖钩松悬住。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9827—9829、9853—9857",
+          "reason": "王语嫣跳崖；云中鹤抓她，南海鳄神抓云中鹤，段延庆钩松支撑。四人均未落到谷底。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道旁悬空处",
+      "to": "兴州道旁悬崖",
+      "src": "第45回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "须崖上有人接应；虚竹登松抓杖，将四人逐一提回。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9834—9846",
+          "reason": "游坦之挡住救援，后按约制住砍树者。虚竹登松抓钢杖，逐一提回四人。返向有明确救援实例，不能永久封死。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道旁悬崖",
+      "to": "兴州道旁深谷",
+      "src": "第45回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "矮胖子中掌后坠谷，撞在谷底乱石。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9842—9843",
+          "reason": "吐蕃矮胖子被掌击后坠谷。众人听到撞击声，并想像其脑裂肚破；正文未写众人下谷验尸。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "兴州道旁深谷",
+      "to": "兴州道旁悬崖",
+      "src": "第45回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "原著未见从谷底登崖的常规通路；悬空者可由松枝获救。",
+      "anchors": [
+        {
+          "src": "第45回",
+          "lines": "9827、9843—9846",
+          "reason": "谷深数十丈，尖石密布。正文只写悬空者被提回，未写落到谷底后攀回。常规返向阻断为推断，奇遇仍由导演裁定。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第45回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "卫辉",
+      "to": "卫辉·船舱",
+      "src": "第39回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "木船停岸可登；半沉时玄垢、玄石抢入；全沉后关闭普通登船。",
+      "anchors": [
+        {
+          "src": "第39回",
+          "lines": "8647",
+          "reason": "玄垢、玄石见木船停靠河边且船身已一半入水，仍抢进船舱。原著未写全沉后的普通登船。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第39回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "卫辉·船舱",
+      "to": "卫辉",
+      "src": "第21回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "须在木船全沉前离舱上岸；乔峰踩破船底后立即离船。",
+      "anchors": [
+        {
+          "src": "第21回",
+          "lines": "4513、4517、4533、4553—4560",
+          "reason": "赵钱孙入船，乔峰闯舱、跃出船舱；踩破船底后，他立即出舱回岸。返向须在全沉前完成。",
+          "source_candidate": "44_45_extra",
+          "candidate_original_src": "第21回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "万仙大会山谷·雪覆断涧",
+      "to": "雪峰·落脚雪坡",
+      "src": "第36回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "虚竹负童姥随雪坠下，靠慕容复、桑土公、段誉接力化解坠势",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8024,
+            8034
+          ],
+          "reason": "事实：沿斜坡上奔三里有余后踏入雪覆断涧。8029落向铺雪山坡；8030—8034三次缓冲后站稳。未知：未写山坡等于原大会谷底。",
+          "source_candidate": "snow_delta",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "雪峰·落脚雪坡",
+      "to": "万仙大会山谷·雪覆断涧",
+      "src": "第36回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "断涧高数百丈，常人不能从落点逆攀；须另走山道",
+      "anchors": [
+        {
+          "src": "第36回",
+          "lines": [
+            8024,
+            8034
+          ],
+          "reason": "事实：沿斜坡上奔三里有余后踏入雪覆断涧。8029落向铺雪山坡；8030—8034三次缓冲后站稳。未知：未写山坡等于原大会谷底。",
+          "source_candidate": "snow_delta",
+          "candidate_original_src": "第36回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "少林寺",
+      "to": "少林寺·山门",
+      "src": "第18回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "搜捕时须避守僧；乔峰携阿朱登屋转寺后脱离",
+      "anchors": [
+        {
+          "src": "第18回",
+          "lines": [
+            3962,
+            4049,
+            4050
+          ],
+          "reason": "守山门的虚清明确拒绝女客。",
+          "source_candidate": "14_26",
+          "candidate_original_src": "第18回",
+          "direction_basis": "同一通路反向证据"
+        },
+        {
+          "src": "第43回",
+          "lines": [
+            9457,
+            9460
+          ],
+          "reason": "玄寂邀丐帮同往寺内；群雄随后进寺，不能永久禁绝全部外客。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第43回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "中原",
+      "to": "薛慕华居所",
+      "src": "第30回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "丁春秋围庄期间须避星宿派封锁；此方向是旧路的接入概括",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6913,
+            6914
+          ],
+          "reason": "六僧逃离围庄后遭星宿派抓回；将临时封锁推广到旧图其他接入方向为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "擂鼓山",
+      "to": "薛慕华居所",
+      "src": "第30回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "丁春秋围庄期间须避星宿派封锁；此方向是旧路的接入概括",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6913,
+            6914
+          ],
+          "reason": "六僧逃离围庄后遭星宿派抓回；将临时封锁推广到旧图其他接入方向为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "薛慕华居所",
+      "to": "擂鼓山",
+      "src": "第30回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "丁春秋围庄期间须避星宿派封锁；此方向是旧路的接入概括",
+      "anchors": [
+        {
+          "src": "第30回",
+          "lines": [
+            6913,
+            6914
+          ],
+          "reason": "六僧逃离围庄后遭星宿派抓回；将临时封锁推广到旧图其他接入方向为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第30回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "洞庭湖",
+      "to": "君山",
+      "src": "第41回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "君山在洞庭湖中；须有船只或其他渡水办法",
+      "anchors": [
+        {
+          "src": "第41回",
+          "lines": [
+            9000
+          ],
+          "reason": "原文写洞庭湖君山丐帮大会，未写渡船；具体航线、舟行条件为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第41回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "君山",
+      "to": "洞庭湖",
+      "src": "第41回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "离开湖中君山须有船只或其他渡水办法",
+      "anchors": [
+        {
+          "src": "第41回",
+          "lines": [
+            9000
+          ],
+          "reason": "原文写洞庭湖君山丐帮大会，未写渡船；具体航线、舟行条件为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第41回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "江南",
+      "to": "海南岛",
+      "src": "第33回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "海南与江南隔海，须有海船与可航行天气",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7530,
+            7531
+          ],
+          "reason": "原文写海南岛五指山赤焰洞；渡海条件与江南接点为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "海南岛",
+      "to": "江南",
+      "src": "第33回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "从海南返回江南须乘海船，并择可航行天气",
+      "anchors": [
+        {
+          "src": "第33回",
+          "lines": [
+            7530,
+            7531
+          ],
+          "reason": "原文写海南岛五指山赤焰洞；渡海条件与江南接点为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第33回",
+          "direction_basis": "同一通路反向证据"
+        }
+      ]
+    },
+    {
+      "from": "汴梁",
+      "to": "汴梁皇宫",
+      "src": "第49回",
+      "inferred": true,
+      "hidden": false,
+      "final_how": "宫内御林军与内侍受皇室指挥；入宫须获准或避守卫",
+      "anchors": [
+        {
+          "src": "第49回",
+          "lines": [
+            10753,
+            10755
+          ],
+          "reason": "御林军与内侍受皇室控制；普遍入宫许可条件为推断。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第49回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    },
+    {
+      "from": "汴梁皇宫",
+      "to": "崇庆殿",
+      "src": "第49回",
+      "inferred": false,
+      "hidden": false,
+      "final_how": "赵煦的心腹太监严守殿门，太监听皇上呼召才入殿",
+      "anchors": [
+        {
+          "src": "第49回",
+          "lines": [
+            10755,
+            10776
+          ],
+          "reason": "殿门有赵煦亲信太监严守；皇上呼召后太监抢入。",
+          "source_candidate": "root_adjudication",
+          "candidate_original_src": "第49回",
+          "direction_basis": "同向证据"
+        }
+      ]
+    }
+  ],
+  "missing_anchors": [],
+  "primary_chapter_missing": [],
+  "locator_errors": [],
+  "locator_repairs": [
+    {
+      "from": "聚贤庄·大厅",
+      "to": "聚贤庄",
+      "original_src": "第20回",
+      "original_lines": [
+        4215,
+        4348,
+        4349,
+        4350,
+        4351
+      ],
+      "correction": "按全文回目边界拆分跨回目的离散行号；原候选证据保留。"
+    },
+    {
+      "from": "雁门关·石壁",
+      "to": "雁门关",
+      "original_src": "第21回",
+      "original_lines": [
+        4382,
+        4424,
+        4427,
+        4494
+      ],
+      "correction": "按全文回目边界拆分跨回目的离散行号；原候选证据保留。"
+    },
+    {
+      "from": "小镜湖",
+      "to": "信阳",
+      "original_src": "第23回",
+      "original_lines": [
+        4880,
+        4885,
+        5279,
+        5285
+      ],
+      "correction": "按全文回目边界拆分跨回目的离散行号；原候选证据保留。"
+    },
+    {
+      "from": "长白山",
+      "to": "塞外",
+      "original_src": "第26回",
+      "original_lines": [
+        5868,
+        5869,
+        5870,
+        5871,
+        5877
+      ],
+      "correction": "按全文回目边界拆分跨回目的离散行号；原候选证据保留。"
+    },
+    {
+      "from": "女真部落",
+      "to": "塞外",
+      "original_src": "第26回",
+      "original_lines": [
+        5871,
+        5892,
+        5901,
+        5902,
+        5903
+      ],
+      "correction": "按全文回目边界拆分跨回目的离散行号；原候选证据保留。"
+    }
+  ],
+  "supplemental_adjudications": [
+    {
+      "subject": "无量山末回铁链",
+      "src": "第50回",
+      "lines": [
+        11243
+      ],
+      "decision": "末回已有长铁链，谷底至山崖保持可通行；前期限制写how。"
+    },
+    {
+      "subject": "萧远山坠谷生还",
+      "src": "第42回",
+      "lines": [
+        9330
+      ],
+      "decision": "萧远山坠在谷底树枝上生还；不把坠谷写成必死，脱谷方法仍未知。"
+    },
+    {
+      "subject": "琅嬛福地铜镜室顺序",
+      "src": "第2回",
+      "lines": [
+        330,
+        337
+      ],
+      "decision": "铜镜室在玉像室之前；入口至内室须经暗门及石级。"
+    },
+    {
+      "subject": "西夏入境至兴州",
+      "src": "第36回",
+      "lines": [
+        8044,
+        8060
+      ],
+      "decision": "途中行路兼练功；四日是游戏步行估值，不能从第五日直接换算。"
+    },
+    {
+      "subject": "长春谷未抵达路程",
+      "src": "第50回",
+      "lines": [
+        11223,
+        11226
+      ],
+      "decision": "众人在深涧前止步；采燕客称还需上山二百多里，受阻边暂估四日。"
+    }
+  ]
+}
