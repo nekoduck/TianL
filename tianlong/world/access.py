@@ -40,13 +40,19 @@ def barrier(world, a: str, b: str, edge: dict, player: bool = True, strict: bool
     gate = _gate(edge, b)
     if not gate:
         return None
-    if player and gate["hidden"] and not world.knowledge.knows_secret(edge):
+    if player and gate["hidden"] and not _known(world, edge):
         return LOST
     if gate["blocked"] and (strict or not player or not stranded(world, a)):
         return f"此路不通（{gate['kind']}）：{gate['how']}"
     value = lambda nid, key: world.player.get(key) if nid == "player" else world.graph.get(nid, key)
     lack = [_need(*r) for r in gate["requires"] if not matches(value(r[0], r[1]), r[2])]
     return f"条件未备：{'；'.join(lack)}" if lack else None
+
+
+def _known(world, edge: dict) -> bool:
+    """主角认得这条暗路吗——两个朝向都算：数据日后翻转了道路的存储朝向，主角也不会忘了走过的路。"""
+    k = world.knowledge
+    return k.knows_secret(edge) or k.knows_secret({"src": edge["dst"], "dst": edge["src"], "rel": edge["rel"]})
 
 
 def _passable(world, player: bool = True):
