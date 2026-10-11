@@ -7,7 +7,8 @@
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
        一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
-       reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路
+       reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
+       形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -28,7 +29,10 @@ PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物�
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
 ITEM_FLOW = {"location", "holder", "hidden", "state"}  # 器物：定义不可改，只可流转、显隐、损耗
 OFFSCREEN = {"lod1", "chronicle"}                # 场外推演：主角不在场，碰不到主角本人
-RESOLVED_KEYS = {"location", "holder", "inventory", "skills"}  # 这些值是实体名，须经别名表归一
+RESOLVED_KEYS = {"location", "holder", "inventory", "skills", "faction"}  # 这些值是实体名，须经别名表归一
+NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或 add 一个数
+LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
+ENTITY_LISTS = {"inventory", "skills"}           # 实体清单只可逐件得失：整体改写会绕过"世上有没有此物"的校验
 NOTE_LEN = 40                                    # 关系边上的印象一句话
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 
@@ -119,6 +123,34 @@ def _normalize(world, op):
 # ------------------------------------------------------------
 #  世界物理：与来源无关的一致性
 # ------------------------------------------------------------
+def _number(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _shape(world, op) -> str | None:
+    """形状守恒：数值仍是数值、清单仍是清单、主角的文字仍是文字——剧情可以改值，不能把属性改成别的东西，
+    否则下一回合的视锥、身况与存档就会崩在一个写歪了的指令上。"""
+    kind, nid, key, value = op["op"], op["id"], op["key"], op.get("value")
+    cur = world.player.get(key) if nid == "player" else world.graph.get(nid, key)
+    numeric = key in NUMERIC or _number(cur)
+    if kind == "add" and not numeric:
+        return f"{key}不是数值，无从增减"
+    if numeric:
+        return None if kind in ("set", "add") and _number(value) else f"{key}是数值，只可 set 或 add 一个数"
+    if kind in ("push", "pull"):
+        listy = isinstance(cur, list) or (cur is None and key in LISTS)
+        return None if listy and isinstance(value, str) else f"{key}不是清单，无从增删"
+    if key in ENTITY_LISTS:
+        return "器物与武学只可逐件得失(push/pull)，不可整体改写"
+    if key in LISTS or isinstance(cur, list):
+        return None if isinstance(value, list) and all(isinstance(x, str) for x in value) else f"{key}是清单，须写成一列文字"
+    if isinstance(value, (dict, list)) and key != "state":
+        return f"{key}不可写成复合值"
+    if nid == "player" and not isinstance(value, str):
+        return f"{key}须为文字"
+    return None
+
+
 def _physics(world, op) -> str | None:
     g, kind = world.graph, op["op"]
     if kind in ("link", "unlink", "reveal"):
@@ -149,8 +181,6 @@ def _physics(world, op) -> str | None:
         return f"地理由系统掌管，{nid}只可改变现状(state)"
     if g.kind(nid) == "skill":
         return f"武学由系统掌管，{nid}的定义不可改"
-    if kind == "add" and not isinstance(value, (int, float)):
-        return "add 需要数值"
     if kind == "set" and key == "status":
         if value not in STATUSES:
             return f"非法状态:{value}"
@@ -160,17 +190,21 @@ def _physics(world, op) -> str | None:
         return f"世上没有「{value}」这个地方"  # 主角去得了去不了，由 apply 交 access 按路线裁定
     if kind == "set" and key == "holder" and value is not None and value != "player" and g.kind(value) != "person":
         return f"「{value}」不是人，无法持有器物"
+    if kind == "set" and key == "faction" and value is not None and g.kind(value) != "faction":
+        return f"世上没有「{value}」这个门派"
     if kind in ("push", "pull") and key == "skills" and g.kind(value) != "skill":
         return f"世上没有「{value}」这门武学"
     if nid == "player" and key == "inventory" and kind in ("push", "pull"):
         if g.kind(value) != "item":
             return f"世上没有「{value}」这件器物"
+        if kind == "pull" and value not in world.player["inventory"]:
+            return f"主角身上并没有{value}"
         if kind == "push" and value not in world.player["inventory"]:
             if not usable(world, value):
                 return f"{value}已不复存在"
             if place(world, value) != world.here:
                 return f"{value}不在此地，够不着"
-    return None
+    return _shape(world, op)
 
 
 # ------------------------------------------------------------
@@ -215,24 +249,35 @@ def _exec(world, op, origin):
     elif kind == "reveal":
         if origin == "director":  # 远方原著揭开的身世，主角不会当场知道：随事件入账，由 Knowledge.learn 按传闻或亲历送达
             world.knowledge.reveal(op["src"], op["dst"], op["rel"])
+    elif op["id"] == "player" and op["key"] == "inventory":  # 拾起则归主角随身，丢下则落在此地
+        _hand(world, op["value"], **({"holder": "player"} if kind == "push" else {"location": world.here}))
     elif op["id"] == "player":
         getattr(world.player, kind)(op["key"], op["value"])
-        if op["key"] == "inventory":  # 随身则归主角，丢下则落地
-            item = g.nodes[op["value"]]
-            item.update({"holder": "player", "location": None, "hidden": False} if kind == "push"
-                        else {"holder": None, "location": world.here})
+    elif g.kind(op["id"]) == "item" and op["key"] == "holder":  # 易手；脱手而无人接，便落在原处
+        _hand(world, op["id"], holder=op["value"], location=None if op["value"] else place(world, op["id"]))
+    elif g.kind(op["id"]) == "item" and op["key"] == "location":
+        _hand(world, op["id"], location=op["value"])
     else:
         node, key, value = g.nodes[op["id"]], op["key"], op["value"]
-        if node.get("type") == "item" and key == "holder" and node.get("holder") == "player" and value != "player":
-            world.player.pull("inventory", op["id"])  # 器物从主角手中易主
         if kind == "set":
             node[key] = value
         elif kind == "add":
-            node[key] = node.get(key, 0) + value
-        elif kind == "push" and value not in node.setdefault(key, []):
-            node[key].append(value)
-        elif kind == "pull" and value in node.get(key, []):
-            node[key].remove(value)
+            node[key] = (node[key] if _number(node.get(key)) else 0) + value
+        elif kind == "push" and value not in (node.get(key) or []):
+            node[key] = (node.get(key) or []) + [value]
+        elif kind == "pull" and value in (node.get(key) or []):
+            node[key] = [x for x in node[key] if x != value]
+
+
+def _hand(world, item: str, holder: str | None = None, location: str | None = None):
+    """器物流转：持有与落地不兼存；交到主角手里即入随身，离开主角手里即出随身——黑板与图上的器物永远对得上账。"""
+    node = world.graph.nodes[item]
+    if node.get("holder") == "player" and holder != "player":
+        world.player.pull("inventory", item)
+    node.update(holder=holder, location=location)
+    if holder == "player":
+        world.player.push("inventory", item)
+        node["hidden"] = False
 
 
 def _moves_player(world, op) -> bool:
@@ -244,7 +289,8 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     """逐条落账；返回 (已成立, [(未成立的指令, 原因)])。导演触碰过的节点记为因果污染。
     主角的移动排到最后：一回合内发生的事都发生在回合开始的所在，同伴随行、器物易手不会因主角先走一步而"不在此地"。"""
     applied, rejected = [], []
-    ops = [op for op in ops or [] if not _moves_player(world, op)] + [op for op in ops or [] if _moves_player(world, op)]
+    ops = ops if isinstance(ops, list) else []  # 场外推演偶把一条指令写成单值：整批作废，不让世界崩
+    ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
     for op in ops:
         if not isinstance(op, dict) or op.get("op") not in OPS:
             rejected.append((op, "未知指令"))

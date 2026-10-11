@@ -2,6 +2,7 @@
 [INPUT]: 依赖 copy 做深拷贝
 [OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事/两层叙事记忆）、ORIGINS、JOURNAL_CAP
 [POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相。
+       气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。
        记忆分两层：journal 是近事(工作记忆)，满 JOURNAL_CAP 行即挤出最早 FOLD 行交上层折叠进 synopsis(情节梗概)，上下文有界而记忆无界
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -44,13 +45,12 @@ class Blackboard:
         return self.data.get(key, default)
 
     def set(self, key, value):
-        self.data[key] = value
-
-    def add(self, key, delta):
-        value = self.data[key] + delta
         if key == "hp":
             value = max(1, min(self.data["max_hp"], value))  # 气血有上限，且主角不在规则层死亡
         self.data[key] = value
+
+    def add(self, key, delta):
+        self.set(key, self.data[key] + delta)
 
     def push(self, key, value):
         if value not in self.data[key]:

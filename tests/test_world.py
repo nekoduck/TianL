@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 tianlong.world 全部基础设施与 data/canon 原著硬知识（不接入 LLM）
-[OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表、道路补丁严丝合缝、关口须落在道路上、补上的走廊让大理直通中原与江南)、历法、剧情后果落账、地理器物武学归基础设施、器物易手、
+[OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表、道路补丁严丝合缝、关口须落在道路上、补上的走廊让大理直通中原与江南)、历法、剧情后果落账、地理器物武学归基础设施、器物易手(持有与落地不兼存、随身账与图上对得上)、形状守恒(写歪的指令被驳回而非崩溃)、
           世界物理、场外在场性、通行(此路不通拦所有人、暗路须经剧情发现且回头路认得、硬前提由系统判、远行止步门前)、
           消息延迟、隐情与隐秘字段(含揭示门控、原著揭开的隐情随传闻或亲历抵达)、LOD 按距离分层、到期原著远近分流与依序结算、裁定、存读档(旧档读入即换上新地图)
 [POS]: tests 的状态层验证，以真实原著世界为对象，证明剧情能自由改变既有世界，而人、地、物、武学只由系统掌管
@@ -12,7 +12,7 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-from tianlong.world import genesis, lod, rag
+from tianlong.world import access, genesis, lod, rag
 from tianlong.world.clock import PER_DAY, Clock, day_of
 from tianlong.world.world import World
 
@@ -183,6 +183,34 @@ class PlotTest(unittest.TestCase):
         self.assertEqual((len(applied), len(rejected)), (3, 2))
         self.assertEqual(self.w.player["hp"], 100)
 
+    def test_a_misshapen_plot_cannot_break_the_world(self):
+        ops = [{"op": "add", "id": "段誉", "key": "title", "value": 1},                    # 文字不能加减
+               {"op": "push", "id": "player", "key": "hp", "value": 5},                    # 数值不是清单
+               {"op": "set", "id": "player", "key": "hp", "value": "很多"},                 # 数值仍须是数
+               {"op": "set", "id": "player", "key": "inventory", "value": ["倚天剑"]},      # 实体清单只可逐件得失
+               {"op": "set", "id": "player", "key": "conditions", "value": None},          # 清单仍须是清单
+               {"op": "set", "id": "段誉", "key": "power", "value": "绝顶"},
+               {"op": "push", "id": "段誉", "key": "agenda", "value": "回府"},
+               {"op": "set", "id": "段誉", "key": "faction", "value": "天下第一帮"}]        # 世上没有的门派
+        applied, rejected = self.w.apply(ops, "director")
+        self.assertEqual((applied, len(rejected)), ([], 8))
+        self.w.apply([{"op": "set", "id": "player", "key": "hp", "value": -30}], "director")
+        self.assertEqual(self.w.player["hp"], 1)                                      # 主角不在规则层死亡，set 亦然
+        rag.condition(self.w), rag.build(self.w), rag.backstage(self.w)                 # 下一回合照常成像
+
+    def test_an_item_is_either_carried_or_lying_somewhere(self):
+        sword, w = "褚师弟青钢剑", self.w
+        w.apply([{"op": "set", "id": sword, "key": "holder", "value": "player"}], "director")   # 接过来：入随身
+        self.assertEqual((w.graph.get(sword, "location"), w.player["inventory"]), (None, [sword]))
+        w.apply([{"op": "set", "id": sword, "key": "location", "value": START}], "director")    # 掷在地上：出随身
+        self.assertEqual((w.graph.get(sword, "holder"), w.player["inventory"]), (None, []))
+        w.apply([{"op": "push", "id": "player", "key": "inventory", "value": sword},
+                 {"op": "set", "id": sword, "key": "holder", "value": None}], "director")         # 脱手而无人接：落在原处
+        self.assertEqual((w.graph.get(sword, "location"), w.player["inventory"]), (START, []))
+        _, rejected = w.apply([{"op": "pull", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
+        self.assertEqual((rejected[0][1], w.graph.get("北冥神功卷轴", "location")),
+                         ("主角身上并没有北冥神功卷轴", "琅嬛福地·玉像石室"))                # 丢不下没有的东西，远物不会被"丢"到眼前
+
     def test_garbage_rejected(self):
         _, rejected = self.w.apply([{"op": "rm"}, "x", {"op": "set", "id": "无此人", "key": "a", "value": 1},
                                     {"op": "set", "id": ["段誉"], "key": "mood", "value": 1},
@@ -198,14 +226,24 @@ class AccessTest(unittest.TestCase):
 
     def test_a_blocked_direction_stops_everyone(self):
         w = self.w
-        w.player.set("location", "雁门关·谷底")
-        _, rejected = w.apply([GO("雁门关·石壁")], "director")
-        self.assertEqual((w.here, EXITS(w)), ("雁门关·谷底", []))                   # 常人不能逆攀，谷底别无出路
-        self.assertTrue(rejected[0][1].startswith("此路不通（悬崖）：常人不能逆攀"))
+        w.player.set("location", "长春谷外山岭")
+        _, rejected = w.apply([GO("不老长春谷")], "director")
+        self.assertEqual(w.here, "长春谷外山岭")                                       # 深涧截断前路
+        self.assertTrue(rejected[0][1].startswith("此路不通（险径）：深涧截断前路"))
+        self.assertNotIn("不老长春谷", EXITS(w))
         self.assertIn("此路不通，主角过不去", "".join(rag.backstage(w)["passes"]))   # 导演知道为何
-        w.graph.set("乔峰", "location", "雁门关·谷底")
-        climb = {"op": "set", "id": "乔峰", "key": "location", "value": "雁门关·石壁"}
-        self.assertEqual(len(w.apply([climb], "lod1", {"雁门关·谷底"})[1]), 1)      # 场外之人也攀不上去
+        w.graph.set("乔峰", "location", "长春谷外山岭")
+        cross = {"op": "set", "id": "乔峰", "key": "location", "value": "不老长春谷"}
+        self.assertEqual(len(w.apply([cross], "lod1", {"长春谷外山岭"})[1]), 1)      # 场外之人也过不去
+
+    def test_a_dead_end_is_left_to_a_miracle_not_a_prison(self):
+        w = self.w
+        w.player.set("location", "雁门关·谷底")                                      # 坠入谷底：唯一的出路是攀不上去的绝壁
+        self.assertTrue(access.stranded(w, w.here))
+        self.assertIn("唯有奇遇方能脱身", "".join(rag.backstage(w)["passes"]))       # 交导演以奇遇兑现，而不是困死主角
+        w.apply([GO("雁门关·石壁")], "director")
+        self.assertEqual(w.here, "雁门关·石壁")
+        self.assertFalse(access.stranded(w, "长春谷外山岭"))                          # 别有出路之处，此路不通仍是不通
 
     def test_a_secret_way_opens_only_through_plot(self):
         w = self.w
