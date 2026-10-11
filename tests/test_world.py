@@ -1,8 +1,8 @@
 """
 [INPUT]: 依赖 tianlong.world 全部基础设施与 data/canon 原著硬知识（不接入 LLM）
-[OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表、道路补丁严丝合缝、关口须落在道路上)、历法、剧情后果落账、地理器物武学归基础设施、器物易手、
+[OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表、道路补丁严丝合缝、关口须落在道路上、补上的走廊让大理直通中原与江南)、历法、剧情后果落账、地理器物武学归基础设施、器物易手、
           世界物理、场外在场性、通行(此路不通拦所有人、暗路须经剧情发现且回头路认得、硬前提由系统判、远行止步门前)、
-          消息延迟、隐情与隐秘字段(含揭示门控)、LOD 按距离分层、到期原著远近分流与依序结算、裁定、存读档
+          消息延迟、隐情与隐秘字段(含揭示门控、原著揭开的隐情随传闻或亲历抵达)、LOD 按距离分层、到期原著远近分流与依序结算、裁定、存读档(旧档读入即换上新地图)
 [POS]: tests 的状态层验证，以真实原著世界为对象，证明剧情能自由改变既有世界，而人、地、物、武学只由系统掌管
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -76,10 +76,19 @@ class GenesisTest(unittest.TestCase):
             with self.subTest(key), tampered("15_roads_patch.json", lambda p: p[key].append(row)) as d:
                 with self.assertRaises(genesis.GenesisError):
                     genesis.load(d)
+        with tampered("16_roads_fill.json", lambda p: p["add"].append(bad["add"])) as d:  # 16 不得重加 15 已加之路
+            with self.assertRaises(genesis.GenesisError):
+                genesis.load(d)
         stray = {"from": "无量后山", "to": "大理城", "kind": "守卫", "blocked": False, "hidden": False, "how": "", "requires": []}
         with tampered("14_access.json", lambda rows: rows.append(stray)) as d:  # 关口必须落在一条道路上
             with self.assertRaises(genesis.GenesisError):
                 genesis.load(d)
+
+    def test_dali_reaches_the_central_plains_without_crossing_xixia(self):
+        w = World.create()
+        for dest in ("少室山", "苏州"):
+            self.assertFalse({"西夏", "兴州", "天山"} & set(w.graph.path("大理城", dest)))  # 不再绕道西夏、天山
+        self.assertLessEqual(w.graph.distances("天龙寺")["苏州"], 30)                      # 鸠摩智二月擒人，三月已到姑苏
 
     def test_false_shortcuts_are_gone(self):
         w = World.create()
@@ -286,6 +295,22 @@ class KnowledgeTest(unittest.TestCase):
         w.apply([{"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"}], "director")
         self.assertNotIn("段延庆—生父—段誉", rag.backstage(w)["secrets"])   # 主角已知，无需再提
 
+    def test_canon_reveals_travel_as_news_not_as_telepathy(self):
+        w = World.create()
+        public, scoped = (next(e for e in w.canon if e["id"] == i) for i in ("杏子林揭示契丹身世", "阿朱偷听自认身世"))
+        for ev in (public, scoped):
+            lod.settle(w, ev, ev, "canon")
+        self.assertEqual(w.knowledge.secrets, [])                       # 远方揭开的身世，主角不会当场知道
+        w.advance(PER_DAY * 400)
+        w.sync()
+        self.assertIn(["萧远山之妻", "乔峰", "生母"], w.knowledge.secrets)  # 公开之事随传闻抵达
+        self.assertNotIn(["段正淳", "阿朱", "生父"], w.knowledge.secrets)  # 阿朱独自偷听，江湖无从传开
+        here = next(e for e in w.canon if e["id"] == "刀白凤揭示段誉生父")
+        w.player.set("location", here["where"])
+        lod.settle(w, here, here, "canon")
+        w.sync()
+        self.assertIn(["段延庆", "段誉", "生父"], w.knowledge.secrets)   # 限定知情者的隐情，亲历即知
+
     def test_scoped_reveal_reaches_only_witnesses(self):
         w = World.create()
         reveal = {"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"}
@@ -338,6 +363,24 @@ class LodTest(unittest.TestCase):
 
 
 class PersistenceTest(unittest.TestCase):
+    def test_old_saves_wake_up_on_the_new_map(self):
+        w = World.create("旧档")
+        w.apply([{"op": "set", "id": START, "key": "state", "value": "比剑被搅散"},
+                 {"op": "link", "src": "段誉", "dst": "player", "rel": "结交"}], "director")
+        old = w.dump()  # 仿一份补丁前的存档：没有新地点、没有关口、还留着伪捷径、没有别名表
+        old["graph"]["nodes"].pop("澜沧江边高崖")
+        old["graph"]["edges"] = [{k: v for k, v in e.items() if k != "gates"} for e in old["graph"]["edges"]
+                                 if "澜沧江边高崖" not in (e["src"], e["dst"])]
+        old["graph"]["edges"].append({"src": "无量后山", "dst": "无量山·谷底", "rel": "road", "days": 0})
+        old["aliases"] = {}
+        v = World.from_dump(old)
+        self.assertIsNone(v.graph.road("无量后山", "无量山·谷底"))                         # 伪捷径随新图消失
+        self.assertEqual(sum(len(e.get("gates", {})) for e in v.graph.edges), 179)        # 关口挂上
+        self.assertTrue(v.knowledge.knows("澜沧江边高崖"))                                # 新地点入图、入常识
+        self.assertEqual((v.graph.get(START, "state"), v.aliases["萧峰"]), ("比剑被搅散", "乔峰"))  # 现状保留，别名补上
+        self.assertTrue(any(e["rel"] == "结交" for e in v.graph.edges))                    # 剧情所致的关系保留
+        self.assertEqual(World.from_dump(v.dump()).dump(), v.dump())                       # 重绘多少次都是同一张图
+
     def test_roundtrip(self):
         w = World.create("存档")
         w.apply([GO("大理城"), {"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"},

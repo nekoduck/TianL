@@ -101,12 +101,13 @@ class CanonLoopTest(unittest.TestCase):
         w = game.world
         far = next(e for e in w.canon if e["id"] == "鸠摩智押段誉抵姑苏")
         w.player.set("location", "剑湖宫")  # 主角在无事发生的宫院里，厅中与远方的原著都在场外依序上演
-        eve_of_month_after(w, far["day"])
+        w.clock.tick = (far["day"] + 3) * PER_DAY - 1  # 下一回合跨入排定之日后的第三天：迟了三日才结算
         game.act("歇息")
         self.assertIn(far["id"], w.done)
         self.assertEqual(next(e for e in w.truth.events if e["summary"] == far["summary"])["day"], far["day"])  # 日戳是排定之日
         known = lambda: {w.truth.get(i)["summary"] for i in w.knowledge.known}
-        self.assertNotIn(far["summary"], known())  # 姑苏远在数十日之外
+        self.assertGreater(w.graph.distances(w.here)[far["where"]], 3)
+        self.assertNotIn(far["summary"], known())  # 姑苏远在二十余日之外，消息才走了三日
         w.advance(PER_DAY * w.graph.distances(w.here)[far["where"]])
         w.sync()
         self.assertIn(far["summary"], known())

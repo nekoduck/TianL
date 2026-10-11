@@ -1,7 +1,9 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
-[OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档），持有 aliases 别名表
-[POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线
+[OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
+          remap 以当前舆图重绘地理），持有 aliases 别名表
+[POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
+       存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口与别名，旧档自动用上新地图
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -13,6 +15,15 @@ from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
 from .graph import ROAD, Graph
 from .ledger import Knowledge, Messenger, Truth
+
+
+def _lay(graph: Graph, d: dict):
+    """道路铺上图，有向关口挂在道路边上、以去向为键。"""
+    for a, b, days in d["roads"]:
+        graph.link(a, b, ROAD, days=days)
+    for a, b, gate in d.get("gates", []):
+        graph.road(a, b).setdefault("gates", {})[b] = gate
+
 
 class World:
     def __init__(self, graph, player, clock, truth, knowledge, messenger, canon, done, taint, seed, aliases=None):
@@ -36,10 +47,7 @@ class World:
         d = data or genesis.load()
         birth = ORIGINS.get(origin) or next(iter(ORIGINS.values()))  # 出身：主角为何在此、为何而动
         graph = Graph(d["nodes"])
-        for a, b, days in d["roads"]:
-            graph.link(a, b, ROAD, days=days)
-        for a, b, gate in d.get("gates", []):  # 有向关口挂在道路边上，以去向为键
-            graph.road(a, b).setdefault("gates", {})[b] = gate
+        _lay(graph, d)
         for r in d["relations"]:
             graph.link(**r)
         player = Blackboard({**d["player"], **birth, **({"name": name} if name else {})})
@@ -94,10 +102,29 @@ class World:
                 "taint": sorted(self.taint), "seed": self.seed, "aliases": self.aliases}
 
     @classmethod
-    def from_dump(cls, d: dict) -> "World":
-        return cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
-                   Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
-                   set(d["taint"]), d["seed"], d.get("aliases"))
+    def from_dump(cls, d: dict, atlas: dict | None = None) -> "World":
+        """读档：现状取自存档，地理取自当前创世数据（atlas 可注入，便于测试）。"""
+        world = cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
+                    Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
+                    set(d["taint"]), d["seed"], d.get("aliases"))
+        world.remap(atlas or genesis.load())
+        return world
+
+    def remap(self, atlas: dict):
+        """以当前舆图重绘地理：地点定义、道路与关口、别名换成创世数据，地点现状(state)与剧情所致的一切照存档保留。
+        旧档由此用上新地图；道路补丁只在创世时打一次，存档从不重放补丁，重绘多少次都是同一张图。"""
+        g = self.graph
+        for nid, node in atlas["nodes"].items():
+            if node["type"] != "location":
+                continue
+            kept = g.nodes.get(nid)
+            g.nodes[nid] = {**node, **({"state": kept["state"]} if kept and "state" in kept else {})}
+            if kept is None:  # 新入图的地点进入常识，与开局时一样
+                self.knowledge.observe(g, [nid])
+        roads = Graph(g.nodes)
+        _lay(roads, atlas)
+        g.edges = roads.edges + [e for e in g.edges if e["rel"] != ROAD]
+        self.aliases = atlas.get("aliases") or self.aliases
 
     def save(self, path, extra: dict | None = None):
         """整世界存档；extra 供上层附带自己的段落（如 Web 的回合记录），读档时被 from_dump 忽略。

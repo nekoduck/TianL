@@ -6,7 +6,8 @@
        人物生死伤病、去留、恩怨、武学、主角的得失与行止、器物易手、隐情与暗路的揭开。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
        一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）；
-       主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知
+       主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
+       reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -202,7 +203,7 @@ def _reach(world, op, origin, scope) -> str | None:
     return f"未知来源:{origin}"
 
 
-def _exec(world, op):
+def _exec(world, op, origin):
     g, kind = world.graph, op["op"]
     if kind == "link":
         if "player" in (op["src"], op["dst"]):  # 某人对主角的关系只留最新一条：写新即覆盖旧，恩怨会演变而不会堆叠
@@ -212,7 +213,8 @@ def _exec(world, op):
     elif kind == "unlink":
         g.unlink(op["src"], op["dst"], op["rel"])
     elif kind == "reveal":
-        world.knowledge.reveal(op["src"], op["dst"], op["rel"])
+        if origin == "director":  # 远方原著揭开的身世，主角不会当场知道：随事件入账，由 Knowledge.learn 按传闻或亲历送达
+            world.knowledge.reveal(op["src"], op["dst"], op["rel"])
     elif op["id"] == "player":
         getattr(world.player, kind)(op["key"], op["value"])
         if op["key"] == "inventory":  # 随身则归主角，丢下则落地
@@ -263,7 +265,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
                     continue
                 op["value"] = route[-1]
             access.learn(world, route)
-        _exec(world, op)
+        _exec(world, op, origin)
         applied.append(op)
         if origin == "director":
             world.taint.update(i for i in _ids(op) if i and i != "player")

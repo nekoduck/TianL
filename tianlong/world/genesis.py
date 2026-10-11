@@ -2,7 +2,7 @@
 [INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
-       处理开端未明的人物（休眠）、道路补丁(15)先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
+       处理开端未明的人物（休眠）、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
        按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -38,6 +38,7 @@ SOURCES = {
 }
 RENAME = {"type": "style"}  # 武学自带的 type(掌法/指法…) 与节点类型同名，入世时改称 style
 GATE = ("kind", "blocked", "hidden", "how", "requires", "risk")  # 通行条件入世的字段；src/inferred 是抽取元数据
+ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
 
 
 class GenesisError(Exception):
@@ -60,28 +61,29 @@ def _nodes(root: Path) -> dict[str, dict]:
 
 
 # ============================================================
-#  道路与关口：02 是原路，15 修正 0 日中枢造成的伪捷径，14 是有向的通行条件
+#  道路与关口：02 是原路，15 修正 0 日中枢造成的伪捷径，16 补上缺失的走廊，14 是有向的通行条件
 # ============================================================
 def _roads(root: Path) -> list[tuple[str, str, int]]:
-    """原路打上补丁（先删、再加、再改，各只一次），返回步行日数；不依 parent 自动连路。
-    补丁须与原路严丝合缝：删与改的路必须存在、加的路必须不存在——对不上即补丁与原路版本错配，拒绝开局。"""
+    """原路依次打上补丁（每个补丁先删、再加、再改，各只一次），返回步行日数；不依 parent 自动连路。
+    补丁须与它所补的路严丝合缝：删与改的路必须存在、加的路必须不存在——对不上即补丁与原路版本错配，拒绝开局。"""
     roads, errors = {}, []
     for a, b, days in _read(root, "02_roads.json"):
         if frozenset((a, b)) in roads:
             errors.append(f"道路「{a}—{b}」重复登记")
         roads[frozenset((a, b))] = (a, b, days)
-    patch = _read(root, "15_roads_patch.json")
-    for a, b in patch["remove"]:
-        if roads.pop(frozenset((a, b)), None) is None:
-            errors.append(f"道路补丁要删的「{a}—{b}」并不存在")
-    for a, b, days in patch["add"]:
-        if frozenset((a, b)) in roads:
-            errors.append(f"道路补丁要加的「{a}—{b}」已经存在")
-        roads[frozenset((a, b))] = (a, b, days)
-    for a, b, days in patch["change"]:
-        if frozenset((a, b)) not in roads:
-            errors.append(f"道路补丁要改的「{a}—{b}」并不存在")
-        roads[frozenset((a, b))] = (a, b, days)
+    for name in ROAD_PATCHES:
+        patch = _read(root, name)
+        for a, b in patch["remove"]:
+            if roads.pop(frozenset((a, b)), None) is None:
+                errors.append(f"{name} 要删的「{a}—{b}」并不存在")
+        for a, b, days in patch["add"]:
+            if frozenset((a, b)) in roads:
+                errors.append(f"{name} 要加的「{a}—{b}」已经存在")
+            roads[frozenset((a, b))] = (a, b, days)
+        for a, b, days in patch["change"]:
+            if frozenset((a, b)) not in roads:
+                errors.append(f"{name} 要改的「{a}—{b}」并不存在")
+            roads[frozenset((a, b))] = (a, b, days)
     if errors:
         raise GenesisError(f"道路补丁有 {len(errors)} 处对不上原路，首条：{errors[0]}")
     return list(roads.values())
