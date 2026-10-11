@@ -281,7 +281,7 @@ def _hand(world, item: str, holder: str | None = None, location: str | None = No
 
 
 def _moves_player(world, op) -> bool:
-    return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", world.player["name"]) \
+    return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", "主角", world.player["name"]) \
         and PLAYER_ALIASES.get(op.get("key"), op.get("key")) == "location"
 
 

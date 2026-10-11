@@ -253,7 +253,8 @@ class AccessTest(unittest.TestCase):
         _, rejected = w.apply([GO("琅嬛福地")], "director")
         self.assertEqual((w.here, rejected[0][1]), ("无量山·谷底", "找不到去路"))     # 缘由不点破暗路
         found = {"op": "reveal", "src": "无量山·谷底", "dst": "琅嬛福地", "rel": "机关"}
-        applied, rejected = w.apply([GO("琅嬛福地"), found], "director")             # 同一批里先发现、后穿过
+        go = {"op": "set", "id": "主角", "key": "位置", "value": "琅嬛福地"}                  # 写法再随意，移动也排在最后
+        applied, rejected = w.apply([go, found], "director")                        # 同一批里先发现、后穿过
         self.assertEqual((len(applied), rejected, w.here), (2, [], "琅嬛福地"))
         self.assertIn("无量山·谷底", EXITS(w))                                      # 进来的暗门，回头也认得
 
