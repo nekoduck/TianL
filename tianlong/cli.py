@@ -141,8 +141,14 @@ def main(argv=None):
             print(_c(_unreadable(args.load, e), "33"))
             return
     else:
-        name = args.name or input("  侠客名号（回车默认「无名」）：").strip()
-        world = World.create(name or None, origin=args.origin or _choose_origin())
+        name, origin = args.name or input("  侠客名号（回车默认「无名」）：").strip(), args.origin or _choose_origin()
+        while True:
+            try:
+                world = World.create(name or None, origin=origin)
+                break
+            except ValueError as e:  # 与书中人物、地名重名
+                print(_c(f"  {e}", "33"))
+                name = input("  侠客名号（回车默认「无名」）：").strip()
 
     game = Game(world, llm)
     show(game.open())

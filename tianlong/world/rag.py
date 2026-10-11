@@ -3,7 +3,7 @@
          与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、rule()（较量预裁）、heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
-       build 给编剧——在场取真相、场外取认知，只含玩家已知；
+       build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥）；
        backstage 给导演——此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、到时候的隐情、各方图谋、功力对比、
        在场武学、此地出发的关口、近处未被发现的暗路、主角走得到的去处、命运骰、节奏，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -76,10 +76,12 @@ def _believed(world, nid: str) -> str:
 
 
 def _toward_player(world, p: str) -> list[str]:
+    """此人(及其门派)与主角之间的关系与印象；暗中的心思(secret)在揭开之前不入视锥——编剧看得见的，主角就看得见。"""
     sides = {p, world.graph.get(p, "faction")} - {None}
     return [(f"{e['src']}→你：{e['rel']}" if e["dst"] == "player" else f"你→{e['dst']}：{e['rel']}")
             + (f"（{e['note']}）" if e.get("note") else "")
-            for e in world.graph.edges if {e["src"], e["dst"]} & sides and "player" in (e["src"], e["dst"])]
+            for e in world.graph.edges if {e["src"], e["dst"]} & sides and "player" in (e["src"], e["dst"])
+            and not (e.get("secret") and not world.knowledge.knows_secret(e))]
 
 
 def _relation_lines(world, people: list[str], visible: set[str]) -> list[str]:
@@ -188,7 +190,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
     dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
         "fate": fate,
-        "stage": {"event": stage, "dirt": lod.dirt(world, stage)} if stage else None,
+        "stage": {"event": stage, "dirt": lod.dirt(world, stage), "broken": lod.broken(world, stage)} if stage else None,
         "upcoming": [f"{'今日稍后' if n <= 0 else f'{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],
         "ruling": ruling,

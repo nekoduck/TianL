@@ -6,7 +6,8 @@
 [POS]: 两层唯一的交汇点——游戏主循环：先了远方到期的原著(场外推演可闻江湖近闻) → 此地到期的一桩原著交给导演作本回合主干 → 导演编织节拍/后果/时长/选项
        → 原著照常落账，或因主角扰动而由导演的后果作准 → 导演后果落账 → 时长按措辞与道路结算 → LOD1 场外推演与新到期的远方原著
        → 传闻投递 → 编剧成文并写下真实梗概 → 事件门槛判定是否入江湖账本 → 近事溢出则折叠梗概。
-       基础设施在每一步替 LLM 记忆、算账、裁决、送信；账本只记已成立之事。
+       基础设施在每一步替 LLM 记忆、算账、裁决、送信；账本只记已成立之事——此地原著前提已破便不照演；
+       主角做完便走的事，以亲历之人、事发之日、事发之地入账；编剧没写梗概时，以意图与系统核实过的后果代记，绝不拿导演的节拍充数。
        一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -69,7 +70,7 @@ class Game:
         """on(kind, data)：stage 报进度，head 在落笔前送出除正文外的整回合，text 随编剧送出正文增量。"""
         emit = on or (lambda kind, data: None)
         w = self.world
-        origin, before, hp0 = w.here, w.clock.label(), w.player["hp"]
+        origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
         offstage, staged = lod.split_due(w)
         for ev, tier in offstage:                     # 远方到期之事先了：原著永不插队
             self._settle(ev, tier)
@@ -79,15 +80,18 @@ class Game:
         emit("stage", "direct")
         plan = agents.direct(self.llm, rag.build(w), gm, deed)
         emit("stage", "settle")
-        if staged:                                    # 此地的原著是本回合主干：照常则系统落账，被主角扰动则导演的后果作准
-            if plan["canon"]["unfolds"]:
-                lod.settle(w, staged, staged, "canon")
+        if staged:  # 此地的原著是本回合主干：照常(且前提未破)则系统落账、盖今日之戳，否则导演的后果作准
+            if plan["canon"]["unfolds"] and not lod.broken(w, staged):
+                lod.settle(w, staged, staged, "canon", day=day0)
             else:
-                lod.settle(w, staged, {"happens": False}, "director")
-                w.taint.update(staged["actors"])
-                log.info("原著「%s」因主角扰动未照常发生：%s", staged["id"], plan["canon"]["why"])
+                lod.settle(w, staged, {"happens": False}, "director", day=day0)
+                if not plan["canon"]["unfolds"]:
+                    w.taint.update(staged["actors"])
+                log.info("原著「%s」未照常发生：%s", staged["id"], plan["canon"]["why"] or "前提已破")
         applied, rejected = w.apply(plan["effects"], "director")
-        journey = access.distances(w, origin).get(w.here, 0) * PER_DAY       # 远行时日由主角走得通的道路决定，不由 LLM 估算
+        w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
+        stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
+        journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
         days, _ = w.advance(max(w.clock.minutes(plan["pace"]), journey))     # 时长由措辞换算，不由 LLM 报数
         self._offstage(days)
         arrived = w.sync()
@@ -109,10 +113,13 @@ class Game:
             "news": [e["summary"] for e in arrived if not e.get("witnessed")]},  # 亲历之事已在节拍里，不再当传闻
             on_text=on and (lambda d: emit("text", d)))
         turn["text"] = page["text"]
+        facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))
+        memory = page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else "")
         weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
-        if weight:                                    # 众目之下的大事才传开，记的是编剧核实过的一句话
-            w.record(page["headline"] or page["memory"].replace("你", w.player["name"]), origin, applied, "director", weight)
-        evicted = w.player.remember(f"{w.clock.label()}·{w.here}：{page['memory']}")
+        if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
+            told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
+            w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
+        evicted = w.player.remember(f"{w.clock.label()}·{w.here}：{memory[:60]}")
         if evicted:
             w.player.set("synopsis", agents.recap(self.llm, w.player["synopsis"], evicted))
         self.options, self.last_text = plan["options"], page["text"]

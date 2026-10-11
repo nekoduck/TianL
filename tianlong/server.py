@@ -39,8 +39,12 @@ class Session:
 
     @classmethod
     def begin(cls, hero: str | None, llm, send=None) -> "Session":
-        """开卷：新建世界并写出开场回合；send 存在则边写边送。"""
-        session = cls(Game(World.create(hero), llm), hero or "无名", [])
+        """开卷：新建世界并写出开场回合；send 存在则边写边送。名号与书中人物、地名重名则不收（剧情里分不清是谁）。"""
+        try:
+            world = World.create(hero)
+        except ValueError as e:
+            raise ProtocolError(400, "bad_request", str(e)) from None
+        session = cls(Game(world, llm), hero or "无名", [])
         on = protocol.relay(send, 1, None) if send else None
         session.transcript.append(protocol.present(session.game.open(on), 1, None))
         return session

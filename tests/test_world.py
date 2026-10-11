@@ -350,6 +350,33 @@ class KnowledgeTest(unittest.TestCase):
         w.sync()
         self.assertIn(["段延庆", "段誉", "生父"], w.knowledge.secrets)   # 限定知情者的隐情，亲历即知
 
+    def test_a_scoped_event_never_travels_as_a_rumor(self):
+        w = World.create()
+        ev = next(e for e in w.canon if e["id"] == "刀白凤揭示段誉生父")
+        w.clock.tick = ev["day"] * PER_DAY
+        lod.settle(w, ev, ev, "canon")
+        w.advance(PER_DAY * 60)
+        self.assertEqual([e["summary"] for e in w.sync()], [])                    # 母子之间的私话，江湖无从传开
+        self.assertEqual(w.knowledge.secrets, [])
+
+    def test_an_old_rumor_does_not_overwrite_what_was_seen_since(self):
+        w = World.create()
+        op = {"op": "set", "id": "段誉", "key": "location", "value": "聚贤庄"}
+        w.apply([op], "canon")
+        w.record("段誉现身聚贤庄", "聚贤庄", [op], "canon")                            # 第 0 日的远方消息
+        w.advance(2 * PER_DAY)
+        w.apply([{"op": "set", "id": "段誉", "key": "location", "value": w.here}], "canon")
+        w.sync()                                                                  # 第 2 日亲眼见他在厅中
+        w.player.set("location", "剑湖宫")
+        w.advance(40 * PER_DAY)
+        w.sync()                                                                  # 旧消息姗姗来迟
+        self.assertEqual(w.knowledge.view("段誉")["location"], START)
+
+    def test_secret_regard_stays_out_of_the_players_view(self):
+        w = World.create()
+        w.apply([{"op": "link", "src": "左子穆", "dst": "player", "rel": "暗中起了杀心", "secret": True}], "director")
+        self.assertEqual(next(p for p in rag.build(w)["people"] if p["name"] == "左子穆")["toward_you"], [])
+
     def test_scoped_reveal_reaches_only_witnesses(self):
         w = World.create()
         reveal = {"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"}
@@ -393,6 +420,28 @@ class LodTest(unittest.TestCase):
         self.assertEqual(lod.verdict(w, minor, 2)[0], "skip")        # 远方小事破局：悄然作罢
         self.assertEqual(lod.verdict(w, minor, 1)[0], "chronicle")   # 近处破局：史官改写
 
+    def test_implicit_premises_of_canon(self):
+        w = World.create()
+        w.graph.set("康敏", "status", "dead")
+        self.assertTrue(lod.broken(w, next(e for e in w.canon if e["id"] == "阿紫折磨康敏致死")))    # 死者不再登场
+        box = next(e for e in w.canon if e["id"] == "甘宝宝托段誉向段家求援")
+        item = next(op["id"] for op in box["effects"] if w.graph.kind(op.get("id")) == "item")
+        w.graph.nodes[item].update(holder="player", location=None)
+        w.player.push("inventory", item)
+        self.assertIn(f"{item}正在主角手中", lod.dirt(w, box))                                  # 主角手中之物不会飞走
+        dies = next(e for e in w.canon if e["id"] == "高昇泰逝世消息确认")
+        w.graph.set("高昇泰", "location", w.here)
+        self.assertIn("高昇泰正与主角同在剑湖宫·练武厅", "".join(lod.dirt(w, dies)))            # 非相关者也分身不得
+
+    def test_offstage_claims_are_recorded_only_as_far_as_they_came_true(self):
+        w = World.create()
+        report = {"where": "少林寺", "event": "玄慈圆寂", "result": "方丈坐化",
+                  "effects": [{"op": "set", "id": "玄慈", "key": "status", "value": "dead"}]}
+        self.assertEqual(lod.absorb(w, [report], {"无量山"}), [])                               # 推演区域之外的战报不收
+        report["where"] = "无量山"
+        self.assertEqual(lod.absorb(w, [report], {"无量山"}), [])                               # 后果不成立，说法不入账
+        self.assertEqual(w.graph.get("玄慈", "status"), "alive")
+
     def test_requires_on_lists(self):
         w = World.create()
         ev = next(e for e in w.canon if ["段誉", "skills", "凌波微步"] in e["requires"])
@@ -402,6 +451,19 @@ class LodTest(unittest.TestCase):
 
 
 class PersistenceTest(unittest.TestCase):
+    def test_a_hero_may_not_borrow_a_name_from_the_book(self):
+        for name in ("段誉", "萧峰", "剑湖宫"):
+            with self.assertRaises(ValueError):
+                World.create(name)
+
+    def test_old_saves_regain_the_timing_of_secrets(self):
+        w = World.create()
+        old = w.dump()
+        for e in old["graph"]["edges"]:
+            e.pop("revealed_by", None)                                                        # 重构之前的存档没有揭示事件
+        v = World.from_dump(old)
+        self.assertNotIn("段延庆—生父—段誉", rag.backstage(v)["secrets"])                    # 第四十八回的真相仍不在第一回上桌
+
     def test_old_saves_wake_up_on_the_new_map(self):
         w = World.create("旧档")
         w.apply([{"op": "set", "id": START, "key": "state", "value": "比剑被搅散"},

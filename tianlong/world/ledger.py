@@ -1,7 +1,8 @@
 """
 [INPUT]: 依赖 world/graph 的 Graph（观察时读取真相）
 [OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS
-[POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）
+[POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）。
+       限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -30,10 +31,12 @@ class Truth:
 #  玩家认知账本：信念（node → 公开属性）+ 已知事件 + 已知隐情（secret 边）
 # ============================================================
 class Knowledge:
-    def __init__(self, beliefs: dict | None = None, known: list | None = None, secrets: list | None = None):
+    def __init__(self, beliefs: dict | None = None, known: list | None = None, secrets: list | None = None,
+                 asof: dict | None = None):
         self.beliefs: dict[str, dict] = beliefs or {}
         self.known: list[int] = known or []
         self.secrets: list[list[str]] = secrets or []
+        self.asof: dict[str, int] = asof or {}  # 节点 → 关于它最新一条消息的日子：迟到的旧闻不得覆盖新见
 
     @classmethod
     def from_truth(cls, graph) -> "Knowledge":
@@ -58,11 +61,13 @@ class Knowledge:
     def knows_secret(self, edge: dict) -> bool:
         return [edge["src"], edge["dst"], edge["rel"]] in self.secrets
 
-    def observe(self, graph, ids):
-        """亲眼所见：直接以真相覆盖信念。"""
+    def observe(self, graph, ids, day: int | None = None):
+        """亲眼所见：直接以真相覆盖信念，并记下这是哪一天的见闻（开局常识不记日子，任何消息都比它新）。"""
         for nid in ids:
             node = graph.nodes[nid]
             self.beliefs[nid] = {k: node.get(k) for k in PUBLIC_KEYS if k in node}
+            if day is not None:
+                self.asof[nid] = max(self.asof.get(nid, day), day)
 
     def learn(self, event: dict):
         """传闻抵达：事件中的公开变更写入信念；只对少数人揭开的隐情(public=false)，唯有亲历者得知。"""
@@ -71,7 +76,10 @@ class Knowledge:
         self.known.append(event["id"])
         for op in event["effects"]:
             if op["op"] == "set" and op.get("id") != "player" and op["key"] in PUBLIC_KEYS:
+                if event["day"] < self.asof.get(op["id"], event["day"]):
+                    continue  # 迟到的旧闻：主角后来亲眼见过、或已听到更新的消息
                 self.beliefs.setdefault(op["id"], {})[op["key"]] = op["value"]
+                self.asof[op["id"]] = event["day"]
             elif op["op"] == "reveal" and (event.get("public", True) or event.get("witnessed")):
                 self.reveal(op["src"], op["dst"], op["rel"])
 
@@ -91,6 +99,8 @@ class Messenger:
         arrived, waiting = [], []
         for eid in self.pending:
             event = truth.get(eid)
+            if not event.get("public", True) and not event.get("witnessed"):
+                continue  # 限定知情者之事，江湖无从传开：主角不在场，便永不得闻
             reach = (today - event["day"]) * NEWS_SPEED * event["weight"]
             seen = event.get("witnessed") or dist.get(event["where"], float("inf")) <= reach  # 亲历之事不必等传闻
             (arrived if seen else waiting).append(event)

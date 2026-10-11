@@ -3,7 +3,7 @@
          读 world/clock 的 PACES 作时长措辞表
 [OUTPUT]: 对外提供 render() / render_backstage() / PLOT_GUIDE（含"effects 即真相"） / TENSIONS 与 director / writer / recap / simulator / chronicler 五组 (system, user) 组装器（场外两组可附江湖近闻）
 [POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，
-       并以 PLOT_GUIDE 教它把剧情后果落账到既有世界；改文风、改叙事纲领只动这一个文件
+       并以 PLOT_GUIDE 教它把剧情后果落账到既有世界；此地原著前提已破时明告导演不得照演；改文风、改叙事纲领只动这一个文件
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -77,8 +77,10 @@ def render_backstage(gm: dict) -> str:
     parts = ["═══ 以下为后台，主角不知 ═══"]
     if gm.get("stage"):
         ev, dirt = gm["stage"]["event"], gm["stage"]["dirt"]
+        broken = "｜前提已破：此事不能照原著发生——canon.unfolds 填 false，若仍有变故，实际后果由你的 effects 写下" \
+            if gm["stage"].get("broken") else ""
         parts.append(f"【原著此刻在此上演】{ev['summary']}｜相关者：{'、'.join(ev['actors'])}"
-                     f"｜原著结局：{'；'.join(_outcome(ev)) or '无可记之变'}" + (f"｜前提有变：{'；'.join(dirt)}" if dirt else "")
+                     f"｜原著结局：{'；'.join(_outcome(ev)) or '无可记之变'}" + (f"｜前提有变：{'；'.join(dirt)}" if dirt else "") + broken
                      + "\n  这是本回合的主干：把它编入节拍，让主角目睹或卷入，相关者的言行须合乎原著；原著结局由系统落账，不必写进 effects。"
                        "若主角的举动使它不能照常发生，canon.unfolds 填 false 并在 why 说明，实际后果由你的 effects 写下。")
     parts += [

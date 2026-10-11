@@ -8,7 +8,8 @@
        一批指令里主角的移动最后执行，在场性以回合开始时的所在为准（同伴随行不被误判为"不在此地"）；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
-       形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上
+       形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
+       场外推演只碰得到推演区域之内的人与地，结恩怨亦然
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -213,6 +214,10 @@ def _physics(world, op) -> str | None:
 def _reach(world, op, origin, scope) -> str | None:
     if op["op"] == "reveal" and origin in OFFSCREEN:
         return "主角不在场，无从得知隐情"
+    if op["op"] in ("link", "unlink") and origin in OFFSCREEN and scope is not None:  # 场外结恩怨，也只在推演区域之内
+        far = [i for i in (op["src"], op["dst"]) if i != "player" and i not in scope and place(world, i) not in scope]
+        if far:
+            return f"{far[0]}不在推演区域内"
     if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
         return None
     g, nid = world.graph, op.get("id")

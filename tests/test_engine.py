@@ -208,7 +208,88 @@ class DirectorTest(unittest.TestCase):
         self.assertEqual(w.graph.get("乔峰", "mood"), "万念俱灰")
         self.assertEqual(w.graph.get("段誉", "status"), "alive")  # 越出相关者
         self.assertLess(w.player["power"], 100)                  # 场外碰不到主角
-        self.assertIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])
+        self.assertNotIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])  # 说法里夹着不成立之事，不照录
+
+
+class LedgerHonestyTest(unittest.TestCase):
+    """账本只记已成立之事：编剧没写的梗概、破了前提的原著、主角做完便走的事、空口的场外战报，都不得把假话写进账本。"""
+
+    def test_an_unverified_beat_never_reaches_the_ledger(self):
+        reply = {**director(beats=["你隔空一掌击毙乔峰"], effects=[
+            {"op": "set", "id": "乔峰", "key": "status", "value": "dead"},
+            {"op": "link", "src": "段誉", "dst": "player", "rel": "畏惧"}])}
+        for tail, memory in (("梗概: 你一掌落空\n传言: 无", "你一掌落空"),          # 半角冒号也认
+                             ("**梗概**：\n你一掌落空", "你一掌落空"),             # markdown 粗体、值另起一行
+                             ("", "你意欲隔空打死乔峰：段誉与你结下「畏惧」")):     # 没写：意图加核实过的后果
+            game = Game(World.create("测"), StubLLM({**reply, "小说家": "正文\n===\n" + tail}))
+            game.act("隔空打死乔峰")
+            self.assertTrue(game.world.player["journal"][-1].endswith(memory), game.world.player["journal"][-1])
+            self.assertFalse(any("击毙" in e["summary"] for e in game.world.truth.events))
+
+    def test_a_staged_canon_with_broken_premises_does_not_unfold(self):
+        game = Game(World.create("测"))
+        game.world.graph.set("龚光杰", "status", "dead")
+        turn = game.open()
+        self.assertEqual(game.world.graph.get("褚师弟", "status"), "alive")                # 死人刺不伤人
+        self.assertNotIn("龚光杰刺伤褚师弟", "".join(n["text"] for n in turn["news"]))
+
+    def test_a_deed_done_before_leaving_is_witnessed_where_and_when_it_happened(self):
+        llm = StubLLM({**director(effects=[{"op": "set", "id": "左子穆", "key": "status", "value": "wounded"},
+                                            {"op": "set", "id": "player", "key": "location", "value": "大理城"}]),
+                       "小说家": "正文\n===\n梗概：你刺伤左子穆后远走\n传言：测当众刺伤左子穆"})
+        game = Game(World.create("测"), llm)
+        w = game.world
+        w.done += [e["id"] for e in w.canon if e["day"] == w.clock.day]
+        day0 = w.clock.day
+        game.act("刺伤左子穆，远走大理")
+        deed = next(e for e in w.truth.events if e["origin"] == "director")
+        self.assertEqual((deed["witnessed"], deed["day"], deed["where"]), (True, day0, "剑湖宫·练武厅"))
+        self.assertEqual(w.knowledge.view("左子穆")["status"], "wounded")                  # 走了也记得刚才所见
+        llm.replies = {**director(pace="一日"), "小说家": WRITER}
+        game.act("歇")
+        self.assertNotIn("测当众刺伤左子穆", llm.writer_prompts[-1].partition("【刚刚传到的消息】")[2])  # 自己做的事不会再当新到的传闻
+
+    def test_a_staged_canon_seen_late_is_dated_today(self):
+        game = Game(World.create("测"), StubLLM(director(pace="一夜")))
+        game.open()
+        morning = game.act("歇")["time"].split(" ")[0]           # 一夜醒来已是第三日，原著排的却是第一日
+        turn = game.act("看")                                      # 这一回合开头，厅中那一幕才在主角眼前上演
+        seen = [n for n in turn["news"] if n["witnessed"]]
+        self.assertTrue(seen and all(n["date"] == morning for n in seen))
+
+    def test_every_leg_of_a_round_trip_takes_time(self):
+        game = Game(World.create("测"), StubLLM(director(effects=[
+            {"op": "set", "id": "player", "key": "location", "value": "大理城"},
+            {"op": "set", "id": "player", "key": "location", "value": "剑湖宫·练武厅"}])))
+        tick = game.world.clock.tick
+        game.act("去大理再回来")
+        self.assertEqual(game.world.clock.tick - tick, 4 * PER_DAY)                         # 去两日，回两日
+
+
+class AgentShapeTest(unittest.TestCase):
+    def test_loose_director_output_is_read_kindly(self):
+        llm = StubLLM({"说书人与导演": {"beats": "你拔剑出鞘", "options": "拔剑、离去、观望", "pace": ["片刻"],
+                                       "canon": {"unfolds": "false"}, "effects": {"op": "set", "id": "player", "key": "posture", "value": "拔剑"}}})
+        game = Game(World.create(), llm)
+        turn = game.open()
+        self.assertEqual(turn["options"], ["拔剑", "离去", "观望"])                          # 不逐字拆散
+        self.assertEqual(game.world.player["posture"], "拔剑")                              # 单条指令也收
+        self.assertEqual(game.world.graph.get("褚师弟", "status"), "alive")                 # "false" 就是否
+
+    def test_an_empty_stream_falls_back_instead_of_a_blank_page(self):
+        turn = Game(World.create(), StreamLLM(director(), [])).act("看", on=lambda *_: None)
+        self.assertTrue(turn["text"])
+
+    def test_a_separator_split_across_chunks_never_reaches_the_reader(self):
+        llm = StreamLLM(director(), ["灯下如豆。\n=", "==\n梗概：看\n传言：无"])
+        shown = []
+        Game(World.create(), llm).act("看", on=lambda kind, data: shown.append(data) if kind == "text" else None)
+        self.assertEqual("".join(shown), "灯下如豆。")
+
+    def test_offline_travel_picks_the_place_named_in_full(self):
+        game = Game(World.create())
+        game.world.player.set("location", "无量山")
+        self.assertEqual(game.act("前往澜沧江边高崖")["place"], "澜沧江边高崖")
 
 
 class AtomicTurnTest(unittest.TestCase):
@@ -231,7 +312,7 @@ class AtomicTurnTest(unittest.TestCase):
         self.assertEqual(cli._pick(game, "1"), game.options[0])                    # 终端：打 1 即第一个选项
         self.assertEqual((cli._pick(game, "①"), cli._pick(game, "9")), ("①", "9"))  # 全角或越界之数仍是原话
         game.act("①")                                                              # 内核照收原话，不再因它崩溃
-        self.assertTrue(game.world.player["journal"][-1].endswith("你①。"))
+        self.assertTrue(game.world.player["journal"][-1].endswith("你意欲①"))
 
 
 class StreamingTest(unittest.TestCase):

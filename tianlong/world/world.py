@@ -1,9 +1,10 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
 [OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
-          remap 以当前舆图重绘地理），持有 aliases 别名表
+          remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
-       存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口与别名，旧档自动用上新地图
+       存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
+       主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -45,6 +46,8 @@ class World:
     @classmethod
     def create(cls, name: str | None = None, data: dict | None = None, origin: str | None = None) -> "World":
         d = data or genesis.load()
+        if name and (name in d["nodes"] or name in (d.get("aliases") or {}) or name in ("player", "主角")):
+            raise ValueError(f"「{name}」已是书中的人名或地名，请另取一个名号")
         birth = ORIGINS.get(origin) or next(iter(ORIGINS.values()))  # 出身：主角为何在此、为何而动
         graph = Graph(d["nodes"])
         _lay(graph, d)
@@ -67,12 +70,19 @@ class World:
         return effects.apply(self, ops, origin, scope)
 
     def record(self, summary: str, where: str, applied: list, origin: str, weight: int = 1,
-               public: bool = True, day: int | None = None) -> dict:
-        """写入绝对真实账本，并把传闻投进消息队列；主角身在事发之地即为亲历者。day 缺省为今日，原著事件传其排定之日。"""
+               public: bool = True, day: int | None = None, witnessed: bool | None = None) -> dict:
+        """写入绝对真实账本，并把传闻投进消息队列；主角身在事发之地即为亲历者（亦可明说，如主角做完便离开的事）。
+        day 缺省为今日，原著事件传其排定之日。"""
         event = self.truth.record(self.clock.day if day is None else day, where, summary, applied, origin, weight)
-        event.update(public=public, witnessed=where == self.here)
+        event.update(public=public, witnessed=where == self.here if witnessed is None else witnessed)
         self.messenger.post(event)
         return event
+
+    def witness(self, ops: list):
+        """导演写下的后果都发生在主角眼前：其中的公开变化当场入认知——即便主角随即离开，也记得刚才所见。隐匿者不因此现形。"""
+        g = self.graph
+        seen = {op.get("id") for op in ops} - {None, "player"}
+        self.knowledge.observe(g, sorted(n for n in seen if g.has(n) and not g.get(n, "hidden")), self.clock.day)
 
     def advance(self, shichen: int) -> tuple[int, int]:
         return self.clock.advance(shichen)
@@ -89,7 +99,7 @@ class World:
         for nid, belief in self.knowledge.beliefs.items():  # 以为在此、实则不在的人：下落不明
             if belief.get("location") == self.here and nid not in seen and self.graph.kind(nid) == "person":
                 belief["location"] = None
-        self.knowledge.observe(self.graph, seen)
+        self.knowledge.observe(self.graph, seen, self.clock.day)
 
     # ------------------------------------------------------------
     #  存读档：整个世界就是一份 JSON
@@ -97,7 +107,7 @@ class World:
     def dump(self) -> dict:
         return {"graph": self.graph.dump(), "player": self.player.data, "tick": self.clock.tick,
                 "truth": self.truth.events, "beliefs": self.knowledge.beliefs, "known": self.knowledge.known,
-                "secrets": self.knowledge.secrets,
+                "secrets": self.knowledge.secrets, "asof": self.knowledge.asof,
                 "pending": self.messenger.pending, "canon": self.canon, "done": self.done,
                 "taint": sorted(self.taint), "seed": self.seed, "aliases": self.aliases}
 
@@ -105,7 +115,7 @@ class World:
     def from_dump(cls, d: dict, atlas: dict | None = None) -> "World":
         """读档：现状取自存档，地理取自当前创世数据（atlas 可注入，便于测试）。"""
         world = cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
-                    Knowledge(d["beliefs"], d["known"], d["secrets"]), Messenger(d["pending"]), d["canon"], d["done"],
+                    Knowledge(d["beliefs"], d["known"], d.get("secrets"), d.get("asof")), Messenger(d["pending"]), d["canon"], d["done"],
                     set(d["taint"]), d["seed"], d.get("aliases"))
         world.remap(atlas or genesis.load())
         return world
@@ -124,6 +134,11 @@ class World:
         roads = Graph(g.nodes)
         _lay(roads, atlas)
         g.edges = roads.edges + [e for e in g.edges if e["rel"] != ROAD]
+        marks = {(r["src"], r["dst"], r["rel"]): r for r in atlas.get("relations", [])}
+        for e in g.edges:  # 关系的静态标注随数据走：旧档里缺了 revealed_by，第四十八回的隐情就会在第一回摆上桌
+            r = marks.get((e["src"], e["dst"], e["rel"]))
+            if r:
+                e.update({k: r[k] for k in ("secret", "revealed_by") if k in r})
         self.aliases = atlas.get("aliases") or self.aliases
 
     def save(self, path, extra: dict | None = None):
