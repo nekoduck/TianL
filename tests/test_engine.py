@@ -188,8 +188,10 @@ class DirectorTest(unittest.TestCase):
         turn = game.act("隔空一掌打死乔峰")
         self.assertEqual(game.world.graph.get("乔峰", "status"), "alive")
         self.assertFalse(game.world.graph.has("神秘剑客"))
-        self.assertEqual(len(turn["void"]), 3)
-        self.assertIn("乔峰身亡——乔峰不在此地", llm.writer_prompts[-1])                      # 驳回译成人话回告编剧
+        self.assertEqual(len(turn["void"]), 4)                                                # 三条驳回的指令 + 一拍作废
+        self.assertIn("乔峰身亡——乔峰不在你身边", llm.writer_prompts[-1])                      # 驳回译成人话回告编剧
+        self.assertIn("你隔空一掌击毙乔峰——未曾发生", llm.writer_prompts[-1])                  # 写了却不成立的拍：整拍作废，化作失败的事实
+        self.assertNotIn("【已成立之事】\n- 你隔空一掌击毙乔峰", llm.writer_prompts[-1])
         self.assertEqual([e for e in game.world.truth.events if e["origin"] == "director"], [])  # 未成立之事不入账
         self.assertNotIn("击毙", game.world.player["journal"][-1])                             # 前情也不记
 
@@ -324,7 +326,8 @@ class StreamingTest(unittest.TestCase):
         self.assertEqual(kinds, ["stage", "stage", "stage", "head", "text", "text", "text"])
         self.assertEqual([d for k, d in events if k == "stage"], ["direct", "settle", "write"])
         head = events[3][1]
-        self.assertEqual((head["text"], head["options"]), ("", ["一", "二", "三"]))  # 落笔前，除正文外都已定
+        self.assertEqual((head["text"], head["options"]), ("", []))  # 落笔前，除正文与选项外都已定：选项在落账之后由编剧拟、规则验收
+        self.assertEqual(turn["options"], ["一", "二", "三"])
         self.assertEqual(turn["text"], "剑光一闪，\n满堂寂然。")
 
     def test_tail_is_kept_from_the_reader_but_feeds_the_ledger(self):

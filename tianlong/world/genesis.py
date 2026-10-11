@@ -3,7 +3,7 @@
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
        处理开端未明的人物（休眠）、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
-       按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
+       按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -38,7 +38,8 @@ SOURCES = {
 }
 RENAME = {"type": "style"}  # 武学自带的 type(掌法/指法…) 与节点类型同名，入世时改称 style
 GATE = ("kind", "blocked", "hidden", "how", "requires", "risk")  # 通行条件入世的字段；src/inferred 是抽取元数据
-ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
+ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")
+SITUATION = "17_situation.json"  # 原著事件的情境前提补充（某人仍受制于人），合并进 requires  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
 
 
 class GenesisError(Exception):
@@ -208,11 +209,30 @@ def _validate(nodes, roads, gates, relations, canon) -> list[str]:
         need(ev["where"], ("location",), ctx + ".where")
         for a in ev["actors"]:
             need(a, ("person",), ctx + ".actors")
-        for nid, _, _ in ev["requires"]:
+        for nid, key, want in ev["requires"]:
             need(nid, tuple(SOURCES), ctx + ".requires")
+            if key[:1] in ("~", "!"):  # 关系前提的另一端也须在世
+                need(want, tuple(SOURCES), ctx + ".requires")
         for op in ev["effects"]:
             for nid in ([op.get("src"), op.get("dst")] if "src" in op else [op.get("id")]):
                 need(nid, tuple(SOURCES), ctx + ".effects")
+    return errors
+
+
+def _situate(root: Path, canon: list[dict]) -> list[str]:
+    """情境前提并入原著事件的 requires；事件须已登记、条目须是 [src, ~关系/!关系, dst]。"""
+    if not (root / SITUATION).exists():
+        return []
+    by_id, errors = {ev["id"]: ev for ev in canon}, []
+    for eid, conds in _read(root, SITUATION)["requires"].items():
+        if eid not in by_id:
+            errors.append(f"情境前提：「{eid}」不是已登记的原著事件")
+            continue
+        for c in conds:
+            if not (isinstance(c, list) and len(c) == 3 and isinstance(c[1], str) and c[1][:1] in "~!"):
+                errors.append(f"情境前提 {eid}：「{c}」不是 [src, ~关系/!关系, dst]")
+            else:
+                by_id[eid]["requires"] = by_id[eid]["requires"] + [c]
     return errors
 
 
@@ -230,7 +250,7 @@ def _compile(root: str) -> dict:
     relations = [{k: r[k] for k in ("src", "dst", "rel", "secret", "revealed_by") if k in r}
                  for r in _read(root, "07_relations.json")]
     canon = _schedule(_read(root, "08_canon.json"))
-    errors = _validate(nodes, roads, gates, relations, canon)
+    errors = _situate(root, canon) + _validate(nodes, roads, gates, relations, canon)
     if errors:
         raise GenesisError(f"原著数据有 {len(errors)} 处引用错误，首条：{errors[0]}")
     first = canon[0]

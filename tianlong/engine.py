@@ -11,11 +11,13 @@
        一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import copy
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
-from .world import access, lod, rag
+from .world import access, adjudicate, lod, menu, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -24,13 +26,14 @@ log = logging.getLogger("tianlong")
 TAIL = 240        # 交给编剧承接语气的上回合末段字数
 WITNESSES = 3     # 众目之下（在场他人≥3）的伤亡、易手、恩怨、重创才成江湖事件
 GRAVE_LOSS = 25   # 主角单回合失血至此即为重创
+HOOKS = 4         # 未兑现的伏笔至多记这么多条
 
 
 def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
     """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉。"""
     def grave(op) -> bool:
         kind, key = op["op"], op.get("key")
-        if kind in ("link", "unlink"):
+        if kind in ("link", "unlink", "drain"):
             return True
         if op.get("id") == "player":
             return kind == "push" and key == "skills"
@@ -44,8 +47,10 @@ class Game:
     def __init__(self, world: World, llm=None):
         self.world, self.llm = world, llm
         self.options: list[str] = []
+        self.menu: dict[str, list[str]] = {}  # 选项文字 → 对象：玩家选中即成为下一回合的授意范围
         self.last_text = ""          # 上回合正文，末段交给编剧承接语气与悬念
-        self.tempo: list[str] = []   # 近三回合张力，供导演调节节奏
+        self.tempo: list[str] = []   # 近三回合本幕之问的结局，供导演调节节奏
+        self._recap = None           # 后台折叠中的梗概：下一回合开始前汇合
 
     def open(self, on=None) -> dict:
         return self._turn("", on)
@@ -54,77 +59,148 @@ class Game:
         """玩家原话照收（选项即原话）；"打 1 选第一项"之类的快捷写法是终端的事，不在内核里猜。"""
         return self._turn(deed.strip(), on)
 
+    def flush(self):
+        """汇合后台折叠的梗概：存档之前、下一回合之前调用。"""
+        if self._recap is not None:
+            self.world.player.set("synopsis", self._recap.result())
+            self._recap = None
+
     # ------------------------------------------------------------
     #  一个回合：原子的——要么整个成立，要么不曾发生
     # ------------------------------------------------------------
     def _turn(self, deed: str, on=None) -> dict:
-        before = json.dumps(self.world.dump(), ensure_ascii=False), self.options, self.last_text, self.tempo
+        self.flush()
+        before = json.dumps(self.world.dump(), ensure_ascii=False), self.options, self.menu, self.last_text, self.tempo
         try:
             return self._play(deed, on)
         except Exception:
-            dump, self.options, self.last_text, self.tempo = before
+            dump, self.options, self.menu, self.last_text, self.tempo = before
             self.world = World.from_dump(json.loads(dump))
+            self._recap = None
             raise
 
     def _play(self, deed: str, on=None) -> dict:
-        """on(kind, data)：stage 报进度，head 在落笔前送出除正文外的整回合，text 随编剧送出正文增量。"""
+        """on(kind, data)：stage 报进度，head 在落笔前送出除正文与选项外的整回合，text 随编剧送出正文增量。"""
         emit = on or (lambda kind, data: None)
         w = self.world
+        w.turn = {}
+        w.player.set("turn", w.player["turn"] + 1)
         origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
+        aim = adjudicate.targets(w, deed, self.menu.get(deed, ()))  # 玩家所指：选项自带的对象 + 原话里认得出的名字
         offstage, staged = lod.split_due(w)
         for ev, tier in offstage:                     # 远方到期之事先了：原著永不插队
             self._settle(ev, tier)
         skip = {ev["id"] for ev, _ in offstage} | ({staged["id"]} if staged else set())
-        gm = rag.backstage(w, stage=staged, upcoming=lod.upcoming(w, skip), tempo=self.tempo)
+        soon = lod.upcoming(w, skip)
+        gm = rag.backstage(w, stage=staged, upcoming=soon, tempo=self.tempo, aim=aim)
+        pack = rag.build(w)
         witnesses = len(rag.scene(w)["people"])
         emit("stage", "direct")
-        plan = agents.direct(self.llm, rag.build(w), gm, deed)
+        plan = agents.direct(self.llm, pack, gm, deed)
         emit("stage", "settle")
-        if staged:  # 此地的原著是本回合主干：照常(且前提未破)则系统落账、盖今日之戳，否则导演的后果作准
-            if plan["canon"]["unfolds"] and not lod.broken(w, staged):
-                lod.settle(w, staged, staged, "canon", day=day0)
-            else:
-                lod.settle(w, staged, {"happens": False}, "director", day=day0)
-                if not plan["canon"]["unfolds"]:
-                    w.taint.update(staged["actors"])
-                log.info("原著「%s」未照常发生：%s", staged["id"], plan["canon"]["why"] or "前提已破")
-        applied, rejected = w.apply(plan["effects"], "director")
+        rules = {"embargo": {w.graph.get(a, "faction") for ev, _ in soon for a in ev["actors"]
+                             if a not in situation.around(w)} - {None},
+                 "cast": set(staged["actors"]) if staged else set(),
+                 "no_interrupt": self.tempo[-2:] == ["interrupted", "interrupted"]}
+        plan, drop = self._rehearse(plan, aim, staged, day0, rules, pack, gm, deed)
+        ruling = self._enact(w, plan, aim, staged, day0, rules, drop)  # 定稿：仍不成立的拍整拍作废
+        if 0 in drop and ruling.question.get("state") == "interrupted":
+            ruling.question["state"] = "open"
+        applied = ruling.applied
         w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
         stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
         journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
         days, _ = w.advance(max(w.clock.minutes(plan["pace"]), journey))     # 时长由措辞换算，不由 LLM 报数
-        self._offstage(days)
+        w.turn["days"] = days
         arrived = w.sync()
-        void = [f"{describe(op)}——{why}" for op, why in rejected]
+        void = ruling.void
         for v in void:
             log.info("未成立：%s", v)
+        for f in ruling.hard + ruling.soft:
+            log.info("体检·%s：%s", f.kind, f.message)
         span = f"{plan['pace']}（{before} → {w.clock.label()}）" + \
                (f"；另有 {journey // PER_DAY} 日路程，现已抵达{w.here}" if journey else "")
         news = [e for e in arrived if e["origin"] != "director"]
         turn = {"time": w.clock.label(), "clock": w.clock.parts(), "place": w.here,
-                "region": w.graph.get(w.here, "region"), "text": "", "options": plan["options"],
+                "region": w.graph.get(w.here, "region"), "text": "", "options": [],
                 "news": [{"id": e["id"], "witnessed": bool(e.get("witnessed")), "date": w.clock.label(e["day"]),
                           "place": e["where"], "text": e["summary"]} for e in news],
                 "status": rag.condition(w), "void": void}
         emit("stage", "write")
-        emit("head", {**turn})  # 快照：之后要往 turn 里填正文，不能让监听者看到它变
-        page = agents.write(self.llm, rag.build(w), {
-            "deed": deed or "环顾四周", "beats": plan["beats"], "void": void, "span": span, "prev": self.last_text[-TAIL:],
-            "news": [e["summary"] for e in arrived if not e.get("witnessed")]},  # 亲历之事已在节拍里，不再当传闻
-            on_text=on and (lambda d: emit("text", d)))
+        emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
+        view = rag.build(w)
+        frame = {"deed": deed or "环顾四周", "beats": [b["text"] for b in ruling.beats if b["text"]], "void": void,
+                 "span": span, "prev": self.last_text[-TAIL:], "notes": ruling.notes, "addressed": ruling.addressed,
+                 "candidates": ruling.candidates,
+                 "news": [e["summary"] for e in arrived if not e.get("witnessed")]}  # 亲历之事已在节拍里，不再当传闻
+        with ThreadPoolExecutor(max_workers=1) as pool:  # 场外推演与新到期的远方原著，与编剧落笔并行：其传闻本就迟到
+            offstage_job = pool.submit(self._offstage, days)
+            page = agents.write(self.llm, view, frame, on_text=on and (lambda d: emit("text", d)))
+            offstage_job.result()
         turn["text"] = page["text"]
+        picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates,
+                            plan["options"] or agents.plain_options(rag.build(w)))
+        self.menu = {text: ids for text, ids in picked}
+        turn["options"] = [text for text, _ in picked]
         facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))
         memory = page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else "")
         weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
-        evicted = w.player.remember(f"{w.clock.label()}·{w.here}：{memory[:60]}")
-        if evicted:
-            w.player.set("synopsis", agents.recap(self.llm, w.player["synopsis"], evicted))
-        self.options, self.last_text = plan["options"], page["text"]
-        self.tempo = (self.tempo + [plan["tension"]])[-3:]
+        self._close(ruling, page, memory)
+        self.options, self.last_text = turn["options"], page["text"]
+        self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]
         return turn
+
+    # ------------------------------------------------------------
+    #  试演与定稿：先在世界的副本上裁决，硬违例交导演返工一次；仍不成立的拍号交定稿作废
+    # ------------------------------------------------------------
+    def _rehearse(self, plan, aim, staged, day0, rules, pack, gm, deed) -> tuple[dict, dict]:
+        trial = copy.deepcopy(self.world)
+        ruling = self._enact(trial, plan, aim, staged, day0, rules)
+        if not ruling.hard:
+            return plan, {}
+        problems = adjudicate.brief(trial, ruling)
+        log.info("导演返工：%s", "；".join(problems))
+        fixed = agents.repair(self.llm, pack, gm, deed, plan, problems)
+        if fixed:
+            trial = copy.deepcopy(self.world)
+            again = self._enact(trial, fixed, aim, staged, day0, rules)
+            if len(again.hard) <= len(ruling.hard):
+                plan, ruling = fixed, again
+        return plan, adjudicate.doomed(ruling)
+
+    @staticmethod
+    def _enact(world, plan, aim, staged, day0, rules, drop=None):
+        """一份提议在一个世界上演出：此地原著照常(且前提未破)则系统落账、盖今日之戳，否则导演的后果作准；再逐拍裁决。"""
+        world.turn["minutes"] = world.clock.minutes(plan["pace"])
+        if staged:
+            if plan["canon"]["unfolds"] and not lod.broken(world, staged):
+                lod.settle(world, staged, staged, "canon", day=day0)
+            else:
+                lod.settle(world, staged, {"happens": False}, "director", day=day0)
+                if not plan["canon"]["unfolds"]:
+                    world.taint.update(staged["actors"])
+        return adjudicate.judge(world, plan, aim, drop=drop, **rules)
+
+    def _close(self, ruling, page, memory):
+        """回合收尾：近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出则交后台折叠梗概。"""
+        w, me = self.world, self.world.player
+        touched = {i for op in ruling.applied for i in (op.get("id"), op.get("src"), op.get("dst"), op.get("value"))
+                   if isinstance(i, str)}
+        situation.touch(w, touched)
+        for goal in situation.settle(w):
+            log.info("未了之事了结：%s", goal)
+        situation.sweep(w)
+        hooks = [h for h in me["hooks"] if h["due"] > me["turn"] - 1]  # 到期之后再给导演一回合交代，然后作罢
+        if page.get("hook"):
+            hooks.append({"text": page["hook"]["text"], "due": me["turn"] + page["hook"]["turns"]})
+        me.set("hooks", hooks[-HOOKS:])
+        evicted = me.remember(f"{w.clock.label()}·{w.here}：{memory[:60]}")
+        if evicted:
+            synopsis = me["synopsis"]
+            self._recap = ThreadPoolExecutor(max_workers=1).submit(agents.recap, self.llm, synopsis, evicted)
 
     def _settle(self, ev: dict, tier: int):
         """场外原著的结算：干净照原著、被扰动的大事与近处破局交史官、远方小事破局作罢。"""

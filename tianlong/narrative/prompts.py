@@ -38,6 +38,8 @@ def render(pack: dict) -> str:
         _section("地上器物", [f"{i['name']}：{i['desc']}" for i in pack["items"]]),
         _section("在场人物", people) or "【在场人物】无",
         _section("在场遗体", pack["dead"]),
+        _section("近旁·同一处所之内，喊一声就到", pack.get("nearby", [])),
+        "【同行】" + "、".join(pack["party"]) if pack.get("party") else "",
         _section("关系网·主角所知", pack["relations"]),
         "【出路】" + ("、".join(f"{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "") + "）"
                               for e in pack["exits"]) or "无"),
@@ -84,7 +86,9 @@ def render_backstage(gm: dict) -> str:
                      + "\n  这是本回合的主干：把它编入节拍，让主角目睹或卷入，相关者的言行须合乎原著；原著结局由系统落账，不必写进 effects。"
                        "若主角的举动使它不能照常发生，canon.unfolds 填 false 并在 why 说明，实际后果由你的 effects 写下。")
     parts += [
-        _section("原著近事·只可借风声、预兆、传言伏笔，其相关者不得提前登场动手", gm["upcoming"]),
+        _section("焦点·主角此举所指之物的真相（主角未必知道）", gm.get("focus", [])),
+        _section("受制", gm.get("custody", [])),
+        _section("原著近事·只可借风声、预兆、传言伏笔，其相关者与其门派人马不得提前登场动手", gm["upcoming"]),
         f"【命运骰】{gm['fate']}（1~100，越高越顺遂；用于机缘、巧合、寻物、言辞打动人心的顺逆）",
         _section("较量预裁·主角若与之动手、斗智或潜行，结局须依此，不得顺从主角（未列者为孩童或无力之人，不入较量）", gm["ruling"]),
         f"【主角濒危】{gm['peril']}" if gm.get("peril") else "",
@@ -96,7 +100,9 @@ def render_backstage(gm: dict) -> str:
                  "注明过不去者，主角过不去", gm["passes"]),
         _section("近处暗路·主角尚未发现：剧情中被发现或由知情人领路，才可通行", gm["secret_ways"]),
         _section("在场武学", gm["arts"]),
-        _section("武学机缘", gm["grants"]),
+        _section("武学机缘·研习进度", gm["grants"]),
+        _section("未兑现的伏笔", gm.get("hooks", [])),
+        _section("久未推进的未了之事·宜推进或由剧情了结(pull)", gm.get("stale", [])),
         f"【近处去向】{'、'.join(gm['places'])}（更远的原著地点亦可直呼其名，路程由系统结算）",
         f"【节奏】{gm['tempo']}" if gm.get("tempo") else "",
     ]
@@ -106,65 +112,92 @@ def render_backstage(gm: dict) -> str:
 # ============================================================
 #  剧情落账：LLM 创造剧情，剧情的后果以指令作用于既有世界（基础设施负责记住、传播、算时日）
 # ============================================================
-PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路都由系统掌管，已全部列在上文；你创造的是剧情——言行、冲突、转折、悬念与后果。
-剧情若改变了世界，就在 effects 中写下，系统会永久记住并让江湖传开。只能作用于已存在的人、地、物：
-- {"op":"set","id":"人物/门派/player","key":"属性","value":值}　{"op":"add","id":…,"key":"hp|power","value":增减}
-- {"op":"push"/"pull","id":"player","key":"inventory","value":"此地或随身的器物"}（拾取/丢下）；{"op":"push","id":"player","key":"skills","value":"武学"}
-- {"op":"push"/"pull","id":"player","key":"conditions","value":"中毒/被扣押/被追杀…"}（境况起落）；{"op":"push"/"pull","id":"player","key":"threads","value":"一句未了之事"}（埋下或收束线头，至多四条）
-- {"op":"link"/"unlink","src":…,"dst":…,"rel":"恩怨/结义/师承等","note":"此人对主角的一句印象(可选)","secret":可选true}；同一人对主角只留最新一条关系，写新即覆盖旧
+PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路都由系统掌管，已全部列在上文。你创造剧情，剧情的后果逐拍挂在拍上（ops），系统据此裁决、记账、传开。
+一拍写了变化却没有对应的 ops——取得或交出某物、某人离去或随你同行、生死、擒放、吸功——这一拍就不成立，会被退回重写。指令只能作用于已存在的人、地、物：
+- {"op":"set","id":"人物/门派/player","key":"属性","value":值}；{"op":"add","id":…,"key":"hp","value":增减}（主角受伤或疗伤）
+- 拾取/丢下：{"op":"push"/"pull","id":"player","key":"inventory","value":"此地或身边的器物"}；器物易手：{"op":"set","id":器物,"key":"holder","value":在场人物或player}
+- 境况：{"op":"push"/"pull","id":"player","key":"conditions","value":"中毒/被追杀…"}
+- 未了之事：{"op":"push","id":"player","key":"threads","value":{"goal":"一句话","done_when":[["钟灵","~随行","player"]]}}（done_when 可省；了结即自动收束，至多四条）；收束写 pull
+- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"此人对主角的一句印象(可选)"}；同一人对主角只留最新一条；
+  随你同行写 {"op":"link","src":某人,"dst":"player","rel":"随行"}（之后主角走到哪他跟到哪，过不去的关他会留下）；分道扬镳写 unlink 随行；
+  擒人写 {"op":"link","src":擒者,"dst":被擒者,"rel":"扣为人质|囚禁"}，救人写 unlink 这条
+- 有人赶来：{"op":"arrive","id":某人}（系统按其所在与路程、本回合光阴裁定赶不赶得到；近旁之人无须 arrive）
+- 研习秘籍或向身边人求教武学：{"op":"study","id":"player","value":"秘籍或武学"}；北冥吸人内力：{"op":"drain","id":"player","value":"某人"}——增减多少由系统算，不要写 power
 - {"op":"reveal","src":…,"dst":…,"rel":…}（揭开一条既有隐情；发现暗路时 src 为暗路起点、dst 为通往之地、rel 写"通路"）
-- 地点与景物只可改其现状：{"op":"set","id":"地点或景物","key":"state","value":"…"}；暗藏之人或物被发现：{"op":"set","id":…,"key":"hidden","value":false}
-主角(player，写主角名号亦可)可写属性：location/hp/power/posture/inventory/skills/conditions/threads；人物 status 取 alive/wounded/dead；
-主角移动即 set player.location 为原著中的地点（跋涉时日由系统按道路结算；目的地门前若有关口，系统让主角止步关前，留待下一回合过关）；
-器物易手用 {"op":"set","id":器物,"key":"holder","value":在场人物}。
-不成立之事（会被系统驳回）：新造人物/地点/器物、前往不存在之地、走不通的路（此路不通、条件未备、未被发现的暗路）、拿取此地没有的器物、死者复生、触碰不在此地的人。
-剧情所需的路人龙套（店小二、巡山弟子之流）可以在节拍里出场，但他们只活在叙事中，不写入 effects。
-effects 即真相：节拍里写到的每一处伤亡、易手、器物落地、去留、地点现状之变，都必须有对应的 effects；没写进 effects 的变化不曾发生，下一回合世界会按原样呈现。"""
+- 地点与景物只可改现状：{"op":"set","id":…,"key":"state","value":"…"}；暗藏之人或物被发现：{"op":"set","id":…,"key":"hidden","value":false}
+- 主角移动：{"op":"set","id":"player","key":"location","value":原著地点}（路程由系统结算，同行者随之；目的地门前有关口则止步关前）
+- 败走：让此人 set location 到别处；系统记他新败，数日内不会再来
+场景实体：剧情需要一队人马或一件寻常物件（碎银、火折、金创药）时，在顶层 spawn 里立它：{"kind":"group","name":"万劫谷谷丁","faction":"万劫谷","count":8} 或 {"kind":"thing","name":"火折"}；
+立了才能在 ops 里用它。群体须属于此地附近有据点或有人的门派，不得属于原著近事里尚未到场的势力；物件不得冒用原著器物之名。路人龙套只活在叙事里，不写 ops。
+不成立之事：新造人物/地点/原著器物、去不了的地方、拿此地没有的器物、死者复生、触碰不在身边的人、替主角做他没选的事（主角只做玩家所选之事；顺手取物、杀人、吸功须是玩家所指）。"""
+
+THREATS = "威胁须有来源：打断、堵路、追击主角的，只能是在场或能赶来的人、已立的群体、或此刻上演的原著。"
 
 
 def _example(pack: dict) -> str:
     """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错。"""
     who = pack["people"][0]["name"] if pack["people"] else "段誉"
-    ex = {"beats": [f"{who}冷眼打量你，手按剑柄", "你拱手自报来历，他哼了一声"],
-          "effects": [{"op": "link", "src": who, "dst": "player", "rel": "疑忌", "note": "你来路不明"},
-                      {"op": "push", "id": "player", "key": "threads", "value": f"{who}对你起了疑心"}],
-          "pace": "片刻", "canon": {"unfolds": True, "why": ""}, "tension": "起",
-          "options": ["向他讨教剑法", "退到人群之后", "直言来意"]}
+    ex = {"beats": [{"who": "player", "text": "你拱手自报来历，说明来意", "ops": []},
+                    {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」",
+                     "ops": [{"op": "link", "src": who, "dst": "player", "rel": "疑忌", "note": "你来路不明"}]}],
+          "question": {"ask": f"能否取信于{who}", "state": "open", "by": None},
+          "spawn": [], "pace": "片刻", "canon": {"unfolds": True, "why": ""}, "tension": "起"}
     return "【示例·只示格式，不示内容】" + json.dumps(ex, ensure_ascii=False)
 
 
-def director(pack: dict, gm: dict, deed: str) -> tuple[str, str]:
-    system = (
-        "你是《天龙八部》沙盒世界的说书人与导演。主角无论做什么，都由你依据世界真相推演其后果，让在场人物依各自性情与图谋作出反应，"
-        "制造冲突、转折与悬念；一幕有起有落，不可回回剑拔弩张、回回以利刃指喉收尾。"
-        "剧情必须有根有据：合乎原著人物性情与武学设定，合乎已发生的历史、传闻与未了之事；较量的成败依【较量预裁】，机缘的顺逆依【命运骰】；"
-        "高手不会被庸手击败，原著人物不会无端性情大变。后台若列出【原著此刻在此上演】，它就是本回合的主干，主角可旁观、可卷入。"
-        "隐情可以伏笔、可以在合乎情理时揭开（用 reveal），不要平白说破。主角的出身与所求是他行动的理由，让剧情围着它转。"
-        "原著之外，不得凭空生出门派覆灭、大批伤亡、大军攻山之类大事——超出主角一人之力的变故须有原著依据，世界的尺度由系统掌管。"
-        "道路并非想走就走：主角要过后台所列的关口，须在节拍里兑现（应付守卫、攀崖涉险、备船渡水、破解机关……），代价落进 effects。"
-        "选项由你自由拟定：3 个方向迥异、此情此景下真正诱人的下一步，而不是千篇一律的行走与交谈。\n"
+def _director_system(pack: dict) -> str:
+    return (
+        "你是《天龙八部》沙盒世界的说书人与导演。玩家选了一件事，你推演它的后果：主角只做玩家所选之事，在场人物依各自性情与图谋作出反应，"
+        "制造冲突、转折与悬念；一幕有起有落，不可回回剑拔弩张、回回以追兵或利刃收尾。"
+        "剧情必须有根有据：合乎原著人物性情与武学设定，合乎已发生的历史、传闻与未了之事；较量的成败依【较量预裁】，机缘的顺逆依【命运骰】，"
+        "但节拍里绝不出现后台术语（命运骰、预裁、档位、功力数字）。高手不会被庸手击败，原著人物不会无端性情大变。"
+        "后台若列出【原著此刻在此上演】，它就是本回合的主干。【焦点】是主角所求之物的真相，剧情须与之相符：东西在谁手里就在谁手里。"
+        "隐情可以伏笔、可以在合乎情理时揭开（用 reveal），不要平白说破。主角的出身与所求是他行动的理由。"
+        "原著之外，不得凭空生出门派覆灭、大批伤亡、大军攻山之类大事。" + THREATS +
+        "道路并非想走就走：主角要过后台所列的关口，须在节拍里兑现（应付守卫、攀崖涉险、备船渡水……）。"
+        "每回合标出本幕之问：主角这一举所求的那件事，结局是了结(resolved)、悬而未决(open)还是被打断(interrupted，须写明 by 是谁)。"
+        "选项不归你拟，你只写到此刻为止。\n"
         + PLOT_GUIDE +
-        '\n输出 JSON：{"beats":["3~6拍，每拍不超过40字，写清动作、对白要点与张力"],"effects":[...],'
-        f'"pace":"本回合主角举动的时长，只可取 {"/".join(PACES)} 之一（远行路程由系统另算，不必计入）",'
+        '\n输出 JSON：{"beats":[{"who":"player或人物名","to":"对谁说话(可省；对主角说话写player)","text":"不超过40字，写清动作与对白要点","ops":[…]}，共3~6拍],'
+        '"question":{"ask":"本幕之问","state":"resolved/open/interrupted","by":"打断者，否则 null"},"spawn":[…],'
+        f'"pace":"本回合主角举动的时长，只可取 {"/".join(PACES)} 之一（远行路程由系统另算）",'
         '"canon":{"unfolds":true或false,"why":"原著不能照常发生时的缘由，否则留空"},'
-        f'"tension":"本回合张力，取 {"/".join(TENSIONS)} 之一",'
-        '"options":["3个方向迥异的下一步，每个不超过14字，江湖口吻"]}\n'
+        f'"tension":"本回合张力，取 {"/".join(TENSIONS)} 之一"}}\n'
         + _example(pack)
     )
-    user = f"{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}"
+
+
+def director(pack: dict, gm: dict, deed: str) -> tuple[str, str]:
+    return _director_system(pack), f"{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}"
+
+
+def repair(pack: dict, gm: dict, deed: str, draft: dict, problems: list[str]) -> tuple[str, str]:
+    """导演返工：原样拿回自己的提议与系统查出的问题，只改有问题的拍，输出同一格式。"""
+    system = _director_system(pack) + "\n\n你上一稿的提议有几处与世界账本对不上。只改有问题的拍（补上漏写的 ops、改掉做不到的事、删去越权之举），其余照旧，输出完整的同一格式 JSON。"
+    user = (f"{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}\n"
+            f"【上一稿】{json.dumps(draft, ensure_ascii=False)}\n{_section('账本对不上之处', problems)}")
     return system, user
 
 
 def writer(pack: dict, frame: dict) -> tuple[str, str]:
     system = ("你是深谙金庸笔法的武侠小说家，为文字冒险撰写正文。以第二人称「你」叙述，白描为主，对话传神，人物言行合乎性情与设定。"
-              "依导演节拍铺陈，可补足细节与氛围，承接【上回合末段】的语气与悬念而不重复它；"
-              "【未能成立】中的内容不得写成既成事实；正文所述光阴须与【本回合光阴】相符，不得凭空过夜、过日；"
-              "新到的传闻可借人物之口或环境自然带出。篇幅 250~450 字，不写标题、选项与任何 markdown 符号。\n"
-              "正文写完后另起一行只写 ===，再写两行：\n梗概：本回合实际发生之事的一句话，不超过40字，只记已成立之事"
-              "\n传言：若此事值得在江湖上传开，一句客观记述（不超过30字，以主角名号称呼主角）；否则写 无")
+              "【已成立之事】是本回合实际发生的一切，依它铺陈，可补足神态、细节与氛围，但不得添出新的得失、伤亡、去留或擒放；"
+              "【未能成立】中的内容不得写成既成事实，可写成未遂或落空；【连带】是系统结算的后果，须自然写进正文；"
+              "【上回合末段】只作承接语气，不作事实；正文所述光阴须与【本回合光阴】相符。新到的传闻可借人物之口或环境自然带出。"
+              "篇幅 250~450 字，不写标题与任何 markdown 符号。\n"
+              "正文写完后另起一行只写 ===，然后写：\n"
+              "梗概：本回合实际发生之事的一句话，不超过40字\n"
+              "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【出路】【随身之物】【地上器物】里的原名，多个用顿号）\n2. …\n3. …\n"
+              "伏笔：正文里埋下、日后须兑现的一句悬念｜期限：回合数（没有就写 无）\n"
+              "传言：若此事值得在江湖上传开，一句客观记述（不超过30字，以主角名号称呼主角）；否则写 无\n"
+              "选项是三个方向迥异、此情此景下真正诱人的下一步，每个不超过14字，江湖口吻；只能指向主角此刻知道、够得着或走得到的人、地、物，"
+              "不得包含主角尚不知道的隐情；若有人刚对主角说了话，至少一项回应他；【可作选项】里的举动优先采用。")
     user = (f"{render(pack)}\n【主角此刻】{frame['deed']}\n【本回合光阴】{frame['span']}\n"
-            f"{_section('上回合末段', [frame['prev']] if frame.get('prev') else [])}\n"
-            f"{_section('导演节拍', frame['beats'])}\n{_section('未能成立', frame['void'])}\n"
+            f"{_section('上回合末段·只作语气参考', [frame['prev']] if frame.get('prev') else [])}\n"
+            f"{_section('已成立之事', frame['beats'])}\n{_section('未能成立', frame['void'])}\n"
+            f"{_section('连带', frame.get('notes', []))}\n"
+            f"{_section('须回应', [f'{p}刚对你说了话' for p in frame.get('addressed', [])])}\n"
+            f"{_section('可作选项', frame.get('candidates', []))}\n"
             f"{_section('刚刚传到的消息', frame['news'])}")
     return system, user
 

@@ -39,6 +39,7 @@ class World:
         self.taint: set[str] = taint        # 因果涟漪：被玩家亲手触碰过的节点
         self.seed: int = seed
         self.aliases: dict[str, str] = aliases or {}  # 别名→id：LLM 写「萧峰」「乔帮主」亦能落到乔峰
+        self.turn: dict = {}                # 本回合的瞬时账（谁被谁挪动过、谁到场、连带说明）——不入存档
 
     # ------------------------------------------------------------
     #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试

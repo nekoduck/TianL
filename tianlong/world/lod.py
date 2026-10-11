@@ -1,17 +1,19 @@
 """
-[INPUT]: 依赖 world/graph 的 matches（前提核对口径）、world/effects 的 describe（只记成立之事时的代笔），
+[INPUT]: 依赖 world/graph 的 holds（前提核对口径）、world/situation 的 party / quests / CUSTODY（纠缠与拘押）、world/effects 的 describe（只记成立之事时的代笔），
          world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
-[OUTPUT]: 对外提供 tiers()、lod1_scope()、absorb()、split_due()、upcoming()、verdict()、dirt()、broken()、settle()
+[OUTPUT]: 对外提供 entangled()、tiers()、lod1_scope()、absorb()、split_due()、upcoming()、verdict()、dirt()、broken()、settle()
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、何事到期、是否被污染），
        把需要 LLM 的工作以"任务"形式交给 engine：远方到期原著场外结算，此地到期原著一回合一桩交导演作主干；
        场外剧情的后果经 effects 落账为真相，并盖原著排定之日的日戳（此地亲见者盖今日）。
        账本只记已成立之事：场外的说法在后果全数成立时才照录，有不成立的只记成立的部分，一事无成则不入账；
-       原著的隐含前提——死者不再登场、正与主角同在一处的人分身不得、主角手中之物不会凭空飞走
+       原著的隐含前提——死者不再登场、正与主角同在一处的人分身不得、主角手中之物不会凭空飞走、救人之事须那人仍受制；
+       情境前提(~关系/!关系)与属性前提同一口径(graph.holds)；与主角故事纠缠之人(同行者、未了之事所系者)的场外原著交史官或作罢
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
+from . import situation
 from .effects import describe
-from .graph import matches
+from .graph import holds
 
 NEAR = 1  # 一日路程之内皆为近处：0 日路相连的山门、洞府同属一簇，不以跳数计
 
@@ -88,14 +90,23 @@ def upcoming(world, skip: set[str] = frozenset(), within: int = 7, limit: int = 
     return out[:limit]
 
 
+def entangled(world) -> set[str]:
+    """与主角的故事纠缠在一起的人：正随主角同行者、主角未了之事所系之人。他们的场外原著不再照本宣科。"""
+    about = {a for meta in situation.quests(world).values() for a in meta.get("about", [])}
+    return set(situation.party(world)) | {a for a in about if world.graph.kind(a) == "person"}
+
+
 def _unmet(world, ev: dict) -> list[tuple]:
     g = world.graph
     touched = sorted(set(ev["actors"]) | {op.get("id") for op in ev["effects"] if isinstance(op.get("id"), str)})
-    unmet = [(nid, key, want) for nid, key, want in ev["requires"] if not matches(g.get(nid, key), want)]
+    unmet = [(nid, key, want) for nid, key, want in ev["requires"] if not holds(g, nid, key, want)]
+    unmet += [(op["src"], "~" + op["rel"], op["dst"]) for op in ev["effects"]  # 救人的原著，须那人仍受制：已被主角救走便不必再救
+              if op.get("op") == "unlink" and op.get("rel") in situation.CUSTODY and not holds(g, op["src"], "~" + op["rel"], op["dst"])]
     unmet += [(a, "status", "alive") for a in ev["actors"] if g.get(a, "status") == "dead"]       # 死者不再登场
     unmet += [(i, "holder", "非主角") for i in touched if g.kind(i) == "item" and g.get(i, "holder") == "player"]  # 主角手中之物
     if ev["where"] != world.here:  # 场外之事：正与主角同在一处的人分身不得——同伴随行，他的原著便在别处断了
         unmet += [(n, "location", ev["where"]) for n in touched if g.kind(n) == "person" and g.get(n, "location") == world.here]
+        unmet += [(n, "纠缠", ev["where"]) for n in touched if n in entangled(world) and g.get(n, "location") != world.here]
     return unmet
 
 
@@ -105,6 +116,12 @@ def broken(world, ev: dict) -> bool:
 
 
 def _why(world, nid: str, key: str, want) -> str:
+    if key == "纠缠":
+        return f"{nid}正与主角同行或系于主角未了之事，其行止已不照原著"
+    if key[:1] == "~":
+        return f"{nid}与{want}之间已无「{key[1:]}」"
+    if key[:1] == "!":
+        return f"{nid}与{want}之间已有「{key[1:]}」"
     cur = world.graph.get(nid, key)
     if key == "location" and cur == world.here:
         return f"{nid}正与主角同在{world.here}，无法在{want}现身"

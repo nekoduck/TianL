@@ -10,7 +10,7 @@
 """
 import random
 
-from . import access, lod
+from . import access, growth, lod, situation
 from .effects import usable
 from .ledger import NEWS_SPEED
 
@@ -111,8 +111,8 @@ def build(world) -> dict:
                "persona": g.get(p, "persona"), "appearance": g.get(p, "appearance"), "speech": g.get(p, "speech"),
                "carrying": _held(world, p), "toward_you": _toward_player(world, p)} for p in s["people"]]
     carried = [{"name": i, "desc": g.get(i, "desc")} for i in me["inventory"]]
-    news = [f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}"
-            for e in (world.truth.get(i) for i in world.knowledge.known[-NEWS_WINDOW:])]
+    news = [f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}"  # 主角自己的作为已在【近来】里，不再当传闻
+            for e in (world.truth.get(i) for i in world.knowledge.known) if e["origin"] != "director"][-NEWS_WINDOW:]
     return {
         "time": world.clock.label(),
         "player": {"name": me["name"], "hp": f"{me['hp']}/{me['max_hp']}", "tier": power_tier(me["power"]),
@@ -126,6 +126,8 @@ def build(world) -> dict:
         "people": people,
         "dead": s["dead"],
         "relations": _relation_lines(world, s["people"] + s["dead"], visible),
+        "party": situation.party(world),
+        "nearby": [f"{p}（{g.get(p, 'title')}）在{g.get(p, 'location')}" for p in sorted(situation.around(world) - set(s["people"]))],
         "exits": access.exits(world),
         "news": news,
         "journal": me["journal"],
@@ -157,18 +159,51 @@ def _secret_open(world, edge: dict, canon_by_id: dict) -> bool:
     return ev is not None and ev["day"] - world.clock.day <= SECRET_HORIZON
 
 
+QUESTION = {"resolved": "已了结", "open": "悬而未决", "interrupted": "被打断"}
+
+
 def _tempo(tempo) -> str:
+    """节奏看本幕之问的结局，而不只看张力标签：一问已解宜开新问，连番被打断则本回合必须了结。"""
     if not tempo:
         return ""
-    line = "近来张力：" + "、".join(tempo)
-    if list(tempo[-2:]) == ["高潮", "高潮"]:
-        line += "——连番高潮，本回合宜收束或转场，不可再堆砌对峙"
-    elif list(tempo[-2:]) == ["平", "平"]:
-        line += "——久无波澜，宜起一波"
+    line = "近来本幕之问：" + "、".join(QUESTION.get(t, t) for t in tempo)
+    if list(tempo[-2:]) == ["interrupted", "interrupted"]:
+        line += "——连番被打断，本回合必须让主角此问有个了结，不得再打断"
+    elif tempo[-1] == "resolved":
+        line += "——上一问已解，宜由人物的图谋或主角的所求引出新问，不必非起刀兵"
+    elif list(tempo[-3:]) == ["open"] * 3:
+        line += "——久悬未决，本回合宜推进或了结"
     return line
 
 
-def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
+def focus(world, ids) -> list[str]:
+    """玩家举动所指之物的真相：在哪、谁拿着、多远、主角以为在哪——导演看不见解药在谁身上，就会凭空变出一瓶来。"""
+    g, dist, out = world.graph, world.graph.distances(world.here), []
+    for nid in sorted(ids):
+        kind = g.kind(nid)
+        if kind == "person":
+            where, held = g.get(nid, "location"), situation.captors(world, nid)
+            line = f"{nid}：{STATUS_WORD.get(g.get(nid, 'status'), '')}，身在{where}（距此{dist.get(where, '?')}日）" \
+                + (f"，受制于{'、'.join(held)}" if held else "") + ("，正随你同行" if nid in situation.party(world) else "")
+        elif kind == "item":
+            holder = g.get(nid, "holder")
+            line = f"{nid}：" + ("在你身上" if holder == "player" else f"由{holder}随身（{holder}在{g.get(holder, 'location')}）"
+                                 if holder else f"在{g.get(nid, 'location')}" + ("，藏而未露" if g.get(nid, "hidden") else ""))
+        elif kind == "location":
+            line = f"{nid}：距此{dist.get(nid, '?')}日" + ("" if nid in access.distances(world, world.here) else "，主角眼下走不到")
+        else:
+            continue
+        belief = world.knowledge.view(nid) if kind == "person" else {}
+        if belief.get("location") and belief["location"] != g.get(nid, "location"):
+            line += f"；主角以为在{belief['location']}"
+        out.append(line)
+    return out
+
+
+STATUS_WORD = {"alive": "安好", "wounded": "负伤", "dead": "已死"}
+
+
+def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -> dict:
     g, me, here = world.graph, world.player, world.here
     s = scene(world)
     hidden = [n for n in g.where(location=here) if g.get(n, "hidden") and not g.get(n, "dormant")]
@@ -201,9 +236,15 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=()) -> dict:
         "secrets": secrets,
         "agendas": [f"{p}：{g.get(p, 'agenda')}" for p in s["people"] if g.get(p, "agenda")],
         "odds": odds,
-        "grants": [f"{i}：研习可得「{g.get(i, 'grants')['skill']}」，功力+{g.get(i, 'grants')['power']}"
+        "grants": [f"{growth.progress(world, i)}（可得「{g.get(i, 'grants')['skill']}」；功力由系统分阶兑现，写 study 即可）"
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]
                    if g.get(i, "grants")],
+        "focus": focus(world, aim),
+        "hooks": [f"{h['text']}" + (f"（已到期：本回合兑现或交代其落空）" if h["due"] <= me.get("turn", 0) else
+                                    f"（{h['due'] - me.get('turn', 0)}回合内兑现）") for h in me.get("hooks", [])],
+        "stale": situation.stale(world),
+        "custody": [f"{e['dst']}受制于{e['src']}（{e['rel']}）" for e in g.edges if e["rel"] in situation.CUSTODY
+                    and situation.around(world) & {e["src"], e["dst"]}],
         "arts": _arts(world, ["player", *s["people"]]),
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),

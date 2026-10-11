@@ -152,6 +152,9 @@ class PlotTest(unittest.TestCase):
         self.assertEqual((len(applied), rejected), (3, []))
         self.assertEqual((self.w.player["posture"], self.w.here), ("跌坐", "大理城"))
         self.assertEqual(self.w.graph._find("段誉", "player", "结交")["note"], "同去王府")
+        _, rejected = self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
+        self.assertEqual(len(rejected), 1)  # 段誉没跟来大理城：不在身边的人结不下新的关系
+        self.w.graph.set("段誉", "location", "大理城")
         self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
         self.assertEqual([e["rel"] for e in self.w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["结义"])  # 写新覆盖旧
 
