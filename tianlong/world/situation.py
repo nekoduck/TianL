@@ -7,7 +7,7 @@
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：群体与寻常物件，入账、有归属、离远即回收）、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
-          MAX_QUESTS、STALE
+          entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
 [POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
@@ -56,6 +56,12 @@ def around(world, loc: str | None = None) -> set[str]:
 # ============================================================
 #  随行
 # ============================================================
+def entangled(world) -> set[str]:
+    """与主角的故事纠缠在一起的人：正随主角同行者、主角未了之事所系之人。他们的场外原著不再照本宣科，场外推演与史官也挪不动他们。"""
+    about = {a for meta in quests(world).values() for a in meta.get("about", [])}
+    return set(party(world)) | {a for a in about if world.graph.kind(a) == "person"}
+
+
 def party(world) -> list[str]:
     g = world.graph
     return [e["src"] for e in g.edges if e["rel"] == FOLLOW and e["dst"] == "player"

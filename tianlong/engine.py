@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
+[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、pacing.record(节奏账)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
@@ -7,7 +7,7 @@
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → 焦点检索与后台 → 导演逐拍提议
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
        → 时长按措辞与道路结算(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
-       → 选项过出口检查、对象记入 menu 作下一回合的授意 → 事件门槛判定入江湖账本 → 近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出交后台折叠梗概。
+       → 选项过出口检查、对象记入 menu 作下一回合的授意 → 事件门槛判定入江湖账本 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题与僵持，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -15,10 +15,11 @@
 import copy
 import json
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
-from .world import access, adjudicate, body, lod, menu, perspective, rag, situation
+from .world import access, adjudicate, body, lod, menu, pacing, perspective, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -27,7 +28,8 @@ log = logging.getLogger("tianlong")
 TAIL = 240        # 交给编剧承接语气的上回合末段字数
 WITNESSES = 3     # 众目之下（在场他人≥3）的伤亡、易手、恩怨、重创才成江湖事件
 GRAVE_LOSS = 25   # 主角单回合失血至此即为重创
-HOOKS = 4         # 未兑现的伏笔至多记这么多条
+BODILY = re.compile(r"伤|毒|病|血|疼|痛|反噬|岔气|走火|经脉|内息")  # 关于身体的伏笔一律不收
+HOOKS = 2         # 未兑现的伏笔至多记这么多条：悬念是稀缺品，多了便成了催债
 
 
 def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
@@ -153,7 +155,7 @@ class Game:
         emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
         view = perspective.veil(w, rag.build(w))  # 编剧从主角的视角写：不识名之人只剩叫法，不给即不泄露
         veil = lambda text, who=None: perspective.mask(w, text, who)
-        frame = {"deed": deed or "环顾四周", "beats": [veil(b["text"], b["who"]) for b in ruling.beats if b["text"]],
+        frame = {"deed": deed or "环顾四周", "beats": [veil(b["text"], b["who"]) + (f"〔{b['mood']}〕" if b.get("mood") else "") for b in ruling.beats if b["text"]],
                  "void": [veil(v) for v in void], "span": span, "prev": self.last_text[-TAIL:],
                  "notes": [veil(n) for n in ruling.notes + ([mend] if mend else [])], "addressed": [perspective.handle(w, p) for p in ruling.addressed],
                  "candidates": [veil(c) for c in ruling.candidates],
@@ -177,7 +179,7 @@ class Game:
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
-        self._close(ruling, page, memory)
+        self._close(ruling, page, memory, moved=w.here != origin)
         self.options, self.last_text = turn["options"], page["text"]
         self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]
         return turn
@@ -218,8 +220,8 @@ class Game:
                     world.taint.update(staged["actors"])
         return adjudicate.judge(world, plan, aim, drop=drop, then=canon, **rules)
 
-    def _close(self, ruling, page, memory):
-        """回合收尾：近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出则交后台折叠梗概。"""
+    def _close(self, ruling, page, memory, moved=False):
+        """回合收尾：近事、未了之事的推进与了结、伏笔账、节奏账、场景实体回收；近事溢出则交后台折叠梗概。"""
         w, me = self.world, self.world.player
         touched = {i for op in ruling.applied for i in (op.get("id"), op.get("src"), op.get("dst"), op.get("value"))
                    if isinstance(i, str)}
@@ -227,8 +229,9 @@ class Game:
         for goal in situation.settle(w):
             log.info("未了之事了结：%s", goal)
         situation.sweep(w)
-        hooks = [h for h in me["hooks"] if h["due"] > me["turn"] - 1]  # 到期之后再给导演一回合交代，然后作罢
-        if page.get("hook"):
+        hooks = [h for h in me["hooks"] if h["due"] > me["turn"] - 1]  # 到期之后再给导演一回合交代，然后静默作罢
+        pacing.record(w, ruling.beats, moved or any(adjudicate.physical(op) for op in ruling.applied))
+        if page.get("hook") and not BODILY.search(page["hook"]["text"]):  # 身体归规则，伤病不作悬念
             hooks.append({"text": page["hook"]["text"], "due": me["turn"] + page["hook"]["turns"]})
         me.set("hooks", hooks[-HOOKS:])
         evicted = me.remember(f"{w.clock.label()}·{w.here}：{memory[:60]}")

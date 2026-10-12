@@ -4,7 +4,8 @@
 [OUTPUT]: 命令行工具：python -m tools.replay [样本.json] [--show 种类]——按违例种类统计旧对局的节拍与正文，并列出例子；
           亦可 import：audit(turns) → {kind: [(回合, Finding)]}
 [POS]: 量尺——不调用模型、不改世界，用真实对局校准变化词表的误报与漏报；每一批重构都拿它对比基线。
-       另量身体两项(v3 P0-3)：无伤扣血(这一回合一字未写伤却扣主角气血)、研习伤身(研习的回合主角掉血)
+       另量身体两项(v3 P0-3)：无伤扣血(这一回合一字未写伤却扣主角气血)、研习伤身(研习的回合主角掉血)；
+       与打转一项(v3 P1)：streaks——逐回合重放节奏账，阻尼器会在哪些回合报「打转」(主题词表与判定口径与 pacing 共用)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -12,7 +13,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from tianlong.world import lexicon
+from tianlong.world import lexicon, pacing
 from tianlong.world.adjudicate import WOUND
 from tianlong.world.world import World
 
@@ -80,10 +81,25 @@ def _body(turn: dict):
         yield "study_hurt", lexicon.Finding("study_hurt", 0, "player", f"研习之回合主角失血{loss}")
 
 
+def streaks(turns: list[dict], key: str = "beats") -> list[tuple[int, str]]:
+    """逐回合重放节奏账：阻尼器会在哪些回合报「打转」→ [(回合, 主题)]。key 取 beats(导演节拍) 或 text(编剧正文)。"""
+    log, out = [], []
+    for t in turns:
+        text = "".join(t[key]) if isinstance(t[key], list) else t[key]
+        log.append({"themes": pacing.tag(text), "pleas": []})
+        out += [(t["n"], theme) for theme in pacing.tired(log)]
+    return out
+
+
 def main(argv):
     path = Path(argv[0]) if argv and not argv[0].startswith("--") else FIXTURE
     show = argv[argv.index("--show") + 1] if "--show" in argv else None
     turns = json.loads(path.read_text("utf-8"))
+    for key in ("beats", "text"):
+        if all(key in t for t in turns):
+            runs = streaks(turns, key)
+            print(f"== 打转({key})：近{pacing.WINDOW}回合有{pacing.STREAK}回合同一主题，{len(runs)} 回合报警  "
+                  + " ".join(f"{n}{t}" for n, t in runs[:12]))
     for label, prose in (("导演节拍", False), ("编剧正文", True)):
         found = audit(turns, prose)
         total = sum(len(v) for v in found.values())

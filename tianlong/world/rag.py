@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
+[INPUT]: 依赖 world/pacing 的 advise（阻尼），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、久悬之事）、world/growth 的 progress（研习进度）
          与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、
@@ -8,11 +8,11 @@
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
        backstage 给导演——焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
-       节奏(看本幕之问的结局：一问已解宜开新问，连番被打断则必须了结)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
+       原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, body, growth, lod, perspective, situation
+from . import access, body, growth, lod, pacing, perspective, situation
 from .effects import usable
 from .ledger import NEWS_SPEED
 
@@ -226,10 +226,12 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
     return {
         "fate": fate,
         "stage": {"event": stage, "dirt": lod.dirt(world, stage), "broken": lod.broken(world, stage)} if stage else None,
-        "upcoming": [f"{'今日稍后' if n <= 0 else f'{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
+        "upcoming": [f"原著里此时{ev['summary']}——本局已不成立，只作背景，不得写进任何人的台词" if lod.broken(world, ev) else
+                     f"{'今日稍后' if n <= 0 else f'{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],
         "ruling": ruling,
         "tempo": _tempo(tempo),
+        "fatigue": pacing.advise(world),
         "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if me["hp"] <= me["max_hp"] * PERIL else "",
         "hidden": [f"{n}（{g.get(n, 'type')}）：{g.get(n, 'persona') or g.get(n, 'desc')}"
                    + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "")

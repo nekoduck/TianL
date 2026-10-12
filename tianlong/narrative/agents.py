@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,ops}/本幕之问/场景实体/时长措辞/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
+[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，只给编剧)/本幕之问/场景实体/时长措辞/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象)/伏笔/可传之事，给 on_text 即边写边送）、plain_options()（离线朴素选项）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
@@ -86,7 +86,8 @@ def _beat(x, me: str) -> dict | None:
     if not isinstance(x, dict) or not str(x.get("text") or "").strip():
         return None
     norm = lambda v: "player" if v in ME or v == me else (v if isinstance(v, str) and v else None)
-    return {"who": norm(x.get("who")), "to": norm(x.get("to")), "text": str(x["text"]).strip()[:80], "ops": _dicts(x.get("ops"))}
+    return {"who": norm(x.get("who")), "to": norm(x.get("to")), "text": str(x["text"]).strip()[:80], "ops": _dicts(x.get("ops")),
+            "mood": str(x.get("mood") or "").strip()[:8]}  # 情绪是快变量：只给编剧渲染，不入账、不回喂
 
 
 def _plan(r: dict, pack: dict, deed: str) -> dict:

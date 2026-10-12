@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/graph 的 holds（前提核对口径）、world/situation 的 party / quests / CUSTODY（纠缠与拘押）、world/effects 的 describe（只记成立之事时的代笔），
+[INPUT]: 依赖 world/graph 的 holds（前提核对口径）、world/situation 的 entangled / CUSTODY（纠缠与拘押）、world/effects 的 describe（只记成立之事时的代笔），
          world/world 的 World 门面（graph / clock / canon / done / taint / apply / record）
 [OUTPUT]: 对外提供 entangled()、tiers()、lod1_scope()、absorb()、split_due()、upcoming()、verdict()、dirt()、broken()、settle()
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、何事到期、是否被污染），
@@ -7,7 +7,7 @@
        场外剧情的后果经 effects 落账为真相，并盖原著排定之日的日戳（此地亲见者盖今日）。
        账本只记已成立之事：场外的说法在后果全数成立时才照录，有不成立的只记成立的部分，一事无成则不入账；
        原著的隐含前提——死者不再登场、正与主角同在一处的人分身不得、主角手中之物不会凭空飞走、救人之事须那人仍受制；
-       情境前提(~关系/!关系)与属性前提同一口径(graph.holds)；与主角故事纠缠之人(同行者、未了之事所系者)的场外原著交史官或作罢
+       情境前提(~关系/!关系)与属性前提同一口径(graph.holds)；与主角故事纠缠之人(同行者、未了之事所系者)的场外原著前提已破即作罢、不唤史官——他们的行止只听导演与此地剧情
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -90,10 +90,7 @@ def upcoming(world, skip: set[str] = frozenset(), within: int = 7, limit: int = 
     return out[:limit]
 
 
-def entangled(world) -> set[str]:
-    """与主角的故事纠缠在一起的人：正随主角同行者、主角未了之事所系之人。他们的场外原著不再照本宣科。"""
-    about = {a for meta in situation.quests(world).values() for a in meta.get("about", [])}
-    return set(situation.party(world)) | {a for a in about if world.graph.kind(a) == "person"}
+entangled = situation.entangled  # 与主角故事纠缠之人：定义归情境层，effects 也据此拦场外调遣
 
 
 def _unmet(world, ev: dict) -> list[tuple]:
@@ -146,6 +143,8 @@ def verdict(world, ev: dict, tier: int) -> tuple[str, list[str]]:
     if not reasons:
         return "canon", []
     if broken(world, ev):
+        if set(ev["actors"]) & entangled(world):  # 纠缠者的行止只听导演与此地剧情：前提已破，连史官也不唤，作罢
+            return "skip", reasons
         return ("chronicle" if ev["weight"] >= 2 or tier <= 1 else "skip"), reasons
     return ("chronicle" if ev["weight"] >= 2 else "canon"), reasons
 

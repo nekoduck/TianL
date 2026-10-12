@@ -16,7 +16,8 @@
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
-       场外推演只碰得到推演区域之内的人与地，结恩怨亦然
+       场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
+       关系是慢变量：某人对主角的看法(边上记 turn)定下之后 DAMP 回合内不改写，一时的情绪写在拍的 mood 里
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -36,7 +37,7 @@ from .graph import ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances"}
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -340,12 +341,16 @@ def _travel(world, op, origin) -> str | None:
 def _reach(world, op, origin, scope) -> str | None:
     if op["op"] == "reveal" and origin in OFFSCREEN:
         return "主角不在场，无从得知隐情"
+    if origin in OFFSCREEN:  # 纠缠者的去留、生死、拘押只听导演与此地剧情；史官与场外推演可写风声，动不了他们
+        bound = [i for i in _ids(op) if i in situation.entangled(world)]
+        if bound and (op["op"] in ("link", "unlink", "arrive") or op.get("key") in ("location", "status", "hp")):
+            return f"{bound[0]}的行止系于主角，场外动不了"
     if op["op"] in ("link", "unlink") and origin in OFFSCREEN and scope is not None:  # 场外结恩怨，也只在推演区域之内
         far = [i for i in (op["src"], op["dst"]) if i != "player" and i not in scope and place(world, i) not in scope]
         if far:
             return f"{far[0]}不在推演区域内"
     if origin == "director" and op["op"] in ("link", "unlink"):
-        return _bond(world, op)
+        return _bond(world, op) or (_damp(world, op) if op["op"] == "link" else None)
     if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
         return None
     g, nid = world.graph, op.get("id")
@@ -402,6 +407,23 @@ def _bond(world, op) -> str | None:
     return None
 
 
+DAMP = 5  # 某人对主角的看法定下之后，几回合内不改写
+
+
+def _damp(world, op) -> str | None:
+    """关系是慢变量：某人对主角的看法改写之后 DAMP 回合内不再改换——一时的焦急、恼怒是情绪，写在拍的 mood 里，不入账。
+    随行与拘押是物理，不在此列；同一种关系只更新印象，不算改写；同一回合里导演先后写两次，以后一次为准。"""
+    if "player" not in (op["src"], op["dst"]) or op["rel"] == situation.FOLLOW or op["rel"] in situation.CUSTODY:
+        return None
+    now = world.player["turn"]
+    for e in world.graph.edges:
+        if e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] != op["rel"] \
+                and e["rel"] != situation.FOLLOW and e["rel"] not in situation.CUSTODY and 0 < now - e.get("turn", -DAMP) < DAMP:
+            who = "你" if op["src"] == "player" else op["src"]
+            return f"{who}对{'你' if op['dst'] == 'player' else op['dst']}的「{e['rel']}」第{e['turn']}回合才定下，{DAMP}回合内不改；一时的情绪写在拍的 mood 里"
+    return None
+
+
 def _arrival(world, pid: str) -> str | None:
     """不在身边的人来到此地：须活着、在江湖中、不在溃退期，且本回合的光阴够他从所在之处赶来。"""
     g = world.graph
@@ -443,6 +465,8 @@ def _exec(world, op, origin):
             g.edges = [e for e in g.edges if not (e["src"] == op["src"] and e["dst"] == op["dst"]
                                                   and situation.FOLLOW not in (e["rel"], op["rel"]))]
         attrs = {k: v for k, v in (("secret", op.get("secret") and True), ("note", op.get("note"))) if v}
+        if "player" in (op["src"], op["dst"]):
+            attrs["turn"] = world.player["turn"]  # 看法定下的回合：慢变量的阻尼据此计时
         g.link(op["src"], op["dst"], op["rel"], **attrs)
         if op["rel"] in situation.CUSTODY:  # 被擒者不再随行
             situation.part(world, op["dst"])

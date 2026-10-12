@@ -93,7 +93,7 @@ def render_backstage(gm: dict) -> str:
     parts += [
         _section("焦点·主角此举所指之物的真相（主角未必知道）", gm.get("focus", [])),
         _section("受制", gm.get("custody", [])),
-        _section("原著近事·只可借风声、预兆、传言伏笔，其相关者与其门派人马不得提前登场动手", gm["upcoming"]),
+        _section("原著近事·只可借风声、预兆、传言伏笔，其相关者与其门派人马不得提前登场动手；尚未发生之事，任何人的台词里不得当作已知说出", gm["upcoming"]),
         f"【命运骰】{gm['fate']}（1~100，越高越顺遂；用于机缘、巧合、寻物、言辞打动人心的顺逆）",
         _section("较量预裁·主角若与之动手、斗智或潜行，结局须依此，不得顺从主角（未列者为孩童或无力之人，不入较量）", gm["ruling"]),
         f"【主角濒危】{gm['peril']}" if gm.get("peril") else "",
@@ -110,6 +110,7 @@ def render_backstage(gm: dict) -> str:
         _section("久未推进的未了之事·宜推进或由剧情了结(pull)", gm.get("stale", [])),
         f"【近处去向】{'、'.join(gm['places'])}（更远的原著地点亦可直呼其名，路程由系统结算）",
         f"【节奏】{gm['tempo']}" if gm.get("tempo") else "",
+        _section("阻尼·剧情在打转，本回合照此调整", gm.get("fatigue", [])),
     ]
     return "\n".join(p for p in parts if p)
 
@@ -127,7 +128,7 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 - 拾取/丢下：{"op":"push"/"pull","id":"player","key":"inventory","value":"此地或身边的器物"}；器物易手：{"op":"set","id":器物,"key":"holder","value":在场人物或player}
 - 境况：{"op":"push"/"pull","id":"player","key":"conditions","value":"中毒/被追杀…"}
 - 未了之事：{"op":"push","id":"player","key":"threads","value":{"goal":"一句话","done_when":[["钟灵","~随行","player"]]}}（done_when 可省；了结即自动收束，至多四条）；收束写 pull
-- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"此人对主角的一句印象(可选)"}；同一人对主角只留最新一条；
+- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"此人对主角的一句印象(可选)"}；同一人对主角只留最新一条；关系是慢变量（结识、恩、怨、信任），定下之后五回合内不改，一时的焦急恼怒写在拍的 mood 里；
   随你同行写 {"op":"link","src":某人,"dst":"player","rel":"随行"}（之后主角走到哪他跟到哪，过不去的关他会留下）；分道扬镳写 unlink 随行；
   擒人写 {"op":"link","src":擒者,"dst":被擒者,"rel":"扣为人质|囚禁"}，救人写 unlink 这条
 - 有人赶来：{"op":"arrive","id":某人}（系统按其所在与路程、本回合光阴裁定赶不赶得到；近旁之人无须 arrive）
@@ -171,7 +172,7 @@ def _director_system(pack: dict) -> str:
         "每回合标出本幕之问：主角这一举所求的那件事，结局是了结(resolved)、悬而未决(open)还是被打断(interrupted，须写明 by 是谁)。"
         "选项不归你拟，你只写到此刻为止。\n"
         + PLOT_GUIDE +
-        '\n输出 JSON：{"beats":[{"who":"player或人物名","to":"对谁说话(可省；对主角说话写player)","text":"不超过40字，写清动作与对白要点","ops":[…]}，共3~6拍],'
+        '\n输出 JSON：{"beats":[{"who":"player或人物名","to":"对谁说话(可省；对主角说话写player)","text":"不超过40字，写清动作与对白要点","mood":"此刻情绪两三字(可省；只给编剧渲染，不入账)","ops":[…]}，共3~6拍],'
         '"question":{"ask":"本幕之问","state":"resolved/open/interrupted","by":"打断者，否则 null"},"spawn":[…],'
         f'"pace":"本回合主角举动的时长，只可取 {"/".join(PACES)} 之一（远行路程由系统另算）",'
         '"canon":{"unfolds":true或false,"why":"原著不能照常发生时的缘由，否则留空"},'
@@ -201,13 +202,13 @@ def writer(pack: dict, frame: dict) -> tuple[str, str]:
               "正文写完后另起一行只写 ===，然后写：\n"
               "梗概：本回合实际发生之事的一句话，不超过40字\n"
               "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【出路】【随身之物】【地上器物】里的原名，多个用顿号）\n2. …\n3. …\n"
-              "伏笔：正文里埋下、日后须兑现的一句悬念｜期限：回合数（没有就写 无）\n"
+              "伏笔：正文里埋下、日后须兑现的一句悬念｜期限：回合数（多数回合应当写 无；伤病与身体不作伏笔）\n"
               "传言：若此事值得在江湖上传开，一句客观记述（不超过30字，以主角名号称呼主角）；否则写 无\n"
               "选项是三个方向迥异、此情此景下真正诱人的下一步，每个不超过14字，江湖口吻；只能指向主角此刻知道、够得着或走得到的人、地、物，"
               "不得包含主角尚不知道的隐情；若有人刚对主角说了话，至少一项回应他；【可作选项】里的举动优先采用。")
     user = (f"{render(pack)}\n【主角此刻】{frame['deed']}\n【本回合光阴】{frame['span']}\n"
             f"{_section('上回合末段·只作语气参考', [frame['prev']] if frame.get('prev') else [])}\n"
-            f"{_section('已成立之事', frame['beats'])}\n{_section('未能成立', frame['void'])}\n"
+            f"{_section('已成立之事（〔〕里是那一刻的情绪，只作渲染）', frame['beats'])}\n{_section('未能成立', frame['void'])}\n"
             f"{_section('连带', frame.get('notes', []))}\n"
             f"{_section('须回应', [f'{p}刚对你说了话' for p in frame.get('addressed', [])])}\n"
             f"{_section('可作选项', frame.get('candidates', []))}\n"
