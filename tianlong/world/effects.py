@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / party / join / part / follow / captors / track（情境层与连带）、
-         world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+         world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
+         world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/器物近似名→id）、
           unearth()（场景物件认作现场的原著器物）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
@@ -8,7 +9,9 @@
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
        数值归规则：导演不得直接增减功力或凭空授武学——研习写 study、吸功写 drain，多少由 growth 算；
-       内伤归 body：导演往境况里写内伤(岔气、经脉、内息…)即按分级升一级、去掉即降一级，有据的疗伤(气血回升)顺带降一级，每回合各至多一级；
+       内伤归 body：导演往境况里写内伤(岔气、经脉、内息…)即按分级升一级、去掉即降一级，有据的疗伤(气血回升)顺带降一级，每回合每人各至多一级；
+       主角与 NPC 同构(v4)：add hp、push/pull conditions 对任何活人成立，NPC 的气血归 actor、status 由气血推出(写 set status 则气血随之对齐)，
+       set intent 改写此人眼下之事(一句话)、set mood 记下此人此刻的情绪；
        器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
        在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
@@ -17,7 +20,8 @@
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
-       关系是慢变量：某人对主角的看法(边上记 turn)定下之后 DAMP 回合内不改写，一时的情绪写在拍的 mood 里
+       事件先于状态(v4)：某人对主角的非结构性关系(疑忌、感激……)不再立边、不再覆盖与阻尼，而是记进 bond 的恩怨账、由系统折叠成立场；
+       结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -31,13 +35,14 @@
 # ============================================================
 import re
 
-from . import access, body, growth, perspective, situation
+from . import access, actor, body, bond, growth, perspective, situation
 from .clock import PER_DAY
 from .graph import ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing", "came_from", "en_route"}
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing", "came_from", "en_route",
+                      "drift"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -48,6 +53,7 @@ NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或
 LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
 ENTITY_LISTS = {"inventory", "skills"}           # 实体清单只可逐件得失：整体改写会绕过"世上有没有此物"的校验
 NOTE_LEN = 40                                    # 关系边上的印象一句话
+SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN}  # 人物身上的一句话属性
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 
 
@@ -187,6 +193,10 @@ def _normalize(world, op):
             op.update(src=road["src"], dst=road["dst"], rel=ROAD)
     if op.get("op") == "link" and "note" in op:
         op["note"] = str(op["note"])[:NOTE_LEN] if op["note"] else None
+    if op.get("op") == "set" and op.get("key") == "conditions" and isinstance(op.get("value"), str):
+        op["op"] = "push"  # 「conditions 变为中毒」：说的是添上一样境况，不是把清单改成一个字
+    if op.get("op") == "set" and op.get("key") in SENTENCE and isinstance(op.get("value"), str):
+        op["value"] = op["value"].strip()[:SENTENCE[op["key"]]]
     if op.get("op") == "set" and op.get("key") == "location" and g.kind(op.get("id")) != "item" \
             and g.kind(op.get("value")) not in ("location", None):
         op["value"] = place(world, op["value"])  # 走向某人/某物 = 走向其所在之地
@@ -350,7 +360,7 @@ def _reach(world, op, origin, scope) -> str | None:
         if far:
             return f"{far[0]}不在推演区域内"
     if origin == "director" and op["op"] in ("link", "unlink"):
-        return _bond(world, op) or (_damp(world, op) if op["op"] == "link" else None)
+        return _bond(world, op)
     if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
         return None
     g, nid = world.graph, op.get("id")
@@ -407,23 +417,6 @@ def _bond(world, op) -> str | None:
     return None
 
 
-DAMP = 5  # 某人对主角的看法定下之后，几回合内不改写
-
-
-def _damp(world, op) -> str | None:
-    """关系是慢变量：某人对主角的看法改写之后 DAMP 回合内不再改换——一时的焦急、恼怒是情绪，写在拍的 mood 里，不入账。
-    随行与拘押是物理，不在此列；同一种关系只更新印象，不算改写；同一回合里导演先后写两次，以后一次为准。"""
-    if "player" not in (op["src"], op["dst"]) or op["rel"] == situation.FOLLOW or op["rel"] in situation.CUSTODY:
-        return None
-    now = world.player["turn"]
-    for e in world.graph.edges:
-        if e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] != op["rel"] \
-                and e["rel"] != situation.FOLLOW and e["rel"] not in situation.CUSTODY and 0 < now - e.get("turn", -DAMP) < DAMP:
-            who = "你" if op["src"] == "player" else op["src"]
-            return f"{who}对{'你' if op['dst'] == 'player' else op['dst']}的「{e['rel']}」第{e['turn']}回合才定下，{DAMP}回合内不改；一时的情绪写在拍的 mood 里"
-    return None
-
-
 def _arrival(world, pid: str) -> str | None:
     """不在身边的人来到此地：须活着、在江湖中、不在溃退期，且本回合的光阴够他从所在之处赶来。"""
     g = world.graph
@@ -460,13 +453,12 @@ def _exec(world, op, origin):
             g.set(op["src"], "location", world.here)
     elif kind == "unlink" and op["rel"] == situation.FOLLOW:
         situation.part(world, op["src"])
+    elif kind == "link" and bond.attitude(world, op):  # 某人对主角的一时看法：记进恩怨账，立场由系统折叠
+        return
     elif kind == "link":
-        if "player" in (op["src"], op["dst"]):  # 某人对主角的关系只留最新一条：写新即覆盖旧，恩怨会演变而不会堆叠（随行另算）
-            g.edges = [e for e in g.edges if not (e["src"] == op["src"] and e["dst"] == op["dst"]
-                                                  and situation.FOLLOW not in (e["rel"], op["rel"]))]
+        if op["src"] == "player" and not bond.structural(op["rel"]):  # 主角对某人的看法只留最新一条
+            g.edges = [e for e in g.edges if not (e["src"] == "player" and e["dst"] == op["dst"] and not bond.structural(e["rel"]))]
         attrs = {k: v for k, v in (("secret", op.get("secret") and True), ("note", op.get("note"))) if v}
-        if "player" in (op["src"], op["dst"]):
-            attrs["turn"] = world.player["turn"]  # 看法定下的回合：慢变量的阻尼据此计时
         g.link(op["src"], op["dst"], op["rel"], **attrs)
         if op["rel"] in situation.CUSTODY:  # 被擒者不再随行
             situation.part(world, op["dst"])
@@ -491,12 +483,20 @@ def _exec(world, op, origin):
         goal = op["value"] if isinstance(op["value"], str) else op["value"].get("goal", "")
         hit = next((t for t in world.player["threads"] if t == goal or goal in t or t in goal), goal)
         world.player.pull("threads", hit)
-    elif op["id"] == "player" and op["key"] == "conditions" and isinstance(op["value"], str) \
-            and body.INNER.search(op["value"]) and kind in ("push", "pull"):  # 内伤只按分级升降，不由导演随手写重
-        _note(world, body.injure(world) if kind == "push" else body.relieve(world))
-    elif op["id"] == "player" and op["key"] == "hp" and kind == "add" and origin == "director" and op["value"] > 0:
-        world.player.add("hp", op["value"])
-        _note(world, body.relieve(world, "调治得法"))
+    elif op["key"] == "conditions" and _bodily(world, op["id"]) and isinstance(op["value"], str) \
+            and body.INNER.search(op["value"]) and kind in ("push", "pull"):  # 内伤只按分级升降，不由导演随手写重；主角与 NPC 同一规则
+        who = op["id"]
+        _note(world, body.injure(world, who=who) if kind == "push" else body.relieve(world, who=who))
+    elif op["key"] == "hp" and _bodily(world, op["id"]) and kind in ("add", "set"):  # 气血归 actor：NPC 的 status 随之推出
+        who = op["id"]
+        delta = op["value"] if kind == "add" else op["value"] - actor.vitals(world, who)[0]
+        actor.hurt(world, who, delta)
+        if delta > 0 and origin == "director":
+            _note(world, body.relieve(world, "调治得法", who=who))
+    elif op["key"] == "status" and g.kind(op["id"]) == "person" and kind == "set":
+        actor.declare(world, op["id"], op["value"])
+    elif op["key"] == "mood" and g.kind(op["id"]) == "person" and kind == "set":
+        actor.feel(world, op["id"], op["value"])
     elif op["id"] == "player" and op["key"] == "inventory":  # 拾起则归主角随身，丢下则落在此地
         _hand(world, op["value"], **({"holder": "player"} if kind == "push" else {"location": world.here}))
     elif op["id"] == "player":
@@ -515,6 +515,10 @@ def _exec(world, op, origin):
             node[key] = (node.get(key) or []) + [value]
         elif kind == "pull" and value in (node.get(key) or []):
             node[key] = [x for x in node[key] if x != value]
+
+
+def _bodily(world, nid) -> bool:
+    return nid == "player" or world.graph.kind(nid) == "person"
 
 
 def _quest(world, value):

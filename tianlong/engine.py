@@ -19,7 +19,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
-from .world import access, adjudicate, body, growth, lod, menu, pacing, perspective, rag, situation
+from .world import access, adjudicate, body, growth, lexicon, lod, menu, pacing, perspective, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -116,6 +116,7 @@ class Game:
         skip = {ev["id"] for ev, _ in offstage} | ({staged["id"]} if staged else set())
         soon = lod.upcoming(w, skip)
         gm = rag.backstage(w, stage=staged, upcoming=soon, tempo=self.tempo, aim=aim)
+        w.player.set("drift", [])                     # 上回合正文的偏差已交导演后台：交代一次即清
         pack = rag.build(w)
         witnesses = len(rag.scene(w)["people"])
         emit("stage", "direct")
@@ -178,6 +179,11 @@ class Game:
                 stream.flush()
             offstage_job.result()
         page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
+        drift = [] if w.turn.get("advanced") else lexicon.mastery(page["text"], "player")
+        if drift:  # 正文已送出读者，改不回来：记下偏差，下回合交导演由剧情交代
+            arts = "；".join(a["detail"] for a in growth.mastery(w)) or "主角尚无武学"
+            w.player.set("drift", [f"正文写主角「{'、'.join(drift)}」，账上：{arts}"])
+            log.info("正文偏差·进境：%s", drift)
         turn["text"] = page["text"]
         picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates, plan["options"])  # 兜底项看局面，归 menu
         self.menu = {text: ids for text, ids in picked}
@@ -215,6 +221,7 @@ class Game:
     def _enact(world, plan, aim, staged, day0, rules, drop=None):
         """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
         被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
+        adjudicate.imply(world, plan, aim)              # 拍里在习练玩家所指的秘籍、导演却没写 study：系统追认这一回研习
         studies = any(op.get("op") == "study" for b in plan["beats"] for op in b.get("ops") or [] if isinstance(op, dict))
         world.turn["minutes"] = max(world.clock.minutes(plan["pace"]), growth.SITTING if studies else 0)  # 研习至少一顿饭
         broken = staged and lod.broken(world, staged)  # 前提以回合开始时为准：主角这一举之前，原著本该如何

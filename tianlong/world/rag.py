@@ -12,36 +12,30 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, body, growth, lod, pacing, perspective, situation
+from . import access, actor, body, growth, lod, pacing, perspective, situation
 from .effects import usable
 from .ledger import NEWS_SPEED
+from .profile import TIERS, power_tier, profile, ties
+from .profile import tier_index as _tier_index
 
-TIERS = ((15, "不会武功"), (35, "三流身手"), (60, "二流好手"), (85, "一流高手"), (10**9, "绝顶高手"))
 NEWS_WINDOW = 3
 PLACES_SHOWN = 15  # 后台只列最近的若干去处；更远之地导演仍可直呼其名，距离由系统结算
 SECRET_HORIZON = 30  # 隐情的揭示事件须在一月内到期（或已发生）才交给导演——第四十八回的真相不该在第一回就摆上桌
 FEEBLE = 5           # 功力不及此者（孩童、文弱之辈）不入较量预裁
 
 
-def power_tier(power: int) -> str:
-    return next(name for cap, name in TIERS if power < cap)
-
-
 def condition(world) -> list[dict]:
-    """主角身况的文字标签：伤势、功力档、姿态、随身器物、所负武学——数值隐于其后。"""
-    me = world.player
-    wound, tone = body.wound(world)  # 气血与内伤共同定伤势：重伤只给气血三成以下或经脉受损以上
-    tags = [{"text": wound, "tone": tone}, {"text": power_tier(me["power"]), "tone": "plain"}]
+    """主角身况的文字标签：伤势、功力档、姿态、境况、随身器物、所负武学(带进境)与习练中的功夫——数值隐于其后，字段取自 profile。"""
+    me = profile(world, "player")
+    tags = [{"text": me["wound"], "tone": me["tone"]}, {"text": me["tier"], "tone": "plain"}]
     if me["posture"] and me["posture"] != "站立":
         tags.append({"text": me["posture"], "tone": "plain"})
     tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
-    tags += [{"text": f"持有{i}", "tone": "plain"} for i in me["inventory"]]
-    tags += [{"text": f"身负{s}", "tone": "plain"} for s in me["skills"]]
+    tags += [{"text": f"持有{i}", "tone": "plain"} for i in me["carrying"]]
+    tags += [{"text": f"身负{a['art']}" + ("" if a["stage"] in ("已会", "入门") else f"·{a['stage']}"), "tone": "plain"}
+             for a in me["arts"] if a["learned"]]
+    tags += [{"text": f"习练{a['art']}中", "tone": "plain"} for a in me["arts"] if not a["learned"]]
     return tags
-
-
-def _tier_index(power: int) -> int:
-    return next(i for i, (cap, _) in enumerate(TIERS) if power < cap)
 
 
 def scene(world) -> dict:
@@ -57,10 +51,6 @@ def scene(world) -> dict:
             "features": at("feature"), "items": [i for i in at("item") if usable(world, i)]}
 
 
-def _held(world, pid: str) -> list[str]:
-    return [i for i in world.graph.where(type="item", holder=pid) if not world.graph.get(i, "hidden") and usable(world, i)]
-
-
 # ============================================================
 #  玩家视锥（编剧与导演共享）
 # ============================================================
@@ -69,15 +59,6 @@ def _believed(world, nid: str) -> str:
     if b.get("status") == "dead":
         return "据你所知已故"
     return f"据你所知身在{b['location']}" if b.get("location") else "下落不明"
-
-
-def _toward_player(world, p: str) -> list[str]:
-    """此人(及其门派)与主角之间的关系与印象；暗中的心思(secret)在揭开之前不入视锥——编剧看得见的，主角就看得见。"""
-    sides = {p, world.graph.get(p, "faction")} - {None}
-    return [(f"{e['src']}→你：{e['rel']}" if e["dst"] == "player" else f"你→{e['dst']}：{e['rel']}")
-            + (f"（{e['note']}）" if e.get("note") else "")
-            for e in world.graph.edges if {e["src"], e["dst"]} & sides and "player" in (e["src"], e["dst"])
-            and not (e.get("secret") and not world.knowledge.knows_secret(e))]
 
 
 def _relation_lines(world, people: list[str], visible: set[str]) -> list[str]:
@@ -103,9 +84,10 @@ def build(world) -> dict:
     s = scene(world)
     visible = {here, *s["people"], *s["dead"], *s["features"], *s["items"]}
     people = [{"name": p, "title": g.get(p, "title"), "faction": g.get(p, "faction"),
-               "status": g.get(p, "status"), "tier": power_tier(g.get(p, "power", 30)),
+               "status": g.get(p, "status"), "tier": (pf := profile(world, p))["tier"], "wound": pf["wound"],
                "persona": g.get(p, "persona"), "appearance": g.get(p, "appearance"), "speech": g.get(p, "speech"),
-               "carrying": _held(world, p), "toward_you": _toward_player(world, p),
+               "carrying": pf["carrying"], "toward_you": pf["ties"], "mood": pf["mood"], "intent": pf["intent"],
+               "conditions": pf["conditions"],
                "seen_as": None if perspective.knows(world, "player", p) else perspective.handle(world, p),  # 主角不知其名：只叫得出外貌
                "knows_you": perspective.knows(world, p, "player")} for p in s["people"]]
     carried = [{"name": i, "desc": g.get(i, "desc")} for i in me["inventory"]]
@@ -115,6 +97,7 @@ def build(world) -> dict:
         "time": world.clock.label(),
         "player": {"name": me["name"], "hp": f"{me['hp']}/{me['max_hp']}", "tier": power_tier(me["power"]),
                    "posture": me["posture"], "skills": me["skills"], "inventory": carried,
+                   "wound": body.wound(world)[0], "arts": [a["detail"] for a in growth.mastery(world)],
                    "origin": me["origin"], "goal": me["goal"], "conditions": me["conditions"], "threads": me["threads"],
                    "synopsis": me["synopsis"], "en_route": me.get("en_route")},
         "scene": {"name": here, "region": g.get(here, "region"), "desc": g.get(here, "desc"),
@@ -222,7 +205,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
         if g.get(p, "power", 30) >= FEEBLE:
             outcome, loss = rule(gap, fate)
             ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损"))
-    study = _studies(world, aim, hidden)  # 玩家所指的秘籍与武学：出研习预裁
+    study = growth.studiable(world, aim, [h for h in hidden if g.kind(h) == "item"])  # 玩家所指的秘籍与武学：出研习预裁
     dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
         "fate": fate,
@@ -248,6 +231,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
                   + [f"{growth.progress(world, k)}（求教身边会的人，写 study {k}）｜研习预裁：{_luck(world, k)}"
                      for k in study if g.kind(k) == "skill"],
         "focus": focus(world, aim),
+        "drift": list(me.get("drift") or []),
         "hooks": [f"{h['text']}" + (f"（已到期：本回合兑现或交代其落空）" if h["due"] <= me.get("turn", 0) else
                                     f"（{h['due'] - me.get('turn', 0)}回合内兑现）") for h in me.get("hooks", [])],
         "stale": situation.stale(world),
@@ -258,14 +242,6 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
     }
-
-
-def _studies(world, aim, hidden) -> list[str]:
-    """玩家这一举指向的研习对象：够得着的秘籍，或身边有人会的武学。"""
-    g, s = world.graph, scene(world)
-    books = {i for i in [*world.player["inventory"], *s["items"], *hidden] if g.get(i, "grants")}
-    taught = {k for p in situation.around(world) for k in g.get(p, "skills") or []}
-    return [i for i in aim if i in books or (g.kind(i) == "skill" and i in taught)]
 
 
 def _luck(world, source: str) -> str:
@@ -305,6 +281,7 @@ def dossier(world, pid: str) -> dict:
     g = world.graph
     loc = g.get(pid, "location")
     return {"name": pid, "title": g.get(pid, "title"), "status": g.get(pid, "status"), "location": loc,
-            "faction": g.get(pid, "faction"), "agenda": g.get(pid, "agenda"), "mood": g.get(pid, "mood"),
+            "faction": g.get(pid, "faction"), "agenda": g.get(pid, "agenda"), "mood": actor.mood(world, pid),
+            "intent": g.get(pid, "intent"),
             "tier": power_tier(g.get(pid, "power", 30)), "persona": g.get(pid, "persona"),
             "exits": access.steps(world, loc) if loc else []}

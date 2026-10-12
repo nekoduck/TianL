@@ -120,7 +120,7 @@ class PlotTest(unittest.TestCase):
         self.assertEqual((len(applied), rejected), (5, []))
         pack = rag.build(self.w)
         self.assertEqual(pack["scene"]["state"], "比剑被搅散，满厅狼藉")
-        self.assertIn("左子穆→你：记恨", next(p for p in pack["people"] if p["name"] == "左子穆")["toward_you"])
+        self.assertIn("对你戒备（记恨）", next(p for p in pack["people"] if p["name"] == "左子穆")["toward_you"])  # 立场由恩怨账折叠
         self.assertEqual(self.w.player["hp"], 80)
         self.assertIn("段誉", self.w.taint)
 
@@ -151,12 +151,13 @@ class PlotTest(unittest.TestCase):
         applied, rejected = self.w.apply(ops, "director")
         self.assertEqual((len(applied), rejected), (3, []))
         self.assertEqual((self.w.player["posture"], self.w.here), ("跌坐", "大理城"))
-        self.assertEqual(self.w.graph._find("段誉", "player", "结交")["note"], "同去王府")
+        self.assertIsNone(self.w.graph._find("段誉", "player", "结交"))          # 一时的看法不立边：记进恩怨账
+        self.assertEqual(self.w.graph.nodes["段誉"]["bond"]["log"][-1]["why"], "同去王府")
         _, rejected = self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
         self.assertEqual(len(rejected), 1)  # 段誉没跟来大理城：不在身边的人结不下新的关系
         self.w.graph.set("段誉", "location", "大理城")
         self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
-        self.assertEqual([e["rel"] for e in self.w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["结义"])  # 写新覆盖旧
+        self.assertEqual([e["rel"] for e in self.w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["结义"])  # 结构性关系才是边
 
     def test_hidden_item_found_through_plot(self):
         self.w.player.set("location", "琅嬛福地·玉像石室")
@@ -470,8 +471,9 @@ class PersistenceTest(unittest.TestCase):
     def test_old_saves_wake_up_on_the_new_map(self):
         w = World.create("旧档")
         w.apply([{"op": "set", "id": START, "key": "state", "value": "比剑被搅散"},
-                 {"op": "link", "src": "段誉", "dst": "player", "rel": "结交"}], "director")
-        old = w.dump()  # 仿一份补丁前的存档：没有新地点、没有关口、还留着伪捷径、没有别名表
+                 {"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
+        old = w.dump()
+        old["graph"]["edges"].append({"src": "段誉", "dst": "player", "rel": "结交", "note": "同游", "turn": 0})  # 旧档的态度边  # 仿一份补丁前的存档：没有新地点、没有关口、还留着伪捷径、没有别名表
         old["graph"]["nodes"].pop("澜沧江边高崖")
         old["graph"]["edges"] = [{k: v for k, v in e.items() if k != "gates"} for e in old["graph"]["edges"]
                                  if "澜沧江边高崖" not in (e["src"], e["dst"])]
@@ -482,7 +484,9 @@ class PersistenceTest(unittest.TestCase):
         self.assertEqual(sum(len(e.get("gates", {})) for e in v.graph.edges), 179)        # 关口挂上
         self.assertTrue(v.knowledge.knows("澜沧江边高崖"))                                # 新地点入图、入常识
         self.assertEqual((v.graph.get(START, "state"), v.aliases["萧峰"]), ("比剑被搅散", "乔峰"))  # 现状保留，别名补上
-        self.assertTrue(any(e["rel"] == "结交" for e in v.graph.edges))                    # 剧情所致的关系保留
+        self.assertTrue(any(e["rel"] == "结义" for e in v.graph.edges))                    # 剧情所致的结构性关系保留
+        self.assertFalse(any(e["rel"] == "结交" for e in v.graph.edges))                   # 旧档的态度边折进恩怨账
+        self.assertEqual(v.graph.nodes["段誉"]["bond"]["log"][-1]["why"], "同游")
         self.assertEqual(World.from_dump(v.dump()).dump(), v.dump())                       # 重绘多少次都是同一张图
 
     def test_roundtrip(self):

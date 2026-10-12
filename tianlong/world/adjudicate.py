@@ -17,13 +17,13 @@ import copy
 import re
 from dataclasses import dataclass, field
 
-from . import effects, lexicon, perspective, situation
+from . import actor, bond, effects, growth, lexicon, perspective, situation
 from .graph import holds
 
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name"}
+        "follow", "leave", "custody", "name", "mastery"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
+UNSURE = {"follow", "leave", "name", "foretold", "mastery"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
 
 @dataclass
@@ -174,8 +174,11 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
                    for op in baseless]
         at = world.here
+        snap = bond.before(world, ops)
         applied, rejected = effects.apply(world, ops, "director")  # 落账会就地规整指令：提议本身留给返工与定稿
         r.applied += applied
+        bond.derive(world, beat.get("who"), applied, snap, beat.get("text") or "", beat.get("to"))  # 事件先于状态：恩怨从做了什么里推出
+        actor.feel(world, beat.get("who"), beat.get("mood"))  # 拍上的情绪挂在此人脸上几回合
         for nid in (i2 for op in applied for i2 in effects._ids(op)):
             touched[nid] = i
         for op, why in rejected:
@@ -276,6 +279,7 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
             found.append(lexicon.Finding("secret", i, f"{src}—{rel}—{dst}",
                                          f"第{i}拍说破了未揭的隐情（{src}与{dst}）：要揭开就写 reveal，否则只可伏笔"))
     found += _foretold(world, shown, tab_kinds[0])
+    found += _mastery(world, shown)
     for f in found:
         if f.kind in RATIFY and _ratify(world, f):
             r.soft.append(f)
@@ -283,6 +287,38 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
             r.hard.append(f)
         else:
             r.soft.append(f)
+
+
+def _mastery(world, shown) -> list:
+    """进境措辞有账可依：主角的拍里写了「练成」「身如游龙」，本回合却没有兑现任何一阶进境，即为违例——
+    练到哪一步由研习账说了算(world/growth)，文字只渲染已成立的进境。"""
+    if world.turn.get("advanced"):
+        return []
+    out = []
+    for i, beat in enumerate(shown, 1):
+        words = lexicon.mastery(beat.get("text") or "", beat.get("who"))
+        if words:
+            arts = "；".join(a["detail"] for a in growth.mastery(world)) or "主角尚无武学"
+            out.append(lexicon.Finding("mastery", i, words[0], f"第{i}拍写主角「{'、'.join(words)}」，账上并无这一阶进境（{arts}）："
+                                                             "进境以研习账为准，改写成正在习练、略有心得或尚未入门"))
+    return out
+
+
+def imply(world, plan: dict, allowed: set[str]) -> str | None:
+    """追认一回研习：玩家所指的是够得着的秘籍或武学(或身边会它的人)，主角的拍里写着习练，导演却没写 study——
+    系统替它补上这条指令(追认，不新造物理：研习本就是玩家所选之事)。返回追认的研习对象，没有即 None。"""
+    beats = plan.get("beats") or []
+    if any(isinstance(op, dict) and op.get("op") == "study" for b in beats for op in b.get("ops") or []):
+        return None
+    aim = set(allowed) | {k for p in allowed if world.graph.kind(p) == "person" for k in world.graph.get(p, "skills") or []}
+    sources = growth.studiable(world, aim) if aim else []
+    if not sources:
+        return None
+    for b in beats:
+        if b.get("who") in (None, "player") and lexicon.PRACTICE.search(b.get("text") or ""):
+            b["ops"] = list(b.get("ops") or []) + [{"op": "study", "id": "player", "value": sources[0]}]
+            return sources[0]
+    return None
 
 
 def _ratify(world, f) -> bool:

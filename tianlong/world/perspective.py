@@ -260,6 +260,8 @@ def veil(world, pack: dict) -> dict:
         if not knows(world, "player", pid):
             p.update(name=handle(world, pid), title="来历不明", faction="门派不明",
                      toward_you=[mask(world, t) for t in p["toward_you"]], carrying=p["carrying"])
+        if p.get("intent"):
+            p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
     out["relations"] = [r for r in out["relations"] if mask(world, r) == r]
     out["party"] = [handle(world, p) for p in out.get("party", [])]

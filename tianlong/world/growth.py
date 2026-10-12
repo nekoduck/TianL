@@ -1,14 +1,17 @@
 """
-[INPUT]: 依赖 world/body 的 forecast / injure（研习预裁与岔气），World 门面（graph / player / clock / turn，鸭子类型）
+[INPUT]: 依赖 world/body 的 forecast / injure（研习预裁与岔气）、world/actor 的 declare（被吸者负伤），World 门面（graph / player / clock / turn，鸭子类型）
 [OUTPUT]: 对外提供 study()（研习一部秘籍或向人求教一门武学：累计时长、分阶兑现武学与功力）、drain()（北冥吸功：双边结算）、
-          stage_of()、progress()（后台用的研习进度一句话）、STAGES、DRAINERS、SITTING（研习一回至少一顿饭，引擎据此给本回合光阴兜底）
+          stage_of()、progress()（后台用的研习进度一句话）、mastery()（主角每门武学的进境投影：已会者带阶名、习练中者带已习时长）、
+          studiable()（够得着的研习对象：手边与此地的秘籍、身边有人会的武学）、arts_of()、STAGES、DRAINERS、SITTING（研习一回至少一顿饭，引擎据此给本回合光阴兜底）、TEACH_MINUTES
 [POS]: world 层的数值规则——凡是有数量的后果都由这里算：导演只说「发生了研习」「发生了吸功」，增减多少不由 LLM 报数。
        研习先过 body 的预裁：顺利计一倍半时长、小有所得照计、受阻折半、有懂易理者解卦位再翻倍、岔气则折半并添一级内伤；
        研习按三阶兑现(初窥/小成/大成)，每阶有累计时长与间隔日数的门槛，同一部秘籍每人只兑现一次——
-       十五分钟的调息不会再让人从二流升到一流；吸功按北冥阶段取对方功力的一定比例，吸者有损耗，被吸者当场负伤
+       十五分钟的调息不会再让人从二流升到一流；吸功按北冥阶段取对方功力的一定比例，吸者有损耗，被吸者当场负伤。
+       进境是一等状态(v4)：mastery 把研习账投影成「凌波微步：未入门（已习练40分钟，初窥须60分钟）」，界面、编剧、导演同看这一份——
+       文字里写「身如游龙」而账上未入门，是文字错了，不是账错了；兑现阶段时记下 turn["advanced"]，裁决器据此辨认进境措辞有没有账可依
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import body
+from . import actor, body, situation
 
 # (阶名, 累计研习分钟, 距上一阶至少几日, 兑现 grants.power 的比例)
 STAGES = (("初窥门径", 60, 0, 0.4), ("小有所成", 12 * 60, 1, 0.3), ("登堂入室", 48 * 60, 3, 0.3))
@@ -44,6 +47,7 @@ def _gain(world, source: str, rec: dict) -> str:
         if rec["stage"] == 0 and rec["minutes"] >= TEACH_MINUTES:
             rec["stage"] = 1
             me.push("skills", source)
+            world.turn.setdefault("advanced", set()).add(source)
             return f"你学会了{source}的入门功夫"
         return f"你随人习练{source}，尚未入门（已{rec['minutes']}分钟）"
     grants = g.get(source, "grants") or {}
@@ -55,6 +59,7 @@ def _gain(world, source: str, rec: dict) -> str:
             break
         rec["stage"] += 1
         rec["since"] = day
+        world.turn.setdefault("advanced", set()).update(filter(None, skills))  # 本回合真有进境：进境措辞有账可依
         gain = round((grants.get("power") or 0) * share)
         me.add("power", gain)
         if rec["stage"] == 1:
@@ -86,7 +91,7 @@ def drain(world, target: str, art: str) -> str:
     loss = round(power * ratio)
     g.set(target, "power", power - loss)
     if g.get(target, "status") == "alive":
-        g.set(target, "status", "wounded")
+        actor.declare(world, target, "wounded")  # 被吸者当场负伤：气血随之对齐，养回来即安好
     gain = round(loss * DRAIN_KEEP)
     me.add("power", gain)
     return f"你以{art}吸去{target}的内力：{target}功力-{loss}，你功力+{gain}"
@@ -95,3 +100,40 @@ def drain(world, target: str, art: str) -> str:
 def _skills_of(g, source: str) -> list[str]:
     grants = g.get(source, "grants") or {}
     return [grants.get("skill")] + [x.get("skill") for x in g.get(source, "grants_extra") or []]
+
+
+def arts_of(g, source: str) -> list[str]:
+    """一个研习对象载着哪些武学：武学即自身，秘籍即它所授。"""
+    return [source] if g.kind(source) == "skill" else [s for s in _skills_of(g, source) if s]
+
+
+def mastery(world) -> list[dict]:
+    """主角的进境投影：[{art, stage, learned, detail}]。已会的武学带上阶名(来自研习账；原本就会的写「已会」)，
+    习练中尚未入门的写明已习多久、初窥还差多少——这一份同时给界面、编剧与导演。"""
+    g, me, out, seen = world.graph, world.player, [], set()
+    for source, rec in _log(world).items():
+        for art in arts_of(g, source):
+            if art in seen:
+                continue
+            seen.add(art)
+            if rec["stage"]:
+                name = "入门" if g.kind(source) == "skill" else STAGES[rec["stage"] - 1][0]
+                out.append({"art": art, "stage": name, "learned": art in me["skills"], "detail": f"{art}：{name}"})
+            else:
+                need = TEACH_MINUTES if g.kind(source) == "skill" else STAGES[0][1]
+                out.append({"art": art, "stage": "未入门", "learned": False,
+                            "detail": f"{art}：未入门（已习练{rec['minutes']}分钟，入门须{need}分钟）"})
+    out += [{"art": s, "stage": "已会", "learned": True, "detail": f"{s}：已会"} for s in me["skills"] if s not in seen]
+    return out
+
+
+def studiable(world, aim=(), extra=()) -> list[str]:
+    """够得着的研习对象：手边与此地(含 extra 里暗藏)的秘籍、身边有人会的武学；给了 aim 只留玩家所指的(秘籍所授的武学也认作那部秘籍)。"""
+    g, me = world.graph, world.player
+    here = [i for i in g.where(type="item", location=world.here) if not g.get(i, "hidden")]
+    books = [i for i in dict.fromkeys([*me["inventory"], *here, *extra]) if g.get(i, "grants")]
+    taught = sorted({k for p in situation.around(world) for k in g.get(p, "skills") or []} - set(me["skills"]))
+    if not aim:
+        return books + taught
+    aim = set(aim)
+    return [b for b in books if b in aim or aim & set(arts_of(g, b))] + [k for k in taught if k in aim]

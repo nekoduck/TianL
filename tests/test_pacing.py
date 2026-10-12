@@ -45,17 +45,21 @@ class PacingTest(unittest.TestCase):
         pacing.record(w, [beat("左子穆抚须而笑")], changed=True)
         self.assertEqual(pacing.advise(w), [])                                         # 此题淡出窗口，阻尼即解
 
-    def test_feelings_toward_the_player_settle_slowly(self):
+    def test_feelings_toward_the_player_are_folded_from_events(self):
         w, me = self.w, self.w.player
+        stance = lambda: rag.build(w)["people"][[p["name"] for p in rag.build(w)["people"]].index("段誉")]["toward_you"]
         me.set("turn", 1)
         effects.apply(w, [LINK("怨恨")], "director")
-        effects.apply(w, [LINK("感激")], "director")                                   # 同一回合里改口：以后写为准
-        me.set("turn", 3)
-        _, rejected = effects.apply(w, [LINK("信任")], "director")
-        self.assertIn("五回合内不改", rejected[0][1].replace("5", "五"))
-        me.set("turn", 6)
-        effects.apply(w, [LINK("信任")], "director")
-        self.assertEqual([e["rel"] for e in w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["信任"])
+        effects.apply(w, [LINK("感激")], "director")                                   # 不覆盖：恩怨两本账并存
+        self.assertEqual([e for e in w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], [])  # 态度不立边
+        self.assertIn("感激中带着戒备", stance()[-1])
+        me.set("turn", 40)                                                              # 怨比恩消得慢
+        self.assertTrue(stance()[-1].startswith("对你戒备") or stance()[-1].startswith("对你相识"))
+        effects.apply(w, [LINK("敬重")], "director")                                    # 一件事改一级，不冻结
+        self.assertTrue(stance()[-1].startswith("对你友善"), stance())
+        for _ in range(2):
+            effects.apply(w, [LINK("敬重")], "director")                                # 恩积得够深才托付
+        self.assertTrue(stance()[-1].startswith("对你托付"), stance())
 
     def test_mood_reaches_the_writer_but_not_the_ledger(self):
         r = judge(self.w, plan(("段誉", "段誉连连摇手", [], "player")))

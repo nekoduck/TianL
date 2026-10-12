@@ -28,9 +28,10 @@ def _section(title: str, lines) -> str:
 
 def render(pack: dict) -> str:
     s, me = pack["scene"], pack["player"]
-    people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{STATUS.get(p['status'], p['status'])}"
+    people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{p.get('wound') or STATUS.get(p['status'], p['status'])}"
               + "".join(f"｜{label}：{p[key]}" for label, key in (("外貌", "appearance"), ("性情", "persona"),
-                                                                  ("言谈", "speech")) if p.get(key))
+                                                                  ("言谈", "speech"), ("此刻神色", "mood"), ("眼下之事", "intent")) if p.get(key))
+              + (f"｜境况：{'、'.join(p['conditions'])}" if p.get("conditions") else "")
               + (f"｜随身：{'、'.join(p['carrying'])}" if p["carrying"] else "")
               + (f"｜与你：{'；'.join(p['toward_you'])}" if p["toward_you"] else "")
               + (f"｜主角不知其名，只叫得出「{p['seen_as']}」" if p.get("seen_as") else "")
@@ -50,8 +51,9 @@ def render(pack: dict) -> str:
         "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "")
                               + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),
         (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
-        f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}｜{me['tier']}"
-        f"｜姿态：{me['posture']}｜武学：{'、'.join(me['skills']) or '无'}",
+        f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}"
+        + (f"（{me['wound']}）" if me.get("wound") else "") + f"｜{me['tier']}｜姿态：{me['posture']}",
+        _section("主角武学与进境·以此为准，未列「已会」或阶名的功夫主角使不出来", me.get("arts") or [f"{s}：已会" for s in me["skills"]]) or "【主角武学与进境】无",
         _section("主角境况", me["conditions"]),
         _section("随身之物", [f"{i['name']}：{i['desc']}" for i in me["inventory"]]),
         _section("未了之事", me["threads"]),
@@ -108,6 +110,7 @@ def render_backstage(gm: dict) -> str:
         _section("近处暗路·主角尚未发现：剧情中被发现或由知情人领路，才可通行", gm["secret_ways"]),
         _section("在场武学", gm["arts"]),
         _section("武学机缘·研习进度与研习预裁", gm["grants"]),
+        _section("上回合正文的偏差·正文写了账上没有的进境，本回合由剧情交代(只是错觉、尚未练成)，不得顺着写成真的", gm.get("drift", [])),
         _section("未兑现的伏笔", gm.get("hooks", [])),
         _section("久未推进的未了之事·宜推进或由剧情了结(pull)", gm.get("stale", [])),
         f"【近处去向】{'、'.join(gm['places'])}（更远的原著地点亦可直呼其名，路程由系统结算）",
@@ -126,11 +129,15 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 身体归规则：交手的胜负与失血看较量预裁；没人出手、不涉险地，主角一拍至多伤 5 点；研习的顺逆看研习预裁，照演进境，不得自编反噬、走火、扣血。
 内伤（内息紊乱→经脉受损→经脉重创）写 push conditions「岔气」之类即由系统加重一级，疗愈写 pull；歇息、服药、有人运功疗伤都会让它好转。
 擒人者走，人质随之；要人质随你走，先写明救下（unlink 拘押、link 随行）。指令只能作用于已存在的人、地、物：
-- {"op":"set","id":"人物/门派/player","key":"属性","value":值}；{"op":"add","id":…,"key":"hp","value":增减}（主角受伤或疗伤）
+- {"op":"set","id":"人物/门派/player","key":"属性","value":值}；{"op":"add","id":…,"key":"hp","value":增减}（主角或在场之人受伤、疗伤）
 - 拾取/丢下：{"op":"push"/"pull","id":"player","key":"inventory","value":"此地或身边的器物"}；器物易手：{"op":"set","id":器物,"key":"holder","value":在场人物或player}
 - 境况：{"op":"push"/"pull","id":"player","key":"conditions","value":"中毒/被追杀…"}
 - 未了之事：{"op":"push","id":"player","key":"threads","value":{"goal":"一句话","done_when":[["钟灵","~随行","player"]]}}（done_when 可省；了结即自动收束，至多四条）；收束写 pull
-- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"此人对主角的一句印象(可选)"}；同一人对主角只留最新一条；关系是慢变量（结识、恩、怨、信任），定下之后五回合内不改，一时的焦急恼怒写在拍的 mood 里；
+- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"缘由(可选)"}只立结构性关系（结义、师徒、随行、拘押、效忠……）。
+  某人对主角的看法不必下结论：救人、赠物、夺物、伤人、擒拿都由系统从 ops 里记进他的恩怨账，折叠成【在场人物】里的「对你…」；
+  一件 ops 表达不了的大事（当众折辱、替他扬名、背弃承诺）可写 {"op":"link","src":某人,"dst":"player","rel":"感激/记恨/敬佩…","note":"缘由"}，系统按轻重记一笔；一时的焦急恼怒写在拍的 mood 里；
+- 人物自身：{"op":"add","id":某人,"key":"hp","value":-15}（伤人，须拍里有伤；他负不负伤由气血推出）；{"op":"push","id":某人,"key":"conditions","value":"中毒/被点穴…"}；
+  {"op":"set","id":某人,"key":"intent","value":"他眼下要做的事，一句话"}（他改了主意、有了新打算时写）；
   随你同行写 {"op":"link","src":某人,"dst":"player","rel":"随行"}（之后主角走到哪他跟到哪，过不去的关他会留下）；分道扬镳写 unlink 随行；
   擒人写 {"op":"link","src":擒者,"dst":被擒者,"rel":"扣为人质|囚禁"}，救人写 unlink 这条
 - 有人赶来：{"op":"arrive","id":某人}（系统按其所在与路程、本回合光阴裁定赶不赶得到；近旁之人无须 arrive）
@@ -210,7 +217,8 @@ def repair(pack: dict, gm: dict, deed: str, draft: dict, problems: list[str]) ->
 
 def writer(pack: dict, frame: dict) -> tuple[str, str]:
     system = ("你是深谙金庸笔法的武侠小说家，为文字冒险撰写正文。以第二人称「你」叙述，白描为主，对话传神，人物言行合乎性情与设定。"
-              "【已成立之事】是本回合实际发生的一切，依它铺陈，可补足神态、细节与氛围，但不得添出新的得失、伤亡、去留或擒放；"
+              "【已成立之事】是本回合实际发生的一切，依它铺陈，可补足神态、细节与氛围，但不得添出新的得失、伤亡、去留、擒放或进境；"
+              "主角武功练到哪一步以【主角武学与进境】与【连带】为准：账上未入门就只是在习练、摸索、略有所感，不得写成练成、学会、身如游龙、功力大进；"
               "【未能成立】中的内容不得写成既成事实，可写成未遂或落空；【连带】是系统结算的后果，须自然写进正文；"
               "【上回合末段】只作承接语气，不作事实；正文所述光阴须与【本回合光阴】相符。新到的传闻可借人物之口或环境自然带出。"
               "篇幅 250~450 字，不写标题与任何 markdown 符号。\n"

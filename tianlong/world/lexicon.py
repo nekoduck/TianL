@@ -1,11 +1,13 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
 [OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表）、
-          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()
+          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
        回放工具(tools/replay.py)用它统计旧对局的违例。只认"动词与实体同在一个分句"的强证据，否定、假设、回忆、远处一律不算；
-       「二人」「众人」只回指上一句点到的人，不把同句里的旁人一并算作随行
+       「二人」「众人」只回指上一句点到的人，不把同句里的旁人一并算作随行；
+       进境(v4)：「练成、学会、身如游龙、功力大进」之类成就性措辞是第九类变化——说了就意味着账上该有一阶进境，没有即为违例；
+       「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -28,6 +30,10 @@ ACT = re.compile(r"^[^，。；！？“”「」的之与和及、]{0,4}?(?:道
 REMOTE = re.compile(r"远远|远处|遥遥|传来|想起|忆起|回想|记得|昔日|当日|曾经|曾|据说|听说|传闻|传言|若是|倘若|如果|只怕|担心|料想|心想|念及|挂念|不知|下落|生死未卜")
 NEGATE = re.compile(r"未能|未曾|不曾|没有|没能|险些|几乎|差点|欲要|正欲|正要|想要|将要|似要|不敢|不肯|岂能|休想|妄图|企图")
 BACKSTAGE = re.compile(r"命运骰|骰子|骰点|预裁|较量预裁|档位|功力\s*\d|气血\s*\d|后台|LOD|原著结局|系统")
+MASTERY = re.compile(r"练成|学会|学成|领悟了|融会贯通|大成|小成|登堂入室|运转如意|得心应手|身如游龙|功力大进|内力大增|内力大进|神功初成|"
+                     r"已然入门|初窥门径|炉火纯青|了然于胸|练熟了|使得有模有样|随心所欲|如臂使指|脱胎换骨")
+PRACTICE = re.compile(r"练|演|参研|参悟|研习|研读|修习|习练|运功|拆解|揣摩|照着.{0,6}(?:图|谱|卷|书)|比划|修炼|吐纳|打坐|依法|按图")
+YET = re.compile(r"尚未|还未|未曾|不曾|远未|仍未|未能|没能|不能|难以|无法|何时才能|若能|但愿|盼着|梦想")
 ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|丸|散|膏|秘籍|秘笈|卷轴|帛卷|经书|剑谱|刀谱|图谱|珠|钏|镯|盒|匣|瓶|信|令牌|钥匙|锦囊|宝剑|宝刀|草)")
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
@@ -108,6 +114,15 @@ def _kin(rel: str) -> tuple[str, ...]:
     if "生" in rel:
         out += ["亲生"]
     return tuple(out)
+
+
+def mastery(text: str, who=None) -> list[str]:
+    """主角的进境措辞：分句里有「你」(或这一拍是主角的拍)、命中成就性措辞、且不在否定假设之中。返回命中的词。"""
+    out = []
+    for clause in _clauses(text or ""):
+        if ("你" in clause or who in (None, "player")) and not YET.search(clause) and not REMOTE.search(clause):
+            out += MASTERY.findall(clause)
+    return list(dict.fromkeys(out))
 
 
 def itemish(text: str) -> str | None:
