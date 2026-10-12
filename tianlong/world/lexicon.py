@@ -1,7 +1,7 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
 [OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表）、
-          unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、
+          unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、ARRIVE / DEPART / QUOTED（主角的去留：完成体的到与离，台词不算）、
           leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE / MOVE / HURT
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
@@ -9,6 +9,7 @@
        「二人」「众人」只回指上一句点到的人，不把同句里的旁人一并算作随行；
        进境(v4)：「练成、学会、身如游龙、功力大进」之类成就性措辞是第九类变化——说了就意味着账上该有一阶进境，没有即为违例；
        「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)；
+       主角的去留(v5)：「你走进X」「你离开X」要账上真到过、真离开(View.route / here / aimed)，「奔向」只是方向不算；
        场外(v5)：场外推演与史官的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)，
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -20,7 +21,11 @@ from dataclasses import dataclass, field
 #  词表：每类变化一组强动词——只收"说了就意味着状态变了"的词，宁缺毋滥
 # ============================================================
 ACQUIRE = re.compile(r"夺(?:过|下|走|得)|抢(?:过|走|得)|取走|拿走|取得|取下|摘下|拾起|捡起|揣入|揣进|收入怀|纳入怀|藏入怀|塞入怀|"
-                     r"拔起|采下|采了|顺手.{0,2}(?:拔|取|摘|拿|牵)|据为己有|收下|接过|到手")
+                     r"拔起|采下|采了|顺手.{0,2}(?:拔|取|摘|拿|牵)|据为己有|收下|接过|到手|抓起|端起|拿起|取过|抄起|捧起|攥起|执起")
+# 主角的去留(v5)：完成体的到达与离开——「奔向」「走向」只是方向，不算到了
+ARRIVE = re.compile(r"走进|走入|进入|进了|来到|到了|登上|攀上|爬上|钻进|钻入|踏入|步入|回到|抵达|下到|落到|跃入|跳入|闯入|闯进|迈进|跨进|潜入|折回")
+DEPART = re.compile(r"离开|走出|出了|退出|逃出|奔出|冲出|离了")
+QUOTED = re.compile(r"[「“『][^」”』]*[」”』]")  # 台词里说到的去处不是主角的行止
 GIVE = re.compile(r"递给|递与|交给|交与|交到|塞给|塞到|奉上|献上|送给|还给|抛给|掷给|丢下|扔下|弃下|抛下")
 LEAVE = re.compile(r"逃走|逃去|逃离|逃遁|遁走|遁去|遁入|飞遁|远遁|退走|离去|走远|溜走|掠走|飞退|倒纵|远去|扬长而去|拂袖而去|告辞而去|消失在")
 FOLLOW = re.compile(r"携着|携了|携起|携|带着|带了|揽住|揽着|扶着|背着|抱着|拉住|拉着|领着|同行|随你|跟着你|随后跟上|紧随")
@@ -68,6 +73,9 @@ class View:
     drained: set[str] = field(default_factory=set)        # 本回合功力下降之人
     captive: set[str] = field(default_factory=set)        # 回合结束时仍受制之人
     moved: bool = False                                   # 主角本回合是否换了地方
+    here: str | None = None                               # 回合结束时主角所在(v5)
+    route: set[str] = field(default_factory=set)          # 主角本回合到过的地方(含起止)
+    aimed: set[str] = field(default_factory=set)          # 导演写了主角要去的地方(落没落得了另有回告，不再算漏写)
 
 
 @dataclass
@@ -169,7 +177,28 @@ def scan(beats: list[dict], view: View, tab, kinds: dict[str, str]) -> list[Find
             if not NEGATE.search(sent) and not far:
                 found, prev = _sentence(i, sent, who, view, tab, kinds, prev)
                 out += found
+        out += _moves(i, text, who, view, tab, kinds)
     return _dedupe(out)
+
+
+def _moves(i, text, who, view, tab, kinds) -> list[Finding]:
+    """主角的去留(v5)：拍文写「你走进X」「你离开X」，账上主角须真到过 X、真离开了 X；台词里说到的去处不算，
+    导演写了要去却没去成(关前止步、途中歇脚)的地方另有回告，也不算。只认地名紧跟在完成体的去留之词后面。"""
+    if view.here is None:
+        return []
+    out = []
+    for clause in _clauses(QUOTED.sub("", text)):
+        if not (who == "player" or "你" in clause) or NEGATE.search(clause) or YET.search(clause) or REMOTE.search(clause):
+            continue
+        for nid, a, _ in find(clause, tab):
+            if kinds.get(nid) != "location" or nid in view.aimed:
+                continue
+            lead = clause[max(0, a - 4):a]
+            if ARRIVE.search(lead) and nid not in view.route:
+                out.append(Finding("move", i, nid, f"第{i}拍写你到了{nid}，账上你并未到那里：要去就写 set player location，否则改写成正要前往"))
+            elif DEPART.search(lead) and nid == view.here:
+                out.append(Finding("move", i, nid, f"第{i}拍写你离开了{nid}，账上你仍在那里：要走就写 set player location"))
+    return out
 
 
 def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:

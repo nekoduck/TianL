@@ -9,7 +9,7 @@
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
        → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，一幕了结、无人相逼时导演写的幕间省略(cut)再让光阴跳过(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
-       → 编剧按三个槽位(此刻/此后/机缘)拟选项，正文写出账上没有的进境记作偏差(drift)交下回合导演
+       → 编剧按三个槽位(此刻/此后/机缘)拟选项，正文写出账上没有的进境、得失、去留、生死、擒放(adjudicate.afterword)记作偏差(drift)交下回合导演
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
@@ -214,10 +214,11 @@ class Game:
             offstage_job.result()
         page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
         drift = growth.unearned(w, lexicon.mastery(page["text"], "player"))  # 只记账上没有的那一阶
-        if drift:  # 正文已送出读者，改不回来：记下偏差，下回合交导演由剧情交代
+        slips = adjudicate.afterword(w, page["text"])  # 正文写了账上没有的得失、去留、生死、擒放
+        if drift or slips:  # 正文已送出读者，改不回来：记下偏差，下回合交导演由剧情交代或圆回
             arts = "；".join(a["detail"] for a in growth.mastery(w)) or "主角尚无武学"
-            w.player.set("drift", [f"正文写主角「{'、'.join(drift)}」，账上：{arts}"])
-            log.info("正文偏差·进境：%s", drift)
+            w.player.set("drift", ([f"正文写主角「{'、'.join(drift)}」，账上：{arts}"] if drift else []) + slips)
+            log.info("正文偏差：%s", (drift, slips))
         turn["text"] = page["text"]
         later = choices.later(w)                      # 此后槽的兜底：选项里没有一件持续之事，就补一项
         picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates, plan["options"], later=later)  # 兜底项看局面，归 menu

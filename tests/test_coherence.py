@@ -1,18 +1,21 @@
 """
 [INPUT]: 依赖 tianlong.world 的 World / lod / body / bond / effects / rag / graph 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
-         tianlong.narrative 的 prompts（后台成文），tests/test_engine 的 StubLLM / director（桩导演）
+         tianlong.narrative 的 prompts（后台成文）与 llm.LLMError，tests/test_engine 的 StubLLM / director（桩导演），tests/test_adjudicate 的 plan / judge
 [OUTPUT]: unittest 用例——v5「连贯性」的离线验收，每一类对应 PR #2 review 里一条 P0：
           剧情前提与体征分开(原著宣告的负伤不被养伤抹掉、明写痊愈才消、读路径不写气血、原著主线离线连演不断)；
-          一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)
+          一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
+          账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)
 [POS]: tests 的连贯性验证——36 回实录里「段誉不来」「剧情前后打架」的病灶在这里逐条成为用例；与 test_state(v4 状态层)、test_story(v4 故事层)互补
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
 import unittest
 
+from tests.test_adjudicate import judge, plan
 from tests.test_engine import StubLLM, director
 from tianlong.engine import Game
 from tianlong.narrative import prompts
+from tianlong.narrative.llm import LLMError
 from tianlong.world import body, bond, effects, graph, lod, rag
 from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
@@ -249,3 +252,87 @@ class FarewellTest(unittest.TestCase):
         self.assertIn(self.fall["id"], [ev["id"] for ev, _ in offstage])              # 过了时候的旧事不回头拽人：场外作罢
         self.assertTrue(lod.broken(w, self.fall))
         self.assertEqual(staged["id"], "段誉借乘黑玫瑰")                               # 来要他的是当下的那一桩
+
+
+# ============================================================
+#  P0-3 账文一致：授意、词表、reveal、成文对账、导演失声
+# ============================================================
+VAULT, STUDY, TUNNEL = "琅嬛福地·玉像石室", "琅嬛福地·书房", "琅嬛福地·石级隧道"
+
+
+class AgreementTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.player.set("location", VAULT)
+
+    def test_only_the_overreach_is_stripped(self):
+        w = self.w
+        r = judge(w, plan(("player", "你抓起石室烛台，快步奔向来时的石级隧道。",
+                           [{"op": "push", "id": "player", "key": "inventory", "value": "琅嬛洞烛台"},
+                            {"op": "set", "id": "player", "key": "location", "value": TUNNEL}])), aim={TUNNEL})
+        self.assertEqual(w.here, TUNNEL)                                              # 玩家要走：照走
+        self.assertNotIn("琅嬛洞烛台", w.player["inventory"])                          # 顺手牵羊：不演
+        self.assertEqual(r.candidates, ["取走琅嬛洞烛台"])
+        self.assertIn("取走琅嬛洞烛台——主角并未起意，未曾发生", r.void)                 # 编剧知道那件事没有发生
+        self.assertIn("「取走琅嬛洞烛台」主角并未起意", r.beats[0]["text"])
+        self.assertEqual(r.hard, [])                                                  # 剥掉的那件不再算拍文违例
+
+    def test_a_narrated_hand_is_still_the_players(self):
+        w = self.w
+        r = judge(w, plan((None, "你顺手拾起地上的玉钏", [{"op": "push", "id": "player", "key": "inventory", "value": "神仙姊姊玉钏"}])))
+        self.assertEqual(r.candidates, ["取走神仙姊姊玉钏"])                            # 旁白里写「你」，也是主角的举动
+        w.graph.set("钟灵", "location", VAULT)
+        r = judge(w, plan((None, "钟灵把玉钏塞给你", [{"op": "push", "id": "player", "key": "inventory", "value": "神仙姊姊玉钏"}])))
+        self.assertEqual(r.candidates, [])                                            # 别人递给你的不归授意管
+        self.assertIn("神仙姊姊玉钏", w.player["inventory"])
+
+    def test_walking_in_without_walking_is_a_violation(self):
+        w = self.w
+        r = judge(w, plan(("player", "你走进书房，四下打量", [])))
+        self.assertEqual([f.kind for f in r.hard], ["move"])                          # 账上你仍在石室
+        r = judge(w, plan(("player", "你走进书房，四下打量", [{"op": "set", "id": "player", "key": "location", "value": STUDY}])))
+        self.assertEqual(r.hard, [])
+        r = judge(w, plan(("player", "你问道：「你们是何时来到无量山的？」", [])))
+        self.assertEqual(r.hard, [])                                                  # 台词里说到的去处不是你的行止
+
+    def test_a_secret_way_is_found_where_it_is(self):
+        w = self.w
+        road = {"op": "reveal", "src": "无量山·谷底", "dst": "琅嬛福地", "rel": "通路"}
+        w.player.set("location", "剑湖宫")
+        _, rejected = effects.apply(w, [dict(road)], "director")
+        self.assertIn("发现不了这条暗路", rejected[0][1])                               # 隔着几重山，发现不了谷底的石门
+        w.player.set("location", "无量山·谷底")
+        self.assertEqual(effects.apply(w, [dict(road)], "director")[1], [])
+        _, rejected = effects.apply(w, [{"op": "reveal", "src": "段延庆", "dst": "段誉", "rel": "生父"}], "director")
+        self.assertIn("无从得知", rejected[0][1])                                       # 当事人都不在身边
+
+    def test_taking_needs_reach(self):
+        w = self.w
+        w.player.set("location", STUDY)
+        take = lambda item: effects.apply(w, [{"op": "push", "id": "player", "key": "inventory", "value": item}], "director")[1]
+        self.assertEqual(take("琅嬛洞烛台"), [])                                       # 隔壁石室里摆着的，走两步就拿到
+        self.assertTrue(take("北冥神功卷轴"))                                           # 藏在隔壁蒲团里的，人不到那里找不着
+        _, rejected = effects.apply(w, [{"op": "set", "id": "北冥神功卷轴", "key": "holder", "value": "player"}], "director")
+        self.assertTrue(rejected)                                                     # 换成 set holder 也一样
+        _, rejected = effects.apply(w, [{"op": "set", "id": "player", "key": "location", "value": VAULT},
+                                        {"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
+        self.assertEqual(rejected, [])                                                # 走过去再找：同一拍里也成立
+
+    def test_the_page_is_audited_after_it_is_written(self):
+        w = self.w
+        llm = StubLLM({**director(), "小说家": "你俯身拾起神仙姊姊玉钏，揣入怀中。\n===\n梗概：记\n传言：无"})
+        game = Game(w, llm)
+        game.act("看")
+        self.assertTrue(any("玉钏" in d for d in w.player["drift"]))                   # 账上没有：记作偏差
+        game.act("看")
+        self.assertIn("正文写你取得神仙姊姊玉钏", llm.director_prompts[-1])              # 下回合导演圆回
+
+    def test_a_silent_director_voids_the_turn(self):
+        class Strict(StubLLM):
+            strict = True
+        w = self.w
+        game = Game(w, Strict({}))
+        turn0 = w.player["turn"]
+        with self.assertRaises(LLMError):
+            game.act("看")
+        self.assertEqual(game.world.player["turn"], turn0)                            # 回合作废：不以离线说书人代演

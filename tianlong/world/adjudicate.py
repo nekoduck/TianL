@@ -1,11 +1,13 @@
 """
-[INPUT]: 依赖 world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
+[INPUT]: 依赖 world/access 的 steps（近处子地点的短名）、world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、names()（实体名表）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
+[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、
+          afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放 → 偏差交下回合导演）、names()（实体名表，含近处子地点的短名）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
-       每一拍的后果挂在这一拍上，先授意（主角的拍里取物、杀人、吸功须是玩家所指——越俎代庖的拍不演，降为下回合的候选选项），
+       每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
+       v5 只剥掉越权的那几条，这一拍其余照演(玩家要走就照走)，拍文后注明哪件事未曾发生、【未能成立】里明告编剧，越权之举降为下回合的候选选项；拍里只有越权之事则整拍不演），
        再落账，再以词表体检「写了变化却没有指令」的影子状态；随行、获救、败走这三种写漏了的连带由系统追认，其余硬违例交导演修复一次，
        仍不成立的拍整拍作废，化作一句失败的事实交编剧。
        一拍一事务(v3)：拍里改变物理状态的指令(去留、得失、生死、随行与拘押、赶来、研习、吸功、揭示)落不了，整拍即交返工；
@@ -13,6 +15,7 @@
        台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知(foretold，返工不作废)；拍上的 mood 原样带给编剧、不入账；
        词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；
        事件先于状态(v4)：每拍落账之后 bond.derive 从已成立的指令推出恩怨事件、actor.feel 把拍上的情绪挂在此人脸上；研习是主角的举动，玩家没指着的秘籍导演不替他练(降为候选)；
+       主角的去留有账可依(v5)：拍文写「你走进X」「你离开X」而账上没到、没走即 move 违例(台词里的去处、导演写了要去而止步关前的不算)；
        进境有账可依：主角的拍里写了账上没有的那一阶(「身如游龙」而未入门、「大成」而只初窥)即 mastery 违例，交返工不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -20,11 +23,11 @@ import copy
 import re
 from dataclasses import dataclass, field
 
-from . import actor, bond, effects, growth, lexicon, perspective, situation
+from . import access, actor, bond, effects, growth, lexicon, perspective, situation
 from .graph import holds
 
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name", "mastery"}
+        "follow", "leave", "custody", "name", "mastery", "move"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
 UNSURE = {"follow", "leave", "name", "foretold", "mastery"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
@@ -51,6 +54,8 @@ def names(world) -> tuple[list, dict]:
     surface = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group", "location", "skill")}
     surface.update({a: n for a, n in world.aliases.items() if n in surface})
     surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    local = situation.near(world) | set(access.steps(world, world.here))  # 近处的子地点叫短名：「石级隧道」即琅嬛福地·石级隧道
+    surface.update({loc.split("·", 1)[1]: loc for loc in sorted(local) if "·" in loc and loc.split("·", 1)[1] not in surface})
     surface.update({perspective.handle(world, p): p for p in situation.around(world)
                     if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵
     kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else node["type"])
@@ -72,9 +77,20 @@ def targets(world, deed: str, given=()) -> set[str]:
 
 
 # ============================================================
-#  授意：主角的拍里，取走他人或此地之物、毁物、杀人、吸功，对象须在玩家所指之内
+#  授意：主角做的事(主角的拍、或写「你」的旁白)里，取走他人或此地之物、毁物、杀人、吸功、研习，对象须在玩家所指之内
 # ============================================================
-def _unbidden(world, ops: list, allowed: set[str]) -> list[str]:
+TO_YOU = re.compile(r"(?:给|与|到|进|入)你|(?:向|朝)你(?:抛|掷|扔|递)")  # 你是收受的一方：东西是别人给的
+
+
+def _by_player(beat: dict) -> bool:
+    """这一拍是不是主角在做事：主角的拍；或没有署名、写着「你」、又不是别人递给你的旁白(「你顺手拾起烛台」)。
+    别人给主角东西(钟灵把解药塞给你、塞进你怀里)是他的举动，不归授意管。"""
+    who, text = beat.get("who"), beat.get("text") or ""
+    return who == "player" or (who is None and "你" in text and not TO_YOU.search(text))
+
+
+def _unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]:
+    """越权之举：(那条指令, 一句人话, 所涉实体)。"""
     g, out = world.graph, []
     allowed = allowed | {effects.resolve(world, a) for a in allowed}  # 玩家所指的叫法(蒲团里的帛卷)落回实体
 
@@ -89,19 +105,19 @@ def _unbidden(world, ops: list, allowed: set[str]) -> list[str]:
         kind, key = op.get("op"), op.get("key")
         nid, value = effects.resolve(world, op.get("id")), effects.resolve(world, op.get("value"))
         if kind == "push" and nid == "player" and key in ("inventory", "随身", "物品") and g.kind(value) == "item" and not ok(value):
-            out.append(f"取走{value}")
+            out.append((op, f"取走{value}", value))
         elif kind == "set" and key == "holder" and value == "player" and g.kind(nid) == "item" and not ok(nid):
-            out.append(f"取走{nid}")
+            out.append((op, f"取走{nid}", nid))
         elif kind == "set" and key == "status" and value == "dead" and g.kind(nid) == "person" and nid not in allowed:
-            out.append(f"杀了{nid}")
+            out.append((op, f"杀了{nid}", nid))
         elif kind == "drain" and g.kind(value) == "person" and value not in allowed:
-            out.append(f"吸取{value}的内力")
+            out.append((op, f"吸取{value}的内力", value))
         elif kind == "study" and g.kind(value) in ("item", "skill") and value not in allowed \
                 and not set(growth.arts_of(g, value)) & (allowed | taught | arts):
-            out.append(f"研习{value}")  # 研习是主角的举动：玩家没指着这部秘籍或这门武学，导演不替他坐下来练
+            out.append((op, f"研习{value}", value))  # 研习是主角的举动：玩家没指着这部秘籍或这门武学，导演不替他坐下来练
         elif kind == "set" and key == "state" and g.kind(nid) == "item" and isinstance(value, dict) \
                 and value.get("exists") is False and nid not in allowed:
-            out.append(f"毁去{nid}")
+            out.append((op, f"毁去{nid}", nid))
     return out
 
 
@@ -165,22 +181,29 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             r.spawned.append(nid)
         elif 0 not in drop:
             r.hard.append(lexicon.Finding("spawn", 0, str(spec.get("name")), f"场景实体「{spec.get('name')}」不成立：{why}"))
-    shown, touched = [], {}
+    shown, touched, stripped = [], {}, set()
     beats = plan["beats"]
+    aimed = {effects.resolve(world, op.get("value")) for b in beats for op in b.get("ops") or [] if effects._moves_player(world, op)}
     for i, beat in enumerate(beats, 1):
         if i in drop:
             r.void.append(f"{beat['text'] or '这一拍的后果'}——未曾发生：{'；'.join(drop[i])}")
             shown.append({**beat, "text": ""})
             continue
-        if beat.get("who") == "player":
-            over = _unbidden(world, beat.get("ops") or [], allowed)
-            if over:  # 系统不替玩家做主：这一拍不演，越权之举留作下回合的选项
-                r.candidates += over
-                r.soft.append(lexicon.Finding("agency", i, "、".join(over), f"第{i}拍替主角{'、'.join(over)}，玩家并未授意"))
+        raw, aside = beat.get("ops") or [], ""
+        over = _unbidden(world, raw, allowed) if _by_player(beat) else []
+        if over:  # 系统不替玩家做主：只剥掉越权的那几条，这一拍其余照演；越权之举留作下回合的选项，并明告编剧它没有发生
+            acts = [act for _, act, _ in over]
+            r.candidates += [a for a in acts if a not in r.candidates]
+            r.void += [f"{a}——主角并未起意，未曾发生" for a in acts]
+            r.soft.append(lexicon.Finding("agency", i, "、".join(acts), f"第{i}拍替主角{'、'.join(acts)}，玩家并未授意"))
+            stripped |= {ent for _, _, ent in over}
+            raw = [op for op in raw if all(op is not o for o, _, _ in over)]
+            if not raw:  # 这一拍只做了越权之事：整拍不演
                 shown.append({**beat, "text": ""})
                 continue
+            aside = f"（其中{'、'.join(f'「{a}」' for a in acts)}主角并未起意，未曾发生）"
         after = beats[i]["text"] if i < len(beats) and isinstance(beats[i].get("text"), str) else ""
-        ops, baseless = _grounded(world, copy.deepcopy(beat.get("ops") or []), beat.get("text") or "", after, beat.get("who"))
+        ops, baseless = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"))
         r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
                    for op in baseless]
         at = world.here
@@ -197,7 +220,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             partial = effects._moves_player(world, op) and world.here != at  # 远行止步关前：前半程成立，交编剧写明，不必返工
             hard = physical(op) and not partial and bool((beat.get("text") or "").strip())  # 无文字的拍(旧写法的顶层后果)没有拍文可违
             (r.hard if hard else r.soft).append(lexicon.Finding("void", i, effects.describe(op), f"第{i}拍：{line}", hard=hard))
-        r.beats.append({k: beat.get(k) for k in ("who", "to", "text", "mood")})
+        r.beats.append({**{k: beat.get(k) for k in ("who", "to", "text", "mood")}, "text": (beat.get("text") or "") + aside})
         shown.append(beat)
         if beat.get("to") == "player" and beat.get("who") not in (None, "player"):
             r.addressed.append(beat["who"])
@@ -209,7 +232,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     if then:
         then()
     _custody(world, r, touched)
-    _examine(world, r, shown, here0, inv0, around0, power0)
+    world.turn["start"] = {"here": here0, "inventory": inv0, "around": around0, "route": route, "aimed": aimed}  # 编剧成文之后的对账也以此为准
+    _examine(world, r, shown, here0, inv0, around0, power0, stripped)
     _question(world, r, cast, no_interrupt and 0 not in drop)
     r.notes = list(world.turn.get("notes", []))
     return r
@@ -273,15 +297,24 @@ def _custody(world, r: Ruling, touched: dict[str, int]):
                                                              f"要{b}随你走，须先写明救下{b}（unlink 拘押、link 随行）"))
 
 
-def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
-    """落账之后体检拍文：写了变化却没有指令即为违例；随行、获救、败走照拍文追认，其余交导演。"""
-    g, tab_kinds = world.graph, names(world)
-    view = lexicon.View(here_start=around0, here_end=situation.around(world), arrived=set(world.turn.get("arrived", ())),
+def _view(world, here0, inv0, around0, route, aimed, power0=None) -> lexicon.View:
+    """回合起止两个切面：拍文体检与成文之后的对账共用。"""
+    g = world.graph
+    return lexicon.View(here_start=around0, here_end=situation.around(world), arrived=set(world.turn.get("arrived", ())),
                         inventory_start=inv0, inventory_end=set(world.player["inventory"]),
                         dead={p for p in g.where(type="person") if g.get(p, "status") == "dead"},
-                        drained={p for p, v in power0.items() if (g.get(p, "power") or 0) < (v or 0)},
-                        captive=situation.captive(world), moved=world.here != here0)
-    found = lexicon.scan(shown, view, *tab_kinds)
+                        drained={p for p, v in (power0 or {}).items() if (g.get(p, "power") or 0) < (v or 0)},
+                        captive=situation.captive(world), moved=world.here != here0,
+                        here=world.here, route=set(route) | {here0, world.here}, aimed=set(aimed))
+
+
+def _examine(world, r: Ruling, shown, here0, inv0, around0, power0, stripped=frozenset()):
+    """落账之后体检拍文：写了变化却没有指令即为违例；随行、获救、败走照拍文追认，其余交导演。
+    越权而被剥掉的那几件(取走、杀、吸)已明告编剧未曾发生，拍文里提到它们不再算违例。"""
+    tab_kinds = names(world)
+    view = _view(world, here0, inv0, around0, world.turn["start"]["route"], world.turn["start"]["aimed"], power0)
+    found = [f for f in lexicon.scan(shown, view, *tab_kinds)
+             if not (f.kind in ("acquire", "kill", "drain", "give") and f.entity in stripped)]
     found += perspective.audit(world, shown, around0 | view.here_end)  # 听来的名字入认知；叫出不该知道的名字即违例
     secrets = _secrets(world)
     for i, beat in enumerate(shown, 1):
@@ -297,6 +330,20 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
             r.hard.append(f)
         else:
             r.soft.append(f)
+
+
+AFTER = {"acquire", "give", "kill", "drain", "bind", "free", "follow", "leave", "move"}  # 成文之后还要对账的变化
+
+
+def afterword(world, text: str) -> list[str]:
+    """编剧成文之后再对一次账(v5)：正文写了账上没有的得失、去留、生死、擒放(与拍文同一口径，以回合起止两个切面为准)——
+    读者已经读到，改不回来，记作偏差，下回合交导演由剧情交代或圆回。须在本回合裁决之后调用(world.turn["start"])。"""
+    start = (getattr(world, "turn", None) or {}).get("start")
+    if not start or not text:
+        return []
+    view = _view(world, start["here"], start["inventory"], start["around"], start["route"], start["aimed"])
+    found = lexicon.scan([{"who": None, "text": text}], view, *names(world))
+    return [f.message.replace("第1拍", "正文") for f in found if f.kind in AFTER]
 
 
 def _mastery(world, shown) -> list:

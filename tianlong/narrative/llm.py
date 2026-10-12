@@ -4,7 +4,7 @@
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
        stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据。
        一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON、被安全策略半途截断）都化为 LLMError，交上层兜底——绝不让一回合半途炸开；
-       用量与 trace 加锁：场外推演、梗概折叠与编剧并行调用
+       用量与 trace 加锁：场外推演、梗概折叠与编剧并行调用；strict=True(v5)：导演这一笔失败即整回合作废(agents._ask)，不以离线说书人代演
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import http.client
@@ -47,6 +47,8 @@ def sse_texts(lines, usage: dict):
 
 
 class Gemini:
+    strict = True  # 导演失声不演假戏：导演这一笔调用失败即整回合作废(agents._ask)，其余 Agent 照旧兜底
+
     def __init__(self, key: str, model: str = DEFAULT_MODEL, timeout: int = 60, trace=None):
         self.key, self.model, self.timeout = key, model, timeout
         self.tokens = 0  # 累计消耗，用于自查成本

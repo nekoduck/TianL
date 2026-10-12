@@ -18,6 +18,8 @@
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
+       揭示须有来由(v5)：暗路要主角身在路的一端或其近旁、本回合走过或正要去那一端，隐情要当事人之一在主角身边(_seen)；
+       取物只有一个口径(v5 _handy)：就在此地、或本批指令里主角要去的地方、或近旁而不是暗藏的——push inventory 与 set holder player 一样；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
        原样不动的指令(人已在那里、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
@@ -236,7 +238,14 @@ def _shape(world, op) -> str | None:
     return None
 
 
-def _physics(world, op) -> str | None:
+def _handy(world, item: str, heading=frozenset()) -> bool:
+    """主角够得着这件东西(v5，取物的唯一口径)：就在此地；或在本批指令里主角要去的地方；或在近旁、且不是暗藏的——
+    暗藏之物要人到了那里才找得着。push inventory 与 set holder player 同一口径。"""
+    where = place(world, item)
+    return where == world.here or where in heading or (where in situation.near(world) and not world.graph.get(item, "hidden"))
+
+
+def _physics(world, op, heading=frozenset()) -> str | None:
     g, kind = world.graph, op["op"]
     if kind in ("link", "unlink", "reveal"):
         if not all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
@@ -293,7 +302,7 @@ def _physics(world, op) -> str | None:
         if kind == "push" and value not in world.player["inventory"]:
             if not usable(world, value):
                 return f"{value}已不复存在"
-            if place(world, value) != world.here:
+            if not _handy(world, value, heading):
                 return f"{value}不在此地，够不着"
     return _shape(world, op)
 
@@ -349,9 +358,11 @@ def _travel(world, op, origin) -> str | None:
 # ------------------------------------------------------------
 #  在场性：谁能碰到谁
 # ------------------------------------------------------------
-def _reach(world, op, origin, scope) -> str | None:
+def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
     if op["op"] == "reveal" and origin in OFFSCREEN:
         return "主角不在场，无从得知隐情"
+    if op["op"] == "reveal" and origin == "director":
+        return _seen(world, op, heading)
     if origin in OFFSCREEN:  # 纠缠者的去留、生死、拘押只听导演与此地剧情；史官与场外推演可写风声，动不了他们
         bound = [i for i in _ids(op) if i in situation.entangled(world)]
         if bound and (op["op"] in ("link", "unlink", "arrive") or op.get("key") in ("location", "status", "hp")):
@@ -381,6 +392,8 @@ def _reach(world, op, origin, scope) -> str | None:
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
             return f"{op['value']}不在此地，接不过{nid}"
+        if op.get("key") == "holder" and op.get("value") == "player" and g.kind(nid) == "item":
+            return None if _handy(world, nid, heading) else f"{nid}不在此地，够不着"
         return None if where in close else f"{nid}不在你身边，主角够不着"
     if origin in OFFSCREEN:
         if nid == "player" or op.get("value") == "player":
@@ -403,6 +416,18 @@ def _self(world, op) -> str | None:
     if key == "skills" and op["op"] == "push" and v not in world.player["skills"]:
         return f"无从凭空习得{v}：手边有秘籍就写 study 研习，身边有人会就写 study 求教"
     return None
+
+
+def _seen(world, op, heading=frozenset()) -> str | None:
+    """导演写的揭示须有来由(v5)：暗路要主角身在路的一端或其近旁、本回合走过或正要去那一端；
+    隐情要当事人之一在主角身边(或回合开始时还在)——隔着千山万水，没有人能当场得知。"""
+    turn = getattr(world, "turn", None) or {}
+    if op["rel"] == ROAD:
+        ends = {op["src"], op["dst"]}
+        seen = situation.near(world) | set(turn.get("route", ())) | set(heading)
+        return None if ends & seen else f"主角不在{op['src']}或{op['dst']}，发现不了这条暗路"
+    close = situation.around(world) | set(turn.get("present", ())) | {"player"}
+    return None if {op["src"], op["dst"]} & close else f"{op['src']}与{op['dst']}都不在你身边，此事无从得知"
 
 
 def _bond(world, op) -> str | None:
@@ -588,6 +613,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     applied, rejected = [], []
     ops = ops if isinstance(ops, list) else []  # 场外推演偶把一条指令写成单值：整批作废，不让世界崩
     ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
+    heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, op.get("value")), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西
     for op in ops:
         if not isinstance(op, dict) or op.get("op") not in OPS:
             rejected.append((op, "未知指令"))
@@ -599,7 +625,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             _summon(world, op, origin)
             if _noop(world, op):
                 continue  # 本就如此：既非成立也非驳回
-            reason = _physics(world, op) or _reach(world, op, origin, scope) or _travel(world, op, origin)
+            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩
             reason = "格式不可解"
         if reason:

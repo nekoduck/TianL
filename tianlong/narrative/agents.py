@@ -6,7 +6,8 @@
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
        后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
-       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文
+       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文；
+       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -27,12 +28,16 @@ NO = {"false", "no", "否", "不", "0", "none", "null", ""}
 SCRAP = 60  # 流式半途被截断、正文又不足此数：只言片语，须以已成立之事续成
 
 
-def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):
+def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800, strict=False):
+    """调用模型；失败走兜底。strict 的调用(导演)遇上严格的模型(真 Gemini，strict=True)不演假戏：抛出去，整回合作废、玩家重试——
+    离线说书人那句「你看了看四周」配上编剧的一番铺陈，比一次重试更伤剧情。"""
     if llm is None:
         return fallback()
     try:
         return llm.json(*prompt, max_tokens=tokens) if as_json else llm.text(*prompt, max_tokens=tokens)
     except LLMError as e:
+        if strict and getattr(llm, "strict", False):
+            raise
         log.warning("LLM 调用失败，走兜底：%s", e)
         return fallback()
 
@@ -123,7 +128,7 @@ def _cut(cut):
 
 
 def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
-    r = _ask(llm, prompts.director(pack, gm, deed or "初来乍到，环顾四周"), lambda: _plain_director(pack, deed), tokens=2000)
+    r = _ask(llm, prompts.director(pack, gm, deed or "初来乍到，环顾四周"), lambda: _plain_director(pack, deed), tokens=2000, strict=True)
     return _plan(r, pack, deed)
 
 
