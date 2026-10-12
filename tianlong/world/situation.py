@@ -1,14 +1,17 @@
 """
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
-          near()（近旁：同一处所之内、零日可达、无不通之关的子地点）、around()（主角身边之人：此地 + 近旁）、
+          near()（近旁：同一处所之内、零日可达、无不通之关的子地点）、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
+          area() / cast() / enlist() / muster() / elsewhere() / debuted()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
+          同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：群体与寻常物件，入账、有归属、离远即回收）、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
           entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
-[POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
+[POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
+       「在眼前」只有一个口径(around)：裁决、选项、视锥、认知校正、见证人数、原著的分身之禁都读它。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -33,6 +36,8 @@ def _root(loc: str) -> str:
 # ============================================================
 #  近旁：同一处所(名号同根)之内、零日路程、没有拦人之关的子地点——喊一声就到的距离
 #  「万劫谷」与「万劫谷·药室」是近旁；「无量山」与「无量山·谷底」中间隔着悬崖，不是
+#  眼前(v5)：近旁的「片区」(area：无量山、少林寺、中原这种下辖子地点或自成区域的大地方)不是一间屋子——
+#  同在片区的人要被剧情带到主角跟前(cast：赶来的、原著带上台的、随行的)才算在眼前；其余只交导演(elsewhere)
 # ============================================================
 def near(world, loc: str | None = None) -> set[str]:
     g, loc = world.graph, loc or world.here
@@ -47,11 +52,55 @@ def near(world, loc: str | None = None) -> set[str]:
     return seen
 
 
+def area(world, loc) -> bool:
+    return bool(world.graph.get(loc, "area"))
+
+
+def cast(world) -> set[str]:
+    """被剧情带到主角跟前的人(片区之内的名册)。"""
+    return set(world.player.get("cast") or [])
+
+
+def enlist(world, pids):
+    """这些人来到了主角跟前(赶来、原著带上台)：片区之内也算在眼前；擒者带着他的人质。"""
+    g, now = world.graph, list(world.player.get("cast") or [])
+    for p in pids:
+        for q in [p, *(e["dst"] for e in g.edges if e["src"] == p and e["rel"] in CUSTODY)]:
+            if g.kind(q) == "person" and q not in now:
+                now.append(q)
+    world.player.set("cast", now)
+
+
+def muster(world, before: set[str]):
+    """主角走出了原来的近旁(before)：跟前的人留在原处，名册清空——同行者照旧随行，不靠名册。"""
+    if world.here not in before:
+        world.player.set("cast", [])
+
+
+def _alive(g, p) -> bool:
+    return g.get(p, "status") != "dead" and not g.get(p, "hidden") and not g.get(p, "dormant")
+
+
 def around(world, loc: str | None = None) -> set[str]:
-    """主角身边之人（此地 + 近旁，活着、未隐匿、未休眠）。"""
+    """主角身边之人（此地 + 近旁，活着、未隐匿、未休眠）：片区里的人须在名册上或正随行——同在「中原」的四十人不同处一室。"""
     g, spots = world.graph, near(world, loc)
-    return {p for p in g.where(type="person") if g.get(p, "location") in spots and g.get(p, "status") != "dead"
-            and not g.get(p, "hidden") and not g.get(p, "dormant")}
+    seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
+    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
+            and (not area(world, n.get("location")) or p in seen)}
+
+
+def debuted(world, pid: str) -> bool:
+    """此人是否已在江湖上露面：原著里没有戏份的人一向都在；有戏份的，第一桩已到期(演了、作罢了或今天该演)才算——
+    原著数据把南海鳄神开局就放在无量山，他却要到第四回才登场：在此之前，他不在任何人的眼前。"""
+    done, mine = set(world.done), [ev for ev in world.canon if pid in ev["actors"]]
+    return not mine or any(ev["id"] in done or ev["day"] <= world.clock.day for ev in mine)
+
+
+def elsewhere(world) -> list[str]:
+    """同在近旁的片区里、此刻却不在眼前、且已在江湖上露面的人：只交导演——要他们登场写 arrive(同在一片，不计路程)。"""
+    g, spots, close = world.graph, near(world), around(world)
+    return sorted(p for p in g.where(type="person") if g.get(p, "location") in spots and p not in close and _alive(g, p)
+                  and debuted(world, p))
 
 
 # ============================================================

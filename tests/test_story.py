@@ -15,7 +15,7 @@ from tests.test_adjudicate import plan
 from tests.test_engine import StubLLM, director
 from tianlong.engine import Game
 from tianlong.story import arc, brief, canon, choices, scene, stakes, timing
-from tianlong.world import menu
+from tianlong.world import menu, situation
 from tianlong.world.clock import PER_DAY, PER_SHICHEN
 from tianlong.world.world import World
 
@@ -77,6 +77,7 @@ class CanonWindowTest(unittest.TestCase):
         w.clock.tick = 1832 * PER_DAY + 4 * PER_SHICHEN
         w.player.set("location", VALLEY)
         w.graph.set("段誉", "location", VALLEY)
+        situation.enlist(w, ["段誉"])                                                 # 谷底是一片地方：两人碰上了，他才在跟前
         w.graph.set("段誉", "status", "wounded")
         ev = canon.pull(w)
         self.assertEqual(ev and ev["id"], "段誉坠入无量山谷")                              # 两日后的原著，相关者到位即可上演
@@ -97,6 +98,7 @@ class CanonWindowTest(unittest.TestCase):
         w.clock.tick = 1832 * PER_DAY + 4 * PER_SHICHEN
         w.player.set("location", VALLEY)
         w.graph.set("段誉", "location", VALLEY)
+        situation.enlist(w, ["段誉"])
         w.graph.set("段誉", "status", "wounded")
         llm = StubLLM(director())
         Game(w, llm).act("看")

@@ -13,7 +13,8 @@
        主角与 NPC 同构(v4)：add hp、push/pull conditions 对任何活人成立，NPC 的气血归 actor、status 由气血推出(写 set status 则气血随之对齐)，
        set intent 改写此人眼下之事(一句话)、set mood 记下此人此刻的情绪(写到主角身上即不入账、不算错：主角的心思归玩家)；
        器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
-       在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
+       在场即「近旁」：同一处所之内零日可达的子地点都算身边——片区(v5)里的人须被剧情带到跟前(赶来即上名册)，主角走出近旁名册即清空，
+       导演碰得到的人只以「眼前」为准(around、回合开始时在、本回合赶来)；原著里尚未登场的人赶不来；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
@@ -44,7 +45,7 @@ from .graph import PLIGHT, ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing", "came_from", "en_route",
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route",
                       "drift", "scene", "clocks", "arc", "spines", "setups"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
@@ -389,6 +390,11 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if op.get("key") == "power":
             return "功力由系统结算：研习写 study，吸功写 drain，不得直接增减"
         close = situation.near(world)
+        if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
+            turn = getattr(world, "turn", None) or {}
+            seen = situation.around(world) | set(turn.get("present", ())) | set(turn.get("arrived", ()))
+            if nid not in seen:
+                return f"{nid}不在你身边，主角够不着"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
             return f"{op['value']}不在此地，接不过{nid}"
@@ -457,7 +463,9 @@ def _arrival(world, pid: str) -> str | None:
     where = g.get(pid, "location")
     days = g.distances(where).get(world.here, 99) if where else 99
     allow = getattr(world, "turn", {}).get("minutes", 0) // PER_DAY
-    return None if days <= allow else f"{pid}身在{where}，距此{days}日路程，此刻赶不到"
+    if days > allow:
+        return f"{pid}身在{where}，距此{days}日路程，此刻赶不到"
+    return None if situation.debuted(world, pid) else f"{pid}此时还没在江湖上露面"  # 原著里还没登场的人：等他自己的那一回
 
 
 def _note(world, text: str | list):
@@ -492,6 +500,7 @@ def _exec(world, op, origin):
         g.unlink(op["src"], op["dst"], op["rel"])
     elif kind == "arrive":
         g.set(op["id"], "location", world.here)
+        situation.enlist(world, [op["id"]])  # 来到主角跟前：片区里也算在眼前
         if turn is not None:
             turn.setdefault("movers", {})[op["id"]] = "director"
             turn.setdefault("arrived", set()).add(op["id"])
@@ -640,12 +649,14 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
                 if len(route) < 2 or not _progress(world, route):  # 受阻不倒退：近处绕了一圈仍过不去，便原地不动
                     continue
                 op["value"] = route[-1]
+            before = situation.near(world)
             access.learn(world, route)
             me = world.player
             me.set("came_from", route[-2])
             me.set("en_route", {"to": dest, "left": world.graph.distances(route[-1]).get(dest, 0)}
                    if why and why.startswith(access.ON_ROAD) else None)  # 途中：记着去向，下回合可续行，也可在途中生事
             _exec(world, op, origin)
+            situation.muster(world, before)  # 走出了原来的近旁：跟前的人留在原处
             applied.append(op)
             turn = getattr(world, "turn", None)
             if turn is not None and "route" in turn:  # 裁决器在场：同伴等诸拍落定再跟（拍中途解除随行的人不被带走）

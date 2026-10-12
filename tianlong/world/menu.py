@@ -3,7 +3,7 @@
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets，world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
 [OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
-       三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
+       三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -49,7 +49,10 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     for goal, meta in situation.quests(world).items():
         if goal in me["threads"]:
             out.append((f"继续：{goal}"[:20], [a for a in meta.get("about", []) if _reachable(world, a, "寻")]))
-    out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in sorted(situation.around(world))[:2]]
+    g = world.graph  # 攀谈先找与主角有过交集的人、再找叫得出名字的人——不按字码挑人
+    salient = sorted(situation.around(world), key=lambda p: (-len((g.get(p, "bond") or {}).get("log", [])),
+                                                          not perspective.knows(world, "player", p), p))
+    out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in salient[:2]]
     if not peril:
         out += [(e["way"], [e["name"]]) for e in access.exits(world) if e["days"] == 0 and not e["back"]][:2]
         out.append(("歇息", []))

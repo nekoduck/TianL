@@ -1,10 +1,11 @@
 """
-[INPUT]: 依赖 tianlong.world 的 World / lod / body / bond / effects / rag / graph 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
+[INPUT]: 依赖 tianlong.world 的 World / lod / body / bond / effects / rag / graph / situation / menu 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
          tianlong.narrative 的 prompts（后台成文）与 llm.LLMError，tests/test_engine 的 StubLLM / director（桩导演），tests/test_adjudicate 的 plan / judge
 [OUTPUT]: unittest 用例——v5「连贯性」的离线验收，每一类对应 PR #2 review 里一条 P0：
           剧情前提与体征分开(原著宣告的负伤不被养伤抹掉、明写痊愈才消、读路径不写气血、原著主线离线连演不断)；
           一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
-          账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)
+          账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)；
+          眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)
 [POS]: tests 的连贯性验证——36 回实录里「段誉不来」「剧情前后打架」的病灶在这里逐条成为用例；与 test_state(v4 状态层)、test_story(v4 故事层)互补
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -16,7 +17,7 @@ from tests.test_engine import StubLLM, director
 from tianlong.engine import Game
 from tianlong.narrative import prompts
 from tianlong.narrative.llm import LLMError
-from tianlong.world import body, bond, effects, graph, lod, rag
+from tianlong.world import body, bond, effects, graph, lod, menu, rag, situation
 from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
@@ -221,6 +222,7 @@ class FarewellTest(unittest.TestCase):
         self.w.done.extend(e["id"] for e in self.w.canon if e["order"] < self.fall["order"])
         self.w.player.set("location", "无量后山")
         self.w.graph.set("段誉", "location", "无量后山")
+        situation.enlist(self.w, ["段誉"])                                            # 两人在后山碰上了：他在主角跟前
         effects.apply(self.w, [{"op": "set", "id": "段誉", "key": "status", "value": "wounded"}], "canon")
         self.w.advance((self.fall["day"] - self.w.clock.day) * PER_DAY)
 
@@ -336,3 +338,73 @@ class AgreementTest(unittest.TestCase):
         with self.assertRaises(LLMError):
             game.act("看")
         self.assertEqual(game.world.player["turn"], turn0)                            # 回合作废：不以离线说书人代演
+
+
+# ============================================================
+#  P0-4 眼前：片区不是一间屋子，名册记着被剧情带到跟前的人
+# ============================================================
+class PresenceTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.turn = {}
+
+    def test_a_region_is_not_one_room(self):
+        w = self.w
+        w.player.set("location", "中原")
+        crowd = [p for p in w.graph.where(type="person") if w.graph.get(p, "location") == "中原"]
+        self.assertGreater(len(crowd), 30)
+        self.assertEqual(rag.scene(w)["people"], [])                                  # 四十多人同在「中原」，不同处一室
+        self.assertTrue(situation.elsewhere(w))                                       # 交导演：要谁登场写 arrive
+
+    def test_the_mountain_hides_who_has_not_come_forward(self):
+        w = self.w
+        w.player.set("location", "无量山")
+        self.assertEqual(situation.around(w), set())                                  # 走到无量山，不是撞进神农帮的营帐
+        self.assertIn("司空玄", situation.elsewhere(w))
+        self.assertNotIn("南海鳄神", situation.elsewhere(w))                           # 第四回才登场的人，此刻不在任何人眼前
+        _, rejected = effects.apply(w, [{"op": "arrive", "id": "南海鳄神"}], "director")
+        self.assertIn("还没在江湖上露面", rejected[0][1])
+        applied, _ = effects.apply(w, [{"op": "arrive", "id": "司空玄"}], "director")
+        self.assertEqual(len(applied), 1)
+        self.assertIn("司空玄", situation.around(w))                                   # 找上门来：在跟前了
+        self.assertIn("司空玄", rag.scene(w)["people"])
+
+    def test_leaving_the_place_leaves_them_behind(self):
+        w = self.w
+        w.player.set("location", "无量山")
+        situation.enlist(w, ["司空玄"])
+        effects.apply(w, [{"op": "set", "id": "player", "key": "location", "value": "剑湖宫"}], "director")
+        self.assertEqual(situation.cast(w), set())
+        w.player.set("location", "无量山")
+        self.assertNotIn("司空玄", situation.around(w))                                # 回来时，他不会还站在原处等你
+
+    def test_canon_on_stage_brings_its_cast(self):
+        w = self.w
+        ev = canon(w, "神农帮留钟灵下毒逼援")
+        w.done.extend(e["id"] for e in w.canon if e["order"] < ev["order"])
+        w.player.set("location", "无量山")
+        w.advance((ev["day"] - w.clock.day) * PER_DAY)
+        llm = StubLLM(director())
+        Game(w, llm).act("看")
+        self.assertIn("司空玄｜", llm.director_prompts[-1])                              # 原著在眼前上演：它的相关者就在跟前
+
+    def test_the_director_knows_who_else_is_about(self):
+        w = self.w
+        w.player.set("location", "无量山")
+        text = prompts.render_backstage(rag.backstage(w))
+        self.assertIn("此地另有其人", text)
+        self.assertIn("司空玄（神农帮帮主）在无量山一带", text)
+
+    def test_familiar_faces_nearby_are_remembered(self):
+        w = self.w
+        w.player.set("location", "澜沧江")
+        w.graph.set("段誉", "location", "澜沧江边高崖")
+        self.assertFalse(any(line.startswith("段誉") for line in rag.acquainted(w)))  # 素不相识：不算熟人
+        bond.event(w, "段誉", 1.5, "你替他解过围")
+        self.assertTrue(rag.acquainted(w)[0].startswith("段誉：身在澜沧江边高崖（距此0日）"))  # 一日之内的熟人(有过交集者在前)，导演记得他就在不远处
+
+    def test_small_talk_goes_to_someone_who_matters(self):
+        w = self.w
+        bond.event(w, "钟灵", 1.5, "你替她挡过一剑")
+        picked = menu.check(w, [])
+        self.assertTrue(any("钟灵" in str(ids) for _, ids in picked))                   # 兜底攀谈先找与主角有过交集的人

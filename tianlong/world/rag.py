@@ -3,12 +3,12 @@
          world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress / mastery / studiable（研习进度、进境投影、研习对象）
          与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
-[OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、
+[OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        状态字段一律取自 profile(v4 单一投影)：condition、build、backstage 只取不同切面，不各算一遍——进境、伤势、心境、眼下之事、立场三处同时看得见；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
-       backstage 给导演——上回合正文的进境偏差、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、
+       backstage 给导演——此地另有其人(v5：同在近旁片区、此刻不在眼前，要他们登场写 arrive)、近处的熟人(一日之内主角认得或有过交集的人)、上回合正文的偏差、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、
        主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
        原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问、局面平静则提示幕间省略，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
@@ -42,16 +42,36 @@ def condition(world) -> list[dict]:
 
 
 def scene(world) -> dict:
-    """玩家此刻能亲眼看见的一切（真相，排除隐匿节点）。"""
-    g = world.graph
+    """玩家此刻能亲眼看见的一切（真相，排除隐匿节点）。人以「眼前」为准(situation.around)：
+    主角站在片区里(无量山、中原)，只看得见被剧情带到跟前的人，同在一片的其余人交导演(elsewhere)。"""
+    g, close = world.graph, situation.around(world)
+    wide = situation.area(world, world.here)
 
     def at(kind):
         return [n for n in g.where(type=kind, location=world.here) if not g.get(n, "hidden")]
 
     people = at("person")
-    return {"people": [p for p in people if g.get(p, "status") != "dead"],
-            "dead": [p for p in people if g.get(p, "status") == "dead"],
+    return {"people": [p for p in people if p in close],
+            "dead": [p for p in people if g.get(p, "status") == "dead" and (not wide or p in situation.cast(world))],
             "features": at("feature"), "items": [i for i in at("item") if usable(world, i)]}
+
+
+def _salient(world, p) -> tuple:
+    """近处之人的轻重：与主角有过交集的在前，叫得出名字的次之。"""
+    return (-len((world.graph.get(p, "bond") or {}).get("log", [])), not perspective.knows(world, "player", p), p)
+
+
+def acquainted(world, limit: int = 5) -> list[str]:
+    """近处的熟人(v5)：一日路程之内、此刻不在眼前，主角叫得出名字或与之有过交集的人——导演知道他们就在不远处，剧情需要时可以让他们找来。"""
+    g, dist, close = world.graph, world.graph.distances(world.here), situation.around(world) | set(situation.elsewhere(world))
+    known = [p for p in g.where(type="person") if p not in close and g.get(p, "status") != "dead" and not g.get(p, "dormant")
+             and dist.get(g.get(p, "location"), lod.NEAR + 1) <= lod.NEAR
+             and (perspective.knows(world, "player", p) or (g.get(p, "bond") or {}).get("log"))]
+    out = []
+    for p in sorted(known, key=lambda p: _salient(world, p))[:limit]:
+        where, belief = g.get(p, "location"), world.knowledge.view(p).get("location")
+        out.append(f"{p}：身在{where}（距此{dist.get(where, '?')}日）" + (f"，主角以为在{belief}" if belief and belief != where else ""))
+    return out
 
 
 # ============================================================
@@ -247,6 +267,9 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
+        "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带"  # 有过交集的、怀有图谋的在前
+                      for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
+        "acquainted": acquainted(world),
     }
 
 

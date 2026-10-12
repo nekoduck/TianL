@@ -2,7 +2,7 @@
 [INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
-       处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
+       处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、标出片区(area：下辖子地点或以自身为区域的大地名，同在片区不等于同处一室)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
        按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -244,10 +244,20 @@ def load(root: Path = DATA) -> dict:
     return copy.deepcopy(_compile(str(root)))
 
 
+def _areas(nodes: dict):
+    """片区(v5)：下辖子地点的处所(无量山、少林寺、大理城)与以自身为区域的大地名(中原、西域)——那是一片地方，不是一间屋子：
+    同在「中原」的四十人并不同处一室，主角走到那里，眼前只有找上门来、或被剧情带到跟前的人(situation.around)。"""
+    parents = {n.get("parent") for n in nodes.values() if n["type"] == "location"}
+    for nid, n in nodes.items():
+        if n["type"] == "location" and (nid in parents or n.get("region") == nid):
+            n["area"] = True
+
+
 @lru_cache(maxsize=4)
 def _compile(root: str) -> dict:
     root = Path(root)
     nodes = _nodes(root)
+    _areas(nodes)
     roads = [(a, b, _ride(days)) for a, b, days in _roads(root)]
     gates = _gates(root)
     relations = [{k: r[k] for k in ("src", "dst", "rel", "secret", "revealed_by") if k in r}

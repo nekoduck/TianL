@@ -12,7 +12,7 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-from tianlong.world import access, genesis, lod, rag
+from tianlong.world import access, genesis, lod, rag, situation
 from tianlong.world.clock import PER_DAY, Clock, day_of
 from tianlong.world.world import World
 
@@ -156,6 +156,7 @@ class PlotTest(unittest.TestCase):
         _, rejected = self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
         self.assertEqual(len(rejected), 1)  # 段誉没跟来大理城：不在身边的人结不下新的关系
         self.w.graph.set("段誉", "location", "大理城")
+        situation.enlist(self.w, ["段誉"])  # 大理城是一片城池：他找到了主角跟前，才算在身边
         self.w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}], "director")
         self.assertEqual([e["rel"] for e in self.w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], ["结义"])  # 结构性关系才是边
 

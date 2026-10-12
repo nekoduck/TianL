@@ -10,7 +10,7 @@
        一人一主(v5)：同一个人此刻只归一处调遣——主角身边与近旁之人归导演，HORIZON 日内有原著的人归原著，与主角有过交集的近处之人等着主角的故事，
        剩下的自由之人才交场外推演；尚有原著之约的人，场外推演挪不动、杀不得(原著自会把人送到事发之地，中途被挪走，回来便是瞬移)。
        主角眼前(v5)：事发在此地或近旁(喊一声就到的同一处所)，或原著当其时(迟不过 LATE 日)要把主角身边的人带往别处——都交导演演出，
-       原著挪人之后谁来谁走写成连带交编剧；同行者与未了之事所系之人不在此列，主角把人带在身边，原著便不来要人；史官改写时看得见相关者此后的原著(ahead)。
+       在主角这一片上演的原著，上了台的相关者进眼前的名册(片区里也算在跟前；主角已先走一步离开事发之地则不算)，原著挪人之后谁来谁走写成连带交编剧；「分身不得」读眼前(around)而非同处一片；同行者与未了之事所系之人不在此列，主角把人带在身边，原著便不来要人；史官改写时看得见相关者此后的原著(ahead)。
        账本只记已成立之事：场外的说法在后果全数成立、且逐句对得上账(lexicon.unbacked)时才照录，有不成立的或对不上账的只记成立的要事，一事无成则不入账；
        场外的结算是一个事务：原著与史官的后果先在副本上试演，筋骨(去留、生死伤病、易手、擒放随行)有一条落不了，整桩不半截照演——原著视同前提已破，史官的改写不入账；
        原著的隐含前提——死者不再登场、正与主角同在一处(含近旁)的人分身不得、主角手中之物不会凭空飞走、救人之事须那人仍受制；
@@ -228,11 +228,11 @@ def onstage(world, ev: dict) -> bool:
 
 def _unmet(world, ev: dict) -> list[tuple]:
     g, unmet = world.graph, _premises(world, ev)
-    if not onstage(world, ev):  # 场外之事：正与主角同在一处(含近旁)的人分身不得——非相关者被原著顺带写到，也一样
-        close = situation.near(world)
+    if not onstage(world, ev):  # 场外之事：正在主角眼前(此地、近旁、片区里被带到跟前)的人分身不得——非相关者被原著顺带写到，也一样
+        close = situation.around(world)
         touched = sorted(set(ev["actors"]) | {op.get("id") for op in ev["effects"] if isinstance(op.get("id"), str)})
-        unmet += [(n, "location", ev["where"]) for n in touched if g.kind(n) == "person" and g.get(n, "location") in close]
-        unmet += [(n, "纠缠", ev["where"]) for n in touched if n in entangled(world) and g.get(n, "location") not in close]
+        unmet += [(n, "location", ev["where"]) for n in touched if g.kind(n) == "person" and n in close]
+        unmet += [(n, "纠缠", ev["where"]) for n in touched if n in entangled(world) and n not in close]
     return unmet
 
 
@@ -311,7 +311,10 @@ def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None, 
         return None
     before = situation.around(world)
     applied, rejected = world.apply(ops, origin, scope)
-    if partial:
+    if partial:  # 主角眼前的原著：在主角这一片上演的，上了台的相关者就在跟前(片区里也一样)；谁因此来去写成连带
+        close = situation.near(world)
+        if ev["where"] in close:  # 主角已先走一步离开了事发之地：那里的人不跟着上他的名册
+            situation.enlist(world, [a for a in ev["actors"] if world.graph.get(a, "location") in close])
         effects._note(world, _comings(world, before))
     summary = _told(world, outcome.get("summary") or ev["summary"], applied, rejected, verify=origin != "canon")
     if summary is None:
