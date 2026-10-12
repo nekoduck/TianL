@@ -1,8 +1,8 @@
 """
-[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / party / join / part / follow / captors / track（情境层与连带）、
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track（情境层与连带）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
-[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/器物近似名→id）、
+[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           unearth()（场景物件认作现场的原著器物）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
@@ -90,7 +90,7 @@ def resolve(world, name):
         return "player"
     aliases = getattr(world, "aliases", {})
     return aliases.get(name) or aliases.get(name.replace("·", "").replace(" ", "")) or perspective.by_handle(world, name) \
-        or _akin(world, name) or name
+        or situation.shortnames(world).get(name) or _akin(world, name) or name  # 「玉像石室」：近处子地点的短名(与体检同一口径)
 
 
 def _common(a: str, b: str) -> int:

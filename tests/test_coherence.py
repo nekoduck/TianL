@@ -607,7 +607,7 @@ class ReplayTest(unittest.TestCase):
         w = self.w
         w.player.set("location", VAULT)
         came = w.player["came_from"]
-        for value in (VAULT, "琅嬛福地玉像石室"):  # 全名与去「·」的写法都一样：人已在那里
+        for value in (VAULT, "琅嬛福地玉像石室", "玉像石室"):  # 全名、去「·」的写法、近处的短名都一样：人已在那里
             applied, rejected = effects.apply(w, [{"op": "set", "id": "player", "key": "location", "value": value}], "director")
             self.assertEqual((applied, rejected), ([], []))                           # 原地不动：不是一程路，也不该崩
         self.assertEqual((w.here, w.player["came_from"], w.player["en_route"]), (VAULT, came, None))

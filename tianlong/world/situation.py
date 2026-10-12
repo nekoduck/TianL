@@ -3,6 +3,7 @@
 [OUTPUT]: 对外提供 情境层的查询与连带——
           near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
           area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited() / bodies() / seen()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
+          shortnames() 近处子地点的短名(体检与落账同一口径)；
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
@@ -96,6 +97,18 @@ def around(world, loc: str | None = None) -> set[str]:
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
     return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
             and (not area(world, n.get("location")) or p in seen)}
+
+
+def shortnames(world) -> dict[str, str]:
+    """近处子地点的短名(v5)：「石级隧道」「玉像石室」即琅嬛福地·石级隧道、琅嬛福地·玉像石室——体检的名表与落账的名字归一同一口径。
+    只收近旁与一步之遥(含暗路)的子地点，两处同名即都不收。"""
+    local = near(world) | set(access.steps(world, world.here))
+    out: dict[str, str] = {}
+    for loc in sorted(local):
+        if "·" in loc:
+            short = loc.split("·", 1)[1]
+            out[short] = None if short in out else loc
+    return {k: v for k, v in out.items() if v}
 
 
 def bodies(world) -> set[str]:

@@ -1,7 +1,7 @@
 """
-[INPUT]: 依赖 world/access 的 steps（近处子地点的短名）、world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
+[INPUT]: 依赖 world/situation 的 shortnames（近处子地点的短名，与落账同一口径）、world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
-         world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
+         world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
 [OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 arrive、写 set player location)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放 → 偏差交下回合导演）、names()（实体名表，含近处子地点的短名）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
@@ -24,7 +24,7 @@ import copy
 import re
 from dataclasses import dataclass, field
 
-from . import access, actor, bond, effects, growth, lexicon, perspective, situation
+from . import actor, bond, effects, growth, lexicon, perspective, situation
 from .graph import holds
 
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
@@ -55,8 +55,7 @@ def names(world) -> tuple[list, dict]:
     surface = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group", "location", "skill")}
     surface.update({a: n for a, n in world.aliases.items() if n in surface})
     surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
-    local = situation.near(world) | set(access.steps(world, world.here))  # 近处的子地点叫短名：「石级隧道」即琅嬛福地·石级隧道
-    surface.update({loc.split("·", 1)[1]: loc for loc in sorted(local) if "·" in loc and loc.split("·", 1)[1] not in surface})
+    surface.update({short: loc for short, loc in situation.shortnames(world).items() if short not in surface})  # 「石级隧道」即琅嬛福地·石级隧道
     surface.update({perspective.handle(world, p): p for p in situation.around(world)
                     if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵
     kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else node["type"])
