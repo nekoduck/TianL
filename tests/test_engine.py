@@ -16,7 +16,7 @@ import unittest
 from tianlong import cli
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError
-from tianlong.world import access
+from tianlong.world import access, perspective
 from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
@@ -124,6 +124,7 @@ class DirectorTest(unittest.TestCase):
             options=["替段誉挡下一掌", "偷看钟灵的布囊", "向左子穆讨教剑法"]),
             "小说家": "（正文）\n===\n梗概：你替段誉解围，与他结交\n传言：无量剑比剑被一名外客搅乱"})
         game = Game(World.create(), llm)
+        perspective.learn(game.world, "player", "段誉")  # 主角已识得段誉：写的是跨回合延续，不是称谓
         turn = game.act("替段誉解围")
         self.assertEqual(turn["options"], ["替段誉挡下一掌", "偷看钟灵的布囊", "向左子穆讨教剑法"])
         llm.replies = {**director(), "小说家": WRITER}
@@ -224,6 +225,7 @@ class LedgerHonestyTest(unittest.TestCase):
                              ("**梗概**：\n你一掌落空", "你一掌落空"),             # markdown 粗体、值另起一行
                              ("", "你意欲隔空打死乔峰：段誉与你结下「畏惧」")):     # 没写：意图加核实过的后果
             game = Game(World.create("测"), StubLLM({**reply, "小说家": "正文\n===\n" + tail}))
+            perspective.learn(game.world, "player", "段誉")
             game.act("隔空打死乔峰")
             self.assertTrue(game.world.player["journal"][-1].endswith(memory), game.world.player["journal"][-1])
             self.assertFalse(any("击毙" in e["summary"] for e in game.world.truth.events))
@@ -323,12 +325,13 @@ class StreamingTest(unittest.TestCase):
         events = []
         turn = Game(World.create(), llm).act("看", on=lambda kind, data: events.append((kind, data)))
         kinds = [k for k, _ in events]
-        self.assertEqual(kinds, ["stage", "stage", "stage", "head", "text", "text", "text"])
+        self.assertEqual(kinds, ["stage", "stage", "stage", "head", "text", "text"])          # 正文按段送出：一段齐了才过视角掩码
         self.assertEqual([d for k, d in events if k == "stage"], ["direct", "settle", "write"])
         head = events[3][1]
         self.assertEqual((head["text"], head["options"]), ("", []))  # 落笔前，除正文与选项外都已定：选项在落账之后由编剧拟、规则验收
         self.assertEqual(turn["options"], ["一", "二", "三"])
         self.assertEqual(turn["text"], "剑光一闪，\n满堂寂然。")
+        self.assertEqual("".join(d for k, d in events if k == "text"), turn["text"])
 
     def test_tail_is_kept_from_the_reader_but_feeds_the_ledger(self):
         llm = StreamLLM(director(), ["剑光一闪。", "\n===\n梗概：", "你看了一眼\n传言：无"])

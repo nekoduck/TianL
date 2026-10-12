@@ -4,7 +4,8 @@
           leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
-       回放工具(tools/replay.py)用它统计旧对局的违例。只认"动词与实体同在一个分句"的强证据，否定、假设、回忆、远处一律不算
+       回放工具(tools/replay.py)用它统计旧对局的违例。只认"动词与实体同在一个分句"的强证据，否定、假设、回忆、远处一律不算；
+       「二人」「众人」只回指上一句点到的人，不把同句里的旁人一并算作随行
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -183,7 +184,7 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
             out.append(Finding("bind", i, p, f"第{i}拍写{p}被擒，账上却没有这层拘押：写 link 扣为人质或囚禁"))
     follow = bool(mine and FOLLOW.search(sent) and view.moved)
     if follow:
-        company = people + (sorted(view.here_start) if GROUP.search(sent) else [])
+        company = people + ([p for p in prev if p not in people] if GROUP.search(sent) else [])  # 「二人」只指上一句里的人，不扩到全场
         out += [Finding("follow", i, p, f"第{i}拍写{p}随你同行，账上{p}却留在原地")
                 for p in company if p in view.here_start and p not in view.here_end]
     m = LEAVE.search(sent)

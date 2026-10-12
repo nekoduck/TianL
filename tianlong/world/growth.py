@@ -1,12 +1,14 @@
 """
-[INPUT]: 依赖 World 门面（graph / player / clock，鸭子类型）
+[INPUT]: 依赖 world/body 的 forecast / injure（研习预裁与岔气），World 门面（graph / player / clock / turn，鸭子类型）
 [OUTPUT]: 对外提供 study()（研习一部秘籍或向人求教一门武学：累计时长、分阶兑现武学与功力）、drain()（北冥吸功：双边结算）、
           stage_of()、progress()（后台用的研习进度一句话）、STAGES、DRAINERS
 [POS]: world 层的数值规则——凡是有数量的后果都由这里算：导演只说「发生了研习」「发生了吸功」，增减多少不由 LLM 报数。
+       研习先过 body 的预裁：顺利计一倍半时长、小有所得照计、受阻折半、有懂易理者解卦位再翻倍、岔气则折半并添一级内伤；
        研习按三阶兑现(初窥/小成/大成)，每阶有累计时长与间隔日数的门槛，同一部秘籍每人只兑现一次——
        十五分钟的调息不会再让人从二流升到一流；吸功按北冥阶段取对方功力的一定比例，吸者有损耗，被吸者当场负伤
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+from . import body
 
 # (阶名, 累计研习分钟, 距上一阶至少几日, 兑现 grants.power 的比例)
 STAGES = (("初窥门径", 60, 0, 0.4), ("小有所成", 12 * 60, 1, 0.3), ("登堂入室", 48 * 60, 3, 0.3))
@@ -27,7 +29,16 @@ def study(world, source: str, minutes: int) -> str:
     """主角研习 source（随身或此地的秘籍 / 身边人会的武学）minutes 分钟；返回一句连带说明（写给编剧）。"""
     g, me, day = world.graph, world.player, world.clock.day
     rec = _log(world).setdefault(source, {"minutes": 0, "stage": 0, "since": day})
-    rec["minutes"] += max(minutes, 15)
+    luck = body.forecast(world, source)
+    rec["minutes"] += round(max(minutes, 15) * luck["factor"])
+    said = f"研习{luck['tier']}" + (f"（{luck['why']}）" if luck["why"] else "")
+    if luck["strain"]:
+        said += "；" + body.injure(world, "真气走岔")
+    return said + "：" + _gain(world, source, rec)
+
+
+def _gain(world, source: str, rec: dict) -> str:
+    g, me, day = world.graph, world.player, world.clock.day
     if g.kind(source) == "skill":  # 求教：入门即会，不涨功力
         if rec["stage"] == 0 and rec["minutes"] >= TEACH_MINUTES:
             rec["stage"] = 1

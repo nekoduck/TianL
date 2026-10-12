@@ -307,7 +307,7 @@ class KnowledgeTest(unittest.TestCase):
         op = {"op": "set", "id": "游骥", "key": "status", "value": "dead"}
         w.apply([op], "canon")
         w.record("游骥身亡", "聚贤庄", [op], "canon", 1)
-        self.assertEqual(w.knowledge.view("游骥")["status"], "alive")  # 真相已变，认知未变
+        self.assertNotEqual(w.knowledge.view("游骥").get("status"), "dead")  # 真相已变，认知未变
         w.advance(PER_DAY * (dist - 1))
         self.assertNotIn("游骥身亡", [e["summary"] for e in w.sync()])
         w.advance(PER_DAY)

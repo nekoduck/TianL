@@ -1,15 +1,15 @@
 """
 [INPUT]: 依赖 world/effects 的 resolve / place / usable、world/access 的 distances / exits、world/situation 的 around / party / quests、
-         world/lexicon 的 leaks / secret_hits、world/adjudicate 的 names / targets，World 门面（graph / player / knowledge / here）
+         world/lexicon 的 leaks / secret_hits、world/adjudicate 的 names / targets，world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
 [OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
-       三项各不相同、有人刚对主角开口则至少一项回应他、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换。
+       三项各不相同、有人刚对主角开口则至少一项回应他、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换(兜底项对不识名之人只用叫法)。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
 
-from . import access, adjudicate, effects, lexicon, situation
+from . import access, adjudicate, effects, lexicon, perspective, situation
 
 SIZE = 3
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
@@ -44,7 +44,7 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     for goal, meta in situation.quests(world).items():
         if goal in world.player["threads"]:
             out.append((f"继续：{goal}"[:20], [a for a in meta.get("about", []) if _reachable(world, a, "寻")]))
-    out += [(f"与{p}攀谈", [p]) for p in sorted(situation.around(world))[:2]]
+    out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in sorted(situation.around(world))[:2]]
     out += [(f"前往{e['name']}", [e["name"]]) for e in access.exits(world)[:2]]
     out += [("歇息片刻", []), ("四下察看", [])]
     return out
@@ -73,7 +73,7 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=()) 
             picked = picked[:SIZE - 1] + [(want, ids)]
     for p in dict.fromkeys(addressed):  # 有人刚对主角开口：至少一项回应他
         if p in situation.around(world) and not any(p in o for _, o in picked):
-            picked = picked[:SIZE - 1] + [(f"回应{p}", [p])]
+            picked = picked[:SIZE - 1] + [(f"回应{perspective.handle(world, p)}", [p])]
     for text, ids in _fallbacks(world, fallback):
         if len(picked) >= SIZE:
             break

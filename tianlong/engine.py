@@ -1,12 +1,12 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
+[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
 [POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → 焦点检索与后台 → 导演逐拍提议
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
-       → 时长按措辞与道路结算 → 传闻投递 → 编剧只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
+       → 时长按措辞与道路结算(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
        → 选项过出口检查、对象记入 menu 作下一回合的授意 → 事件门槛判定入江湖账本 → 近事、未了之事的推进与了结、伏笔账、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
@@ -18,7 +18,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
-from .world import access, adjudicate, lod, menu, rag, situation
+from .world import access, adjudicate, body, lod, menu, perspective, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -43,6 +43,26 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
         return 0
     return 2 if any(op["op"] == "set" and op.get("key") == "status" and op.get("value") == "dead" for op in applied) else 1
 
+
+
+def _paragraphs(send):
+    """正文增量按段送出：一段齐了才过视角掩码——名字与引号不会被拦腰切开，整段掩码与整篇掩码逐字相同。"""
+    buf = []
+
+    def feed(delta):
+        buf.append(delta)
+        text = "".join(buf)
+        cut = text.rfind("\n") + 1
+        if cut:
+            send(text[:cut])
+            buf[:] = [text[cut:]]
+    def flush():
+        rest = "".join(buf)
+        buf.clear()
+        if rest:
+            send(rest)
+    feed.flush = flush
+    return feed
 
 class Game:
     def __init__(self, world: World, llm=None):
@@ -111,8 +131,10 @@ class Game:
         w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
         stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
         journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
-        days, _ = w.advance(max(w.clock.minutes(plan["pace"]), journey))     # 时长由措辞换算，不由 LLM 报数
+        spent = max(w.clock.minutes(plan["pace"]), journey)
+        days, _ = w.advance(spent)                    # 时长由措辞换算，不由 LLM 报数
         w.turn["days"] = days
+        mend = body.recover(w, spent)                 # 歇满半日，气血渐复、内伤降一级：伤病的好转也归规则
         arrived = w.sync()
         void = ruling.void
         for v in void:
@@ -129,22 +151,28 @@ class Game:
                 "status": rag.condition(w), "void": void}
         emit("stage", "write")
         emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
-        view = rag.build(w)
-        frame = {"deed": deed or "环顾四周", "beats": [b["text"] for b in ruling.beats if b["text"]], "void": void,
-                 "span": span, "prev": self.last_text[-TAIL:], "notes": ruling.notes, "addressed": ruling.addressed,
-                 "candidates": ruling.candidates,
+        view = perspective.veil(w, rag.build(w))  # 编剧从主角的视角写：不识名之人只剩叫法，不给即不泄露
+        veil = lambda text, who=None: perspective.mask(w, text, who)
+        frame = {"deed": deed or "环顾四周", "beats": [veil(b["text"], b["who"]) for b in ruling.beats if b["text"]],
+                 "void": [veil(v) for v in void], "span": span, "prev": self.last_text[-TAIL:],
+                 "notes": [veil(n) for n in ruling.notes + ([mend] if mend else [])], "addressed": [perspective.handle(w, p) for p in ruling.addressed],
+                 "candidates": [veil(c) for c in ruling.candidates],
                  "news": [e["summary"] for e in arrived if not e.get("witnessed")]}  # 亲历之事已在节拍里，不再当传闻
         with ThreadPoolExecutor(max_workers=1) as pool:  # 场外推演与新到期的远方原著，与编剧落笔并行：其传闻本就迟到
             offstage_job = pool.submit(self._offstage, days)
-            page = agents.write(self.llm, view, frame, on_text=on and (lambda d: emit("text", d)))
+            stream = on and _paragraphs(lambda d: emit("text", veil(d)))
+            page = agents.write(self.llm, view, frame, on_text=stream)
+            if stream:
+                stream.flush()
             offstage_job.result()
+        page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
         turn["text"] = page["text"]
         picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates,
                             plan["options"] or agents.plain_options(rag.build(w)))
         self.menu = {text: ids for text, ids in picked}
         turn["options"] = [text for text, _ in picked]
         facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))
-        memory = page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else "")
+        memory = veil(page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
         weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])

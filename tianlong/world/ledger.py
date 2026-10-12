@@ -1,10 +1,13 @@
 """
 [INPUT]: 依赖 world/graph 的 Graph（观察时读取真相）
-[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS
+[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS、FAME / famous()
 [POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）。
+       开局常识只含地理、门派与 FAME(名号显赫或四大恶人)之人——无名之辈的下落与器物所在不是江湖常识，要亲见或听闻才知；
        限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+
+import re
 
 PUBLIC_KEYS = ("status", "location", "title", "faction", "state", "holder")  # 江湖可传闻、可目睹的属性
 NEWS_SPEED = 1.0  # 传闻每日扩散的道路距离（日）× 事件分量 weight
@@ -30,6 +33,14 @@ class Truth:
 # ============================================================
 #  玩家认知账本：信念（node → 公开属性）+ 已知事件 + 已知隐情（secret 边）
 # ============================================================
+FAME = re.compile(r"掌门|帮主|谷主|庄主|宫主|岛主|尊主|方丈|首座|法王|王|帝|太子|世子|公子|盟主|恶|圣|宗主|大师|名医|阎王|神医|镖头|寨主|将军")
+
+
+def famous(node: dict) -> bool:
+    """江湖闻名：头衔是一派之主、王侯、名号响亮的恶人，或身属四大恶人——主角久仰其名，却未必认得其面。"""
+    return bool(FAME.search(node.get("title") or "")) or node.get("faction") == "四大恶人"
+
+
 class Knowledge:
     def __init__(self, beliefs: dict | None = None, known: list | None = None, secrets: list | None = None,
                  asof: dict | None = None):
@@ -40,9 +51,11 @@ class Knowledge:
 
     @classmethod
     def from_truth(cls, graph) -> "Knowledge":
-        """开局常识：所有非隐秘节点的公开属性，但人物的隐秘字段(secret_fields，如诈死者的生死去处)不入常识。"""
+        """开局常识：地理、门派、武学之名，与江湖闻名之人(一派之主、王侯、四大恶人……)的公开属性；
+        无名小卒与器物的下落不是常识，须亲眼见过或听来。人物的隐秘字段(secret_fields，如诈死者的生死去处)不入常识。"""
         k = cls()
-        k.observe(graph, [nid for nid, n in graph.nodes.items() if not n.get("hidden")])
+        k.observe(graph, [nid for nid, n in graph.nodes.items() if not n.get("hidden")
+                          and (n["type"] not in ("person", "item") or (n["type"] == "person" and famous(n)))])
         for nid, belief in k.beliefs.items():
             for key in graph.get(nid, "secret_fields") or []:
                 belief.pop(key, None)

@@ -1,20 +1,27 @@
 """
 [INPUT]: 依赖 world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
-         world/situation 的 around / spawn / join / free / rout / captive（情境层与连带），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、names()（实体名表）、targets()（举动所指的实体）、HARD
+         world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
+         world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
+[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、names()（实体名表）、targets()（举动所指的实体）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角的拍里取物、杀人、吸功须是玩家所指——越俎代庖的拍不演，降为下回合的候选选项），
        再落账，再以词表体检「写了变化却没有指令」的影子状态；随行、获救、败走这三种写漏了的连带由系统追认，其余硬违例交导演修复一次，
-       仍不成立的拍整拍作废，化作一句失败的事实交编剧。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
+       仍不成立的拍整拍作废，化作一句失败的事实交编剧。
+       一拍一事务(v3)：拍里改变物理状态的指令(去留、得失、生死、随行与拘押、赶来、研习、吸功、揭示)落不了，整拍即交返工；
+       指令在拍文里无据即丢(无伤扣血、被荡开的一击、研习之拍扣主角气血)，主角自己的拍里无人出手又不涉险地，一拍至多伤 SCRATCH 点；
+       词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
+import re
 from dataclasses import dataclass, field
 
-from . import effects, lexicon, situation
+from . import effects, lexicon, perspective, situation
 
-HARD = {"void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt"}
-RATIFY = {"follow", "free", "leave"}  # 写漏了也无妨的连带：系统照拍文追认，不劳导演返工
+HARD = {"void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
+        "follow", "leave", "custody", "name"}
+RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
+UNSURE = {"follow", "leave", "name"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
 
 @dataclass
@@ -39,6 +46,8 @@ def names(world) -> tuple[list, dict]:
     surface = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group", "location", "skill")}
     surface.update({a: n for a, n in world.aliases.items() if n in surface})
     surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    surface.update({perspective.handle(world, p): p for p in situation.around(world)
+                    if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵
     kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else node["type"])
              for n, node in g.nodes.items() if n in surface.values()}
     return lexicon.table(surface), kinds
@@ -60,6 +69,7 @@ def targets(world, deed: str, given=()) -> set[str]:
 # ============================================================
 def _unbidden(world, ops: list, allowed: set[str]) -> list[str]:
     g, out = world.graph, []
+    allowed = allowed | {effects.resolve(world, a) for a in allowed}  # 玩家所指的叫法(蒲团里的帛卷)落回实体
 
     def ok(item):
         return item in allowed or g.get(item, "holder") in allowed or item in world.player["inventory"]
@@ -95,20 +105,30 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
           no_interrupt: bool = False, drop: dict | None = None, then=None) -> Ruling:
     """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力；cast：此地原著的相关者（可作打断的来源）；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
-    then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。"""
+    then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
+    一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
+    同伴随行等诸拍落定才结算：拍中途解除了随行、被人擒住的，不会被主角先走一步带走。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     world.turn["present"] = around0  # 回合开始时身边之人：主角先走一步，他们仍可在后面的拍里跟上
+    world.turn["route"] = [here0]    # 主角本回合走过的路：同伴诸拍之后沿它跟上
     power0 = {p: g.get(p, "power") for p in around0}
     for spec in copy.deepcopy(plan.get("spawn") or []):
+        canon = spec.get("kind") == situation.THING and effects.unearth(world, spec.get("name"))
+        if canon:  # 导演另立的「帛卷」就是此地暗藏的原著秘籍：认回它、揭开暗藏，拍里的指令按此名落到它身上
+            world.aliases[str(spec["name"]).strip()] = canon
+            if g.get(canon, "hidden"):
+                r.applied += effects.apply(world, [{"op": "set", "id": canon, "key": "hidden", "value": False}], "director")[0]
+            continue
         nid, why = situation.spawn(world, spec, set(embargo))
         if nid:
             r.spawned.append(nid)
         elif 0 not in drop:
             r.hard.append(lexicon.Finding("spawn", 0, str(spec.get("name")), f"场景实体「{spec.get('name')}」不成立：{why}"))
-    shown = []
-    for i, beat in enumerate(plan["beats"], 1):
+    shown, touched = [], {}
+    beats = plan["beats"]
+    for i, beat in enumerate(beats, 1):
         if i in drop:
             r.void.append(f"{beat['text'] or '这一拍的后果'}——未曾发生：{'；'.join(drop[i])}")
             shown.append({**beat, "text": ""})
@@ -120,23 +140,95 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
                 r.soft.append(lexicon.Finding("agency", i, "、".join(over), f"第{i}拍替主角{'、'.join(over)}，玩家并未授意"))
                 shown.append({**beat, "text": ""})
                 continue
-        applied, rejected = effects.apply(world, copy.deepcopy(beat.get("ops") or []), "director")  # 落账会就地规整指令：提议本身留给返工与定稿
+        after = beats[i]["text"] if i < len(beats) and isinstance(beats[i].get("text"), str) else ""
+        ops, baseless = _grounded(world, copy.deepcopy(beat.get("ops") or []), beat.get("text") or "", after, beat.get("who"))
+        r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
+                   for op in baseless]
+        at = world.here
+        applied, rejected = effects.apply(world, ops, "director")  # 落账会就地规整指令：提议本身留给返工与定稿
         r.applied += applied
+        for nid in (i2 for op in applied for i2 in effects._ids(op)):
+            touched[nid] = i
         for op, why in rejected:
             line = f"{effects.describe(op)}——{why}"
             r.void.append(line)
-            soft = effects._moves_player(world, op)  # 远行止步关前：前半程成立，交编剧写明，不必返工
-            (r.soft if soft else r.hard).append(lexicon.Finding("void", i, effects.describe(op), f"第{i}拍：{line}", hard=not soft))
+            partial = effects._moves_player(world, op) and world.here != at  # 远行止步关前：前半程成立，交编剧写明，不必返工
+            hard = _physical(op) and not partial and bool((beat.get("text") or "").strip())  # 无文字的拍(旧写法的顶层后果)没有拍文可违
+            (r.hard if hard else r.soft).append(lexicon.Finding("void", i, effects.describe(op), f"第{i}拍：{line}", hard=hard))
         r.beats.append({k: beat.get(k) for k in ("who", "to", "text")})
         shown.append(beat)
         if beat.get("to") == "player" and beat.get("who") not in (None, "player"):
             r.addressed.append(beat["who"])
+    route = world.turn.pop("route")
+    if len(route) > 1:
+        for pid in situation.party(world):
+            touched.setdefault(pid, touched.get("player", 0))
+        effects._note(world, situation.follow(world, route))
     if then:
         then()
+    _custody(world, r, touched)
     _examine(world, r, shown, here0, inv0, around0, power0)
     _question(world, r, cast, no_interrupt and 0 not in drop)
     r.notes = list(world.turn.get("notes", []))
     return r
+
+
+# ============================================================
+#  一拍一事务：哪些指令是这一拍的筋骨，落不了整拍便不成立；哪些指令在拍文里无据
+# ============================================================
+WOUND = re.compile(r"伤|血|痛|跌|摔|撞|刺中|刺入|刺伤|砍中|劈中|击中|打中|拍中|掌中|中掌|中剑|中毒|毒发|擦破|咳|呕|吐出|昏|晕|反噬|岔气|走火|灼|烫|咬|抓破|划破|骨折|断了")
+PARRY = re.compile(r"荡开|架开|格开|挡开|拦开|拨开.{0,2}(?:剑|刀|掌|招)|避开|闪开|躲开|让开|落空|扑空|险险避过|堪堪避过|毫发无伤|毫发未伤")
+SCRATCH = 5                                      # 非较量场合一拍至多伤几点
+HEAL = re.compile(r"药|丹|丸|调息|运功|歇|养|疗|敷|包扎|吐纳|平复|好转|缓过|回复|恢复|止血|顺气|气色")
+
+
+def _physical(op) -> bool:
+    """改变物理状态的指令：去留、得失、生死伤病、擒放随行、赶来、研习吸功、揭开暗路与隐情。
+    只有恩怨印象(其余关系)、未了之事、地点现状落不了是小事——丢那一条，拍照常成立。"""
+    if not isinstance(op, dict):
+        return False
+    kind, key = op.get("op"), op.get("key")
+    if kind in ("link", "unlink"):
+        return op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY
+    if kind in ("arrive", "study", "drain", "reveal"):
+        return True
+    return key not in ("threads", "未了之事", "state", "note", "epithet", "mood")
+
+
+def _grounded(world, ops: list, text: str, after: str, who=None) -> tuple[list, list]:
+    """反向证据：增减气血须拍文里有伤或疗的字眼；伤人的一击若在本拍或下一拍被荡开避过，那一下便没有伤。
+    无据的数值变更直接丢弃——不让导演拿气血当佐料，一回合掉几点血却一字未写。
+    研习之拍不扣主角气血(预裁已定顺逆)；主角自己的拍里既无人出手也不涉险地远行，一拍至多伤 SCRATCH 点。"""
+    moving = any(effects._moves_player(world, op) for op in ops)
+    keep, drop = [], []
+    studying = any(isinstance(op, dict) and op.get("op") == "study" for op in ops)
+    for op in ops:
+        if isinstance(op, dict) and op.get("op") == "add" and op.get("key") in ("hp", "气血") \
+                and isinstance(op.get("value"), (int, float)):
+            mine = op.get("id") in ("player", "主角", world.player["name"])
+            if op["value"] < 0 and (not WOUND.search(text) or PARRY.search(text + after) or (mine and studying)):
+                drop.append(op)  # 研习的顺逆由预裁定，岔气的内伤系统已落：导演不另扣血
+                continue
+            if op["value"] < 0 and mine and who in (None, "player") and not moving:
+                op["value"] = max(op["value"], -SCRATCH)  # 无人出手、不涉险地：自己磕碰，一拍至多伤五点
+            if op["value"] > 0 and not HEAL.search(text):
+                drop.append(op)
+                continue
+        keep.append(op)
+    return keep, drop
+
+
+def _custody(world, r: Ruling, touched: dict[str, int]):
+    """不变量：擒者与人质同处一地。本回合碰过其中一方而两人分处两地，是哪一拍写歪了，就记在哪一拍上。"""
+    for e in world.graph.edges:
+        if e["rel"] not in situation.CUSTODY:
+            continue
+        a, b = e["src"], e["dst"]
+        beat = max(touched.get(a, 0), touched.get(b, 0))
+        pa, pb = effects.place(world, a), effects.place(world, b)
+        if beat and pa and pb and pa != pb:
+            r.hard.append(lexicon.Finding("custody", beat, b, f"第{beat}拍之后{b}在{pb}、擒住{b}的{a}却在{pa}：擒者走则人质随之；"
+                                                             f"要{b}随你走，须先写明救下{b}（unlink 拘押、link 随行）"))
 
 
 def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
@@ -148,6 +240,7 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
                         drained={p for p, v in power0.items() if (g.get(p, "power") or 0) < (v or 0)},
                         captive=situation.captive(world), moved=world.here != here0)
     found = lexicon.scan(shown, view, *tab_kinds)
+    found += perspective.audit(world, shown, around0 | view.here_end)  # 听来的名字入认知；叫出不该知道的名字即违例
     secrets = _secrets(world)
     for i, beat in enumerate(shown, 1):
         for src, rel, dst in lexicon.secret_hits(beat.get("text") or "", secrets, tab_kinds[0]):
@@ -163,22 +256,11 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
 
 
 def _ratify(world, f) -> bool:
-    """照拍文追认连带：某人随你同行、某人获救、某人败走。追认不了（如败走无处可去）的仍算违例。"""
-    g, pid, notes = world.graph, f.entity, world.turn.setdefault("notes", [])
-    if f.kind == "follow":
-        notes += situation.join(world, pid)
-        g.set(pid, "location", world.here)
-        notes.append(f"{pid}随你同行")
-        return True
+    """照拍文追认连带：只追认获救——解除拘押边，不挪动任何人。随行与败走是物理，交导演写明。"""
     if f.kind == "free":
-        who = situation.free(world, pid)
-        notes.append(f"{pid}脱离了{'、'.join(who)}的拘押")
+        who = situation.free(world, f.entity)
+        world.turn.setdefault("notes", []).append(f"{f.entity}脱离了{'、'.join(who)}的拘押")
         return True
-    if f.kind == "leave":
-        to = situation.rout(world, pid)
-        if to:
-            notes.append(f"{pid}离去")
-        return bool(to)
     return False
 
 
@@ -200,10 +282,11 @@ def _question(world, r: Ruling, cast, no_interrupt: bool):
 #  修复清单：硬违例 + 让导演改得对的线索（那件东西究竟在谁手里、那人究竟在哪）
 # ============================================================
 def doomed(ruling: Ruling) -> dict[int, list[str]]:
-    """返工之后仍不成立、须整拍作废的拍号 → 缘由。单条指令被驳回不算：那一条本就没落账，拍里其余的事照常成立。"""
+    """返工之后仍不成立、须整拍作废的拍号 → 缘由。拍里改变物理状态的指令落不了，拍文便与账本对不上，整拍作废；
+    词表推断的去留(UNSURE)可能看错，只交返工、不作废。"""
     out: dict[int, list[str]] = {}
     for f in ruling.hard:
-        if f.kind != "void":
+        if f.kind not in UNSURE and f.beat > 0:
             out.setdefault(f.beat, []).append(f.message)
     return out
 

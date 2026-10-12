@@ -4,7 +4,7 @@
           焦点检索让导演看见解药在谁身上、器物近似名归一、同伴随主角移动且过不去的关留下、救人即解押、未了之事谓词满足自动收束、
           原著救人之事在人已获救时不再照演、一人一回合只听一处调遣、纠缠之人的场外原著不照本宣科、
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令、
-          拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、随行获救败走照拍文追认、
+          拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -54,11 +54,10 @@ class SituationTest(unittest.TestCase):
         self.assertEqual([f.kind for f in judge(self.w, plan(("乔峰", "乔峰与你结伴", [{"op": "link", "src": "乔峰", "dst": "player", "rel": "随行"}]))).hard],
                          ["void", "absent"])                                          # 不在身边的人跟不上来
 
-    def test_a_written_but_unrecorded_companion_is_ratified(self):
-        r = judge(self.w, plan(("player", "你拉着段誉奔出大厅", [GO("无量山")])))      # 漏写随行：照拍文追认
-        self.assertEqual(r.hard, [])
-        self.assertEqual(self.w.graph.get("段誉", "location"), "无量山")
-        self.assertIn("段誉随你同行", r.notes)
+    def test_a_written_but_unrecorded_companion_goes_back_to_the_director(self):
+        r = judge(self.w, plan(("player", "你拉着段誉奔出大厅", [GO("无量山")])))      # 漏写随行：词表不替导演挪人，交返工
+        self.assertEqual([f.kind for f in r.hard], ["follow"])
+        self.assertEqual(self.w.graph.get("段誉", "location"), "剑湖宫·练武厅")
 
     def test_rescue_frees_the_hostage_and_settles_the_quest(self):
         g = self.w.graph

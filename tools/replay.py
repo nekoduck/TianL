@@ -1,9 +1,10 @@
 """
 [INPUT]: 依赖 tests/fixtures/replay80.json（从 80 回实录抽出的逐回合样本：举动/在场/随身/导演节拍与后果/选项/正文），
-         world/world 的 World（实体名与别名表）、world/lexicon 的 scan / find / table
+         world/world 的 World（实体名与别名表）、world/lexicon 的 scan / find / table、world/adjudicate 的 WOUND（伤的字眼）
 [OUTPUT]: 命令行工具：python -m tools.replay [样本.json] [--show 种类]——按违例种类统计旧对局的节拍与正文，并列出例子；
           亦可 import：audit(turns) → {kind: [(回合, Finding)]}
-[POS]: 量尺——不调用模型、不改世界，用真实对局校准变化词表的误报与漏报；每一批重构都拿它对比基线
+[POS]: 量尺——不调用模型、不改世界，用真实对局校准变化词表的误报与漏报；每一批重构都拿它对比基线。
+       另量身体两项(v3 P0-3)：无伤扣血(这一回合一字未写伤却扣主角气血)、研习伤身(研习的回合主角掉血)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -12,6 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from tianlong.world import lexicon
+from tianlong.world.adjudicate import WOUND
 from tianlong.world.world import World
 
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "replay80.json"
@@ -59,7 +61,23 @@ def audit(turns: list[dict], prose: bool = False) -> dict[str, list]:
                 [{"who": None, "text": p} for p in t["text"].split("\n") if p.strip()]
         for f in lexicon.scan(beats, _view(t), tab, kinds):
             out[f.kind].append((t["n"], f))
+        if not prose:
+            for kind, f in _body(t):
+                out[kind].append((t["n"], f))
     return out
+
+
+def _body(turn: dict):
+    """主角掉血的两种病：拍文无伤，或研习之回合。"""
+    ops = [op for op in turn["effects"] if isinstance(op, dict)]
+    loss = sum(-op["value"] for op in ops if op.get("id") == "player" and op.get("key") == "hp" and op.get("op") == "add"
+               and isinstance(op.get("value"), (int, float)) and op["value"] < 0)
+    if not loss:
+        return
+    if not WOUND.search("".join(turn["beats"])):
+        yield "baseless", lexicon.Finding("baseless", 0, "player", f"主角失血{loss}，拍文一字未写伤")
+    if any(op.get("op") == "study" for op in ops):
+        yield "study_hurt", lexicon.Finding("study_hurt", 0, "player", f"研习之回合主角失血{loss}")
 
 
 def main(argv):

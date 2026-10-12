@@ -1,12 +1,15 @@
 """
 [INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / party / join / part / follow / captors / track（情境层与连带）、
-         world/growth 的 study / drain / DRAINERS（数值规则）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+         world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/器物近似名→id）、
+          unearth()（场景物件认作现场的原著器物）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
        数值归规则：导演不得直接增减功力或凭空授武学——研习写 study、吸功写 drain，多少由 growth 算；
+       内伤归 body：导演往境况里写内伤(岔气、经脉、内息…)即按分级升一级、去掉即降一级，有据的疗伤(气血回升)顺带降一级，每回合各至多一级；
+       器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
        在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
@@ -27,13 +30,13 @@
 # ============================================================
 import re
 
-from . import access, growth, situation
+from . import access, body, growth, perspective, situation
 from .clock import PER_DAY
 from .graph import ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn"}
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -75,27 +78,55 @@ def resolve(world, name):
     if name in (world.player["name"], "主角"):
         return "player"
     aliases = getattr(world, "aliases", {})
-    return aliases.get(name) or aliases.get(name.replace("·", "").replace(" ", "")) or _akin(world, name) or name
+    return aliases.get(name) or aliases.get(name.replace("·", "").replace(" ", "")) or perspective.by_handle(world, name) \
+        or _akin(world, name) or name
 
 
-def _akin(world, name: str) -> str | None:
-    """器物名的宽松认法：「闪电貂解药」认作「闪电貂毒解药」——一方包含另一方、或字字都在对方之中且只差一两个字；
-    字数最接近的优先（「闪电貂解药」是解药，不是那只貂），再以够得着的(随身、此地、身边人手里)为先，认不出唯一的一件就不认，交校验驳回。"""
+def _common(a: str, b: str) -> int:
+    """最长公共子串的长度。"""
+    return max((k for i in range(len(a)) for k in range(1, len(a) - i + 1) if a[i:i + k] in b), default=0)
+
+
+def _akin(world, name: str, scene_only: bool = False) -> str | None:
+    """器物名的宽松认法，三档字面、三层先验：
+    字面——一方包含另一方或字字都在对方之中只差一两个字(「闪电貂解药」→「闪电貂毒解药」，字数最近者优先，不认作那只貂)
+          > 最长公共子串过半且至少三字(「北冥神功帛卷」→「北冥神功卷轴」) > 现场器物描述里有这个说法(「帛卷」→ 蒲团内藏帛卷)；
+    先验——现场(随身、此地与近旁、身边人手里，暗藏的也算) > 主角认知 > 全局。认不出唯一的一件就不认，交校验驳回。"""
     if len(name) < 2:
         return None
-    g = world.graph
+    g, reach = world.graph, situation.near(world)
+    where, _, head = name.rpartition("的")
 
-    def close(n):
-        return name in n or n in name or (set(name) <= set(n) and len(n) - len(name) <= 2)
-    hits = [n for n in g.where(type="item") if close(n)]
-    if not hits:
+    def tier(n):
+        if g.get(n, "holder") == "player" or place(world, n) in reach:
+            return 0
+        return 1 if world.knowledge.knows(n) else 2
+
+    def rank(n):
+        t = tier(n)
+        if name in n or n in name or (set(name) <= set(n) and len(n) - len(name) <= 2):
+            return (0, abs(len(n) - len(name)), t, 0)
+        common = _common(name, n)
+        if common >= max(3, (len(name) + 1) // 2):
+            return (1, t, -common, 0)
+        desc = g.get(n, "desc") or ""
+        if t == 0 and _common(where, n) < 2 and any(head[i:i + 2] in desc for i in range(len(head) - 1) if THINGISH.search(head[i:i + 2])):
+            return (2, t, 0, 0)  # 「蒲团里的帛卷」：说的是帛卷，那蒲团只是它藏身之处
         return None
-    best = min(abs(len(n) - len(name)) for n in hits)
-    hits = [n for n in hits if abs(len(n) - len(name)) == best]
-    if len(hits) > 1:
-        reach = situation.near(world)
-        hits = [n for n in hits if place(world, n) in reach or g.get(n, "holder") == "player"] or hits
-    return hits[0] if len(hits) == 1 else None
+    pool = [n for n in g.where(type="item") if not scene_only or tier(n) == 0]
+    ranked = sorted((r, n) for n in pool if (r := rank(n)))
+    if not ranked or (len(ranked) > 1 and ranked[0][0] == ranked[1][0]):
+        return None
+    return ranked[0][1]
+
+
+THINGISH = re.compile(r"[药丹丸散膏卷册谱经珠钏镯盒匣瓶信牌钥囊剑刀簪玉佩]")  # 描述里的说法须是物件的叫法(帛卷、药瓶)，不是「蒲团」「石室」
+
+
+def unearth(world, name: str) -> str | None:
+    """导演要立的场景物件若就是现场的原著器物(多半是暗藏的那件)，认回它：不另立新物，揭开它的暗藏。"""
+    hit = _akin(world, str(name or "").strip(), scene_only=True)
+    return hit if hit and not world.graph.get(hit, "ephemeral") else None
 
 
 def describe(op) -> str:
@@ -436,6 +467,12 @@ def _exec(world, op, origin):
         goal = op["value"] if isinstance(op["value"], str) else op["value"].get("goal", "")
         hit = next((t for t in world.player["threads"] if t == goal or goal in t or t in goal), goal)
         world.player.pull("threads", hit)
+    elif op["id"] == "player" and op["key"] == "conditions" and isinstance(op["value"], str) \
+            and body.INNER.search(op["value"]) and kind in ("push", "pull"):  # 内伤只按分级升降，不由导演随手写重
+        _note(world, body.injure(world) if kind == "push" else body.relieve(world))
+    elif op["id"] == "player" and op["key"] == "hp" and kind == "add" and origin == "director" and op["value"] > 0:
+        world.player.add("hp", op["value"])
+        _note(world, body.relieve(world, "调治得法"))
     elif op["id"] == "player" and op["key"] == "inventory":  # 拾起则归主角随身，丢下则落在此地
         _hand(world, op["value"], **({"holder": "player"} if kind == "push" else {"location": world.here}))
     elif op["id"] == "player":
@@ -489,6 +526,11 @@ def _summon(world, op, origin):
         op.update(op="arrive", id=pid)
 
 
+def _progress(world, route: list[str]) -> bool:
+    """半途止步的这段路走出了至少一日：真正的远行在关前歇脚；零日的近处兜圈不算前进。"""
+    return sum((world.graph.road(a, b) or {}).get("days", 0) for a, b in zip(route, route[1:])) >= 1
+
+
 def _moves_player(world, op) -> bool:
     return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", "主角", world.player["name"]) \
         and PLAYER_ALIASES.get(op.get("key"), op.get("key")) == "location"
@@ -518,13 +560,17 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             route, why = access.walk(world, op["value"])
             if why:
                 rejected.append(({**op}, why))
-                if len(route) < 2:
+                if len(route) < 2 or not _progress(world, route):  # 受阻不倒退：近处绕了一圈仍过不去，便原地不动
                     continue
                 op["value"] = route[-1]
             access.learn(world, route)
             _exec(world, op, origin)
             applied.append(op)
-            _note(world, situation.follow(world, route))
+            turn = getattr(world, "turn", None)
+            if turn is not None and "route" in turn:  # 裁决器在场：同伴等诸拍落定再跟（拍中途解除随行的人不被带走）
+                turn["route"] += route[1:]
+            else:
+                _note(world, situation.follow(world, route))
             continue
         _exec(world, op, origin)
         applied.append(op)

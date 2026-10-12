@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 random.Random（种子化命运骰），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
+[INPUT]: 依赖 world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、久悬之事）、world/growth 的 progress（研习进度）
          与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、
@@ -7,13 +7,12 @@
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
        backstage 给导演——焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
-       到时候的隐情、各方图谋、功力对比、在场武学、研习进度、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
+       到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
        节奏(看本幕之问的结局：一问已解宜开新问，连番被打断则必须了结)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-import random
 
-from . import access, growth, lod, situation
+from . import access, body, growth, lod, perspective, situation
 from .effects import usable
 from .ledger import NEWS_SPEED
 
@@ -29,15 +28,10 @@ def power_tier(power: int) -> str:
     return next(name for cap, name in TIERS if power < cap)
 
 
-# 气血不报数字，只报身况：(气血比例下限, 措辞, 语气)；语气 plain/warn/alert 交由表现层决定着色
-WOUNDS = ((0.9, "安然无恙", "plain"), (0.6, "轻伤", "warn"), (0.3, "重伤", "warn"), (0.0, "命悬一线", "alert"))
-
-
 def condition(world) -> list[dict]:
     """主角身况的文字标签：伤势、功力档、姿态、随身器物、所负武学——数值隐于其后。"""
     me = world.player
-    ratio = me["hp"] / me["max_hp"]
-    wound, tone = next((text, tone) for floor, text, tone in WOUNDS if ratio >= floor)
+    wound, tone = body.wound(world)  # 气血与内伤共同定伤势：重伤只给气血三成以下或经脉受损以上
     tags = [{"text": wound, "tone": tone}, {"text": power_tier(me["power"]), "tone": "plain"}]
     if me["posture"] and me["posture"] != "站立":
         tags.append({"text": me["posture"], "tone": "plain"})
@@ -112,7 +106,9 @@ def build(world) -> dict:
     people = [{"name": p, "title": g.get(p, "title"), "faction": g.get(p, "faction"),
                "status": g.get(p, "status"), "tier": power_tier(g.get(p, "power", 30)),
                "persona": g.get(p, "persona"), "appearance": g.get(p, "appearance"), "speech": g.get(p, "speech"),
-               "carrying": _held(world, p), "toward_you": _toward_player(world, p)} for p in s["people"]]
+               "carrying": _held(world, p), "toward_you": _toward_player(world, p),
+               "seen_as": None if perspective.knows(world, "player", p) else perspective.handle(world, p),  # 主角不知其名：只叫得出外貌
+               "knows_you": perspective.knows(world, p, "player")} for p in s["people"]]
     carried = [{"name": i, "desc": g.get(i, "desc")} for i in me["inventory"]]
     news = [f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}"  # 主角自己的作为已在【近来】里，不再当传闻
             for e in (world.truth.get(i) for i in world.knowledge.known) if e["origin"] != "director"][-NEWS_WINDOW:]
@@ -216,7 +212,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
                if e.get("secret") and {e["src"], e["dst"]} & cast and not world.knowledge.knows_secret(e)
                and _secret_open(world, e, canon_by_id)]
     mine = _tier_index(me["power"])
-    fate = random.Random(f"{world.seed}:{world.clock.tick}").randint(1, 100)
+    fate = body.fate(world)
     odds, ruling = [], []
     for p in s["people"]:
         gap = _tier_index(g.get(p, "power", 30)) - mine
@@ -225,6 +221,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
         if g.get(p, "power", 30) >= FEEBLE:
             outcome, loss = rule(gap, fate)
             ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损"))
+    study = _studies(world, aim, hidden)  # 玩家所指的秘籍与武学：出研习预裁
     dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
         "fate": fate,
@@ -235,13 +232,18 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
         "tempo": _tempo(tempo),
         "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if me["hp"] <= me["max_hp"] * PERIL else "",
         "hidden": [f"{n}（{g.get(n, 'type')}）：{g.get(n, 'persona') or g.get(n, 'desc')}"
-                   + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "") for n in hidden],
+                   + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "")
+                   + (f"｜发现即写 push player inventory {n}（拍文里怎么称呼都行，指令用此名，不要另立物件）"
+                      if g.kind(n) == "item" else "") for n in hidden],
         "secrets": secrets,
         "agendas": [f"{p}：{g.get(p, 'agenda')}" for p in s["people"] if g.get(p, "agenda")],
         "odds": odds,
         "grants": [f"{growth.progress(world, i)}（可得「{g.get(i, 'grants')['skill']}」；功力由系统分阶兑现，写 study 即可）"
+                   + (f"｜研习预裁：{_luck(world, i)}" if i in study else "")
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]
-                   if g.get(i, "grants")],
+                   if g.get(i, "grants")]
+                  + [f"{growth.progress(world, k)}（求教身边会的人，写 study {k}）｜研习预裁：{_luck(world, k)}"
+                     for k in study if g.kind(k) == "skill"],
         "focus": focus(world, aim),
         "hooks": [f"{h['text']}" + (f"（已到期：本回合兑现或交代其落空）" if h["due"] <= me.get("turn", 0) else
                                     f"（{h['due'] - me.get('turn', 0)}回合内兑现）") for h in me.get("hooks", [])],
@@ -253,6 +255,20 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
     }
+
+
+def _studies(world, aim, hidden) -> list[str]:
+    """玩家这一举指向的研习对象：够得着的秘籍，或身边有人会的武学。"""
+    g, s = world.graph, scene(world)
+    books = {i for i in [*world.player["inventory"], *s["items"], *hidden] if g.get(i, "grants")}
+    taught = {k for p in situation.around(world) for k in g.get(p, "skills") or []}
+    return [i for i in aim if i in books or (g.kind(i) == "skill" and i in taught)]
+
+
+def _luck(world, source: str) -> str:
+    luck = body.forecast(world, source)
+    return luck["tier"] + (f"（{luck['why']}）" if luck["why"] else "") + \
+        ("——系统已落一级内伤，照此演出" if luck["strain"] else "——照此演出进境，不得另写反噬受伤")
 
 
 def _arts(world, cast: list[str]) -> list[str]:
