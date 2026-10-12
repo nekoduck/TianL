@@ -37,7 +37,7 @@ import re
 
 from . import access, actor, body, bond, growth, perspective, situation
 from .clock import PER_DAY
-from .graph import ROAD
+from .graph import PLIGHT, ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
@@ -495,6 +495,7 @@ def _exec(world, op, origin):
             _note(world, body.relieve(world, "调治得法", who=who))
     elif op["key"] == "status" and g.kind(op["id"]) == "person" and kind == "set":
         actor.declare(world, op["id"], op["value"])
+        g.nodes[op["id"]][PLIGHT] = op["value"] == "wounded"  # 明写的负伤是剧情上的伤：气血养好不算痊愈，明写安好或身亡才消
     elif op["key"] == "mood" and g.kind(op["id"]) == "person" and kind == "set":
         actor.feel(world, op["id"], op["value"])
     elif op["id"] == "player" and op["key"] == "inventory":  # 拾起则归主角随身，丢下则落在此地

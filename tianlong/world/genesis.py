@@ -1,8 +1,8 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
-       处理开端未明的人物（休眠）、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
+       处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
        按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -14,6 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .clock import DAYS_PER_MONTH, PER_DAY, PER_SHICHEN, day_of
+from .graph import PLIGHT
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "canon"
 START_MINUTE = 4 * PER_SHICHEN  # 开场于辰时
@@ -57,6 +58,8 @@ def _nodes(root: Path) -> dict[str, dict]:
             node = {"type": kind, **{RENAME.get(k, k): row[k] for k in keep if k in row}}
             if row.get("initial_state_confirmed") is False:  # 开端生死去处未明：休眠，不得在江湖中活动
                 node.update(hidden=True, dormant=True, agenda=None)
+            if kind == "person" and node.get("status") == "wounded":  # 开局即带伤(容子矩、无崖子)：剧情上的伤，不随气血养好
+                node[PLIGHT] = True
             nodes[row["id"]] = node
     return nodes
 

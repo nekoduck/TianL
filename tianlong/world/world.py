@@ -4,7 +4,7 @@
           remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表与 turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
        存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
-       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；
+       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
        开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 from . import bond, effects, genesis, perspective, rag
 from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
-from .graph import ROAD, Graph
+from .graph import PLIGHT, ROAD, Graph
 from .ledger import Knowledge, Messenger, Truth
 
 
@@ -125,6 +125,9 @@ class World:
             perspective.seed(world, {e["src"] if e["dst"] == "player" else e["dst"] for e in world.graph.edges
                                      if "player" in (e["src"], e["dst"])} - {"player"})
         bond.migrate(world)  # 旧档里某人对主角的态度边折成恩怨账上的事件(v4)
+        for node in world.graph.nodes.values():  # 旧档没有剧情上的伤(v5)：此刻带伤的人补记一笔，原著前提不因读档而断
+            if node.get("type") == "person" and node.get("status") == "wounded" and PLIGHT not in node:
+                node[PLIGHT] = True
         return world
 
     def remap(self, atlas: dict):
