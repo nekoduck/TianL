@@ -99,7 +99,7 @@ async function narrate(turn, on, flaky) {
   on.stage?.('settle');
   await sleep(between(300, 600));
   on.stage?.('write');
-  on.head?.({ ...turn, narrative: '' });
+  on.head?.({ ...turn, narrative: '', options: [] });
   await sleep(between(400, 800)); // 首字之前的停顿
   const text = turn.narrative;
   for (let i = 0; i < text.length;) {

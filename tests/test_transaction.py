@@ -1,0 +1,72 @@
+"""
+[INPUT]: 依赖 tianlong.world 的 adjudicate / situation 与 data/canon 原著世界；复用 tests/test_adjudicate 的 plan / judge / GO
+[OUTPUT]: unittest 用例——43 回对局(王侠墨)暴露的「拍文与账本不同生共死」逐条转成离线验收：
+          拍里改变物理状态的指令落不了即整拍交返工、仍不成立即作废(第16回)、受阻不倒退、无伤扣血不入账(第5回)、
+          词表不再替导演挪人(第9回「拉着二人」把在场恶人记成随行)、同伴诸拍之后才随行(第11回人质被主角带下崖)、擒者与人质同处
+[POS]: tests 的一拍一事务验证——v3 方案 P0-1 的离线证据
+[PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+"""
+import unittest
+
+from tests.test_adjudicate import GO, judge, plan
+from tianlong.world import adjudicate, situation
+from tianlong.world.world import World
+
+FOLLOW = lambda pid: {"op": "link", "src": pid, "dst": "player", "rel": "随行"}
+
+
+class TransactionTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+
+    def test_a_beat_whose_move_fails_is_doomed_and_the_player_does_not_backtrack(self):
+        self.w.player.set("location", "无量玉壁")
+        r = judge(self.w, plan(("player", "你钻入石隙，推开石门进了一间石室", [GO("琅嬛福地")])))
+        self.assertEqual(self.w.here, "无量玉壁")                                  # 近处绕回谷底仍过不去：原地不动
+        self.assertIn(1, adjudicate.doomed(r))                                       # 文字写进了石室，账上却没有：返工或作废
+
+    def test_a_wound_that_was_parried_costs_no_blood(self):
+        hp = self.w.player["hp"]
+        judge(self.w, plan(("干光豪", "干光豪横剑直刺你肩头", [{"op": "add", "id": "player", "key": "hp", "value": -18}]),
+                           ("马五德", "马五德挥袖将那一剑荡了开去", [])))
+        self.assertEqual(self.w.player["hp"], hp)                                   # 下一拍荡开了：那一剑没有伤到你
+        judge(self.w, plan(("player", "你环顾四周", [{"op": "add", "id": "player", "key": "hp", "value": -5}])))
+        self.assertEqual(self.w.player["hp"], hp)                                   # 一字未写伤，不扣血
+        judge(self.w, plan(("干光豪", "干光豪一剑刺中你肩头，鲜血直流", [{"op": "add", "id": "player", "key": "hp", "value": -10}])))
+        self.assertEqual(self.w.player["hp"], hp - 10)
+
+    def test_the_lexicon_never_moves_people(self):
+        g = self.w.graph
+        for p in ("云中鹤", "南海鳄神"):
+            g.set(p, "location", self.w.here)
+        r = judge(self.w, plan(("player", "段誉与钟灵慌忙起身。你拉着二人奔出大厅",
+                                [FOLLOW("段誉"), FOLLOW("钟灵"), GO("剑湖宫")])))
+        self.assertEqual(sorted(situation.party(self.w)), ["段誉", "钟灵"])         # 「二人」只指上一句的段誉与钟灵
+        self.assertEqual(g.get("云中鹤", "location"), "剑湖宫·练武厅")
+        self.assertEqual([f.kind for f in r.hard], [])
+        r = judge(self.w, plan(("player", "你拉着马五德奔出", [GO("无量山")])))     # 漏写随行：交导演写明，不再替他挪步
+        self.assertEqual(g.get("马五德", "location"), "剑湖宫·练武厅")
+        self.assertIn("follow", [f.kind for f in r.hard])
+        self.assertNotIn(1, adjudicate.doomed(r))                                    # 词表可能看错：只返工、不作废
+
+    def test_a_companion_seized_in_a_later_beat_stays_with_the_captor(self):
+        g = self.w.graph
+        g.link("钟灵", "player", "随行")
+        g.set("云中鹤", "location", self.w.here)
+        r = judge(self.w, plan(("player", "你纵身跃出大厅", [GO("剑湖宫")]),
+                               ("云中鹤", "云中鹤长爪抓住钟灵肩头，将她擒住",
+                                [{"op": "unlink", "src": "钟灵", "dst": "player", "rel": "随行"},
+                                 {"op": "link", "src": "云中鹤", "dst": "钟灵", "rel": "扣为人质"}])))
+        self.assertEqual(g.get("钟灵", "location"), g.get("云中鹤", "location"))   # 人质不随主角先走一步而被带走
+        self.assertEqual([f.kind for f in r.hard], [])
+
+    def test_captor_and_hostage_share_a_place(self):
+        g = self.w.graph
+        g.set("云中鹤", "location", self.w.here)
+        g.link("云中鹤", "钟灵", "扣为人质")
+        r = judge(self.w, plan(("云中鹤", "云中鹤长啸一声，飞身出了大厅", [{"op": "set", "id": "云中鹤", "key": "location", "value": "剑湖宫"}])))
+        self.assertIn("custody", [f.kind for f in r.hard])                           # 擒者走了，人质却留在原地
+
+
+if __name__ == "__main__":
+    unittest.main()

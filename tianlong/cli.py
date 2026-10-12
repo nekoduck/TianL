@@ -1,8 +1,9 @@
 """
-[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，world/blackboard 的 ORIGINS，narrative/llm 的 from_env，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
+[INPUT]: 依赖 tianlong/engine 的 Game，world/world 的 World，world/blackboard 的 ORIGINS，narrative/llm 的 from_env / LLMError，tianlong/server 的 make_server / AUTOSAVE；读取 .env 与命令行参数
 [OUTPUT]: 对外提供 main()（终端交互循环：选名号与出身、开卷、自由输入；--web 时改为启动 Web 服务，续读 --load 存档或上次的自动存档；--trace 记录大模型调用）
 [POS]: 表现层——只负责输入输出与斜杠指令，不含任何游戏逻辑；展示正文、江湖传闻、状态栏、导演给出的 3 个建议与自由输入；
-       "打数字选第几项"是终端独有的快捷写法(只认半角数字)，内核只收原话；读档失败只提示、不丢下眼前这一局
+       "打数字选第几项"是终端独有的快捷写法(只认半角数字)，内核只收原话；读档失败只提示、不丢下眼前这一局；
+       说书人失声(导演调用失败，v5 不再以离线说书人代演)只提示重试，世界已回到回合开始
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
@@ -13,7 +14,7 @@ import sys
 from pathlib import Path
 
 from .engine import Game
-from .narrative.llm import from_env
+from .narrative.llm import LLMError, from_env
 from .world.blackboard import ORIGINS
 from .world.world import World
 
@@ -58,6 +59,14 @@ def show(turn: dict):
     print(_c("  （或直接输入你想做的事；/help 查看指令）", "2"))
 
 
+def _turn(play):
+    """演一回合并展示；说书人失声(导演调用失败)则这一回合作罢——世界已回到回合开始，重试即可，不演假戏。"""
+    try:
+        show(play())
+    except LLMError as e:
+        print(_c(f"  说书人一时失神（{e}），这一回合作罢，请再试一次。", "33"))
+
+
 def _command(game: Game, line: str) -> Game | None:
     """处理斜杠指令；返回 None 表示退出，否则返回（可能被读档替换的）Game。"""
     cmd, _, arg = line.partition(" ")
@@ -65,6 +74,7 @@ def _command(game: Game, line: str) -> Game | None:
     if cmd == "/quit":
         return None
     if cmd == "/save":
+        game.flush()  # 后台折叠中的梗概先汇合，存下的才是完整的记忆
         game.world.save(path)
         print(f"  已存档至 {path}")
     elif cmd == "/load":
@@ -73,7 +83,7 @@ def _command(game: Game, line: str) -> Game | None:
         except UNREADABLE as e:  # 读不了就留在眼前这一局，不崩、不丢
             print(_c(_unreadable(path, e), "33"))
             return game
-        show(game.open())
+        _turn(game.open)
     elif cmd == "/me":
         print(json.dumps(game.world.player.snapshot(), ensure_ascii=False, indent=1))
     elif cmd == "/debug":
@@ -151,7 +161,7 @@ def main(argv=None):
                 name = input("  侠客名号（回车默认「无名」）：").strip()
 
     game = Game(world, llm)
-    show(game.open())
+    _turn(game.open)
     while True:
         try:
             line = input(_c("\n> ", "1")).strip()
@@ -164,5 +174,5 @@ def main(argv=None):
             if game is None:
                 break
             continue
-        show(game.act(_pick(game, line)))
+        _turn(lambda: game.act(_pick(game, line)))
     print("\n  江湖路远，后会有期。")

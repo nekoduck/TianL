@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-export const VERSION = 'tianlong/1.2';
+export const VERSION = 'tianlong/1.3';
 
 /** 次版本只做向后兼容的增补，故只比对主版本：tianlong/1.x 彼此相通。 */
 export const compatible = (protocol) => String(protocol).split('.')[0] === VERSION.split('.')[0];

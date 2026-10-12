@@ -1,8 +1,11 @@
 """
 [INPUT]: 依赖 heapq 做 Dijkstra
-[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图：出路/道路边/距离/路线(可由调用方逐步过滤)、按属性查询）、matches()、ROAD
+[OUTPUT]: 对外提供 Graph（节点属性读写、关系边增删、道路图：出路/道路边/距离/路线(可由调用方逐步过滤)、按属性查询）、matches()（属性判定口径）、holds()（前提判定：属性相符，或 ~关系 有、!关系 无）、ROAD、
+          PLIGHT（剧情上的带伤之身：「某人负伤」的前提读它，不读随气血涨落的 status）
 [POS]: world 层的内存图数据库，世界客观状态的唯一载体；Truth 账本只记"发生过什么"，"现在是什么"永远在这里。
-       道路边可携带有向关口 gates（以去向为键），图只负责存与走，关口如何放行由 world/access 经 through 过滤器裁定
+       道路边可携带有向关口 gates（以去向为键），图只负责存与走，关口如何放行由 world/access 经 through 过滤器裁定；
+       寻路一趟先备好道路邻接表(_roadmap，v5)，不再每走一步扫一遍全部的边——距离是传闻、分层、近处之人的度量衡，查得极勤；
+       v5：剧情前提与体征分开——原著里四十余桩「某人负伤」的前提由 PLIGHT 承载，养伤只改气血，不再把原著主线养断
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import heapq
@@ -19,6 +22,22 @@ def matches(cur, want) -> bool:
         cur = cur if isinstance(cur, dict) else {}
         return all(cur.get(k, True) == v for k, v in want.items())
     return cur == want
+
+
+PLIGHT = "canon_wounded"  # 剧情上的「带伤之身」：由原著或明写的 status 立、由明写的痊愈或死亡消，不随气血涨落
+
+
+def holds(graph, nid: str, key: str, want, cur=None) -> bool:
+    """一条前提是否成立：[id, 属性, 期望] 属性相符；[src, "~关系", dst] 有此关系边；[src, "!关系", dst] 没有。
+    原著的情境前提（钟灵仍被扣为人质）与未了之事的了结谓词共用这一口径。cur 可由调用方给出（主角属性在黑板上）。
+    「某人负伤」是剧情前提，不是体征：气血养回八成五、status 翻回安好，只要剧情上的伤未被明写治好，前提照旧成立。"""
+    if isinstance(key, str) and key[:1] in ("~", "!"):
+        has = any(e["src"] == nid and e["dst"] == want and e["rel"] == key[1:] for e in graph.edges)
+        return has if key[0] == "~" else not has
+    if key == "status" and want == "wounded" and cur is None:
+        status = graph.get(nid, "status")
+        return status == "wounded" or (status != "dead" and bool(graph.get(nid, PLIGHT)))
+    return matches(graph.get(nid, key) if cur is None else cur, want)
 
 
 class Graph:
@@ -76,26 +95,34 @@ class Graph:
         """a 与 b 之间的道路边（不论存储朝向）。"""
         return next((e for e in self.edges if e["rel"] == ROAD and {e["src"], e["dst"]} == {a, b}), None)
 
-    def ways(self, loc: str, through=None) -> list[tuple[str, dict]]:
-        """loc 出发的每一步：(去向, 道路边)；去向封闭或被 through 拦下者不计。"""
-        out = []
+    def _roadmap(self) -> dict[str, list[dict]]:
+        """道路的邻接表(按边的登记次序)：一次遍历全部边，供一趟寻路反复查用——不跨调用缓存，关系边增删不会让它过期。"""
+        adj: dict[str, list[dict]] = {}
         for e in self.edges:
-            if e["rel"] == ROAD and loc in (e["src"], e["dst"]):
-                other = e["dst"] if e["src"] == loc else e["src"]
-                if self.open(other) and (through is None or through(loc, other, e)):
-                    out.append((other, e))
+            if e["rel"] == ROAD:
+                adj.setdefault(e["src"], []).append(e)
+                adj.setdefault(e["dst"], []).append(e)
+        return adj
+
+    def ways(self, loc: str, through=None, adj=None) -> list[tuple[str, dict]]:
+        """loc 出发的每一步：(去向, 道路边)；去向封闭或被 through 拦下者不计。adj 是调用方备好的邻接表(寻路时)。"""
+        out = []
+        for e in (adj.get(loc, ()) if adj is not None else (e for e in self.edges if e["rel"] == ROAD and loc in (e["src"], e["dst"]))):
+            other = e["dst"] if e["src"] == loc else e["src"]
+            if self.open(other) and (through is None or through(loc, other, e)):
+                out.append((other, e))
         return out
 
-    def roads(self, loc: str, through=None) -> list[tuple[str, int]]:
-        return [(other, e["days"]) for other, e in self.ways(loc, through)]
+    def roads(self, loc: str, through=None, adj=None) -> list[tuple[str, int]]:
+        return [(other, e["days"]) for other, e in self.ways(loc, through, adj)]
 
     def _dijkstra(self, src: str, through=None) -> tuple[dict[str, int], dict[str, str]]:
-        dist, prev, heap = {src: 0}, {}, [(0, src)]
+        dist, prev, heap, adj = {src: 0}, {}, [(0, src)], self._roadmap()
         while heap:
             d, loc = heapq.heappop(heap)
             if d > dist[loc]:
                 continue
-            for nxt, days in self.roads(loc, through):
+            for nxt, days in self.roads(loc, through, adj):
                 if d + days < dist.get(nxt, 1 << 30):
                     dist[nxt], prev[nxt] = d + days, loc
                     heapq.heappush(heap, (d + days, nxt))

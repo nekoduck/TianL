@@ -289,7 +289,7 @@
   {
     "id": "无崖子画像",
     "kind": "宝物",
-    "desc": "无崖子所绘的美女绢画，画中有酒窝与小痣。",
+    "desc": "一幅美女绢画，画中人颊有酒窝，嘴角一颗小痣。",
     "location": null,
     "holder": "无崖子",
     "hidden": true,
@@ -331,7 +331,7 @@
   {
     "id": "七宝指环",
     "kind": "信物",
-    "desc": "逍遥派掌门信物，传给虚竹。",
+    "desc": "镶着七色宝石的指环，逍遥派掌门的信物。",
     "location": null,
     "holder": "无崖子",
     "hidden": true,
@@ -487,7 +487,7 @@
   {
     "id": "钟灵黄金钿盒",
     "kind": "信物",
-    "desc": "精致黄金盒，内有钟灵出生八字纸。",
+    "desc": "精致的黄金钿盒，内藏一张写着生辰八字的纸条。",
     "location": null,
     "holder": "甘宝宝",
     "hidden": false,
@@ -634,7 +634,7 @@
   {
     "id": "断肠散",
     "kind": "毒物",
-    "desc": "神农帮迫段誉吞服之毒药。",
+    "desc": "神农帮配制的毒药，服下肝肠寸断。",
     "location": null,
     "holder": "司空玄",
     "hidden": false,
@@ -655,7 +655,7 @@
   {
     "id": "阴阳和合散",
     "kind": "毒物",
-    "desc": "催动情欲的药散，段誉与木婉清遭下药。",
+    "desc": "催动情欲的药散。",
     "location": null,
     "holder": "段延庆",
     "hidden": false,
@@ -739,7 +739,7 @@
   {
     "id": "七香迷魂散",
     "kind": "毒物",
-    "desc": "慕容复用来迷倒段正淳一行的药散。",
+    "desc": "七种香料合成的迷药，闻之即倒。",
     "location": null,
     "holder": "慕容复",
     "hidden": false,
@@ -1351,7 +1351,7 @@
   {
     "id": "汪剑通信",
     "kind": "信物",
-    "desc": "汪剑通留下关于乔峰身世与接任条件的密信。",
+    "desc": "汪剑通留下的一封密信，火漆封缄。",
     "location": null,
     "holder": "康敏",
     "hidden": true,
@@ -1373,7 +1373,7 @@
   {
     "id": "乔峰折扇",
     "kind": "信物",
-    "desc": "乔峰曾持折扇，被盗后用于陷害他。",
+    "desc": "一柄乔峰用过的折扇。",
     "location": null,
     "holder": "康敏",
     "hidden": true,
@@ -1503,7 +1503,7 @@
   {
     "id": "铁头罩",
     "kind": "杂物",
-    "desc": "套游坦之头上的铁罩，后来无法自行摘除。",
+    "desc": "一只沉重的铁头罩，套上便难以摘下。",
     "location": null,
     "holder": null,
     "hidden": false,
@@ -1546,7 +1546,7 @@
   {
     "id": "辽国铁锁铁铐",
     "kind": "杂物",
-    "desc": "囚禁乔峰时加在手脚的大铁链铁铐。",
+    "desc": "辽国的大铁链与铁铐，专锁要犯手脚。",
     "location": "南院大王府",
     "holder": null,
     "hidden": false,
@@ -1609,7 +1609,7 @@
   {
     "id": "琅嬛洞烛台",
     "kind": "杂物",
-    "desc": "段誉入洞后用来照明的烛台。",
+    "desc": "石室里的旧烛台，积着薄尘。",
     "location": "琅嬛福地·玉像石室",
     "holder": null,
     "hidden": false,
@@ -1651,7 +1651,7 @@
   {
     "id": "珍珑棋局",
     "kind": "杂物",
-    "desc": "无崖子所设难解棋局，苏星河以之择传人。",
+    "desc": "黑白纠缠的残局，数十年无人能解。",
     "location": "擂鼓山·棋局场",
     "holder": null,
     "hidden": false,
@@ -1672,7 +1672,7 @@
   {
     "id": "无崖子悬绳",
     "kind": "杂物",
-    "desc": "无崖子瘫痪后用绳悬起身体。",
+    "desc": "自梁上垂下的黑绳，绳头系着人的衣带。",
     "location": "擂鼓山·木屋",
     "holder": null,
     "hidden": true,
@@ -1749,7 +1749,7 @@
   {
     "id": "慕容复纸冠",
     "kind": "杂物",
-    "desc": "慕容复发疯后戴在头上演皇帝的纸冠。",
+    "desc": "一顶纸糊的冠冕。",
     "location": null,
     "holder": null,
     "hidden": false,
@@ -1856,7 +1856,7 @@
   {
     "id": "石杵",
     "kind": "兵刃",
-    "desc": "杀害徐冲霄的凶器。",
+    "desc": "一根沉重的石杵。",
     "location": "中原",
     "holder": null,
     "hidden": false,
@@ -1878,7 +1878,7 @@
   {
     "id": "雁门崖文拓片",
     "kind": "信物",
-    "desc": "记萧远山绝笔的崖刻拓片。",
+    "desc": "雁门关外崖壁刻字的拓片，是契丹文字。",
     "location": null,
     "holder": "智光",
     "hidden": false,
@@ -1920,7 +1920,7 @@
   {
     "id": "断筋腐骨丸",
     "kind": "毒物",
-    "desc": "乌老大用来威逼虚竹的毒药。",
+    "desc": "令人筋断骨腐的毒丸。",
     "location": null,
     "holder": "乌老大",
     "hidden": false,
@@ -1962,7 +1962,7 @@
   {
     "id": "人皮面具",
     "kind": "杂物",
-    "desc": "游坦之用来遮掩毁容面貌的面具。",
+    "desc": "一张薄如蝉翼的人皮面具。",
     "location": null,
     "holder": null,
     "hidden": false,
@@ -1983,7 +1983,7 @@
   {
     "id": "鸠摩智火焰刀经",
     "kind": "秘籍",
-    "desc": "鸠摩智取出愿用来换六脉神剑经的火焰刀秘籍。",
+    "desc": "记载火焰刀法的秘籍。",
     "location": null,
     "holder": "鸠摩智",
     "hidden": false,
@@ -2029,7 +2029,7 @@
   {
     "id": "辽帝御箭",
     "kind": "兵刃",
-    "desc": "辽帝以作誓证的羽箭，乔峰折断后用以自尽。",
+    "desc": "辽帝的御箭，可作誓证。",
     "location": null,
     "holder": "耶律洪基",
     "hidden": false,

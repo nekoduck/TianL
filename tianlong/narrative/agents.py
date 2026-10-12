@@ -1,11 +1,13 @@
 """
-[INPUT]: 依赖 narrative/prompts 的五组提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：节拍/后果/时长措辞/原著去留/张力/3 自由选项）、write()（编剧：正文/真实梗概/可传之事，给 on_text 即边写边送）、
-          recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
-[POS]: narrative 层的五个 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
-       （单个字串当清单、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
-       剧情后果能否落账交给 world/effects，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行。
-       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记——账本从不拿导演未经核实的节拍充数
+[INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
+[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
+          write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或括号里都认——括号写在文字末尾或对象之后皆可，说耗时路程的才是代价、其余是对象(v5)；至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
+          recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
+[POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
+       （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
+       后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
+       编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文；
+       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -15,21 +17,27 @@ from . import prompts
 from .llm import LLMError
 from .prompts import TENSIONS
 from ..world.clock import PACES
+from ..world.pacing import CUTS, UNTIL
 
 log = logging.getLogger("tianlong")
 TAIL = re.compile(r"\n[ \t]*={3,}")  # 编剧正文之后的分隔线，其后是 梗概/传言 两行
 HOLD = re.compile(r"\n[ \t]*={0,2}$")  # 流式正文末尾疑似分隔线的开头：先扣下，等下一块再定
-FIELD = re.compile(r"^[\s*#>\-—=]*(梗概|传言)[\s*]*[:：][\s*]*(.*)$")  # 半角冒号、markdown 粗体都认
+FIELD = re.compile(r"^[\s*#>\-—=]*(梗概|传言|伏笔|选项)[\s*]*[:：][\s*]*(.*)$")  # 半角冒号、markdown 粗体都认
 SPLIT = re.compile(r"[、，,；;／/|\n]+")  # 选项被写成一句时的分隔
 NO = {"false", "no", "否", "不", "0", "none", "null", ""}
+SCRAP = 60  # 流式半途被截断、正文又不足此数：只言片语，须以已成立之事续成
 
 
-def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800):
+def _ask(llm, prompt: tuple[str, str], fallback, *, as_json=True, tokens=800, strict=False):
+    """调用模型；失败走兜底。strict 的调用(导演)遇上严格的模型(真 Gemini，strict=True)不演假戏：抛出去，整回合作废、玩家重试——
+    离线说书人那句「你看了看四周」配上编剧的一番铺陈，比一次重试更伤剧情。"""
     if llm is None:
         return fallback()
     try:
         return llm.json(*prompt, max_tokens=tokens) if as_json else llm.text(*prompt, max_tokens=tokens)
     except LLMError as e:
+        if strict and getattr(llm, "strict", False):
+            raise
         log.warning("LLM 调用失败，走兜底：%s", e)
         return fallback()
 
@@ -55,52 +63,146 @@ def _yes(value, default: bool) -> bool:
 
 
 # ============================================================
-#  LOD0：导演（剧情 + 选项）
+#  LOD0：导演（逐拍的剧情与后果；选项归编剧）
 # ============================================================
+QUESTION_STATES = ("resolved", "open", "interrupted")
+ME = {"player", "主角", "你"}
+
+
 def _plain_director(pack: dict, deed: str) -> dict:
     """离线兜底：只会走路与旁观的朴素说书人；原著照常上演。"""
-    exits = [e["name"] for e in pack["exits"]]
-    dest = max((e for e in exits if e in deed), key=len, default=None)  # 「澜沧江边高崖」不被「澜沧江」截胡
-    beats = [f"你动身前往{dest}。"] if dest else [f"你{deed}。" if deed else "你凝神四顾。"]
-    return {"beats": beats, "pace": "片刻" if deed else "瞬息", "canon": {"unfolds": True, "why": ""}, "tension": "平",
-            "effects": [{"op": "set", "id": "player", "key": "location", "value": dest}] if dest else [],
-            "options": _plain_options(pack)}
+    dest = max((e["name"] for e in pack["exits"] if e["name"] in deed or e.get("way") == deed),
+               key=len, default=None)  # 「澜沧江边高崖」不被「澜沧江」截胡；兜底选项的方向措辞(出练武厅)也认得
+    text = f"你动身前往{dest}。" if dest else f"你{deed}。" if deed else "你凝神四顾。"
+    ops = [{"op": "set", "id": "player", "key": "location", "value": dest}] if dest else []
+    return {"beats": [{"who": "player", "text": text, "ops": ops}], "pace": "片刻" if deed else "瞬息", "cut": None,
+            "canon": {"unfolds": True, "why": ""}, "tension": "平",
+            "question": {"ask": deed, "state": "resolved" if dest or not deed else "open", "by": None}}
 
 
-def _plain_options(pack: dict) -> list[str]:
-    opts = [f"与{p['name']}攀谈" for p in pack["people"][:2]] + [f"前往{e['name']}" for e in pack["exits"]]
-    return (opts + ["歇息片刻", "四下察看"])[:3]
+def _beat(x, me: str) -> dict | None:
+    """一拍：{who, to, text, ops}；只给一句话的旧写法也收（who 不明、ops 为空）。"""
+    if isinstance(x, str):
+        return {"who": None, "to": None, "text": x.strip()[:80], "ops": []} if x.strip() else None
+    if not isinstance(x, dict) or not str(x.get("text") or "").strip():
+        return None
+    norm = lambda v: "player" if v in ME or v == me else (v if isinstance(v, str) and v else None)
+    return {"who": norm(x.get("who")), "to": norm(x.get("to")), "text": str(x["text"]).strip()[:80], "ops": _dicts(x.get("ops")),
+            "mood": str(x.get("mood") or "").strip()[:8]}  # 情绪是快变量：只给编剧渲染，不入账、不回喂
+
+
+def _plan(r: dict, pack: dict, deed: str) -> dict:
+    me = pack["player"]["name"]
+    beats = [b for b in (_beat(x, me) for x in (r.get("beats") if isinstance(r.get("beats"), list) else [])) if b][:6]
+    loose = _dicts(r.get("effects"))  # 旧写法：后果写在顶层，挂到一个无文字的拍上——裁决照样逐条落账
+    if loose:
+        beats.append({"who": None, "to": None, "text": "", "ops": loose})
+    beats = beats or [{"who": "player", "to": None, "text": "你凝神四顾。", "ops": []}]
+    canon = r.get("canon") if isinstance(r.get("canon"), dict) else {}
+    q = r.get("question") if isinstance(r.get("question"), dict) else {}
+    pace, cut, tension = r.get("pace"), r.get("cut"), r.get("tension")
+    sc = r.get("scene") if isinstance(r.get("scene"), dict) else None
+    clocks = [c for c in _dicts(r.get("clock")) if str(c.get("what") or "").strip()][:2]
+    return {"beats": beats,
+            "question": {"ask": str(q.get("ask") or deed)[:40],
+                         "state": q.get("state") if q.get("state") in QUESTION_STATES else "open",
+                         "by": q.get("by") if isinstance(q.get("by"), str) and q.get("by") else None},
+            "spawn": _dicts(r.get("spawn"))[:3],
+            "pace": pace if isinstance(pace, str) and pace in PACES else ("片刻" if deed else "瞬息"),
+            "cut": _cut(cut),  # 幕间省略：一段长度或「到某一刻」；「无」与不识的措辞都当没有
+            "scene": {"state": str(sc.get("state") or "").strip()[:1], "ask": str(sc.get("ask") or "").strip()[:40],
+                      "by": sc.get("by") if isinstance(sc.get("by"), str) and sc.get("by") else None} if sc else None,
+            "clock": clocks,
+            "canon": {"unfolds": _yes(canon.get("unfolds"), True), "why": str(canon.get("why") or "")[:60]},
+            "tension": tension if isinstance(tension, str) and tension in TENSIONS else "起",
+            "options": [o[:20] for o in _texts(r.get("options"), split=True)][:3]}  # 旧写法的选项：编剧未拟时兜底
+
+
+def _cut(cut):
+    """幕间省略的宽松读法：长度措辞、「入夜/天明/正午」、或 {"until": 某一刻/某个时限}；其余都当没有。"""
+    if isinstance(cut, str) and (cut in CUTS or cut in UNTIL):
+        return cut
+    if isinstance(cut, dict) and isinstance(cut.get("until"), str) and cut["until"].strip() and cut["until"].strip() not in NO | {"无"}:
+        return {"until": cut["until"].strip()[:20]}
+    return None
 
 
 def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
-    r = _ask(llm, prompts.director(pack, gm, deed or "初来乍到，环顾四周"),
-             lambda: _plain_director(pack, deed), tokens=1500)
-    beats = _texts(r.get("beats"))[:6] or ["你凝神四顾。"]
-    canon = r.get("canon") if isinstance(r.get("canon"), dict) else {}
-    options = [o[:20] for o in _texts(r.get("options"), split=True)][:3]
-    pace, tension = r.get("pace"), r.get("tension")
-    return {"beats": beats,
-            "effects": _dicts(r.get("effects")),
-            "pace": pace if isinstance(pace, str) and pace in PACES else ("片刻" if deed else "瞬息"),
-            "canon": {"unfolds": _yes(canon.get("unfolds"), True), "why": str(canon.get("why") or "")[:60]},
-            "tension": tension if isinstance(tension, str) and tension in TENSIONS else "起",
-            "options": options + _plain_options(pack)[len(options):]}
+    r = _ask(llm, prompts.director(pack, gm, deed or "初来乍到，环顾四周"), lambda: _plain_director(pack, deed), tokens=2000, strict=True)
+    return _plan(r, pack, deed)
+
+
+def _draft(plan: dict) -> dict:
+    """交还导演返工的上一稿：去掉系统补的字段，形状与它写的一样。"""
+    return {k: plan[k] for k in ("beats", "scene", "question", "spawn", "pace", "cut", "clock", "canon") if plan.get(k) is not None}
+
+
+def repair(llm, pack: dict, gm: dict, deed: str, plan: dict, problems: list[str]) -> dict | None:
+    """导演返工一次：只改有问题的拍。离线或失败返回 None——由系统把仍不成立的拍作废。"""
+    if llm is None:
+        return None
+    r = _ask(llm, prompts.repair(pack, gm, deed or "初来乍到，环顾四周", _draft(plan), problems), lambda: None, tokens=2000)
+    return _plan(r, pack, deed) if isinstance(r, dict) else None
+
+
+OPTION = re.compile(r"^[\s*#>\-]*(?:\d+|[一二三])[\.、．:：)）]\s*(.+)$")
+TARGETS = re.compile(r"[｜|]\s*(?:对象|目标)\s*[:：]\s*(.*)$")
+SCALE = re.compile(r"[｜|]\s*尺度\s*[:：]\s*(此刻|此后|机缘)[^｜|]*")
+COST = re.compile(r"[｜|]\s*(?:代价|耗时)\s*[:：]\s*([^｜|]*)")
+LABEL = 26  # 选项连同代价的字数上限
+COST_LEN = 8  # 代价至多八字
+PAREN = re.compile(r"[（(]([^（）()]*)[）)]\s*$")
+TIMEISH = re.compile(r"日|时辰|顿饭|一夜|片刻|路程|里路|天|刻|更|宿|盏茶|炷香")  # 括号里说的是耗时路程，才是代价；否则多半是对象
+DUE = re.compile(r"[｜|]\s*期限\s*[:：]\s*(\d+)")
 
 
 def _page(raw: str) -> dict:
-    """编剧原文 → {text, memory, headline}：分隔线之前是正文，之后是只记已成立之事的梗概与可传之事。
-    写法宽松（半角冒号、markdown 粗体、值另起一行皆可）；没写就是 None——由引擎以核实过的后果代记。"""
+    """编剧原文 → {text, memory, headline, options, hook}：分隔线之前是正文，之后是梗概、选项（文字｜对象）、伏笔与可传之事。
+    写法宽松（半角冒号、markdown 粗体、值另起一行皆可）；没写就是 None 或空——由引擎代记、由选项出口检查补齐。"""
     text, tail = (TAIL.split(raw, maxsplit=1) + [""])[:2]
-    lines, found = [line.strip() for line in tail.splitlines()], {}
+    lines, found, options = [line.strip() for line in tail.splitlines()], {}, []
     for i, line in enumerate(lines):
         m = FIELD.match(line)
         if m:
-            nxt = lines[i + 1] if i + 1 < len(lines) and not FIELD.match(lines[i + 1]) else ""
+            nxt = lines[i + 1] if i + 1 < len(lines) and not FIELD.match(lines[i + 1]) and not OPTION.match(lines[i + 1]) else ""
             found.setdefault(m.group(1), m.group(2).strip().strip("*").strip() or nxt)
+            continue
+        o = OPTION.match(line)
+        if o and len(options) < 3:
+            body = o.group(1).strip().strip("*")
+            scale, cost = SCALE.search(body), COST.search(body)
+            body = COST.sub("", SCALE.sub("", body))  # 尺度与代价写在对象前后都认：先摘下来，免得被对象一并吞掉
+            t = TARGETS.search(body)
+            label = (body[:t.start()] if t else body).strip().strip("*").strip()
+            aims = t.group(1).strip() if t else ""
+            price, more = cost.group(1).strip().strip("（）()") if cost else "", []
+            for part in ("label", "aims"):  # 括号写在文字末尾或对象之后都认(v5)：说耗时路程的是代价，其余是对象
+                m = PAREN.search(label if part == "label" else aims)
+                if not m:
+                    continue
+                inner = m.group(1).strip()
+                if part == "label":
+                    label = label[:m.start()].strip()
+                else:
+                    aims = aims[:m.start()].strip()
+                if TIMEISH.search(inner):
+                    price = price or inner
+                elif inner:
+                    more.append(inner)
+            keep = bool(price) and len(price) <= COST_LEN  # 代价太长就不写，宁缺不截半句；不写代价就不为它让出字数
+            label = label[:LABEL - COST_LEN - 2] + f"（{price}）" if keep else label[:LABEL]
+            if label.strip("（）"):
+                options.append({"text": label, "targets": [x.strip() for x in SPLIT.split(aims) if x.strip()] + more,
+                                "scale": scale.group(1) if scale else None})
     memory = found.get("梗概") or None
     headline = (found.get("传言") or "").strip("。. ")
+    hook = found.get("伏笔") or ""
+    due = DUE.search(hook)
+    hook = re.split(r"[｜|]", hook)[0].strip().strip("。")
     return {"text": text.strip(), "memory": memory[:60] if memory else None,
-            "headline": headline[:40] if headline and headline.lower() not in NO | {"无"} else None}
+            "headline": headline[:40] if headline and headline.lower() not in NO | {"无"} else None,
+            "options": options,
+            "hook": {"text": hook[:40], "turns": min(int(due.group(1)), 8) if due else 3} if hook and hook not in NO | {"无"} else None}
 
 
 def _show(on_text, acc: str, sent: int) -> int | None:
@@ -116,24 +218,30 @@ def _show(on_text, acc: str, sent: int) -> int | None:
 
 def write(llm, pack: dict, frame: dict, on_text=None) -> dict:
     """编剧成文，并写下本回合实际成立之事的梗概（它同时看见节拍与未成立，是唯一有资格记账的人）。
-    给了 on_text 且模型能流式，就边写边送；半途失声时已写出的即为正文，一字未得才走兜底。"""
+    给了 on_text 且模型能流式，就边写边送；半途失声时已写出的即为正文，只得只言片语则以已成立之事续成，一字未得才走兜底。"""
     prompt = prompts.writer(pack, frame)
-    fallback = lambda: "\n".join([pack["scene"]["desc"], *frame["beats"], *(f"（{v}）" for v in frame["void"])])
+    fallback = lambda: "\n".join([pack["scene"]["desc"], *frame["beats"], *frame.get("notes", []), *(f"（{v}）" for v in frame["void"])])
     if on_text and hasattr(llm, "stream"):
-        parts, sent = [], 0
+        parts, sent, cut = [], 0, False
         try:
-            for delta in llm.stream(*prompt, max_tokens=1400):
+            for delta in llm.stream(*prompt, max_tokens=1800):
                 parts.append(delta)
                 if sent is not None:
                     sent = _show(on_text, "".join(parts), sent)
         except LLMError as e:
+            cut = True
             log.warning("编剧流式中断（已得 %d 段）：%s", len(parts), e)
         raw = "".join(parts)
+        page = _page(raw)
+        if cut and raw.strip() and len(page["text"]) < SCRAP:  # 只得只言片语（多半被安全策略拦腰截断）：以已成立之事续成正文
+            rest = fallback()
+            on_text("\n" + rest)
+            return {**page, "text": (page["text"] + "\n" + rest).strip()}
         if raw.strip():  # 一字未得（断在开头，或被安全策略整段拦下）才走下面的兜底
             if sent is not None and sent < len(raw.rstrip()):
                 on_text(raw.rstrip()[sent:])  # 流尽而不见分隔线：扣下的尾巴放行
-            return _page(raw)
-    page = _page(_ask(llm, prompt, fallback, as_json=False, tokens=1400))
+            return page
+    page = _page(_ask(llm, prompt, fallback, as_json=False, tokens=1800))
     if on_text:
         on_text(page["text"])  # 不能流式时，整段作一次送出，调用方无须区分
     return page
@@ -154,9 +262,9 @@ def simulate(llm, time: str, days: int, actors: list[dict], heard=()) -> list[di
     return _dicts(r.get("reports"))[:2]
 
 
-def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool, heard=()) -> dict:
+def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool, heard=(), ahead=()) -> dict:
     fallback = lambda: {"happens": not broken, "summary": ev["summary"], "effects": ev["effects"]}
-    r = _ask(llm, prompts.chronicler(ev, reasons, actors, heard), fallback, tokens=800)
+    r = _ask(llm, prompts.chronicler(ev, reasons, actors, heard, ahead), fallback, tokens=800)
     effects = _dicts(r.get("effects"))
     return {"happens": _yes(r.get("happens"), bool(r.get("summary") or effects)),
             "summary": str(r.get("summary") or ev["summary"])[:120], "effects": effects}

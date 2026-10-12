@@ -1,20 +1,21 @@
 """
-[INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag 全部基础设施
+[INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag、perspective(开局相识) 全部基础设施
 [OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
-          remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表
+          remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表与 turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
        存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
-       主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
+       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
+       开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
 import os
 from pathlib import Path
 
-from . import effects, genesis, rag
+from . import bond, effects, genesis, perspective, rag, situation
 from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
-from .graph import ROAD, Graph
+from .graph import PLIGHT, ROAD, Graph
 from .ledger import Knowledge, Messenger, Truth
 
 
@@ -39,6 +40,7 @@ class World:
         self.taint: set[str] = taint        # 因果涟漪：被玩家亲手触碰过的节点
         self.seed: int = seed
         self.aliases: dict[str, str] = aliases or {}  # 别名→id：LLM 写「萧峰」「乔帮主」亦能落到乔峰
+        self.turn: dict = {}                # 本回合的瞬时账（谁被谁挪动过、谁到场、连带说明）——不入存档
 
     # ------------------------------------------------------------
     #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试
@@ -56,6 +58,7 @@ class World:
         player = Blackboard({**d["player"], **birth, **({"name": name} if name else {})})
         world = cls(graph, player, Clock(d["start_tick"]), Truth(), Knowledge.from_truth(graph),
                     Messenger(), d["canon"], [], set(), d["seed"], d.get("aliases"))
+        perspective.seed(world)
         world.sync()
         return world
 
@@ -88,16 +91,18 @@ class World:
         return self.clock.advance(shichen)
 
     def sync(self) -> list[dict]:
-        """投递已抵达的传闻，再以亲眼所见校正认知；返回本次抵达的传闻。"""
-        news = self.messenger.deliver(self.truth, self.knowledge, self.graph.distances(self.here), self.clock.day)
+        """投递已抵达的传闻(主角身边这一片得有人传话)，再以亲眼所见校正认知；返回本次抵达的传闻。"""
+        news = self.messenger.deliver(self.truth, self.knowledge, self.graph.distances(self.here), self.clock.day,
+                                      listening=situation.inhabited(self))  # 传闻要有传话的人
         self._observe()
         return news
 
     def _observe(self):
         s = rag.scene(self)
         seen = [self.here] + s["people"] + s["dead"] + s["features"] + s["items"]
-        for nid, belief in self.knowledge.beliefs.items():  # 以为在此、实则不在的人：下落不明
-            if belief.get("location") == self.here and nid not in seen and self.graph.kind(nid) == "person":
+        for nid, belief in self.knowledge.beliefs.items():  # 以为在此、实则不在的人：下落不明(同在片区而未到跟前的不算)
+            if belief.get("location") == self.here and nid not in seen and self.graph.kind(nid) == "person" \
+                    and self.graph.get(nid, "location") != self.here:
                 belief["location"] = None
         self.knowledge.observe(self.graph, seen, self.clock.day)
 
@@ -118,6 +123,13 @@ class World:
                     Knowledge(d["beliefs"], d["known"], d.get("secrets"), d.get("asof")), Messenger(d["pending"]), d["canon"], d["done"],
                     set(d["taint"]), d["seed"], d.get("aliases"))
         world.remap(atlas or genesis.load())
+        if "acquaintances" not in d["player"]:  # 旧档没有识名账：出身里的人与已有交情的人算作相识
+            perspective.seed(world, {e["src"] if e["dst"] == "player" else e["dst"] for e in world.graph.edges
+                                     if "player" in (e["src"], e["dst"])} - {"player"})
+        bond.migrate(world)  # 旧档里某人对主角的态度边折成恩怨账上的事件(v4)
+        for node in world.graph.nodes.values():  # 旧档没有剧情上的伤(v5)：此刻带伤的人补记一笔，原著前提不因读档而断
+            if node.get("type") == "person" and node.get("status") == "wounded" and PLIGHT not in node:
+                node[PLIGHT] = True
         return world
 
     def remap(self, atlas: dict):

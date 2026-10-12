@@ -149,7 +149,7 @@ class ServerTest(unittest.TestCase):
                  ({"Content-Type": "text/plain"}, 403),                                          # no-cors 写不出 JSON
                  ({"Content-Type": "application/json", "Origin": self.base}, 201)]               # 本页
         for headers, status in cases:
-            req = urllib.request.Request(self.base + "/api/session", data=b'{"name": "\u593a\u820d"}', method="POST",
+            req = urllib.request.Request(self.base + "/api/session", data=rb'{"name": "\u593a\u820d"}', method="POST",
                                          headers=headers)
             try:
                 with urllib.request.urlopen(req, timeout=30) as res:

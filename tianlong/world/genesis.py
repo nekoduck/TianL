@@ -1,9 +1,9 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
-       处理开端未明的人物（休眠）、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
-       按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
+       处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、标出片区(area：下辖子地点或以自身为区域的大地名，同在片区不等于同处一室)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
+       按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -14,6 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .clock import DAYS_PER_MONTH, PER_DAY, PER_SHICHEN, day_of
+from .graph import PLIGHT
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "canon"
 START_MINUTE = 4 * PER_SHICHEN  # 开场于辰时
@@ -38,7 +39,8 @@ SOURCES = {
 }
 RENAME = {"type": "style"}  # 武学自带的 type(掌法/指法…) 与节点类型同名，入世时改称 style
 GATE = ("kind", "blocked", "hidden", "how", "requires", "risk")  # 通行条件入世的字段；src/inferred 是抽取元数据
-ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
+ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")
+SITUATION = "17_situation.json"  # 原著事件的情境前提补充（某人仍受制于人），合并进 requires  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
 
 
 class GenesisError(Exception):
@@ -56,6 +58,8 @@ def _nodes(root: Path) -> dict[str, dict]:
             node = {"type": kind, **{RENAME.get(k, k): row[k] for k in keep if k in row}}
             if row.get("initial_state_confirmed") is False:  # 开端生死去处未明：休眠，不得在江湖中活动
                 node.update(hidden=True, dormant=True, agenda=None)
+            if kind == "person" and node.get("status") == "wounded":  # 开局即带伤(容子矩、无崖子)：剧情上的伤，不随气血养好
+                node[PLIGHT] = True
             nodes[row["id"]] = node
     return nodes
 
@@ -208,11 +212,30 @@ def _validate(nodes, roads, gates, relations, canon) -> list[str]:
         need(ev["where"], ("location",), ctx + ".where")
         for a in ev["actors"]:
             need(a, ("person",), ctx + ".actors")
-        for nid, _, _ in ev["requires"]:
+        for nid, key, want in ev["requires"]:
             need(nid, tuple(SOURCES), ctx + ".requires")
+            if key[:1] in ("~", "!"):  # 关系前提的另一端也须在世
+                need(want, tuple(SOURCES), ctx + ".requires")
         for op in ev["effects"]:
             for nid in ([op.get("src"), op.get("dst")] if "src" in op else [op.get("id")]):
                 need(nid, tuple(SOURCES), ctx + ".effects")
+    return errors
+
+
+def _situate(root: Path, canon: list[dict]) -> list[str]:
+    """情境前提并入原著事件的 requires；事件须已登记、条目须是 [src, ~关系/!关系, dst]。"""
+    if not (root / SITUATION).exists():
+        return []
+    by_id, errors = {ev["id"]: ev for ev in canon}, []
+    for eid, conds in _read(root, SITUATION)["requires"].items():
+        if eid not in by_id:
+            errors.append(f"情境前提：「{eid}」不是已登记的原著事件")
+            continue
+        for c in conds:
+            if not (isinstance(c, list) and len(c) == 3 and isinstance(c[1], str) and c[1][:1] in "~!"):
+                errors.append(f"情境前提 {eid}：「{c}」不是 [src, ~关系/!关系, dst]")
+            else:
+                by_id[eid]["requires"] = by_id[eid]["requires"] + [c]
     return errors
 
 
@@ -221,16 +244,26 @@ def load(root: Path = DATA) -> dict:
     return copy.deepcopy(_compile(str(root)))
 
 
+def _areas(nodes: dict):
+    """片区(v5)：下辖子地点的处所(无量山、少林寺、大理城)与以自身为区域的大地名(中原、西域)——那是一片地方，不是一间屋子：
+    同在「中原」的四十人并不同处一室，主角走到那里，眼前只有找上门来、或被剧情带到跟前的人(situation.around)。"""
+    parents = {n.get("parent") for n in nodes.values() if n["type"] == "location"}
+    for nid, n in nodes.items():
+        if n["type"] == "location" and (nid in parents or n.get("region") == nid):
+            n["area"] = True
+
+
 @lru_cache(maxsize=4)
 def _compile(root: str) -> dict:
     root = Path(root)
     nodes = _nodes(root)
+    _areas(nodes)
     roads = [(a, b, _ride(days)) for a, b, days in _roads(root)]
     gates = _gates(root)
     relations = [{k: r[k] for k in ("src", "dst", "rel", "secret", "revealed_by") if k in r}
                  for r in _read(root, "07_relations.json")]
     canon = _schedule(_read(root, "08_canon.json"))
-    errors = _validate(nodes, roads, gates, relations, canon)
+    errors = _situate(root, canon) + _validate(nodes, roads, gates, relations, canon)
     if errors:
         raise GenesisError(f"原著数据有 {len(errors)} 处引用错误，首条：{errors[0]}")
     first = canon[0]
