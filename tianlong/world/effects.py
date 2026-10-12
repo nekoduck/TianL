@@ -11,7 +11,7 @@
        数值归规则：导演不得直接增减功力或凭空授武学——研习写 study、吸功写 drain，多少由 growth 算；
        内伤归 body：导演往境况里写内伤(岔气、经脉、内息…)即按分级升一级、去掉即降一级，有据的疗伤(气血回升)顺带降一级，每回合每人各至多一级；
        主角与 NPC 同构(v4)：add hp、push/pull conditions 对任何活人成立，NPC 的气血归 actor、status 由气血推出(写 set status 则气血随之对齐)，
-       set intent 改写此人眼下之事(一句话)、set mood 记下此人此刻的情绪；
+       set intent 改写此人眼下之事(一句话)、set mood 记下此人此刻的情绪(写到主角身上即不入账、不算错：主角的心思归玩家)；
        器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
        在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
@@ -42,7 +42,7 @@ from .graph import ROAD
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
 FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing", "came_from", "en_route",
-                      "drift"}
+                      "drift", "scene", "clocks", "arc", "spines", "setups"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -577,6 +577,8 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             continue
         try:
             _normalize(world, op)
+            if op.get("id") == "player" and op.get("key") in SENTENCE:
+                continue  # 主角的心思与神色归玩家：导演替他写下的打算不算错，只是不入账，免得为此返工
             _summon(world, op, origin)
             reason = _physics(world, op) or _reach(world, op, origin, scope) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩

@@ -2,8 +2,8 @@
 [INPUT]: 依赖 tianlong.world 的 pacing / effects / lod / rag / situation 与 data/canon 原著世界，tianlong.engine 的 Game；
          复用 tests/test_adjudicate 的 plan / judge 与 tests/test_engine 的 StubLLM / director
 [OUTPUT]: unittest 用例——两份实录里「剧情打转」的病灶逐条转成离线验收(v3 P1)：
-          同一主题近四回合有三回合即在后台写明不得再起(隔一回合又来也算)、同一个人一再对主角说同一种话即提示换个推进方式、在一处僵持而局面不动即逼导演推进、
-          某人对主角的看法五回合内不改写(同回合以后写为准)、情绪写在拍的 mood 里只给编剧不入账、伏笔至多两条且身体不作伏笔、
+          同一主题近四回合有三回合即在后台写明不得再起(隔一回合又来也算)、同一个人一再对主角说同一种话即提示换个推进方式(僵持归 story/scene 的场上限)、
+          某人对主角的看法由恩怨账折叠(态度不立边、恩怨并存、衰减不冻结、一件事改一级)、情绪写在拍的 mood 里只给编剧不入账、伏笔至多两条且身体不作伏笔、
           纠缠者的场外原著前提已破即作罢且场外动不了他、前提已破的原著近事在后台明标不得进台词、台词说出尚未发生的原著即违例；
           幕间省略(本幕了结且无人相逼才许光阴跳过、「一夜」醒在辰时、编剧写出那段空白；本幕未了、拦阻追杀、受制于人则不许)、研习至少一顿饭、局面平静时后台提示可以跳
 [POS]: tests 的阻尼与纠缠者验证——v3 方案 P1-1(慢变量与阻尼)、P1-2(原著与纠缠者、台词事实出处)的离线证据，及时长「回回片刻」的修正(戏内光阴与幕间省略分开)
@@ -39,9 +39,8 @@ class PacingTest(unittest.TestCase):
         advice = "\n".join(pacing.advise(w))
         self.assertIn("「拦阻」近4回合里已有3回合", advice)
         self.assertIn("左子穆近来一再对主角拦阻", advice)
-        self.assertIn("僵持3回合", advice)                                              # 25 回实录：困在练武厅
+        self.assertNotIn("僵持", advice)                                               # 僵持归场的上限(story/scene)，不在此提示
         pacing.record(w, [beat("左子穆收剑入鞘，放你出厅")], changed=True)
-        self.assertNotIn("僵持", "".join(pacing.advise(w)))                            # 局面一动，僵持即解
         pacing.record(w, [beat("左子穆抚须而笑")], changed=True)
         self.assertEqual(pacing.advise(w), [])                                         # 此题淡出窗口，阻尼即解
 

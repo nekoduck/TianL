@@ -127,6 +127,14 @@ def mastery(world) -> list[dict]:
     return out
 
 
+def unearned(world, words: list[str]) -> list[str]:
+    """进境措辞里账上没有的：所需之阶高过研习账上最高的一阶(原本就会的武学算入门)，或说「功力大进」而本回合并无进境。"""
+    from .lexicon import mastery_level  # 词表只在核对进境措辞时用到
+    top = max([r["stage"] for r in _log(world).values()] + [1 if world.player["skills"] else 0])
+    fresh = bool(world.turn.get("advanced"))
+    return [w for w in words if (mastery_level(w) == 0 and not fresh) or mastery_level(w) > top]
+
+
 def studiable(world, aim=(), extra=()) -> list[str]:
     """够得着的研习对象：手边与此地(含 extra 里暗藏)的秘籍、身边有人会的武学；给了 aim 只留玩家所指的(秘籍所授的武学也认作那部秘籍)。"""
     g, me = world.graph, world.player

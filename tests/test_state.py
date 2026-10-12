@@ -84,6 +84,13 @@ class BondTest(unittest.TestCase):
         judge(w, plan(("player", "你一掌击中左子穆胸口", [{"op": "add", "id": "左子穆", "key": "hp", "value": -20}])), {"左子穆"})
         self.assertEqual(stance(w, "左子穆")["word"], "戒备")
 
+    def test_rewriting_an_existing_bond_is_not_another_event(self):
+        w = self.w
+        seize = plan(("player", "你一把扣住段誉", [{"op": "link", "src": "player", "dst": "段誉", "rel": "扣押"}]))
+        judge(w, seize, {"段誉"})
+        judge(w, seize, {"段誉"})                                                        # 导演每回合重写一遍拘押
+        self.assertEqual(len(w.graph.nodes["段誉"]["bond"]["log"]), 1)
+
     def test_an_attitude_is_an_event_not_an_edge(self):
         w = self.w
         w.apply([{"op": "link", "src": "段誉", "dst": "player", "rel": "疑忌", "note": "你来路不明"}], "director")
@@ -126,6 +133,16 @@ class MasteryTest(unittest.TestCase):
         r = judge(w, plan(("player", "你踏着卦位一路走下来，身如游龙", [])))
         self.assertEqual([f.kind for f in r.hard], ["mastery"])
         self.assertEqual(lexicon.mastery("你尚未练成，只是略有所感"), [])
+        w.turn = {}
+        growth.study(w, BOOK, 120)
+        self.assertEqual(judge(w, plan(("player", "你步法已然入门，身如游龙", []))).hard, [])  # 账上已入门：入门的措辞有账可依
+        self.assertEqual([f.kind for f in judge(w, plan(("player", "你这步法已臻大成", []))).hard], ["mastery"])
+
+    def test_study_is_the_players_choice(self):
+        w = self.w
+        r = judge(w, plan(("player", "你顺手翻开帛卷练了起来", [{"op": "study", "id": "player", "value": BOOK}])))
+        self.assertIn(f"研习{BOOK}", r.candidates)                                       # 玩家没选：不演，留作下回合的选项
+        self.assertNotIn(BOOK, w.player["study"])
 
     def test_a_practice_beat_is_ratified_as_study(self):
         w = self.w

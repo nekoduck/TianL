@@ -114,7 +114,9 @@ def before(world, ops: list) -> dict:
                 holders[v] = g.get(v, "holder")
     for p in situation.around(world):
         hp[p] = actor.vitals(world, p)[0]
-    return {"holders": holders, "hp": hp, "dead": {p for p in situation.around(world) if g.get(p, "status") == "dead"}}
+    edges = {(e["src"], e["dst"], e["rel"]) for e in g.edges if "player" in (e["src"], e["dst"])}
+    return {"holders": holders, "hp": hp, "edges": edges,
+            "dead": {p for p in situation.around(world) if g.get(p, "status") == "dead"}}
 
 
 def derive(world, who, applied: list, snap: dict, text: str = "", to=None):
@@ -123,6 +125,8 @@ def derive(world, who, applied: list, snap: dict, text: str = "", to=None):
     mine = who in (None, "player")
     for op in applied:
         kind, key, v = op.get("op"), op.get("key"), op.get("value")
+        if kind == "link" and (op.get("src"), op.get("dst"), op.get("rel")) in snap["edges"]:
+            continue  # 重写一条已有的关系不是又一件事：擒住一回，记一回
         if kind == "link" and op.get("rel") == situation.FOLLOW and op.get("dst") == "player":
             event(world, op["src"], 1, "与你同行")
         if not mine:
