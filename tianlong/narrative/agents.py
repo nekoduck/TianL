@@ -2,7 +2,7 @@
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或末尾括号里都认、至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
-          recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
+          recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
        后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
@@ -246,9 +246,9 @@ def simulate(llm, time: str, days: int, actors: list[dict], heard=()) -> list[di
     return _dicts(r.get("reports"))[:2]
 
 
-def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool, heard=()) -> dict:
+def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool, heard=(), ahead=()) -> dict:
     fallback = lambda: {"happens": not broken, "summary": ev["summary"], "effects": ev["effects"]}
-    r = _ask(llm, prompts.chronicler(ev, reasons, actors, heard), fallback, tokens=800)
+    r = _ask(llm, prompts.chronicler(ev, reasons, actors, heard, ahead), fallback, tokens=800)
     effects = _dicts(r.get("effects"))
     return {"happens": _yes(r.get("happens"), bool(r.get("summary") or effects)),
             "summary": str(r.get("summary") or ev["summary"])[:120], "effects": effects}

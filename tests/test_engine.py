@@ -1,8 +1,8 @@
 """
 [INPUT]: 依赖 tianlong.engine 的 Game，tianlong.world 的 World 与 data/canon 原著世界；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——原著在主角眼前一回合一桩交导演上演且可被主角阻断、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
-          跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判、新造实体被驳回且账本不记未成立之事、
-          众目之下的事入江湖账本、史官改写被扰动的大事、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
+          跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判(v5：宫院与练武厅同属近旁，厅中之事交下一回合导演)、新造实体被驳回且账本不记未成立之事、
+          众目之下的事入江湖账本、史官改写被扰动的大事(v5：改写是一个事务，筋骨落不了整桩不入账)、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
           流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房(分隔线被拆在两块之间也不漏一个等号)、编剧半途失声保留已写、无监听不流式、
           回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
@@ -103,7 +103,7 @@ class CanonLoopTest(unittest.TestCase):
         game = Game(World.create())
         w = game.world
         far = next(e for e in w.canon if e["id"] == "鸠摩智押段誉抵姑苏")
-        w.player.set("location", "剑湖宫")  # 主角在无事发生的宫院里，厅中与远方的原著都在场外依序上演
+        w.player.set("location", "大理城")  # 主角在无事发生的城里(剑湖宫的宫院与练武厅同属近旁，厅中之事会交导演)，无量山与远方的原著都在场外依序上演
         w.clock.tick = (far["day"] + 3) * PER_DAY - 1  # 下一回合跨入排定之日后的第三天：迟了三日才结算
         game.act("歇息")
         self.assertIn(far["id"], w.done)
@@ -177,8 +177,11 @@ class DirectorTest(unittest.TestCase):
         w = game.world
         turn = game.act("拉段誉同去剑湖宫")
         self.assertEqual((turn["void"], w.graph.get("段誉", "location")), ([], "剑湖宫"))  # 先走一步不算"不在此地"
-        self.assertIn("龚光杰掌掴段誉", w.done)                                        # 厅中那一掌没了对象
+        self.assertNotIn("龚光杰掌掴段誉", w.done)                                     # 厅就在近旁：那一掌不在场外悄悄落下
         self.assertEqual(w.graph.get("段誉", "status"), "alive")                        # 原著不能把身边的人传送回去挨打
+        llm.replies = director()
+        game.act("看")
+        self.assertIn("【原著此刻在近旁的剑湖宫·练武厅", llm.director_prompts[-1])      # 交导演：演不演、怎么演由眼前的剧情定
 
     def test_invented_entities_rejected_and_ledgers_stay_honest(self):
         llm = StubLLM(director(beats=["你隔空一掌击毙乔峰"], effects=[
@@ -208,9 +211,9 @@ class DirectorTest(unittest.TestCase):
         game = Game(w, llm)
         eve_of_month_after(w, ev["day"])
         game.act("歇息")
-        self.assertEqual(w.graph.get("乔峰", "mood"), "万念俱灰")
         self.assertEqual(w.graph.get("段誉", "status"), "alive")  # 越出相关者
         self.assertLess(w.player["power"], 100)                  # 场外碰不到主角
+        self.assertNotEqual(w.graph.get("乔峰", "mood"), "万念俱灰")  # 改写是一个事务(v5)：筋骨(段誉之死)落不了，整桩不入账，心境也不留半截
         self.assertNotIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])  # 说法里夹着不成立之事，不照录
 
 

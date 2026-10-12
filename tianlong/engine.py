@@ -13,7 +13,8 @@
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
-       编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
+       编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
+       v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演，导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -267,8 +268,8 @@ class Game:
         def canon():
             if not staged:
                 return
-            if plan["canon"]["unfolds"] and not broken:
-                lod.settle(world, staged, staged, "canon", day=day0, witnessed=True)  # 主角眼前上演，随即离开也是亲历
+            if plan["canon"]["unfolds"] and not broken:  # 主角眼前上演，随即离开也是亲历；导演挪动过的人原著挪不动，成立的部分照落
+                lod.settle(world, staged, staged, "canon", day=day0, witnessed=True, partial=True)
             else:
                 lod.settle(world, staged, {"happens": False}, "director", day=day0)
                 if not plan["canon"]["unfolds"]:
@@ -307,17 +308,17 @@ class Game:
             lod.settle(w, ev, {"happens": False}, "canon")
         else:
             outcome = agents.chronicle(self.llm, ev, reasons, [rag.dossier(w, a) for a in ev["actors"]], lod.broken(w, ev),
-                                       rag.heard(w, [ev["where"]]))
+                                       rag.heard(w, [ev["where"]]), lod.ahead(w, ev))
             lod.settle(w, ev, outcome, "chronicle")
 
     def _offstage(self, days: int):
         w = self.world
-        if days:  # LOD1：日级刷新，一次调用覆盖所有流逝的日子
-            actors, ring = lod.lod1_scope(w)
+        if days:  # LOD1：日级刷新，一次调用覆盖所有流逝的日子；只推演自由之人(一人一主)，没有就不调模型
+            actors, scope = lod.lod1_scope(w)
             if actors:
                 reports = agents.simulate(self.llm, w.clock.label(), days, [rag.dossier(w, a) for a in actors],
                                           rag.heard(w, [w.graph.get(a, "location") for a in actors]))
-                lod.absorb(w, reports, ring)
+                lod.absorb(w, reports, scope)
         for ev, tier in lod.split_due(w)[0]:  # 时光流过后新到期的远方原著；此地的留待下回合作主干
             self._settle(ev, tier)
 

@@ -1,9 +1,9 @@
 """
-[INPUT]: 依赖 world/lod 的 broken / tiers（前提核对与分层）、world/situation 的 around / party / CUSTODY，World 门面的 canon / done / clock / here / graph / player
+[INPUT]: 依赖 world/lod 的 broken（前提核对）、world/situation 的 near / around / party / CUSTODY（此地与近旁同属 LOD0），World 门面的 canon / done / clock / here / graph / player
 [OUTPUT]: 对外提供 pull()（主角在场、相关者到位的原著提前上演：窗口的「拉」）、consume()（导演演掉的原著按后果签名记作兑现）、signature()、
           ready()（此刻拉得起来的原著 id，后台近事据此改写措辞）、PULL、WITHIN
 [POS]: story 层的原著窗口——「原著是有窗口的因果轨道」(宪法第 6 条 v4)：原著排定之日不再是一个冻住的日子，而是窗口的锚：
-       拉——主角就在事发之地、相关者都在身边、前提未破、按 order 之前没有牵涉同一批人的原著悬着，PULL 日之内将至的那一桩今天就可以上演；
+       拉——主角就在事发之地或其近旁、相关者都在身边、前提未破、按 order 之前没有牵涉同一批人的原著悬着，PULL 日之内将至的那一桩今天就可以上演；
        推——过了排定之日仍未上演，照旧由 lod.split_due 交场外结算(照原著、史官或作罢)；
        消费——导演已成立的后果与某桩未演原著的「后果签名」(擒放、生死、易手、人物去向)过半重合，那桩原著记作已兑现(变体)，不再到期、不交史官。
        消费只记账、不改物理状态；签名先比筋骨(擒放、生死、易手)，没有筋骨的原著才比人物去向，过半且至少一条重合
@@ -26,13 +26,13 @@ def _gathered(world, ev: dict) -> bool:
 
 
 def ready(world, skip=frozenset()) -> list[dict]:
-    """此刻拉得起来的原著：事发之地就是此地、PULL 日内将至、相关者都在身边、前提未破、之前没有牵涉同一批人的原著悬着。"""
-    today, out, waiting = world.clock.day, [], set()
+    """此刻拉得起来的原著：事发之地就是此地或其近旁(与 lod 的 LOD0 同一口径)、PULL 日内将至、相关者都在身边、前提未破、之前没有牵涉同一批人的原著悬着。"""
+    today, out, waiting, close = world.clock.day, [], set(), situation.near(world)
     for ev in _pending(world):  # canon 按 order 排好：先到的先占住它的相关者
         if ev["id"] in skip:
             continue
         early = ev["day"] - today
-        if 0 < early <= PULL and ev["where"] == world.here and not (set(ev["actors"]) & waiting) \
+        if 0 < early <= PULL and ev["where"] in close and not (set(ev["actors"]) & waiting) \
                 and _gathered(world, ev) and not lod.broken(world, ev):
             out.append(ev)
         if ev["day"] <= today + PULL and not lod.broken(world, ev):  # 前提已破的旧事占不住人：段誉已在谷底，后山那桩便不再挡路

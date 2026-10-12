@@ -8,7 +8,8 @@
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        状态字段一律取自 profile(v4 单一投影)：condition、build、backstage 只取不同切面，不各算一遍——进境、伤势、心境、眼下之事、立场三处同时看得见；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
-       backstage 给导演——上回合正文的进境偏差、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
+       backstage 给导演——上回合正文的进境偏差、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、
+       主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
        原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问、局面平静则提示幕间省略，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -211,7 +212,10 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
     dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
         "fate": fate,
-        "stage": {"event": stage, "dirt": lod.dirt(world, stage), "broken": lod.broken(world, stage)} if stage else None,
+        "stage": {"event": stage, "dirt": lod.dirt(world, stage), "broken": lod.broken(world, stage),
+                  "next_door": stage["where"] if stage["where"] != here and stage["where"] in situation.near(world) else None,
+                  "away": sorted(set(stage["actors"]) & situation.around(world)) if stage["where"] not in situation.near(world) else []}
+        if stage else None,  # 近旁上演的原著、要把身边之人带往别处的原著，都交导演
         "upcoming": [f"原著里此时{ev['summary']}——本局已不成立，只作背景，不得写进任何人的台词" if lod.broken(world, ev) else
                      f"{'相关者已到位，可随时上演' if ev['id'] in ready else '今日稍后' if n <= 0 else f'最迟{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],

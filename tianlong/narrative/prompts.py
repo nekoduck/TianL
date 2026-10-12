@@ -2,14 +2,17 @@
 [INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/途中去向与余程/出路按方向措辞、注明关口之类与来路）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
          dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
 [OUTPUT]: 对外提供 render() / render_backstage() / TIME_GUIDE（光阴分戏内 pace 与幕间省略 cut(可等到某一刻)，clock 立时限） / SHAPES（示例的场况、时长、幕间省略轮换） / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
+          OFFSTAGE（场外落账：说法只许写指令里有的变化、不写主角、只碰列出的人与地） /
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、set epithet 立名号） / THREATS / TENSIONS 与
-          director / repair / writer / recap / simulator / chronicler 六组 (system, user) 组装器（场外两组可附江湖近闻）
+          director / repair / writer / recap / simulator / chronicler 六组 (system, user) 组装器（场外两组用 OFFSTAGE 而非 PLOT_GUIDE，可附江湖近闻）
 [POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
        v4：导演上下文第一节是【场记】(story/brief 写的焦点：主干、场况、试过的路数、最急的时限、主角线)，导演报场况 scene(开/转/合/断)；
        一时的看法由系统从 ops 记进恩怨账，link 只立结构性关系，人物自身可伤可病可改眼下之事；人物行带伤势、神色、眼下之事与对你的立场，主角武学以研习账为准；
        编剧按【选项槽位】各拟一项并标尺度，进境不得越过账上那一阶；
        导演只写到此刻为止、不拟选项，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
-       编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；改文风、改叙事纲领只动这一个文件
+       编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；
+       v5：场外推演与史官另有 OFFSTAGE 纲领(它们没有拍、没有主角，说法与指令逐句对账，见 world/lod)，史官另看【相关者此后的原著】及其前提(_premise 译成人话)；
+       主角眼前的原著可在近旁上演、或要把身边之人带往别处(交导演演出这一别)；改文风、改叙事纲领只动这一个文件
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
@@ -93,10 +96,14 @@ def render_backstage(gm: dict) -> str:
         ev, dirt = gm["stage"]["event"], gm["stage"]["dirt"]
         broken = "｜前提已破：此事不能照原著发生——canon.unfolds 填 false，若仍有变故，实际后果由你的 effects 写下" \
             if gm["stage"].get("broken") else ""
-        parts.append(f"【原著此刻在此上演】{ev['summary']}｜相关者：{'、'.join(ev['actors'])}"
+        door, away = gm["stage"].get("next_door"), gm["stage"].get("away")
+        place = f"在近旁的{door}（同一处所之内，喊一声就到：主角或闻其声、或循声可见）" if door else \
+            f"在{ev['where']}（{'、'.join(away)}此刻正在主角身边：原著里要往那里去）" if away else "在此"
+        parts.append(f"【原著此刻{place}上演】{ev['summary']}｜相关者：{'、'.join(ev['actors'])}"
                      f"｜原著结局：{'；'.join(_outcome(ev)) or '无可记之变'}" + (f"｜前提有变：{'；'.join(dirt)}" if dirt else "") + broken
                      + "\n  这是本回合的主干：把它编入节拍，让主角目睹或卷入，相关者的言行须合乎原著；原著结局由系统落账，不必写进 effects。"
-                       "若主角的举动使它不能照常发生，canon.unfolds 填 false 并在 why 说明，实际后果由你的 effects 写下。")
+                     + (f"{'、'.join(away)}要离开主角身边：把这一别演出来(去意、告别、被人带走)，主角可以拦阻、同去或目送；" if away else "")
+                     + "若主角的举动使它不能照常发生，canon.unfolds 填 false 并在 why 说明，实际后果由你的 effects 写下。")
     parts += [
         _section("焦点·主角此举所指之物的真相（主角未必知道）", gm.get("focus", [])),
         _section("受制", gm.get("custody", [])),
@@ -191,7 +198,7 @@ def _director_system(pack: dict) -> str:
         "制造冲突、转折与悬念；一幕有起有落，不可回回剑拔弩张、回回以追兵或利刃收尾。"
         "剧情必须有根有据：合乎原著人物性情与武学设定，合乎已发生的历史、传闻与未了之事；较量的成败依【较量预裁】，机缘的顺逆依【命运骰】，"
         "但节拍里绝不出现后台术语（命运骰、预裁、档位、功力数字）。高手不会被庸手击败，原著人物不会无端性情大变。"
-        "后台若列出【原著此刻在此上演】，它就是本回合的主干。【焦点】是主角所求之物的真相，剧情须与之相符：东西在谁手里就在谁手里。"
+        "后台若列出【原著此刻在此上演】（或在近旁上演），它就是本回合的主干。【焦点】是主角所求之物的真相，剧情须与之相符：东西在谁手里就在谁手里。"
         "隐情可以伏笔、可以在合乎情理时揭开（用 reveal），不要平白说破。主角的出身与所求是他行动的理由。"
         "原著之外，不得凭空生出门派覆灭、大批伤亡、大军攻山之类大事。" + THREATS + NAMES +
         "道路并非想走就走：主角要过后台所列的关口，须在节拍里兑现（应付守卫、攀崖涉险、备船渡水……）。"
@@ -258,12 +265,25 @@ def recap(synopsis: str, lines: list[str]) -> tuple[str, str]:
 
 
 # ============================================================
+#  场外落账(v5)：场外推演与史官专用——没有拍、没有主角、没有场景实体；说法只许写指令里有的变化
+# ============================================================
+OFFSTAGE = """【场外落账】主角不在这些地方。你写的每一桩变化都要写进 effects，系统据此裁决、记账、传开：
+说法(result/summary)只许写 effects 里有的变化——写了某人去了哪里、受了伤、死了、被擒或获救、得了什么东西，effects 里却没有，这句说法便作废，只记系统核实过的后果。
+说法里不写主角；指令只作用于下面列出的人物与地点，不得新造人物、地点、器物：
+- 去向：{"op":"set","id":人物,"key":"location","value":地点}
+- 伤病生死：{"op":"add","id":人物,"key":"hp","value":-15}（须有交手或意外）；{"op":"set","id":人物,"key":"status","value":"wounded/dead/alive"}
+- 擒放与恩怨：{"op":"link"/"unlink","src":人物,"dst":人物,"rel":"扣为人质/囚禁/结仇/结义/效忠……"}
+- 打算与心境：{"op":"set","id":人物,"key":"intent","value":"他眼下要做的事，一句话"}；{"op":"set","id":人物,"key":"mood","value":"两三字"}
+- 器物易手：{"op":"set","id":器物,"key":"holder","value":人物}"""
+
+
+# ============================================================
 #  LOD1：相邻区推演（结构化战报）
 # ============================================================
 def simulator(time: str, days: int, actors: list[dict], heard=()) -> tuple[str, str]:
-    system = ("你是武侠世界的场外推演者，主角不在这些地方。依人物性情、功力与图谋，推演过去数日这些人之间发生的剧情。"
-              "只输出结构化战报，不写文学描写。\n" + PLOT_GUIDE +
-              "\n场外限制：不得改动主角本人，人物一次只能移动到相邻地点。"
+    system = ("你是武侠世界的场外推演者。依人物性情、功力与图谋，推演过去数日【推演人物】之间发生的事——"
+              "多半只是心思与打算有了变化，真正动手、易手、远行的是少数；只输出结构化战报，不写文学描写。\n" + OFFSTAGE +
+              "\n场外限制：人物一日只走一程，只能去【相邻】所列之地；原著里另有安排的人不在推演人物之列，战报里不得写到他们。"
               '\n输出 JSON：{"reports":[{"where":"地点","event":"不超过10字","result":"不超过24字","effects":[...]}]}，'
               "至多 2 条，无进展则为空数组。")
     lines = [f"{a['name']}｜{a['title']}｜{a['tier']}｜身在{a['location']}｜图谋：{a['agenda']}"
@@ -274,14 +294,33 @@ def simulator(time: str, days: int, actors: list[dict], heard=()) -> tuple[str, 
 # ============================================================
 #  LOD2：史官（被因果涟漪污染的原著事件重推演）
 # ============================================================
-def chronicler(ev: dict, reasons: list[str], actors: list[dict], heard=()) -> tuple[str, str]:
+PREMISE = {"wounded": "负伤", "dead": "已死", "alive": "安好"}
+
+
+def _premise(nid: str, key: str, want) -> str:
+    """原著前提译成人话：给史官看后面几桩原著靠什么成立。"""
+    if key[:1] in ("~", "!"):
+        return f"{nid}与{want}之间{'仍有' if key[0] == '~' else '没有'}「{key[1:]}」"
+    if key == "status":
+        return f"{nid}{PREMISE.get(want, want)}"
+    if key == "holder":
+        return f"{nid}在{want}手中"
+    if key == "location":
+        return f"{nid}在{want}"
+    return f"{nid}的{key}为{want}"
+
+
+def chronicler(ev: dict, reasons: list[str], actors: list[dict], heard=(), ahead=()) -> tuple[str, str]:
     system = ("你是《天龙八部》的史官。一桩原著大事本应发生，但世界已被主角扰动。依据当前真相，重新推演其结局："
-              "可以照旧发生、可以变形、可以由其他既有人物代行，也可以不发生。\n" + PLOT_GUIDE +
-              "\n场外限制：不得改动主角本人，只能触碰【相关者】与事发地点。"
-              '\n输出 JSON：{"happens":true或false,"summary":"不超过60字的客观史笔","effects":[...]}')
+              "可以照旧发生、可以变形、可以由其他既有人物代行，也可以不发生。\n" + OFFSTAGE +
+              "\n场外限制：只能触碰【相关者】与事发地点；这桩事是一个整体，effects 里有一条落不了(人不在、物已不存)，整桩便不入账。"
+              '\n输出 JSON：{"happens":true或false,"summary":"不超过60字的客观史笔，只写 effects 里有的变化","effects":[...]}')
     lines = [f"{a['name']}｜{a['title']}｜{a['tier']}｜{STATUS.get(a['status'], a['status'])}"
              f"｜身在{a['location']}｜{a['faction'] or '无门派'}｜性情：{a['persona']}" for a in actors]
+    later = [f"{e['where']}：{e['summary']}" + (f"（须{'、'.join(_premise(*r) for r in e['requires'])}）" if e["requires"] else "")
+             for e in ahead]
     user = (f"【原著事件】{ev['id']}·{ev['where']}：{ev['summary']}\n"
             f"【原著结果】{json.dumps(ev['effects'], ensure_ascii=False)}\n"
-            f"{_section('扰动', reasons)}\n{_section('相关者·当前真相', lines)}\n{_section('已传到此处的江湖近闻', heard)}")
+            f"{_section('扰动', reasons)}\n{_section('相关者·当前真相', lines)}\n"
+            f"{_section('相关者此后的原著·改写这一桩时尽量不断了它们的前提', later)}\n{_section('已传到此处的江湖近闻', heard)}")
     return system, user

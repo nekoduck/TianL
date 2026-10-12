@@ -3,7 +3,7 @@
          tianlong.engine 的 Game；复用 tests/test_adjudicate 的 plan、tests/test_engine 的 StubLLM / director
 [OUTPUT]: unittest 用例——v4 故事层「故事也有账」的离线验收：
           时间是后果(研习一回合可以入门、歇息主张半日、险境里不算歇、此后之举至少一顿饭、cut 可等到入夜或某个时限)；
-          原著窗口(相关者到位即拉起将至的原著、前提已破的旧事不挡路、导演演掉的原著按签名记作兑现、后台近事写「可随时上演」)；
+          原著窗口(故事走到谷底时段誉此前的原著已了、相关者到位即拉起将至的原著、前提已破的旧事不挡路、导演演掉的原著按签名记作兑现、后台近事写「可随时上演」)；
           时限(导演立下、到期交场记一次即除)；场(跨回合保留问题与试过的路数、合场即开新场、演满上限要求收场)；
           场记(主干优先级、原著连占三场即不再拉)；主角线(秘籍到手即入局)；选项槽位(编剧标了尺度而没有此后即补一项、险境里不补、代价写全或不写)、主角的心思不归导演写(不入账也不返工)
 [POS]: tests 的故事层验证——v4 方案第一部分(R1~R7)的离线证据
@@ -73,6 +73,7 @@ class CanonWindowTest(unittest.TestCase):
 
     def test_canon_follows_the_story_into_the_valley(self):
         w = self.w
+        w.done.extend(e["id"] for e in w.canon if e["order"] < 8)                      # 故事走到了谷底：段誉此前的原著都已了结
         w.clock.tick = 1832 * PER_DAY + 4 * PER_SHICHEN
         w.player.set("location", VALLEY)
         w.graph.set("段誉", "location", VALLEY)
@@ -92,6 +93,7 @@ class CanonWindowTest(unittest.TestCase):
 
     def test_the_director_hears_that_canon_is_ready(self):
         w = self.w
+        w.done.extend(e["id"] for e in w.canon if e["order"] < 8)
         w.clock.tick = 1832 * PER_DAY + 4 * PER_SHICHEN
         w.player.set("location", VALLEY)
         w.graph.set("段誉", "location", VALLEY)

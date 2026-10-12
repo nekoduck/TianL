@@ -1,13 +1,16 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
 [OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表）、
-          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE
+          unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、
+          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE / MOVE / HURT
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
        回放工具(tools/replay.py)用它统计旧对局的违例。只认"动词与实体同在一个分句"的强证据，否定、假设、回忆、远处一律不算；
        「二人」「众人」只回指上一句点到的人，不把同句里的旁人一并算作随行；
        进境(v4)：「练成、学会、身如游龙、功力大进」之类成就性措辞是第九类变化——说了就意味着账上该有一阶进境，没有即为违例；
-       「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)
+       「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)；
+       场外(v5)：场外推演与史官的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)，
+       「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -26,6 +29,13 @@ DIE = re.compile(r"身亡|毙命|气绝|殒命|丧命|断气|死于|一命呜呼
 DRAIN = re.compile(r"吸尽|吸干|吸走|吸取|吸去|吸了|吸夺|夺人功力|(?:内力|真气|功力)[^，。；！？]{0,6}(?:尽失|全失|被吸|溃堤|倒灌|流泻|涌入你|源源不绝地涌入)|化去.{0,2}(?:内力|功力)")
 FREE = re.compile(r"救出|救下|斩断.{0,4}(?:绳|索|锁)|割断.{0,4}(?:绳|索)|松绑|解开.{0,3}(?:绳|索|绑)|放走|放了")
 BIND = re.compile(r"擒住|擒下|擒获|生擒|绑了|绑住|捆住|押走|押着|扣下|扣为人质|挟为人质|劫走|劫持|掳走|掳去|掳了|掳在|掳")
+# 场外说法(v5)：行止与伤病的措辞——说了就意味着人换了地方、身上带了伤
+MOVE = re.compile(r"前往|赶往|赶赴|奔赴|奔往|奔向|投奔|去往|转往|转赴|往.{1,6}(?:而去|疾驰|奔去|赶去|行去)|跌往|跌落|跌下|跌入|跌进|"
+                  r"坠入|坠落|坠下|坠崖|堕入|落入|掉入|滚落|逃往|逃入|逃进|逃到|逃回|来到|抵达|赶到|回到|返回|折返|退回|"
+                  r"离开|离了|下山|上山|入谷|出谷|进谷|进入|潜入|闯入|闯进|动身|启程|北上|南下|东去|西去|远走|出走|投向|迁往|移往")
+HURT = re.compile(r"负伤|受伤|重伤|伤重|轻伤|受了伤|带伤|挂彩|中毒|中了毒|毒发|吐血|呕血|咯血|刺伤|打伤|击伤|砍伤|咬伤|射伤|震伤|所伤|伤势")
+FROM = re.compile(r"(?:离开|离了|出了|从|自|由)$")  # 「离开无量山」：说的是来处，不是去处
+HEARSAY = re.compile(r"据说|听说|传闻|传言")
 ACT = re.compile(r"^[^，。；！？“”「」的之与和及、]{0,4}?(?:道|说|喝|笑|叫|怒|答|问|喊|叹|哼|呼|嚷|骂|应声|点头|摇头|拱手|抱拳|冷|厉|急|颤|惊|扑|抢|拔|挥|掠|跃|奔|跪|拜|递|接|攥|握|抓|跑|立在|站在|坐在|望|瞧|伸|抬|转身|回身|迎上|迎了)")
 REMOTE = re.compile(r"远远|远处|遥遥|传来|想起|忆起|回想|记得|昔日|当日|曾经|曾|据说|听说|传闻|传言|若是|倘若|如果|只怕|担心|料想|心想|念及|挂念|不知|下落|生死未卜")
 NEGATE = re.compile(r"未能|未曾|不曾|没有|没能|险些|几乎|差点|欲要|正欲|正要|想要|将要|似要|不敢|不肯|岂能|休想|妄图|企图")
@@ -217,6 +227,47 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
             if a < m.start() and "你" not in sent[b:m.start()] and p in view.here_end:
                 out.append(Finding("leave", i, p, f"第{i}拍写{p}离去，账上{p}却仍在你身边"))
     return out, people or prev
+
+
+# ============================================================
+#  场外说法对账(v5)：场外推演与史官写的一句话，逐分句看它说了什么变化，账上须有相应的指令
+#  facts：moved {人: 去处} / dead / hurt / custody(擒放所涉之人) / items(易手或挪位之物) / player(主角的名号与称呼)
+# ============================================================
+def _root(loc: str) -> str:
+    return loc.split("·")[0]
+
+
+def unbacked(text: str, tab, kinds: dict[str, str], facts: dict) -> list[str]:
+    """返回对不上账的缘由；空即这句说法可照录。主语承上一分句(「段誉坠崖：跌落崖下」)；否定、假设、传闻之句不算；
+    提到主角即不成立——场外之事，主角不在场。宁可错杀：对不上的说法换成系统核实过的后果，真相不会因此失实。"""
+    out, prev = [], []
+    moved = facts.get("moved", {})
+    for clause in _clauses(text or ""):
+        if any(n and n in clause for n in facts.get("player", ())):
+            out.append(f"「{clause}」写到了主角，场外之事主角并不在场")
+            continue
+        ents = find(clause, tab)
+        people = [n for n, _, _ in ents if kinds.get(n) == "person"] or prev
+        prev = people
+        if NEGATE.search(clause) or YET.search(clause) or REMOTE.search(HEARSAY.sub("", clause)):
+            continue  # 「企图逃往」「尚未离开」「心想」不是变化；「据说已坠崖」却是——传闻也要对账
+        if MOVE.search(clause) or LEAVE.search(clause):
+            dests = {moved[p] for p in people if p in moved}
+            named = [n for n, a, _ in ents if kinds.get(n) == "location" and not FROM.search(clause[max(0, a - 2):a])]
+            if not dests:
+                out.append(f"「{clause}」写了{'、'.join(people) or '有人'}的去留，账上却没有人挪动")
+            elif named and not any(n == d or _root(n) == _root(d) for n in named for d in dests):
+                out.append(f"「{clause}」说的去处与账上不符（账上去了{'、'.join(sorted(dests))}）")
+        if (KILL.search(clause) or DIE.search(clause)) and not set(people) & facts.get("dead", set()):
+            out.append(f"「{clause}」写了有人身亡，账上无人死去")
+        if HURT.search(clause) and not set(people) & facts.get("hurt", set()):
+            out.append(f"「{clause}」写了有人受伤，账上无人负伤")
+        if (BIND.search(clause) or FREE.search(clause)) and not set(people) & facts.get("custody", set()):
+            out.append(f"「{clause}」写了擒放，账上却没有这层拘押的变化")
+        things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing")]
+        if things and (ACQUIRE.search(clause) or GIVE.search(clause)) and not set(things) & facts.get("items", set()):
+            out.append(f"「{clause}」写了{'、'.join(things)}易手，账上却没有")
+    return out
 
 
 def _dedupe(found: list[Finding]) -> list[Finding]:

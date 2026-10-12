@@ -19,6 +19,7 @@
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
+       原样不动的指令(人已在那里、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
        事件先于状态(v4)：某人对主角的非结构性关系(疑忌、感激……)不再立边、不再覆盖与阻尼，而是记进 bond 的恩怨账、由系统折叠成立场；
        结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边
@@ -560,6 +561,21 @@ def _progress(world, route: list[str]) -> bool:
     return sum((world.graph.road(a, b) or {}).get("days", 0) for a, b in zip(route, route[1:])) >= 1
 
 
+def _noop(world, op) -> bool:
+    """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
+    「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令不在此列(去留另有路线裁定)。"""
+    g, kind = world.graph, op.get("op")
+    if kind in ("link", "unlink") and all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
+        has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
+        return has if kind == "link" else not has
+    nid, key = op.get("id"), op.get("key")
+    if kind != "set" or nid == "player" or not isinstance(nid, str) or not g.has(nid):
+        return False
+    if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
+        return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
+    return key in ("location", "holder", "faction", "hidden") and g.get(nid, key) == op.get("value")
+
+
 def _moves_player(world, op) -> bool:
     return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", "主角", world.player["name"]) \
         and PLAYER_ALIASES.get(op.get("key"), op.get("key")) == "location"
@@ -581,6 +597,8 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             if op.get("id") == "player" and op.get("key") in SENTENCE:
                 continue  # 主角的心思与神色归玩家：导演替他写下的打算不算错，只是不入账，免得为此返工
             _summon(world, op, origin)
+            if _noop(world, op):
+                continue  # 本就如此：既非成立也非驳回
             reason = _physics(world, op) or _reach(world, op, origin, scope) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩
             reason = "格式不可解"
