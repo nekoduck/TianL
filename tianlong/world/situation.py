@@ -2,7 +2,8 @@
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
           near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
-          area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
+          area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited() / bodies() / seen()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
+          seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
@@ -95,6 +96,20 @@ def around(world, loc: str | None = None) -> set[str]:
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
     return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
             and (not area(world, n.get("location")) or p in seen)}
+
+
+def bodies(world) -> set[str]:
+    """近旁的遗体(v5)：死在主角眼前、或被抬到跟前的人(片区里亦须在名册上)——看得见、搜得着、抬得走，却叫不出名字。"""
+    g, spots, roster = world.graph, near(world), cast(world)
+    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("status") == "dead" and n.get("location") in spots
+            and not n.get("hidden") and (not area(world, n.get("location")) or p in roster)}
+
+
+def seen(world) -> set[str]:
+    """本回合主角见过的人(v5)：此刻眼前的、回合开始时在身边的、本回合赶来的，连同近旁的遗体。先走一步的人导演仍够得着(这一拍他还在)，
+    编剧仍只叫他的外貌——他刚从主角眼前走开(或刚死在主角眼前)，换回名字就等于替主角认出了他。"""
+    turn = getattr(world, "turn", None) or {}
+    return around(world) | set(turn.get("present", ())) | set(turn.get("arrived", ())) | bodies(world)
 
 
 def inhabited(world) -> bool:

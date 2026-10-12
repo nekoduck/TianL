@@ -15,7 +15,7 @@
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
-       v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；
+       v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；把人带去别处的那一桩，主角只看见人走(不记亲历)，事本身随传闻抵达；
        抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -283,7 +283,8 @@ class Game:
             if not staged:
                 return
             if plan["canon"]["unfolds"] and not broken:  # 主角眼前上演，随即离开也是亲历；导演挪动过的人原著挪不动，成立的部分照落
-                lod.settle(world, staged, staged, "canon", day=day0, witnessed=True, partial=True)
+                seen = staged["where"] in situation.near(world)  # 原著来把人带去别处(away)：主角只看见他走，那桩事本身随传闻抵达
+                lod.settle(world, staged, staged, "canon", day=day0, witnessed=seen, partial=True)
             else:
                 lod.settle(world, staged, {"happens": False}, "director", day=day0)
                 if not plan["canon"]["unfolds"]:

@@ -7,7 +7,9 @@
           账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)；
           眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)；
           P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)；
-          P2(LeakTest：器物名不带生人、地点现状与器物描述不泄底、石洞里听不到传闻、无人时示例不出人名、近事以「你」称主角)
+          P2(LeakTest：器物名不带生人、本回合见过的生人(刚走开的、死在眼前的)不露名、地点现状与器物描述不泄底、石洞里听不到传闻、无人时示例不出人名、近事以「你」称主角)；
+          回放(ReplayTest：tools/rerun 以真模型输出重演抓到的病——主角「去」原地、同片之人被写进拍里、导演先演了原著那一走)；
+          终局验收(MeetingTest：「段誉不来」——主角守在石室，原著日子一到他推门进来，原著来要他时目送他走，走开的生人不露名、别处的事不算亲见)
 [POS]: tests 的连贯性验证——36 回实录里「段誉不来」「剧情前后打架」的病灶在这里逐条成为用例；与 test_state(v4 状态层)、test_story(v4 故事层)互补
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -545,6 +547,17 @@ class LeakTest(unittest.TestCase):
         self.assertNotIn("卷轴", str(view["scene"]))                                  # 地点现状不再写着「卷轴藏在蒲团内」
         self.assertNotIn("段誉", w.graph.get("琅嬛洞烛台", "desc"))                     # 器物描述只写此刻看得见的样子
 
+    def test_strangers_seen_this_turn_stay_strangers(self):
+        game = Game(World.create("测", origin="随从"), StubLLM(director()))
+        game.open()
+        game.act("看")
+        dies = game.act("看")                                                          # 容子矩撞进厅来，倒地毙命
+        self.assertIn("入厅撞倒后毙命", "".join(n["text"] for n in dies["news"]))
+        self.assertNotIn("容子矩", "".join(n["text"] for n in dies["news"]))            # 死在眼前的生人也叫不出名字
+        takes = game.act("看")                                                         # 钟灵放貂，携段誉离开
+        self.assertNotIn("段誉", "".join(n["text"] for n in takes["news"]))              # 刚走开的生人，不因走开就露了名
+        self.assertIn("容子矩", situation.seen(game.world))                             # 遗体就在厅里：看得见、搜得着
+
     def test_a_sealed_cave_hears_no_rumors(self):
         w = self.w
         w.player.set("location", "琅嬛福地·书房")
@@ -565,3 +578,67 @@ class LeakTest(unittest.TestCase):
         llm = StubLLM({**director(), "小说家": "正文\n===\n梗概：秦天探查玉壁\n传言：无"})
         Game(w, llm).act("看")
         self.assertIn("你探查玉壁", w.player["journal"][-1])                            # 书记不会把「你」与「秦天」当成两个人
+
+
+# ============================================================
+#  回放：真模型的写法落在 v5 引擎上抓到的病(tools/rerun.py 重演 36 回实录)
+# ============================================================
+class ReplayTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.turn = {}
+
+    def test_going_where_you_stand_is_not_a_journey(self):
+        w = self.w
+        w.player.set("location", VAULT)
+        came = w.player["came_from"]
+        for value in (VAULT, "琅嬛福地玉像石室"):  # 全名与去「·」的写法都一样：人已在那里
+            applied, rejected = effects.apply(w, [{"op": "set", "id": "player", "key": "location", "value": value}], "director")
+            self.assertEqual((applied, rejected), ([], []))                           # 原地不动：不是一程路，也不该崩
+        self.assertEqual((w.here, w.player["came_from"], w.player["en_route"]), (VAULT, came, None))
+
+    def test_whom_the_director_writes_in_comes_forward(self):
+        w = self.w
+        w.player.set("location", "无量山")
+        r = judge(w, plan(("司空玄", "司空玄从林中踱出，冷冷打量着你。", [], "player")))
+        self.assertNotIn("absent", [f.kind for f in r.hard])                         # 同在这一片、已露面的人：写进拍里就是走到了跟前
+        self.assertIn("司空玄", situation.around(w))
+        r = judge(w, plan(("南海鳄神", "南海鳄神从林中跳了出来。", [])))
+        self.assertIn("absent", [f.kind for f in r.hard])                            # 尚未登场的人：照旧不在
+
+    def test_a_step_the_director_already_took_does_not_spoil_the_canon(self):
+        w = self.w
+        ev = canon(w, "钟灵以闪电貂御敌")
+        w.done.extend(e["id"] for e in w.canon if e["order"] < ev["order"])
+        effects.apply(w, [{"op": "set", "id": p, "key": "location", "value": "无量山"} for p in ("钟灵", "段誉")], "director")
+        e = lod.settle(w, ev, ev, "canon", day=w.clock.day, witnessed=True, partial=True)
+        self.assertEqual(e["summary"], ev["summary"])                                # 导演先演了「携段誉离开」：原著的结局照样成立，不换成一串清单
+        self.assertEqual(w.graph.get("龚光杰", "status"), "wounded")
+
+
+# ============================================================
+#  终局验收：「段誉不来」——主角守在石室，原著的日子一到，他推门进来
+# ============================================================
+class MeetingTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测", origin="随从")
+        self.w.player.set("location", VAULT)
+        self.w.advance((canon(self.w, "段誉发现琅嬛福地")["day"] - self.w.clock.day) * PER_DAY)
+        self.llm = StubLLM(director())
+        self.game = Game(self.w, self.llm)
+
+    def test_he_walks_into_the_vault_and_out_again(self):
+        game, llm = self.game, self.llm
+        game.act("静坐等候")
+        w = game.world
+        face = perspective.handle(w, "段誉")
+        self.assertIn("段誉", situation.around(w))                                   # 他推开隐门：两人在石室里相见，不是在传闻里
+        self.assertIn(f"{face}来到了此地", llm.writer_prompts[-1])
+        game.act("看那人在做什么")
+        self.assertIn("磕首取得北冥卷轴", game.world.done)                             # 磕首取卷就在主角眼前
+        game.act("上前拱手相见")
+        w = game.world
+        self.assertEqual(w.graph.get("段誉", "location"), "万劫谷")                    # 原著来要他：交导演演这一别，不是场外悄悄传送
+        self.assertIn(f"{face}离开了你身边", llm.writer_prompts[-1])                    # 刚从眼前走开的生人仍只叫外貌——不替主角认出他
+        far = next(e for e in w.truth.events if e["where"] == "万劫谷")
+        self.assertFalse(far["witnessed"])                                          # 万劫谷里的事主角没看见：只看见他走，那桩事随传闻来

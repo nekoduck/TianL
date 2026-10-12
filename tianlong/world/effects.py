@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / party / join / part / follow / captors / track（情境层与连带）、
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / party / join / part / follow / captors / track（情境层与连带）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/器物近似名→id）、
@@ -14,7 +14,7 @@
        set intent 改写此人眼下之事(一句话)、set mood 记下此人此刻的情绪(写到主角身上即不入账、不算错：主角的心思归玩家)；
        器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
        在场即「近旁」：同一处所之内零日可达的子地点都算身边——片区(v5)里的人须被剧情带到跟前(赶来即上名册)，主角走出近旁名册即清空，
-       导演碰得到的人只以「眼前」为准(around、回合开始时在、本回合赶来)；原著里尚未登场的人赶不来；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
+       导演碰得到的人只以「眼前」为准(situation.seen：此刻眼前、回合开始时在、本回合赶来)；原著里尚未登场的人赶不来；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
@@ -22,7 +22,7 @@
        揭示须有来由(v5)：暗路要主角身在路的一端或其近旁、本回合走过或正要去那一端，隐情要当事人之一在主角身边(_seen)；
        取物只有一个口径(v5 _handy)：就在此地、或本批指令里主角要去的地方、或近旁而不是暗藏的——push inventory 与 set holder player 一样；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
-       原样不动的指令(人已在那里、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
+       原样不动的指令(人已在那里——主角「去」他正站着的地方也是，路线只有起点不是一程路、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
        事件先于状态(v4)：某人对主角的非结构性关系(疑忌、感激……)不再立边、不再覆盖与阻尼，而是记进 bond 的恩怨账、由系统折叠成立场；
        结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边
@@ -391,9 +391,7 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
             return "功力由系统结算：研习写 study，吸功写 drain，不得直接增减"
         close = situation.near(world)
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
-            turn = getattr(world, "turn", None) or {}
-            seen = situation.around(world) | set(turn.get("present", ())) | set(turn.get("arrived", ()))
-            if nid not in seen:
+            if nid not in situation.seen(world):
                 return f"{nid}不在你身边，主角够不着"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
@@ -597,13 +595,15 @@ def _progress(world, route: list[str]) -> bool:
 
 def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
-    「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令不在此列(去留另有路线裁定)。"""
+    「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
     g, kind = world.graph, op.get("op")
     if kind in ("link", "unlink") and all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
         has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
         return has if kind == "link" else not has
     nid, key = op.get("id"), op.get("key")
-    if kind != "set" or nid == "player" or not isinstance(nid, str) or not g.has(nid):
+    if nid == "player":  # 主角「去」他已经站着的地方：不是一程路(路线只有起点，记不出来路)
+        return kind == "set" and key == "location" and op.get("value") == world.here
+    if kind != "set" or not isinstance(nid, str) or not g.has(nid):
         return False
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
@@ -644,6 +644,8 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             dest, turn = op["value"], getattr(world, "turn", None)
             budget = max(1, turn["minutes"] // PER_DAY) if turn and turn.get("minutes") else None
             route, why = access.walk(world, dest, budget)
+            if len(route) < 2 and not why:  # 无路可走也无缘由：原地未动
+                continue
             if why:
                 rejected.append(({**op}, why))
                 if len(route) < 2 or not _progress(world, route):  # 受阻不倒退：近处绕了一圈仍过不去，便原地不动

@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 around，World 门面（graph / player / aliases / knowledge）
+[INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 seen（本回合见过的人），World 门面（graph / player / aliases / knowledge / turn）
 [OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
           audit()（逐拍：听来的名字入认知，叫出不该知道的名字即违例——主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔，不为旁人称谓耗一轮返工）、mask()（交编剧之前，主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称）、
           veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码）、
@@ -9,7 +9,8 @@
        人物之间：原著里有关系、同一门派即互相识名，戏里听见的另记在人物节点的 knows 上；主角所识之人记在黑板的 acquaintances 上（系统维护，导演写不动）。
        纯规则、零调用：追认只增加认知，从不挪动任何人；查不出的旁白漏名，由 mask 在交编剧之前确定性地换掉——不给即不泄露
        veil 连人物眼下之事(intent)一并过 mask——那一句是导演写的，里面的名字主角未必识得；
-       v5：四十一件器物的名字本身带着人名(云中鹤钢爪)、近日传闻与器物描述也写着名字，都在交编剧之前换成主角看得见的说法
+       v5：四十一件器物的名字本身带着人名(云中鹤钢爪)、近日传闻与器物描述也写着名字，都在交编剧之前换成主角看得见的说法；
+       mask 以本回合见过的人(situation.seen)为「当面」：刚从眼前走开的生人(原著来把他带走)仍只叫外貌——走开了就换回名字，等于替主角认出了他
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -221,7 +222,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     """主角不识名之人：旁白里换成叫法，台词里换成当面的称呼；说话者不知主角姓名，他口中的主角名号与「王兄」换成泛称。"""
     if not text:
         return text
-    seen = situation.around(world)
+    seen = situation.seen(world)  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他
     tab = lexicon.table({s: p for s, p in _surfaces(world).items()  # 当面不识其人，或连其名都未曾听过——久仰的不在眼前，照叫其名
                          if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))})
     me = world.player["name"]
@@ -233,7 +234,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
             q = q.replace(me, "兄台")
             for a, b in reversed(_calls(q, "player", me)):
                 q = q[:a] + ("兄台" if q[a + len(surname(me)):b] in ("兄", "兄弟", "兄台") else q[a + len(surname(me)):b]) + q[b:]
-        for p in situation.around(world):
+        for p in seen:
             if not knows(world, "player", p):
                 for a, b in reversed(_calls(q, p, p)):
                     q = q[:a] + q[a + len(surname(p)):b] + q[b:]

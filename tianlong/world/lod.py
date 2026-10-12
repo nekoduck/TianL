@@ -12,6 +12,7 @@
        主角眼前(v5)：事发在此地或近旁(喊一声就到的同一处所)，或原著当其时(迟不过 LATE 日)要把主角身边的人带往别处——都交导演演出，
        在主角这一片上演的原著，上了台的相关者进眼前的名册(片区里也算在跟前；主角已先走一步离开事发之地则不算)，原著挪人之后谁来谁走写成连带交编剧；「分身不得」读眼前(around)而非同处一片；同行者与未了之事所系之人不在此列，主角把人带在身边，原著便不来要人；史官改写时看得见相关者此后的原著(ahead)。
        账本只记已成立之事：场外的说法在后果全数成立、且逐句对得上账(lexicon.unbacked)时才照录，有不成立的或对不上账的只记成立的要事，一事无成则不入账；
+       原著先把人摆回事发之地、再送去终点，而那人已在终点(导演先一步演了这一走)：中间那一步被拦下无关紧要(_arrived)，不因此把原著的说法换成清单；
        场外的结算是一个事务：原著与史官的后果先在副本上试演，筋骨(去留、生死伤病、易手、擒放随行)有一条落不了，整桩不半截照演——原著视同前提已破，史官的改写不入账；
        原著的隐含前提——死者不再登场、正与主角同在一处(含近旁)的人分身不得、主角手中之物不会凭空飞走、救人之事须那人仍受制；
        情境前提(~关系/!关系)与属性前提同一口径(graph.holds)；与主角故事纠缠之人(同行者、未了之事所系者)的场外原著前提已破即作罢、不唤史官——他们的行止只听导演与此地剧情
@@ -97,8 +98,9 @@ def _stuck(world, ops, origin: str, scope: set) -> list[tuple[dict, str]]:
     账本与认知原样共用——场外来源的指令从不写它们。"""
     trial = copy.copy(world)
     trial.graph, trial.player, trial.turn = copy.deepcopy(world.graph), copy.deepcopy(world.player), copy.deepcopy(world.turn)
-    _, rejected = effects.apply(trial, copy.deepcopy(ops if isinstance(ops, list) else []), origin, scope)
-    return [(op, why) for op, why in rejected if _bone(op)]
+    batch = copy.deepcopy(ops if isinstance(ops, list) else [])
+    _, rejected = effects.apply(trial, batch, origin, scope)
+    return [(op, why) for op, why in rejected if _bone(op) and not _arrived(trial, batch, op)]
 
 
 # ============================================================
@@ -267,6 +269,16 @@ def dirt(world, ev: dict) -> list[str]:
     return reasons
 
 
+def _arrived(world, ops: list, op) -> bool:
+    """落不了的那一步是不是无关紧要：原著先把人摆回事发之地、再送他去终点，导演已先一步把他送到了终点——
+    中间那一步被拦下，原著要的结局照样成立，不该因此把原著的说法换成一串清单。"""
+    if not isinstance(op, dict) or op.get("op") != "set" or op.get("key") != "location":
+        return False
+    pid = op.get("id")
+    last = [o.get("value") for o in ops if isinstance(o, dict) and o.get("op") == "set" and o.get("key") == "location" and o.get("id") == pid]
+    return bool(last) and world.graph.get(pid, "location") == last[-1]
+
+
 def _comings(world, before: set[str]) -> list[str]:
     """主角眼前的原著落账之后，谁因此来到或离开主角身边：交编剧写进正文——原著挪人，主角看得见。"""
     g, after = world.graph, situation.around(world)
@@ -311,6 +323,7 @@ def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None, 
         return None
     before = situation.around(world)
     applied, rejected = world.apply(ops, origin, scope)
+    rejected = [(op, why) for op, why in rejected if not _arrived(world, ops, op)]
     if partial:  # 主角眼前的原著：在主角这一片上演的，上了台的相关者就在跟前(片区里也一样)；谁因此来去写成连带
         close = situation.near(world)
         if ev["where"] in close:  # 主角已先走一步离开了事发之地：那里的人不跟着上他的名册

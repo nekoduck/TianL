@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、
+[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 arrive、写 set player location)只写在这里，不随作废缘由流到编剧）、
           afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放 → 偏差交下回合导演）、names()（实体名表，含近处子地点的短名）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -14,6 +14,7 @@
        指令在拍文里无据即丢(无伤扣血、被荡开的一击、研习之拍扣主角气血)，主角自己的拍里无人出手又不涉险地，一拍至多伤 SCRATCH 点；
        台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知(foretold，返工不作废)；拍上的 mood 原样带给编剧、不入账；
        词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；
+       名册由事件写入(v5)：同在这一片的人被导演写进拍里(开口、下指令)即走到了主角跟前(_drawn)；
        事件先于状态(v4)：每拍落账之后 bond.derive 从已成立的指令推出恩怨事件、actor.feel 把拍上的情绪挂在此人脸上；研习是主角的举动，玩家没指着的秘籍导演不替他练(降为候选)；
        主角的去留有账可依(v5)：拍文写「你走进X」「你离开X」而账上没到、没走即 move 违例(台词里的去处、导演写了要去而止步关前的不算)；
        进境有账可依：主角的拍里写了账上没有的那一阶(「身如游龙」而未入门、「大成」而只初窥)即 mastery 违例，交返工不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
@@ -156,6 +157,19 @@ def _secrets(world) -> list[tuple[str, str, str]]:
             if e.get("secret") and not world.knowledge.knows_secret(e)]
 
 
+def _drawn(world, beats: list) -> list[str]:
+    """名册由事件写入(v5)：同在这一片、已露面而尚未到跟前的人(situation.elsewhere)，导演让他开口、对他下指令，
+    就是写他走到了主角跟前——不必另写 arrive，也不因「不在你身边」整拍作废。远处的人照旧要 arrive、照旧核路程。"""
+    near, out = set(situation.elsewhere(world)), []
+    for b in beats:
+        ops = [op for op in b.get("ops") or [] if isinstance(op, dict)]
+        for x in [b.get("who"), b.get("to")] + [op.get(k) for op in ops for k in ("id", "src", "dst")]:
+            x = effects.resolve(world, x)
+            if x in near and x not in out:
+                out.append(x)
+    return out
+
+
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
           no_interrupt: bool = False, drop: dict | None = None, then=None) -> Ruling:
     """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力；cast：此地原著的相关者（可作打断的来源）；
@@ -165,6 +179,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     同伴随行等诸拍落定才结算：拍中途解除了随行、被人擒住的，不会被主角先走一步带走。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
+    situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     world.turn["present"] = around0  # 回合开始时身边之人：主角先走一步，他们仍可在后面的拍里跟上
     world.turn["route"] = [here0]    # 主角本回合走过的路：同伴诸拍之后沿它跟上
@@ -424,6 +439,8 @@ def brief(world, ruling: Ruling) -> list[str]:
             line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）"
         elif f.kind == "absent":
             line += f"（{f.entity}现在{g.get(f.entity, 'location')}；要他来，写 arrive，系统按路程裁定赶不赶得到）"
+        elif f.kind == "move":  # 体检只陈述事实，怎么改是给导演的话：不随作废缘由流到编剧那里
+            line += "（主角真要去留就写 set player location；没走成就改写成正要前往或止步）"
         lines.append(line)
     return lines
 

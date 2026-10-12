@@ -195,9 +195,9 @@ def _moves(i, text, who, view, tab, kinds) -> list[Finding]:
                 continue
             lead = clause[max(0, a - 4):a]
             if ARRIVE.search(lead) and nid not in view.route:
-                out.append(Finding("move", i, nid, f"第{i}拍写你到了{nid}，账上你并未到那里：要去就写 set player location，否则改写成正要前往"))
+                out.append(Finding("move", i, nid, f"第{i}拍写你到了{nid}，账上你并未到那里"))
             elif DEPART.search(lead) and nid == view.here:
-                out.append(Finding("move", i, nid, f"第{i}拍写你离开了{nid}，账上你仍在那里：要走就写 set player location"))
+                out.append(Finding("move", i, nid, f"第{i}拍写你离开了{nid}，账上你仍在那里"))
     return out
 
 
