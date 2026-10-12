@@ -3,9 +3,9 @@
          复用 tests/test_adjudicate 的 plan / judge 与 tests/test_engine 的 StubLLM / director
 [OUTPUT]: unittest 用例——两份实录里「剧情打转」的病灶逐条转成离线验收(v3 P1)：
           同一主题近四回合有三回合即在后台写明不得再起(隔一回合又来也算)、同一个人一再对主角说同一种话即提示换个推进方式(僵持归 story/scene 的场上限)、
-          某人对主角的看法由恩怨账折叠(态度不立边、恩怨并存、衰减不冻结、一件事改一级)、情绪写在拍的 mood 里只给编剧不入账、伏笔至多两条且身体不作伏笔、
+          某人对主角的看法由恩怨账折叠(态度不立边、恩怨并存、按光阴衰减不冻结、一件事改一级、同一件事当天重写不累加)、情绪写在拍的 mood 里只给编剧不入账、伏笔至多两条且身体不作伏笔、
           纠缠者的场外原著前提已破即作罢且场外动不了他、前提已破的原著近事在后台明标不得进台词、台词说出尚未发生的原著即违例；
-          幕间省略(本幕了结且无人相逼才许光阴跳过、「一夜」醒在辰时、编剧写出那段空白；本幕未了、拦阻追杀、受制于人则不许)、研习至少一顿饭、局面平静时后台提示可以跳
+          幕间省略(无人相逼才许光阴跳过——v5 悬而未决而局面平静也可、「一夜」醒在辰时、编剧写出那段空白；本幕刚被打断、拦阻追杀、受制于人则不许)、研习至少一顿饭、局面平静时后台提示可以跳
 [POS]: tests 的阻尼与纠缠者验证——v3 方案 P1-1(慢变量与阻尼)、P1-2(原著与纠缠者、台词事实出处)的离线证据，及时长「回回片刻」的修正(戏内光阴与幕间省略分开)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -15,6 +15,7 @@ from tests.test_adjudicate import judge, plan
 from tests.test_engine import StubLLM, director
 from tianlong.engine import Game
 from tianlong.world import effects, lod, pacing, rag
+from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
 HOSTAGE = "神农帮留钟灵下毒逼援"
@@ -52,12 +53,15 @@ class PacingTest(unittest.TestCase):
         effects.apply(w, [LINK("感激")], "director")                                   # 不覆盖：恩怨两本账并存
         self.assertEqual([e for e in w.graph.edges if e["src"] == "段誉" and e["dst"] == "player"], [])  # 态度不立边
         self.assertIn("感激中带着戒备", stance()[-1])
-        me.set("turn", 40)                                                              # 怨比恩消得慢
+        w.clock.tick += 12 * PER_DAY                                                    # 十二日过去(v5 按光阴衰减)：怨比恩消得慢
         self.assertTrue(stance()[-1].startswith("对你戒备") or stance()[-1].startswith("对你相识"))
         effects.apply(w, [LINK("敬重")], "director")                                    # 一件事改一级，不冻结
         self.assertTrue(stance()[-1].startswith("对你友善"), stance())
-        for _ in range(2):
-            effects.apply(w, [LINK("敬重")], "director")                                # 恩积得够深才托付
+        effects.apply(w, [LINK("敬重")], "director")                                    # 同一件事当天重写：不是又一件事
+        self.assertTrue(stance()[-1].startswith("对你友善"), stance())
+        for _ in range(3):
+            w.clock.tick += PER_DAY
+            effects.apply(w, [LINK("敬重")], "director")                                # 日复一日，恩积得够深才托付
         self.assertTrue(stance()[-1].startswith("对你托付"), stance())
 
     def test_mood_reaches_the_writer_but_not_the_ledger(self):
@@ -103,17 +107,24 @@ class SceneCutTest(unittest.TestCase):
         self.assertTrue(game.world.clock.label().endswith("辰时"))
 
     def test_no_skip_while_the_scene_is_unsettled(self):
-        for llm in (scene(state="open"),                                                # 本幕未了
+        for llm in (scene(state="interrupted", beats=[{"who": "左子穆", "text": "左子穆喝道：「且慢！」"}]),  # 本幕刚被打断
                     scene(beats=[{"who": "左子穆", "to": "player", "text": "左子穆横剑拦住你：「不许走！」"}])):  # 仍有人拦阻
             _, spent = self.play(llm)
             self.assertEqual(spent, 15)
+        _, spent = self.play(scene(state="open"))                                     # 悬而未决而局面平静(v5)：可以隔着半日再续
+        self.assertEqual(spent, 15 + 360)
         w = World.create("测")
         w.graph.link("左子穆", "player", "扣押")
         self.assertEqual(pacing.calm(w, "resolved"), "主角受制于人")
 
     def test_study_takes_a_sitting_whatever_the_wording(self):
-        _, spent = self.play(scene(cut="无", ops=[{"op": "study", "id": "player", "value": "无量剑法"}]))
-        self.assertGreaterEqual(spent, 45)                                              # 片刻练不成功
+        sword = [{"op": "study", "id": "player", "value": "无量剑法"}]
+        game = Game(World.create("测"), scene(cut="无", ops=sword))
+        tick = game.world.clock.tick
+        game.act("向人讨教无量剑法")
+        self.assertGreaterEqual(game.world.clock.tick - tick, 45)                     # 片刻练不成功
+        _, spent = self.play(scene(cut="无", ops=sword))
+        self.assertEqual(spent, 15)                                                   # 玩家只是作别：替他练的剑不演，也不主张时长(v5)
 
     def test_the_director_is_nudged_to_cut_when_nothing_presses(self):
         w = World.create("测")

@@ -5,7 +5,7 @@
 [POS]: world 层的关系账——「事件先于状态」(宪法第 15 条)的第一处落地：LLM 宣告发生了什么，系统推导这意味着什么。
        某人对主角的看法不再是一条可覆盖的边(写新即覆盖旧，再以五回合阻尼冻住)，而是恩与怨两本账：
        施救、赠予、相助、同行、求教记恩；伤人、夺物、擒拿、吸功、杀其亲故记怨；导演在拍上写的态度 link 按措辞轻重记一笔，note 即缘由。
-       两本账按回合衰减(怨比恩消得慢)，读时折叠成立场措辞(托付/信任/友善/相识/戒备/嫌恶/仇视，恩怨都深则「感激中带着戒备」)——
+       两本账按光阴衰减(v5，怨比恩消得慢)，同一件事当天重写不再累加，态度措辞看最先出现的字眼；读时折叠成立场措辞(托付/信任/友善/相识/戒备/嫌恶/仇视，恩怨都深则「感激中带着戒备」)——
        一两件小事改不动立场，救命之恩、杀亲之仇直接跨级；不再需要阻尼，也不再冻结。
        结构性关系(随行、拘押、师徒、结义……)与暗中的心思(secret)仍是图上的边，归 situation 与 perspective
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -13,9 +13,10 @@
 import re
 
 from . import actor, situation
+from .clock import PER_DAY
 
 STRUCTURAL = {situation.FOLLOW, *situation.CUSTODY, "结义", "结拜", "师父", "徒弟", "师徒", "夫妻", "主仆", "同门", "效忠", "护卫"}
-FAVOR_DECAY, GRUDGE_DECAY = 0.97, 0.985   # 每回合留下的比例：恩易淡，怨难消
+FAVOR_DECAY, GRUDGE_DECAY = 0.8, 0.9     # 每过一日留下的比例(v5 按光阴，不按回合)：恩易淡，怨难消——九个回合挤在两个时辰里，不该淡得像过了九天
 LOG = 4                                     # 每人只记最近几件事
 WHY_LEN = 24
 # (恩减怨的下限, 立场)：自上而下取第一个
@@ -39,11 +40,12 @@ def _ledger(world, who: str) -> dict | None:
     node = world.graph.nodes.get(who)
     if not node or node.get("type") != "person":
         return None
-    return node.setdefault("bond", {"favor": 0.0, "grudge": 0.0, "turn": world.player["turn"], "log": []})
+    return node.setdefault("bond", {"favor": 0.0, "grudge": 0.0, "turn": world.player["turn"], "tick": world.clock.tick, "log": []})
 
 
-def _decayed(b: dict, now: int) -> tuple[float, float]:
-    gap = max(0, now - b.get("turn", now))
+def _decayed(b: dict, tick: int) -> tuple[float, float]:
+    """按光阴衰减到 tick 那一刻；旧档的账没有 tick，从今天起算。"""
+    gap = max(0, tick - b.get("tick", tick)) / PER_DAY
     return b["favor"] * FAVOR_DECAY ** gap, b["grudge"] * GRUDGE_DECAY ** gap
 
 
@@ -52,27 +54,28 @@ def event(world, who: str, weight: float, why: str):
     b = _ledger(world, who)
     if b is None or not weight:
         return
-    now = world.player["turn"]
-    favor, grudge = _decayed(b, now)
+    now, tick, why = world.player["turn"], world.clock.tick, str(why)[:WHY_LEN]
+    if any(x["why"] == why and (x["w"] > 0) == (weight > 0) and x.get("day", -1) == tick // PER_DAY for x in b["log"]):
+        return  # 同一件事当天再写一遍不是又一件事：导演每回合重申「提防：袖箭相胁带路」，立场不该就此滑到嫌恶
+    favor, grudge = _decayed(b, tick)
     if weight > 0:
         favor += weight
     else:
         grudge -= weight
-    log = b["log"] + [{"turn": now, "w": round(weight, 1), "why": str(why)[:WHY_LEN]}]
-    b.update(favor=round(favor, 2), grudge=round(grudge, 2), turn=now, log=log[-LOG:])
+    log = b["log"] + [{"turn": now, "day": tick // PER_DAY, "w": round(weight, 1), "why": why}]
+    b.update(favor=round(favor, 2), grudge=round(grudge, 2), turn=now, tick=tick, log=log[-LOG:])
+
+
+SCALE = ((STRONG_BAD, -3), (STRONG_GOOD, 3), (MILD_BAD, -1.5), (MILD_GOOD, 1.5))
 
 
 def weigh(text: str) -> float:
-    """一句态度措辞的分量：先看强字眼，再看弱字眼；说不出好坏的「相识」只记一点。"""
+    """一句态度措辞的分量：看最先出现的那个字眼(v5)——「感激他杀退仇人」是感激，「恨他救了仇人」是恨；
+    同一处既有强字眼又有弱字眼(怒不可遏/怒)取强的；说不出好坏的「相识」只记一点。"""
     text = text or ""
-    if STRONG_BAD.search(text):
-        return -3
-    if STRONG_GOOD.search(text):
-        return 3
-    if MILD_BAD.search(text):
-        return -1.5
-    if MILD_GOOD.search(text):
-        return 1.5
+    hits = [(m.start(), -abs(w), w) for rx, w in SCALE if (m := rx.search(text))]
+    if hits:
+        return min(hits)[2]
     return 0.5 if ACQUAINT.search(text) else 0
 
 
@@ -90,7 +93,7 @@ def stance(world, who: str) -> tuple[str, str] | None:
     b = world.graph.nodes.get(who, {}).get("bond")
     if not b:
         return None
-    favor, grudge = _decayed(b, world.player["turn"])
+    favor, grudge = _decayed(b, world.clock.tick)
     net = favor - grudge
     word = next(w for floor, w in LEVELS if net >= floor)
     if favor >= MIXED and grudge >= MIXED:

@@ -8,7 +8,7 @@
 [POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
-       → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，一幕了结、无人相逼时导演写的幕间省略(cut)再让光阴跳过(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
+       → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
        → 编剧按三个槽位(此刻/此后/机缘)拟选项，正文写出账上没有的进境、得失、去留、生死、擒放(adjudicate.afterword)记作偏差(drift)交下回合导演
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, growth, lexicon, lod, menu, pacing, perspective, rag, situation
+from .world import access, adjudicate, body, bond, growth, lexicon, lod, menu, pacing, perspective, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -39,10 +39,12 @@ HOOKS = 2         # 未兑现的伏笔至多记这么多条：悬念是稀缺品
 
 
 def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
-    """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉。"""
+    """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉；见证者是眼前之人(rag.scene)，轻描淡写的态度 link 不算大事。"""
     def grave(op) -> bool:
         kind, key = op["op"], op.get("key")
-        if kind in ("link", "unlink", "drain"):
+        if kind in ("link", "unlink"):  # 结义、擒放、随行、结仇结交才是江湖上传得开的事；一句试探里的提防不是(v5)
+            return bond.structural(op.get("rel") or "") or abs(bond.weigh(op.get("rel") or "")) >= 3
+        if kind == "drain":
             return True
         if op.get("id") == "player":
             return kind == "push" and key == "skills"
@@ -171,7 +173,7 @@ class Game:
         days, _ = w.advance(spent)                    # 时长由措辞换算，不由 LLM 报数
         scene_end = w.clock.label()
         cut = plan.get("cut")
-        veto = cut and pacing.calm(w, ruling.question.get("state"), ruling.beats)  # 幕间省略：一场合了、无人相逼才许跳
+        veto = cut and pacing.calm(w, ruling.question.get("state"), ruling.beats)  # 幕间省略：无人相逼、本幕未被打断才许跳
         gap = cut and not veto and timing.cut_minutes(w, cut)  # 「一夜」算到次日辰时、「入夜」算到酉时：按收束之时起算
         if cut and not veto and not gap:
             veto = "跳不到那一刻"
@@ -181,7 +183,7 @@ class Game:
         elif veto:
             log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
-        mend = body.recover(w, spent)                 # 歇满半日，气血渐复、内伤降一级：伤病的好转也归规则
+        mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
         arrived = w.sync()
         void = ruling.void
         for v in void:
@@ -263,8 +265,8 @@ class Game:
         """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
         被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
         adjudicate.imply(world, plan, aim)              # 拍里在习练玩家所指的秘籍、导演却没写 study：系统追认这一回研习
-        studies = any(op.get("op") == "study" for b in plan["beats"] for op in b.get("ops") or [] if isinstance(op, dict))
-        floor, _ = timing.claim(world, plan, deed, scale)  # 时间是后果：研习、求教、养伤、此后之举由规则主张下限
+        floor, why = timing.claim(world, plan, deed, scale, aim, drop or ())  # 时间是后果：研习、求教、养伤、此后之举由规则主张下限(只看会成立的)
+        studies = any(w.startswith(("研习", "求教")) for w in why)
         world.turn["minutes"] = max(world.clock.minutes(plan["pace"]), growth.SITTING if studies else 0, floor)
         broken = staged and lod.broken(world, staged)  # 前提以回合开始时为准：主角这一举之前，原著本该如何
 
@@ -282,7 +284,8 @@ class Game:
     def _close(self, ruling, page, memory, moved=False, deed="", spine="deed"):
         """回合收尾：场的推进与合场、主角线、主干轮转、近事、未了之事的推进与了结、伏笔账、节奏账、场景实体回收；近事溢出则交后台折叠梗概。"""
         w, me = self.world, self.world.player
-        scene.close(w, ruling.question, deed)
+        settled = moved or any(op.get("key") not in ("mood", "epithet") for op in ruling.applied)  # 合要有账可依
+        scene.close(w, ruling.question, deed, settled)
         arc.track(w)
         brief.remember(w, spine)
         touched = {i for op in ruling.applied for i in (op.get("id"), op.get("src"), op.get("dst"), op.get("value"))

@@ -1,11 +1,12 @@
 """
 [INPUT]: 依赖 tianlong.world 的 World / lod / body / bond / effects / rag / graph / situation / menu 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
-         tianlong.narrative 的 prompts（后台成文）与 llm.LLMError，tests/test_engine 的 StubLLM / director（桩导演），tests/test_adjudicate 的 plan / judge
+         tianlong.narrative 的 prompts（后台成文）/ agents（选项解析）与 llm.LLMError，tianlong.story 的 brief / choices / scene / timing，tests/test_engine 的 StubLLM / director（桩导演），tests/test_adjudicate 的 plan / judge
 [OUTPUT]: unittest 用例——v5「连贯性」的离线验收，每一类对应 PR #2 review 里一条 P0：
           剧情前提与体征分开(原著宣告的负伤不被养伤抹掉、明写痊愈才消、读路径不写气血、原著主线离线连演不断)；
           一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
           账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)；
-          眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)
+          眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)；
+          P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)
 [POS]: tests 的连贯性验证——36 回实录里「段誉不来」「剧情前后打架」的病灶在这里逐条成为用例；与 test_state(v4 状态层)、test_story(v4 故事层)互补
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -14,11 +15,12 @@ import unittest
 
 from tests.test_adjudicate import judge, plan
 from tests.test_engine import StubLLM, director
-from tianlong.engine import Game
-from tianlong.narrative import prompts
+from tianlong.engine import Game, _newsworthy
+from tianlong.narrative import agents, prompts
 from tianlong.narrative.llm import LLMError
-from tianlong.world import body, bond, effects, graph, lod, menu, rag, situation
-from tianlong.world.clock import PER_DAY
+from tianlong.story import brief, choices, scene, timing
+from tianlong.world import body, bond, effects, graph, growth, lod, menu, rag, situation
+from tianlong.world.clock import PACES, PER_DAY, span
 from tianlong.world.world import World
 
 logging.disable(logging.WARNING)
@@ -408,3 +410,114 @@ class PresenceTest(unittest.TestCase):
         bond.event(w, "钟灵", 1.5, "你替她挡过一剑")
         picked = menu.check(w, [])
         self.assertTrue(any("钟灵" in str(ids) for _, ids in picked))                   # 兜底攀谈先找与主角有过交集的人
+
+
+# ============================================================
+#  P1 时长一张表、研习受阻、场与主干、恩怨、选项括号、江湖大事
+# ============================================================
+class TimeTableTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.turn = {}
+        self.w.player.set("location", VAULT)
+        effects.apply(self.w, [{"op": "push", "id": "player", "key": "inventory", "value": "神仙姊姊玉钏"}], "director")
+
+    def test_options_promise_what_the_rules_will_charge(self):
+        w = self.w
+        w.graph.nodes["北冥神功卷轴"].update(hidden=False)
+        effects.apply(w, [{"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
+        label = next(t for t, _ in choices.later(w) if "研习" in t)
+        self.assertIn(f"约{span(timing.study_minutes(w, '北冥神功卷轴'))}", label)    # 选项上的耗时与规则主张同一张表
+        self.assertEqual(span(240), "两个时辰")
+        self.assertIn("一个时辰", PACES)
+
+    def test_breathing_exercises_are_not_a_nap(self):
+        w = self.w
+        p = plan(("player", "你盘膝打坐，调息运功", []))
+        self.assertEqual(timing.claim(w, p)[0], 0)                                     # 调息、打坐是练功的字眼，不是歇息半日
+
+    def test_a_voided_beat_claims_no_time(self):
+        w = self.w
+        p = plan(("player", "你歇息养伤", []))
+        self.assertGreater(timing.claim(w, p)[0], 0)
+        self.assertEqual(timing.claim(w, p, drop={1})[0], 0)                          # 整拍作废的歇息不主张时长
+
+
+class StudyStallTest(unittest.TestCase):
+    def test_a_stalled_session_never_crosses_a_threshold(self):
+        w = World.create("测")
+        w.turn = {}
+        real = body.forecast
+        body.forecast = lambda world, src: {"tier": "受阻", "factor": 0.5, "strain": False, "why": ""}
+        try:
+            said = growth.study(w, "北冥神功卷轴", 600)
+        finally:
+            body.forecast = real
+        self.assertEqual(growth.stage_of(w, "北冥神功卷轴"), 0)                         # 预裁说受阻，账上就没有初窥门径
+        self.assertIn("研习受阻", said)
+        self.assertNotIn("北冥神功", w.player["skills"])
+
+
+class SceneTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.turn = {}
+        scene.begin(self.w)
+
+    def test_saying_settled_is_not_settling(self):
+        w = self.w
+        scene.close(w, {"ask": "能否取走烛台", "state": "resolved"}, "看", settled=False)
+        self.assertEqual(w.player["scene"]["state"], "转")                            # 账上什么也没变：场不散
+        scene.close(w, {"ask": "能否取走烛台", "state": "resolved"}, "取烛台", settled=True)
+        self.assertEqual(w.player["scene"]["state"], "合")
+
+    def test_the_spine_stays_with_the_scene(self):
+        w = self.w
+        first = brief.compose(w, None, [])
+        self.assertIn("此场开在剑湖宫·练武厅：眼前有", first["text"])                  # 抵达即遭遇
+        scene.close(w, {"ask": "能否劝住两派", "state": "open"}, "劝架", settled=True)
+        for _ in range(3):
+            scene.begin(w)
+            self.assertEqual(brief.compose(w, None, [])["spine"], "scene")            # 一场之内主干不换题
+            w.player.set("turn", w.player["turn"] + 1)
+
+
+class BondTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("测")
+
+    def test_the_first_word_decides_the_feeling(self):
+        self.assertEqual(bond.weigh("感激他杀退仇人"), 3)
+        self.assertEqual(bond.weigh("恨他救了仇人"), -3)
+        self.assertEqual(bond.weigh("怒不可遏"), -3)
+
+    def test_saying_it_again_is_not_another_grievance(self):
+        w = self.w
+        for _ in range(5):
+            w.player.set("turn", w.player["turn"] + 1)
+            bond.attitude(w, {"op": "link", "src": "木婉清", "dst": "player", "rel": "提防", "note": "袖箭相胁带路"})
+        self.assertEqual(bond.stance(w, "木婉清")[0], "相识")                           # 五回合各写一遍，仍是同一件事
+
+    def test_feelings_fade_with_days_not_turns(self):
+        w = self.w
+        bond.event(w, "钟灵", 3, "你救了她")
+        w.player.set("turn", w.player["turn"] + 20)
+        self.assertEqual(bond.stance(w, "钟灵")[0], "友善")                             # 二十回合挤在半日里，恩情不淡
+        w.clock.tick += 10 * PER_DAY
+        self.assertEqual(bond.stance(w, "钟灵")[0], "相识")
+
+
+class OptionTest(unittest.TestCase):
+    def test_a_parenthesis_is_a_cost_only_when_it_tells_time(self):
+        page = agents._page("正文\n===\n选项：\n1. 伏地细察水面投影处（无量玉壁）｜尺度：此刻\n"
+                            "2. 前往大理城｜对象：大理城（两日路程）｜尺度：此后\n")
+        self.assertEqual([(o["text"], o["targets"]) for o in page["options"]],
+                         [("伏地细察水面投影处", ["无量玉壁"]), ("前往大理城（两日路程）", ["大理城"])])
+
+
+class NewsTest(unittest.TestCase):
+    def test_a_whispered_suspicion_is_not_news(self):
+        suspect = [{"op": "link", "src": "木婉清", "dst": "player", "rel": "提防", "note": "袖箭相胁"}]
+        sworn = [{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}]
+        self.assertEqual(_newsworthy(suspect, 5, 0), 0)
+        self.assertEqual(_newsworthy(sworn, 5, 0), 1)

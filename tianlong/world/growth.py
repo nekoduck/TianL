@@ -5,6 +5,7 @@
           studiable()（够得着的研习对象：手边与此地的秘籍、身边有人会的武学）、arts_of()、STAGES、DRAINERS、SITTING（研习一回至少一顿饭，引擎据此给本回合光阴兜底）、TEACH_MINUTES
 [POS]: world 层的数值规则——凡是有数量的后果都由这里算：导演只说「发生了研习」「发生了吸功」，增减多少不由 LLM 报数。
        研习先过 body 的预裁：顺利计一倍半时长、小有所得照计、受阻折半、有懂易理者解卦位再翻倍、岔气则折半并添一级内伤；
+       受阻与岔气的那一回跨不过下一道门槛(v5)：预裁说「受阻」，账上就不会同时写「小有所成」；
        研习按三阶兑现(初窥/小成/大成)，每阶有累计时长与间隔日数的门槛，同一部秘籍每人只兑现一次——
        十五分钟的调息不会再让人从二流升到一流；吸功按北冥阶段取对方功力的一定比例，吸者有损耗，被吸者当场负伤。
        进境是一等状态(v4)：mastery 把研习账投影成「凌波微步：未入门（已习练40分钟，初窥须60分钟）」，界面、编剧、导演同看这一份——
@@ -34,11 +35,27 @@ def study(world, source: str, minutes: int) -> str:
     g, me, day = world.graph, world.player, world.clock.day
     rec = _log(world).setdefault(source, {"minutes": 0, "stage": 0, "since": day})
     luck = body.forecast(world, source)
+    before, stall = rec["minutes"], luck["tier"] in STALL
     rec["minutes"] += round(max(minutes, 15) * luck["factor"])
+    if stall:  # 受阻、岔气：这一回有所积累，却跨不过下一道门槛——预裁定的是这一回成不成，不只是折几成；已攒下的不倒扣
+        rec["minutes"] = min(rec["minutes"], max(before, _need(g, source, rec["stage"]) - 1))
     said = f"研习{luck['tier']}" + (f"（{luck['why']}）" if luck["why"] else "")
     if luck["strain"]:
         said += "；" + body.injure(world, "真气走岔")
-    return said + "：" + _gain(world, source, rec)
+    if not stall:
+        return said + "：" + _gain(world, source, rec)
+    held = f"你随人习练{source}，尚未入门（已{rec['minutes']}分钟）" if g.kind(source) == "skill" else progress(world, source)
+    return said + "：" + held
+
+
+STALL = ("受阻", "岔气")
+
+
+def _need(g, source: str, stage: int) -> int:
+    """跨入下一阶须累计的分钟；已到顶则无穷。"""
+    if g.kind(source) == "skill":
+        return TEACH_MINUTES if stage == 0 else float("inf")
+    return STAGES[stage][1] if stage < len(STAGES) else float("inf")
 
 
 def _gain(world, source: str, rec: dict) -> str:

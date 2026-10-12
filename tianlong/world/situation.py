@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
-          near()（近旁：同一处所之内、零日可达、无不通之关的子地点）、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
+          near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
           area() / cast() / enlist() / muster() / elsewhere() / debuted()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
@@ -35,17 +35,25 @@ def _root(loc: str) -> str:
 
 # ============================================================
 #  近旁：同一处所(名号同根)之内、零日路程、没有拦人之关的子地点——喊一声就到的距离
-#  「万劫谷」与「万劫谷·药室」是近旁；「无量山」与「无量山·谷底」中间隔着悬崖，不是
+#  「万劫谷」与「万劫谷·药室」是近旁；「无量山·山崖」与「无量山·谷底」中间隔着悬崖，不是——路上有关口(悬崖、暗门、险径)就不算近旁
 #  眼前(v5)：近旁的「片区」(area：无量山、少林寺、中原这种下辖子地点或自成区域的大地方)不是一间屋子——
 #  同在片区的人要被剧情带到主角跟前(cast：赶来的、原著带上台的、随行的)才算在眼前；其余只交导演(elsewhere)
 # ============================================================
+APART = {"悬崖", "险径", "水路", "秘道", "机关", "阵法", "其他"}  # 隔开了人的关口：崖顶喊不到谷底，暗门后的石室不算隔壁；守卫、禁地只拦脚步不隔声
+
+
+def _apart(edge: dict) -> bool:
+    return any(gate.get("hidden") or gate.get("kind") in APART for gate in (edge.get("gates") or {}).values())
+
+
 def near(world, loc: str | None = None) -> set[str]:
+    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。"""
     g, loc = world.graph, loc or world.here
     seen, todo = {loc}, [loc]
     while todo:
         a = todo.pop()
         for b, e in g.ways(a):
-            if b not in seen and e["days"] == 0 and _root(b) == _root(loc) \
+            if b not in seen and e["days"] == 0 and _root(b) == _root(loc) and not _apart(e) \
                     and access.barrier(world, a, b, e, player=False) is None:
                 seen.add(b)
                 todo.append(b)

@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 re，world/situation 的 captors / imperiled（幕间省略的闸门）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
 [OUTPUT]: 对外提供 THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
-          advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：本幕了结、无人相逼才许光阴跳过）、CUTS、STREAK / WINDOW / LOG
+          advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：无人相逼、本幕未被打断才许光阴跳过——v5 悬而未决的一幕也可隔夜）、CUTS、STREAK / WINDOW / LOG
 [POS]: world 层的阻尼器——慢变量之外，剧情还会在「快变量」上打转：连着几回合都是被拦、赔罪、催促，同一个人反复同一句诉求，
        主角在一处僵持多回合而局面纹丝不动（43 回与 25 回两份实录里都见过）。这里只做确定性统计：按词表给每回合打主题标签、
        记下谁对主角说了什么主题、局面有没有变；近 WINDOW 回合里有 STREAK 回合是同一题，即在后台写明「此题不得再起」「此人换个推进方式」。
@@ -48,10 +48,11 @@ def record(world, beats: list[dict], changed: bool):
 
 
 def calm(world, state: str, beats=()) -> str | None:
-    """幕间省略的闸门：本幕之问了结、无人相逼，光阴才可跳过；否则返回不许跳的缘由。
-    省略是场面结构的决定，不是举动的时长——刀架在脖子上时，没有「半日之后」。"""
-    if state != "resolved":
-        return "本幕之问未了"
+    """幕间省略的闸门：无人相逼，光阴才可跳过；否则返回不许跳的缘由。
+    省略是场面结构的决定，不是举动的时长——刀架在脖子上时，没有「半日之后」。
+    v5：本幕之问未了而局面平静(等人、练功、赶路)也可跳——悬着的事隔一夜还悬着；不再逼导演为了跳过光阴把一场硬写成「合」。被打断的一幕不跳。"""
+    if state == "interrupted":
+        return "本幕刚被打断"
     if situation.captors(world, "player"):
         return "主角受制于人"
     if situation.imperiled(world):

@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 story/stakes（时限）、world/growth 的 studiable / progress（研习对象与进度）、world/access 的 exits（出路与日程）、world/situation 的 imperiled / captors / quests、
+[INPUT]: 依赖 story/stakes（时限）、story/timing 的 study_minutes 与 world/clock 的 span（选项上写的耗时与规则主张同一张表）、world/growth 的 studiable / progress（研习对象与进度）、world/access 的 exits（出路与日程）、world/situation 的 imperiled / captors / quests、
          world/body 的 severity，world/perspective 的 handle；World 门面的 player / graph（鸭子类型）
 [OUTPUT]: 对外提供 slots()（给编剧的三个槽位：此刻 / 此后 / 机缘，各写明它要回答什么与可用的素材）、later()（此后槽的兜底项 [(文字, 对象)]，供 menu.check 补位）、
           SCALES、peril()
@@ -10,7 +10,8 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from ..world import access, body, growth, situation
-from . import stakes
+from ..world.clock import span
+from . import stakes, timing
 
 SCALES = ("此刻", "此后", "机缘")
 
@@ -27,9 +28,9 @@ def later(world) -> list[tuple[str, list[str]]]:
     if me.get("en_route"):
         out.append((f"继续赶往{me['en_route']['to']}（余{me['en_route']['left']}日）", [me["en_route"]["to"]]))
     for src in [b for b in growth.studiable(world) if world.graph.kind(b) == "item"][:1]:  # 手边的秘籍；求教要对人开口，是此刻之举
-        out.append((f"静心研习{src}（约一个时辰）", [src]))
+        out.append((f"静心研习{src}（约{span(timing.study_minutes(world, src))}）", [src]))  # 耗时与规则主张同一张表
     if body.severity(world) or me["hp"] < me["max_hp"] * 0.8:
-        out.append(("寻个僻静处歇息养伤（半日）", []))
+        out.append((f"寻个僻静处歇息养伤（{span(body.REST)}）", []))
     for e in access.exits(world):
         if e["days"] >= 1 and not e["back"]:
             out.append((f"{e['way']}（约{e['days']}日）", [e["name"]]))

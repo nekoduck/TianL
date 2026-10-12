@@ -102,7 +102,7 @@ class CanonWindowTest(unittest.TestCase):
         w.graph.set("段誉", "status", "wounded")
         llm = StubLLM(director())
         Game(w, llm).act("看")
-        self.assertIn("原著「段誉逃离干葛追赶，失足落入崖下谷地。」在此上演", llm.director_prompts[-1])
+        self.assertIn("原著「段誉逃离干葛追赶，失足落入崖下谷地。」在主角眼前上演", llm.director_prompts[-1])
         self.assertIn("段誉坠入无量山谷", w.done)
 
 

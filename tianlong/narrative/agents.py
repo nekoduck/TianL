@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
-          write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或末尾括号里都认、至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
+          write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或括号里都认——括号写在文字末尾或对象之后皆可，说耗时路程的才是代价、其余是对象(v5)；至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
@@ -152,6 +152,7 @@ COST = re.compile(r"[｜|]\s*(?:代价|耗时)\s*[:：]\s*([^｜|]*)")
 LABEL = 26  # 选项连同代价的字数上限
 COST_LEN = 8  # 代价至多八字
 PAREN = re.compile(r"[（(]([^（）()]*)[）)]\s*$")
+TIMEISH = re.compile(r"日|时辰|顿饭|一夜|片刻|路程|里路|天|刻|更|宿|盏茶|炷香")  # 括号里说的是耗时路程，才是代价；否则多半是对象
 DUE = re.compile(r"[｜|]\s*期限\s*[:：]\s*(\d+)")
 
 
@@ -173,15 +174,25 @@ def _page(raw: str) -> dict:
             body = COST.sub("", SCALE.sub("", body))  # 尺度与代价写在对象前后都认：先摘下来，免得被对象一并吞掉
             t = TARGETS.search(body)
             label = (body[:t.start()] if t else body).strip().strip("*").strip()
-            tail_cost = None if cost else PAREN.search(label)  # 代价也常直接写进括号
-            if tail_cost:
-                label = label[:tail_cost.start()].strip()
-            price = (cost or tail_cost).group(1).strip().strip("（）()") if cost or tail_cost else ""
-            label = label[:LABEL - COST_LEN - 2] if price else label[:LABEL]
-            if price and len(price) <= COST_LEN:
-                label += f"（{price}）"  # 代价太长就不写，宁缺不截半句
-            if label:
-                options.append({"text": label, "targets": [x.strip() for x in SPLIT.split(t.group(1)) if x.strip()] if t else [],
+            aims = t.group(1).strip() if t else ""
+            price, more = cost.group(1).strip().strip("（）()") if cost else "", []
+            for part in ("label", "aims"):  # 括号写在文字末尾或对象之后都认(v5)：说耗时路程的是代价，其余是对象
+                m = PAREN.search(label if part == "label" else aims)
+                if not m:
+                    continue
+                inner = m.group(1).strip()
+                if part == "label":
+                    label = label[:m.start()].strip()
+                else:
+                    aims = aims[:m.start()].strip()
+                if TIMEISH.search(inner):
+                    price = price or inner
+                elif inner:
+                    more.append(inner)
+            keep = bool(price) and len(price) <= COST_LEN  # 代价太长就不写，宁缺不截半句；不写代价就不为它让出字数
+            label = label[:LABEL - COST_LEN - 2] + f"（{price}）" if keep else label[:LABEL]
+            if label.strip("（）"):
+                options.append({"text": label, "targets": [x.strip() for x in SPLIT.split(aims) if x.strip()] + more,
                                 "scale": scale.group(1) if scale else None})
     memory = found.get("梗概") or None
     headline = (found.get("传言") or "").strip("。. ")
