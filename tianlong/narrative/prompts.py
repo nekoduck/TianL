@@ -1,18 +1,21 @@
 """
 [INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/途中去向与余程/出路按方向措辞、注明关口之类与来路）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
          dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
-[OUTPUT]: 对外提供 render() / render_backstage() / TIME_GUIDE（光阴分戏内 pace 与幕间省略 cut） / SHAPES（示例取值轮换） / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
+[OUTPUT]: 对外提供 render() / render_backstage() / TIME_GUIDE（光阴分戏内 pace 与幕间省略 cut(可等到某一刻)，clock 立时限） / SHAPES（示例的场况、时长、幕间省略轮换） / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、set epithet 立名号） / THREATS / TENSIONS 与
           director / repair / writer / recap / simulator / chronicler 六组 (system, user) 组装器（场外两组可附江湖近闻）
 [POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
-       导演只写到此刻为止、不拟选项、标出本幕之问，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
+       v4：导演上下文第一节是【场记】(story/brief 写的焦点：主干、场况、试过的路数、最急的时限、主角线)，导演报场况 scene(开/转/合/断)；
+       一时的看法由系统从 ops 记进恩怨账，link 只立结构性关系，人物自身可伤可病可改眼下之事；人物行带伤势、神色、眼下之事与对你的立场，主角武学以研习账为准；
+       编剧按【选项槽位】各拟一项并标尺度，进境不得越过账上那一阶；
+       导演只写到此刻为止、不拟选项，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
        编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；改文风、改叙事纲领只动这一个文件
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import json
 
 from ..world.clock import PACES
-from ..world.pacing import CUTS
+from ..world.pacing import CUTS, UNTIL
 
 STATUS = {"alive": "安好", "wounded": "负伤", "dead": "已故"}
 TENSIONS = ("平", "起", "高潮", "收")
@@ -28,9 +31,10 @@ def _section(title: str, lines) -> str:
 
 def render(pack: dict) -> str:
     s, me = pack["scene"], pack["player"]
-    people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{STATUS.get(p['status'], p['status'])}"
+    people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{p.get('wound') or STATUS.get(p['status'], p['status'])}"
               + "".join(f"｜{label}：{p[key]}" for label, key in (("外貌", "appearance"), ("性情", "persona"),
-                                                                  ("言谈", "speech")) if p.get(key))
+                                                                  ("言谈", "speech"), ("此刻神色", "mood"), ("眼下之事", "intent")) if p.get(key))
+              + (f"｜境况：{'、'.join(p['conditions'])}" if p.get("conditions") else "")
               + (f"｜随身：{'、'.join(p['carrying'])}" if p["carrying"] else "")
               + (f"｜与你：{'；'.join(p['toward_you'])}" if p["toward_you"] else "")
               + (f"｜主角不知其名，只叫得出「{p['seen_as']}」" if p.get("seen_as") else "")
@@ -50,8 +54,9 @@ def render(pack: dict) -> str:
         "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "")
                               + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),
         (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
-        f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}｜{me['tier']}"
-        f"｜姿态：{me['posture']}｜武学：{'、'.join(me['skills']) or '无'}",
+        f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}"
+        + (f"（{me['wound']}）" if me.get("wound") else "") + f"｜{me['tier']}｜姿态：{me['posture']}",
+        _section("主角武学与进境·以此为准，未列「已会」或阶名的功夫主角使不出来", me.get("arts") or [f"{s}：已会" for s in me["skills"]]) or "【主角武学与进境】无",
         _section("主角境况", me["conditions"]),
         _section("随身之物", [f"{i['name']}：{i['desc']}" for i in me["inventory"]]),
         _section("未了之事", me["threads"]),
@@ -108,10 +113,11 @@ def render_backstage(gm: dict) -> str:
         _section("近处暗路·主角尚未发现：剧情中被发现或由知情人领路，才可通行", gm["secret_ways"]),
         _section("在场武学", gm["arts"]),
         _section("武学机缘·研习进度与研习预裁", gm["grants"]),
+        _section("上回合正文的偏差·正文写了账上没有的进境，本回合由剧情交代(只是错觉、尚未练成)，不得顺着写成真的", gm.get("drift", [])),
         _section("未兑现的伏笔", gm.get("hooks", [])),
         _section("久未推进的未了之事·宜推进或由剧情了结(pull)", gm.get("stale", [])),
         f"【近处去向】{'、'.join(gm['places'])}（更远的原著地点亦可直呼其名，路程由系统结算）",
-        f"【节奏】{gm['tempo']}" if gm.get("tempo") else "",
+        f"【节奏】{gm['tempo']}" if gm.get("tempo") and not gm.get("brief") else "",  # 有场记时，节奏由场记统管
         _section("阻尼·剧情在打转，本回合照此调整", gm.get("fatigue", [])),
     ]
     return "\n".join(p for p in parts if p)
@@ -126,11 +132,15 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 身体归规则：交手的胜负与失血看较量预裁；没人出手、不涉险地，主角一拍至多伤 5 点；研习的顺逆看研习预裁，照演进境，不得自编反噬、走火、扣血。
 内伤（内息紊乱→经脉受损→经脉重创）写 push conditions「岔气」之类即由系统加重一级，疗愈写 pull；歇息、服药、有人运功疗伤都会让它好转。
 擒人者走，人质随之；要人质随你走，先写明救下（unlink 拘押、link 随行）。指令只能作用于已存在的人、地、物：
-- {"op":"set","id":"人物/门派/player","key":"属性","value":值}；{"op":"add","id":…,"key":"hp","value":增减}（主角受伤或疗伤）
+- {"op":"set","id":"人物/门派/player","key":"属性","value":值}；{"op":"add","id":…,"key":"hp","value":增减}（主角或在场之人受伤、疗伤）
 - 拾取/丢下：{"op":"push"/"pull","id":"player","key":"inventory","value":"此地或身边的器物"}；器物易手：{"op":"set","id":器物,"key":"holder","value":在场人物或player}
 - 境况：{"op":"push"/"pull","id":"player","key":"conditions","value":"中毒/被追杀…"}
 - 未了之事：{"op":"push","id":"player","key":"threads","value":{"goal":"一句话","done_when":[["钟灵","~随行","player"]]}}（done_when 可省；了结即自动收束，至多四条）；收束写 pull
-- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"此人对主角的一句印象(可选)"}；同一人对主角只留最新一条；关系是慢变量（结识、恩、怨、信任），定下之后五回合内不改，一时的焦急恼怒写在拍的 mood 里；
+- 关系：{"op":"link"/"unlink","src":…,"dst":…,"rel":"…","note":"缘由(可选)"}只立结构性关系（结义、师徒、随行、拘押、效忠……）。
+  某人对主角的看法不必下结论：救人、赠物、夺物、伤人、擒拿都由系统从 ops 里记进他的恩怨账，折叠成【在场人物】里的「对你…」；
+  一件 ops 表达不了的大事（当众折辱、替他扬名、背弃承诺）可写 {"op":"link","src":某人,"dst":"player","rel":"感激/记恨/敬佩…","note":"缘由"}，系统按轻重记一笔；一时的焦急恼怒写在拍的 mood 里；
+- 人物自身：{"op":"add","id":某人,"key":"hp","value":-15}（伤人，须拍里有伤；他负不负伤由气血推出）；{"op":"push","id":某人,"key":"conditions","value":"中毒/被点穴…"}；
+  {"op":"set","id":某人,"key":"intent","value":"他眼下要做的事，一句话"}（他改了主意、有了新打算时写）；
   随你同行写 {"op":"link","src":某人,"dst":"player","rel":"随行"}（之后主角走到哪他跟到哪，过不去的关他会留下）；分道扬镳写 unlink 随行；
   擒人写 {"op":"link","src":擒者,"dst":被擒者,"rel":"扣为人质|囚禁"}，救人写 unlink 这条
 - 有人赶来：{"op":"arrive","id":某人}（系统按其所在与路程、本回合光阴裁定赶不赶得到；近旁之人无须 arrive）
@@ -145,9 +155,12 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 不成立之事：新造人物/地点/原著器物、去不了的地方、拿此地没有的器物、死者复生、触碰不在身边的人、替主角做他没选的事（主角只做玩家所选之事；顺手取物、杀人、吸功须是玩家所指）。"""
 
 TIME_GUIDE = ("【光阴】时长分两段，都只选措辞、由系统换算。pace 是本回合拍里的事耗了多久：瞬息(一招一式、一句话)、片刻(几句对答、走几步、看一处)、"
-              "一顿饭(一场较量、一番长谈、细细搜寻、包扎伤口)、半日(练功、疗伤、等候、四处打听)、一夜(歇宿、守夜、彻夜长谈)、一日(整日练功或劳作)——照拍里的事如实取，研习至少一顿饭。"
-              "cut 是幕间省略：本幕之问了结、无人相逼时，最后一拍写成收束或过场，光阴随即跳到下一处有戏的时刻（" + "/".join(CUTS) + "）；说书人不逐刻细磨平静的光阴，一幕了了就该跳。"
-              "本幕未了、主角受制或命悬一线、仍有人拦阻追杀时写 无——系统会核对，不成立的 cut 作废。")
+              "一顿饭(一场较量、一番长谈、细细搜寻、包扎伤口)、半日(练功、疗伤、等候、四处打听)、一夜(歇宿、守夜、彻夜长谈)、一日(整日练功或劳作)——照拍里的事如实取；"
+              "研习、求教、歇息养伤的时长由规则补足，写短了系统会按规则算长。"
+              "cut 是幕间省略：本场合上、无人相逼时，最后一拍写成收束或过场，光阴随即跳到下一处有戏的时刻——写一段长度（" + "/".join(CUTS) + "），"
+              "或写 {\"until\":\"" + "/".join(UNTIL) + "/场记里某个时限\"} 跳到那一刻；说书人不逐刻细磨平静的光阴，一场合了就该跳。"
+              "本场未合、主角受制或命悬一线、仍有人拦阻追杀时写 无——系统会核对，不成立的 cut 作废。"
+              "时限：剧情里有人立下期限（「明日启程」「天明之前」「三日之内」），在顶层 clock 里记下 {\"what\":\"一句话\",\"in\":\"一日/三个时辰/半日\"}，系统替你记着、到期提醒。")
 
 NAMES = ("【称谓】标了「主角不知其名」的人，主角的台词里不得叫出其名或「姓+称谓」（钟姑娘、段公子），旁白也只写其外貌叫法；"
          "标了「不知你姓名」的人，不得叫出主角名号（王兄、王侠墨）。要让人知道名字，就让他在台词里自报家门（「小生段誉」「我叫钟灵」），"
@@ -156,20 +169,19 @@ NAMES = ("【称谓】标了「主角不知其名」的人，主角的台词里�
 THREATS = "威胁须有来源：打断、堵路、追击主角的，只能是在场或能赶来的人、已立的群体、或此刻上演的原著。"
 
 
-# 示例的结局、时长、幕间省略与张力轮换着给：写死一组值，小模型就回回照抄(43 回实录里 55 次导演输出有 45 次「片刻」、从无「收」)
-SHAPES = (("open", "片刻", "无", "起"), ("resolved", "一顿饭", "半日", "收"),
-          ("interrupted", "瞬息", "无", "高潮"), ("resolved", "片刻", "一夜", "平"))
+# 示例的场况、时长与幕间省略轮换着给：写死一组值，小模型就回回照抄(43 回实录里 55 次导演输出有 45 次「片刻」、从无「收」)
+SHAPES = (("转", "片刻", "无"), ("合", "一顿饭", "半日"), ("断", "瞬息", "无"), ("合", "片刻", {"until": "入夜"}), ("开", "一顿饭", "无"))
 
 
 def _example(pack: dict) -> str:
     """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错；取值随时辰轮换，不给它一个可抄的默认值。"""
     who = pack["people"][0]["name"] if pack["people"] else "段誉"
-    state, pace, cut, tension = SHAPES[sum(map(ord, pack.get("time", ""))) % len(SHAPES)]
+    state, pace, cut = SHAPES[sum(map(ord, pack.get("time", ""))) % len(SHAPES)]
     ex = {"beats": [{"who": "player", "text": "你拱手自报来历，说明来意", "ops": []},
-                    {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」",
-                     "ops": [{"op": "link", "src": who, "dst": "player", "rel": "疑忌", "note": "你来路不明"}]}],
-          "question": {"ask": f"能否取信于{who}", "state": state, "by": who if state == "interrupted" else None},
-          "spawn": [], "pace": pace, "cut": cut, "canon": {"unfolds": True, "why": ""}, "tension": tension}
+                    {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」", "mood": "戒备",
+                     "ops": [{"op": "set", "id": who, "key": "intent", "value": "要弄清你的来路"}]}],
+          "scene": {"state": state, "ask": f"能否取信于{who}", "by": who if state == "断" else None},
+          "spawn": [], "pace": pace, "cut": cut, "clock": [], "canon": {"unfolds": True, "why": ""}}
     return "【示例·只示格式，不示内容】" + json.dumps(ex, ensure_ascii=False)
 
 
@@ -183,43 +195,50 @@ def _director_system(pack: dict) -> str:
         "隐情可以伏笔、可以在合乎情理时揭开（用 reveal），不要平白说破。主角的出身与所求是他行动的理由。"
         "原著之外，不得凭空生出门派覆灭、大批伤亡、大军攻山之类大事。" + THREATS + NAMES +
         "道路并非想走就走：主角要过后台所列的关口，须在节拍里兑现（应付守卫、攀崖涉险、备船渡水……）。"
-        "每回合标出本幕之问：主角这一举所求的那件事，结局是了结(resolved)、悬而未决(open)还是被打断(interrupted，须写明 by 是谁)。"
+        "【场记】是本回合的焦点：主干是什么、这一场在问什么、试过哪些路数、什么最急——依它编排，后台其余各节只是参考资料。"
+        "每回合报场况 scene：这一场的问题(ask，开场时定下，之后可改写措辞)此刻是 开(刚起)、转(推进中)、合(有了结果：得、失或变)，还是 断(被打断，须写明 by 是谁)。"
+        "一场的问题是此时此地几个回合内就能见分晓的具体之事（能否取信于左子穆、能否把钟灵从神农帮手里救下），不是主角的长远所求；见了分晓就写 合，下一场再起新问。"
         "选项不归你拟，你只写到此刻为止。\n"
         + PLOT_GUIDE + "\n" + TIME_GUIDE +
         '\n输出 JSON：{"beats":[{"who":"player或人物名","to":"对谁说话(可省；对主角说话写player)","text":"不超过40字，写清动作与对白要点","mood":"此刻情绪两三字(可省；只给编剧渲染，不入账)","ops":[…]}，共3~6拍],'
-        '"question":{"ask":"本幕之问","state":"resolved/open/interrupted","by":"打断者，否则 null"},"spawn":[…],'
+        '"scene":{"state":"开/转/合/断","ask":"这一场的问题","by":"打断者，否则 null"},"spawn":[…],'
         f'"pace":"本回合拍里的事耗时，只可取 {"/".join(PACES)} 之一（见【光阴】；远行路程由系统另算）",'
-        f'"cut":"幕间省略，取 {"/".join(CUTS)} 之一，局面未了写 无",'
-        '"canon":{"unfolds":true或false,"why":"原著不能照常发生时的缘由，否则留空"},'
-        f'"tension":"本回合张力，取 {"/".join(TENSIONS)} 之一"}}\n'
+        f'"cut":"幕间省略：{"/".join(CUTS)} 之一，或 {{\\"until\\":\\"入夜\\"}} 之类；本场未合写 无",'
+        '"clock":[{"what":"有人立下的期限","in":"一日"}](没有就空),'
+        '"canon":{"unfolds":true或false,"why":"原著不能照常发生时的缘由，否则留空"}}\n'
         + _example(pack)
     )
 
 
+def _brief(gm: dict) -> str:
+    return f"【场记】\n{gm['brief']}\n" if gm.get("brief") else ""
+
+
 def director(pack: dict, gm: dict, deed: str) -> tuple[str, str]:
-    return _director_system(pack), f"{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}"
+    return _director_system(pack), f"{_brief(gm)}{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}"
 
 
 def repair(pack: dict, gm: dict, deed: str, draft: dict, problems: list[str]) -> tuple[str, str]:
     """导演返工：原样拿回自己的提议与系统查出的问题，只改有问题的拍，输出同一格式。"""
     system = _director_system(pack) + "\n\n你上一稿的提议有几处与世界账本对不上。只改有问题的拍（补上漏写的 ops、改掉做不到的事、删去越权之举），其余照旧，输出完整的同一格式 JSON。"
-    user = (f"{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}\n"
+    user = (f"{_brief(gm)}{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}\n"
             f"【上一稿】{json.dumps(draft, ensure_ascii=False)}\n{_section('账本对不上之处', problems)}")
     return system, user
 
 
 def writer(pack: dict, frame: dict) -> tuple[str, str]:
     system = ("你是深谙金庸笔法的武侠小说家，为文字冒险撰写正文。以第二人称「你」叙述，白描为主，对话传神，人物言行合乎性情与设定。"
-              "【已成立之事】是本回合实际发生的一切，依它铺陈，可补足神态、细节与氛围，但不得添出新的得失、伤亡、去留或擒放；"
+              "【已成立之事】是本回合实际发生的一切，依它铺陈，可补足神态、细节与氛围，但不得添出新的得失、伤亡、去留、擒放或进境；"
+              "主角武功练到哪一步以【主角武学与进境】与【连带】为准：账上未入门就只是在习练、摸索、略有所感，不得写成练成、学会、身如游龙、功力大进；"
               "【未能成立】中的内容不得写成既成事实，可写成未遂或落空；【连带】是系统结算的后果，须自然写进正文；"
               "【上回合末段】只作承接语气，不作事实；正文所述光阴须与【本回合光阴】相符。新到的传闻可借人物之口或环境自然带出。"
               "篇幅 250~450 字，不写标题与任何 markdown 符号。\n"
               "正文写完后另起一行只写 ===，然后写：\n"
               "梗概：本回合实际发生之事的一句话，不超过40字\n"
-              "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【出路】【随身之物】【地上器物】里的原名，多个用顿号）\n2. …\n3. …\n"
+              "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【出路】【随身之物】【地上器物】里的原名，多个用顿号）｜尺度：此刻\n2. …｜尺度：此后\n3. …｜尺度：机缘\n"
               "伏笔：正文里埋下、日后须兑现的一句悬念｜期限：回合数（多数回合应当写 无；伤病与身体不作伏笔）\n"
               "传言：若此事值得在江湖上传开，一句客观记述（不超过30字，以主角名号称呼主角）；否则写 无\n"
-              "选项是三个方向迥异、此情此景下真正诱人的下一步，每个不超过14字，江湖口吻；只能指向主角此刻知道、够得着或走得到的人、地、物，"
+              "选项是三个方向迥异、此情此景下真正诱人的下一步，按【选项槽位】各拟一项（尺度写那一槽的名字），每个不超过18字，江湖口吻，此后一项在末尾括号里写出代价或耗时（如「连夜赶往大理（两日路程）」）；只能指向主角此刻知道、够得着或走得到的人、地、物，"
               "不得包含主角尚不知道的隐情；若有人刚对主角说了话，至少一项回应他；【可作选项】里的举动优先采用。")
     user = (f"{render(pack)}\n【主角此刻】{frame['deed']}\n【本回合光阴】{frame['span']}\n"
             f"{_section('上回合末段·只作语气参考', [frame['prev']] if frame.get('prev') else [])}\n"
@@ -227,6 +246,7 @@ def writer(pack: dict, frame: dict) -> tuple[str, str]:
             f"{_section('连带', frame.get('notes', []))}\n"
             f"{_section('须回应', [f'{p}刚对你说了话' for p in frame.get('addressed', [])])}\n"
             f"{_section('可作选项', frame.get('candidates', []))}\n"
+            f"{_section('选项槽位', frame.get('slots', []))}\n"
             f"{_section('刚刚传到的消息', frame['news'])}")
     return system, user
 

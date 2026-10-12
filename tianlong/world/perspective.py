@@ -7,6 +7,7 @@
        识名是认知最表层的一环：主角初见钟灵，只知是「大眼圆脸的少女」；她自报姓名、或认得她的人当面叫她，主角才知道她叫钟灵。
        人物之间：原著里有关系、同一门派即互相识名，戏里听见的另记在人物节点的 knows 上；主角所识之人记在黑板的 acquaintances 上（系统维护，导演写不动）。
        纯规则、零调用：追认只增加认知，从不挪动任何人；查不出的旁白漏名，由 mask 在交编剧之前确定性地换掉——不给即不泄露
+       veil 连人物眼下之事(intent)一并过 mask——那一句是导演写的，里面的名字主角未必识得
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -260,6 +261,8 @@ def veil(world, pack: dict) -> dict:
         if not knows(world, "player", pid):
             p.update(name=handle(world, pid), title="来历不明", faction="门派不明",
                      toward_you=[mask(world, t) for t in p["toward_you"]], carrying=p["carrying"])
+        if p.get("intent"):
+            p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
     out["relations"] = [r for r in out["relations"] if mask(world, r) == r]
     out["party"] = [handle(world, p) for p in out.get("party", [])]

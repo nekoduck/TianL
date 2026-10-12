@@ -1,8 +1,9 @@
 """
-[INPUT]: 依赖 world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
+[INPUT]: 依赖 world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
+         world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、names()（实体名表）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
+[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单）、names()（实体名表）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角的拍里取物、杀人、吸功须是玩家所指——越俎代庖的拍不演，降为下回合的候选选项），
        再落账，再以词表体检「写了变化却没有指令」的影子状态；随行、获救、败走这三种写漏了的连带由系统追认，其余硬违例交导演修复一次，
@@ -10,20 +11,22 @@
        一拍一事务(v3)：拍里改变物理状态的指令(去留、得失、生死、随行与拘押、赶来、研习、吸功、揭示)落不了，整拍即交返工；
        指令在拍文里无据即丢(无伤扣血、被荡开的一击、研习之拍扣主角气血)，主角自己的拍里无人出手又不涉险地，一拍至多伤 SCRATCH 点；
        台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知(foretold，返工不作废)；拍上的 mood 原样带给编剧、不入账；
-       词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
+       词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；
+       事件先于状态(v4)：每拍落账之后 bond.derive 从已成立的指令推出恩怨事件、actor.feel 把拍上的情绪挂在此人脸上；研习是主角的举动，玩家没指着的秘籍导演不替他练(降为候选)；
+       进境有账可依：主角的拍里写了账上没有的那一阶(「身如游龙」而未入门、「大成」而只初窥)即 mastery 违例，交返工不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
 import re
 from dataclasses import dataclass, field
 
-from . import effects, lexicon, perspective, situation
+from . import actor, bond, effects, growth, lexicon, perspective, situation
 from .graph import holds
 
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name"}
+        "follow", "leave", "custody", "name", "mastery"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
+UNSURE = {"follow", "leave", "name", "foretold", "mastery"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
 
 @dataclass
@@ -63,6 +66,8 @@ def targets(world, deed: str, given=()) -> set[str]:
         hit = effects.resolve(world, word)
         if world.graph.kind(hit) == "item":
             out.add(hit)
+    if lexicon.PRACTICE.search(deed or "") and not any(world.graph.get(t, "grants") or world.graph.kind(t) == "skill" for t in out):
+        out |= {s for s in growth.studiable(world) if world.graph.kind(s) == "item"}  # 「练功」而不说练哪部：手边的秘籍都算所指
     return {t for t in out if isinstance(t, str) and world.graph.has(t)}
 
 
@@ -75,6 +80,8 @@ def _unbidden(world, ops: list, allowed: set[str]) -> list[str]:
 
     def ok(item):
         return item in allowed or g.get(item, "holder") in allowed or item in world.player["inventory"]
+    taught = {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []}  # 指着某人，即可向他求教
+    arts = {k for x in allowed if g.kind(x) in ("item", "skill") for k in growth.arts_of(g, x)}  # 指着秘籍，即指着它所载的武学
 
     for op in ops:
         if not isinstance(op, dict):
@@ -89,6 +96,9 @@ def _unbidden(world, ops: list, allowed: set[str]) -> list[str]:
             out.append(f"杀了{nid}")
         elif kind == "drain" and g.kind(value) == "person" and value not in allowed:
             out.append(f"吸取{value}的内力")
+        elif kind == "study" and g.kind(value) in ("item", "skill") and value not in allowed \
+                and not set(growth.arts_of(g, value)) & (allowed | taught | arts):
+            out.append(f"研习{value}")  # 研习是主角的举动：玩家没指着这部秘籍或这门武学，导演不替他坐下来练
         elif kind == "set" and key == "state" and g.kind(nid) == "item" and isinstance(value, dict) \
                 and value.get("exists") is False and nid not in allowed:
             out.append(f"毁去{nid}")
@@ -174,8 +184,11 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
                    for op in baseless]
         at = world.here
+        snap = bond.before(world, ops)
         applied, rejected = effects.apply(world, ops, "director")  # 落账会就地规整指令：提议本身留给返工与定稿
         r.applied += applied
+        bond.derive(world, beat.get("who"), applied, snap, beat.get("text") or "", beat.get("to"))  # 事件先于状态：恩怨从做了什么里推出
+        actor.feel(world, beat.get("who"), beat.get("mood"))  # 拍上的情绪挂在此人脸上几回合
         for nid in (i2 for op in applied for i2 in effects._ids(op)):
             touched[nid] = i
         for op, why in rejected:
@@ -276,6 +289,7 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
             found.append(lexicon.Finding("secret", i, f"{src}—{rel}—{dst}",
                                          f"第{i}拍说破了未揭的隐情（{src}与{dst}）：要揭开就写 reveal，否则只可伏笔"))
     found += _foretold(world, shown, tab_kinds[0])
+    found += _mastery(world, shown)
     for f in found:
         if f.kind in RATIFY and _ratify(world, f):
             r.soft.append(f)
@@ -283,6 +297,36 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0):
             r.hard.append(f)
         else:
             r.soft.append(f)
+
+
+def _mastery(world, shown) -> list:
+    """进境措辞有账可依：主角的拍里写了「练成」「身如游龙」，本回合却没有兑现任何一阶进境，即为违例——
+    练到哪一步由研习账说了算(world/growth)，文字只渲染已成立的进境。"""
+    out = []
+    for i, beat in enumerate(shown, 1):
+        words = growth.unearned(world, lexicon.mastery(beat.get("text") or "", beat.get("who")))
+        if words:
+            arts = "；".join(a["detail"] for a in growth.mastery(world)) or "主角尚无武学"
+            out.append(lexicon.Finding("mastery", i, words[0], f"第{i}拍写主角「{'、'.join(words)}」，账上并无这一阶进境（{arts}）："
+                                                             "进境以研习账为准，改写成正在习练、略有心得或尚未入门"))
+    return out
+
+
+def imply(world, plan: dict, allowed: set[str]) -> str | None:
+    """追认一回研习：玩家所指的是够得着的秘籍或武学(或身边会它的人)，主角的拍里写着习练，导演却没写 study——
+    系统替它补上这条指令(追认，不新造物理：研习本就是玩家所选之事)。返回追认的研习对象，没有即 None。"""
+    beats = plan.get("beats") or []
+    if any(isinstance(op, dict) and op.get("op") == "study" for b in beats for op in b.get("ops") or []):
+        return None
+    aim = set(allowed) | {k for p in allowed if world.graph.kind(p) == "person" for k in world.graph.get(p, "skills") or []}
+    sources = growth.studiable(world, aim) if aim else []
+    if not sources:
+        return None
+    for b in beats:
+        if b.get("who") in (None, "player") and lexicon.PRACTICE.search(b.get("text") or ""):
+            b["ops"] = list(b.get("ops") or []) + [{"op": "study", "id": "player", "value": sources[0]}]
+            return sources[0]
+    return None
 
 
 def _ratify(world, f) -> bool:

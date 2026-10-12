@@ -114,9 +114,9 @@ class GrowthTest(unittest.TestCase):
 
     def test_a_quarter_hour_of_study_is_not_a_breakthrough(self):
         p0 = self.w.player["power"]
-        judge(self.w, plan(("player", "你展卷细读", [{"op": "study", "id": "player", "value": "北冥神功卷轴"}]), pace="瞬息"))
+        judge(self.w, plan(("player", "你展卷细读", [{"op": "study", "id": "player", "value": "北冥神功卷轴"}]), pace="瞬息"), {"北冥神功卷轴"})
         self.assertEqual(self.w.player["power"], p0)
-        judge(self.w, plan(("player", "你潜心研读", [{"op": "study", "id": "player", "value": "北冥神功"}]), pace="一顿饭"))
+        judge(self.w, plan(("player", "你潜心研读", [{"op": "study", "id": "player", "value": "北冥神功"}]), pace="一顿饭"), {"北冥神功"})
         self.assertEqual(self.w.player["power"], p0 + 12)                             # 初窥：兑现四成
         self.assertIn("北冥神功", self.w.player["skills"])
 

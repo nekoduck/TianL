@@ -130,7 +130,7 @@ class DirectorTest(unittest.TestCase):
         llm.replies = {**director(), "小说家": WRITER}
         game.act(turn["options"][0])  # 选项即原话，交回导演
         self.assertIn("【主角此刻】替段誉挡下一掌", llm.writer_prompts[-1])
-        self.assertIn("段誉→你：结为知交（你替他解了围）", llm.writer_prompts[-1])
+        self.assertIn("对你友善（你替他解了围）", llm.writer_prompts[-1])  # 印象由恩怨账折叠，缘由随之
         self.assertIn("你替段誉解围，与他结交", llm.writer_prompts[-1])  # 前情记的是编剧核实过的梗概
         self.assertEqual(game.world.graph.get("左子穆", "mood"), "疑心大起")
         self.assertIn("无量剑比剑被一名外客搅乱", [e["summary"] for e in game.world.truth.events])  # 众目之下结交，江湖有传

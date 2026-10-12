@@ -1,9 +1,9 @@
 """
 [INPUT]: 依赖 world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets，world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
-[OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项）
+[OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
-       三项各不相同、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
+       三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -57,8 +57,9 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     return out
 
 
-def check(world, options: list[dict], addressed=(), candidates=(), fallback=()) -> list[tuple[str, list[str]]]:
-    """验收编剧拟的选项，返回恰好三项 (文字, 对象)。fallback：导演旧写法给的选项或离线说书人的朴素选项。"""
+def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=()) -> list[tuple[str, list[str]]]:
+    """验收编剧拟的选项，返回恰好三项 (文字, 对象)。fallback：导演旧写法给的选项或离线说书人的朴素选项；
+    later：此后槽的兜底项(story/choices 看局面给出)——三项里没有一件「此后」之事(编剧标的尺度)，就以它换下最后一项。"""
     tab, _ = adjudicate.names(world)
     secrets = [(e["src"], e["rel"], e["dst"]) for e in world.graph.edges
                if e.get("secret") and not world.knowledge.knows_secret(e)]
@@ -82,6 +83,14 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=()) 
     for p in dict.fromkeys(addressed):  # 有人刚对主角开口：至少一项回应他——一再重复同一句诉求的人不再硬塞「回应」，免得原地打转
         if p in situation.around(world) and p not in nagging and not any(p in o for _, o in picked):
             picked = picked[:SIZE - 1] + [(f"回应{perspective.handle(world, p)}", [p])]
+    scales = {str(o.get("text") or "").strip(): o.get("scale") for o in options}
+    tagged = any(scales.values())  # 编剧照槽位标了尺度才查覆盖：没标尺度的旧写法无从判断哪一项是此后
+    if later and tagged and not any(scales.get(t) == "此后" for t, _ in picked):  # 槽位覆盖：至少一件持续之事，时间才往前走
+        for text, ids in later:
+            ids = sorted(adjudicate.targets(world, text, ids))
+            if fine(text, ids):
+                picked = picked[:SIZE - 1] + [(text, ids)]
+                break
     for text, ids in _fallbacks(world, fallback):
         if len(picked) >= SIZE:
             break
