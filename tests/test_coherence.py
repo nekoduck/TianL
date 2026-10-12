@@ -4,7 +4,7 @@
 [OUTPUT]: unittest 用例——v5「连贯性」的离线验收，每一类对应 PR #2 review 里一条 P0：
           剧情前提与体征分开(原著宣告的负伤不被养伤抹掉、明写痊愈才消、读路径不写气血、原著主线离线连演不断)；
           一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
-          账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)；
+          账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、返工写明东西在哪、摸索心法即研习、成文之后再对账、导演失声)；
           眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)；
           P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)；
           P2(LeakTest：器物名不带生人、本回合见过的生人(刚走开的、死在眼前的)不露名、地点现状与器物描述不泄底、石洞里听不到传闻、无人时示例不出人名、近事以「你」称主角)；
@@ -22,7 +22,7 @@ from tianlong.engine import Game, _newsworthy
 from tianlong.narrative import agents, prompts
 from tianlong.narrative.llm import LLMError
 from tianlong.story import brief, choices, scene, timing
-from tianlong.world import body, bond, effects, graph, growth, lod, menu, perspective, rag, situation
+from tianlong.world import adjudicate, body, bond, effects, graph, growth, lod, menu, perspective, rag, situation
 from tianlong.world.clock import PACES, PER_DAY, span
 from tianlong.world.world import World
 
@@ -324,6 +324,21 @@ class AgreementTest(unittest.TestCase):
         _, rejected = effects.apply(w, [{"op": "set", "id": "player", "key": "location", "value": VAULT},
                                         {"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
         self.assertEqual(rejected, [])                                                # 走过去再找：同一拍里也成立
+
+    def test_the_repair_says_where_the_thing_is(self):
+        w = self.w
+        w.player.set("location", "琅嬛福地")
+        r = judge(w, plan(("player", "你扯开蒲团，抽出夹层里的帛卷。",
+                           [{"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}])), aim={"北冥神功卷轴"})
+        self.assertIn("现在琅嬛福地·玉像石室，藏而未露", "".join(adjudicate.brief(w, r)))  # 返工时导演知道要先走进石室
+        self.assertNotIn("玉像石室", "".join(r.void))                                     # 交编剧的作废缘由不带暗藏之处
+
+    def test_groping_through_the_method_is_studying(self):
+        w = self.w
+        w.graph.set("北冥神功卷轴", "hidden", False)
+        effects.apply(w, [{"op": "push", "id": "player", "key": "inventory", "value": "北冥神功卷轴"}], "director")
+        self.assertIn("北冥神功卷轴", adjudicate.targets(w, "借微光继续摸索内功心法（一个时辰）"))  # 不说哪部，手边的秘籍就是所指
+        self.assertNotIn("北冥神功卷轴", adjudicate.targets(w, "摸索石壁，找找出路"))
 
     def test_the_page_is_audited_after_it_is_written(self):
         w = self.w

@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit（识名体检），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 arrive、写 set player location)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 arrive、写 set player location)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放 → 偏差交下回合导演）、names()（实体名表，含近处子地点的短名）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -234,7 +234,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             r.void.append(line)
             partial = effects._moves_player(world, op) and world.here != at  # 远行止步关前：前半程成立，交编剧写明，不必返工
             hard = physical(op) and not partial and bool((beat.get("text") or "").strip())  # 无文字的拍(旧写法的顶层后果)没有拍文可违
-            (r.hard if hard else r.soft).append(lexicon.Finding("void", i, effects.describe(op), f"第{i}拍：{line}", hard=hard))
+            ent = _thing(world, op) or effects.describe(op)  # 落不了的是一件器物：返工清单写明它究竟在哪
+            (r.hard if hard else r.soft).append(lexicon.Finding("void", i, ent, f"第{i}拍：{line}", hard=hard))
         r.beats.append({**{k: beat.get(k) for k in ("who", "to", "text", "mood")}, "text": (beat.get("text") or "") + aside})
         shown.append(beat)
         if beat.get("to") == "player" and beat.get("who") not in (None, "player"):
@@ -431,7 +432,7 @@ def brief(world, ruling: Ruling) -> list[str]:
     g, lines = world.graph, []
     for f in ruling.hard:
         line = f.message
-        if f.kind in ("acquire", "give") and g.kind(f.entity) == "item":
+        if f.kind in ("acquire", "give", "void") and g.kind(f.entity) == "item":  # 暗藏在隔壁的东西：主角要先到那里(同一拍里先走过去也行)
             line += f"（{f.entity}现{_where(world, f.entity)}）"
         elif f.kind == "unnamed":
             near = [i for i in g.where(type="item") if effects.place(world, i) in situation.near(world)
@@ -443,6 +444,17 @@ def brief(world, ruling: Ruling) -> list[str]:
             line += "（主角真要去留就写 set player location；没走成就改写成正要前往或止步）"
         lines.append(line)
     return lines
+
+
+def _thing(world, op) -> str | None:
+    """一条指令要动的器物(取到手、交出去、研习)：没有就是 None。"""
+    if not isinstance(op, dict):
+        return None
+    for x in (op.get("id"), op.get("value")):
+        x = effects.resolve(world, x) if isinstance(x, str) else None
+        if x and world.graph.kind(x) == "item":
+            return x
+    return None
 
 
 def _where(world, item: str) -> str:
