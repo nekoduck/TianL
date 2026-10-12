@@ -1,12 +1,12 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、pacing.record(节奏账)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
+[INPUT]: 依赖 world/（World、adjudicate、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、growth.SITTING(研习至少一顿饭)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
 [POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → 焦点检索与后台 → 导演逐拍提议
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
-       → 时长按措辞与道路结算(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
+       → 时长按措辞与道路结算(研习至少一顿饭)，一幕了结、无人相逼时导演写的幕间省略(cut)再让光阴跳过(歇满半日即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
        → 选项过出口检查、对象记入 menu 作下一回合的授意 → 事件门槛判定入江湖账本 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题与僵持，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍
@@ -19,7 +19,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
-from .world import access, adjudicate, body, lod, menu, pacing, perspective, rag, situation
+from .world import access, adjudicate, body, growth, lod, menu, pacing, perspective, rag, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -133,8 +133,17 @@ class Game:
         w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
         stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
         journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
-        spent = max(w.clock.minutes(plan["pace"]), journey)
+        spent = max(w.turn["minutes"], journey)
         days, _ = w.advance(spent)                    # 时长由措辞换算，不由 LLM 报数
+        scene_end = w.clock.label()
+        cut = plan.get("cut")
+        veto = cut and pacing.calm(w, ruling.question.get("state"), ruling.beats)  # 幕间省略：一幕了了、无人相逼才许跳
+        if cut and not veto:
+            gap = w.clock.minutes(cut)                # 「一夜」算到次日辰时：按收束之时起算
+            more, _ = w.advance(gap)
+            days, spent = days + more, spent + gap
+        elif veto:
+            log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
         mend = body.recover(w, spent)                 # 歇满半日，气血渐复、内伤降一级：伤病的好转也归规则
         arrived = w.sync()
@@ -143,8 +152,9 @@ class Game:
             log.info("未成立：%s", v)
         for f in ruling.hard + ruling.soft:
             log.info("体检·%s：%s", f.kind, f.message)
-        span = f"{plan['pace']}（{before} → {w.clock.label()}）" + \
-               (f"；另有 {journey // PER_DAY} 日路程，现已抵达{w.here}" if journey else "")
+        span = f"{plan['pace']}（{before} → {scene_end}）" + \
+               (f"；另有 {journey // PER_DAY} 日路程，现已抵达{w.here}" if journey else "") + \
+               (f"；此幕收束，光阴跳过{cut}（→ {w.clock.label()}）：正文末尾以一两句过场写出这段空白" if cut and not veto else "")
         news = [e for e in arrived if e["origin"] != "director"]
         turn = {"time": w.clock.label(), "clock": w.clock.parts(), "place": w.here,
                 "region": w.graph.get(w.here, "region"), "text": "", "options": [],
@@ -205,7 +215,8 @@ class Game:
     def _enact(world, plan, aim, staged, day0, rules, drop=None):
         """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
         被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
-        world.turn["minutes"] = world.clock.minutes(plan["pace"])
+        studies = any(op.get("op") == "study" for b in plan["beats"] for op in b.get("ops") or [] if isinstance(op, dict))
+        world.turn["minutes"] = max(world.clock.minutes(plan["pace"]), growth.SITTING if studies else 0)  # 研习至少一顿饭
         broken = staged and lod.broken(world, staged)  # 前提以回合开始时为准：主角这一举之前，原著本该如何
 
         def canon():

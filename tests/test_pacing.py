@@ -4,8 +4,9 @@
 [OUTPUT]: unittest 用例——两份实录里「剧情打转」的病灶逐条转成离线验收(v3 P1)：
           同一主题近四回合有三回合即在后台写明不得再起(隔一回合又来也算)、同一个人一再对主角说同一种话即提示换个推进方式、在一处僵持而局面不动即逼导演推进、
           某人对主角的看法五回合内不改写(同回合以后写为准)、情绪写在拍的 mood 里只给编剧不入账、伏笔至多两条且身体不作伏笔、
-          纠缠者的场外原著前提已破即作罢且场外动不了他、前提已破的原著近事在后台明标不得进台词、台词说出尚未发生的原著即违例
-[POS]: tests 的阻尼与纠缠者验证——v3 方案 P1-1(慢变量与阻尼)、P1-2(原著与纠缠者、台词事实出处)的离线证据
+          纠缠者的场外原著前提已破即作罢且场外动不了他、前提已破的原著近事在后台明标不得进台词、台词说出尚未发生的原著即违例；
+          幕间省略(本幕了结且无人相逼才许光阴跳过、「一夜」醒在辰时、编剧写出那段空白；本幕未了、拦阻追杀、受制于人则不许)、研习至少一顿饭、局面平静时后台提示可以跳
+[POS]: tests 的阻尼与纠缠者验证——v3 方案 P1-1(慢变量与阻尼)、P1-2(原著与纠缠者、台词事实出处)的离线证据，及时长「回回片刻」的修正(戏内光阴与幕间省略分开)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import unittest
@@ -73,6 +74,48 @@ class PacingTest(unittest.TestCase):
             game.llm.replies["小说家"] = hook(text)
             game.act("看")
         self.assertEqual([h["text"] for h in w.player["hooks"]], ["门外马蹄声近", "袖中书信未拆"])
+
+
+def scene(state="resolved", cut="半日", pace="片刻", beats=None, ops=()):
+    return StubLLM(director(pace=pace, cut=cut, question={"ask": "问", "state": state},
+                            beats=beats or [{"who": "player", "text": "你向众人拱手作别", "ops": list(ops)}]))
+
+
+class SceneCutTest(unittest.TestCase):
+    """25 回实录：导演回回取「片刻」，25 回合只过了半日——戏内光阴本就是片刻，缺的是幕与幕之间的空白。"""
+
+    def play(self, llm):
+        game = Game(World.create("测"), llm)
+        tick = game.world.clock.tick
+        game.act("作别")
+        return game, game.world.clock.tick - tick
+
+    def test_a_settled_scene_may_skip_ahead(self):
+        game, spent = self.play(scene())
+        self.assertEqual(spent, 15 + 360)                                               # 片刻 + 半日
+        self.assertIn("光阴跳过半日", game.llm.writer_prompts[-1])                       # 编剧写出这段空白
+
+    def test_a_night_cut_wakes_at_dawn(self):
+        game, _ = self.play(scene(cut="一夜"))
+        self.assertTrue(game.world.clock.label().endswith("辰时"))
+
+    def test_no_skip_while_the_scene_is_unsettled(self):
+        for llm in (scene(state="open"),                                                # 本幕未了
+                    scene(beats=[{"who": "左子穆", "to": "player", "text": "左子穆横剑拦住你：「不许走！」"}])):  # 仍有人拦阻
+            _, spent = self.play(llm)
+            self.assertEqual(spent, 15)
+        w = World.create("测")
+        w.graph.link("左子穆", "player", "扣押")
+        self.assertEqual(pacing.calm(w, "resolved"), "主角受制于人")
+
+    def test_study_takes_a_sitting_whatever_the_wording(self):
+        _, spent = self.play(scene(cut="无", ops=[{"op": "study", "id": "player", "value": "无量剑法"}]))
+        self.assertGreaterEqual(spent, 45)                                              # 片刻练不成功
+
+    def test_the_director_is_nudged_to_cut_when_nothing_presses(self):
+        w = World.create("测")
+        self.assertIn("cut", rag.backstage(w, tempo=["resolved"])["tempo"])
+        self.assertNotIn("cut", rag.backstage(w, tempo=["open"])["tempo"])
 
 
 class EntangledTest(unittest.TestCase):

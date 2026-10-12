@@ -3,7 +3,7 @@
 [OUTPUT]: 对外提供 情境层的查询与连带——
           near()（近旁：同一处所之内、零日可达、无不通之关的子地点）、around()（主角身边之人：此地 + 近旁）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
-          captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、
+          captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：群体与寻常物件，入账、有归属、离远即回收）、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
@@ -20,6 +20,7 @@ FOLLOW = "随行"                                                     # X —随
 CUSTODY = {"扣为人质", "囚禁", "拘作花匠", "扣押", "擒获", "挟持", "绑架", "押解", "软禁"}  # 擒者 —rel→ 被擒者
 ROUT_DAYS = 2                                                       # 溃退者至少隔这么多日才会卷土重来
 MAX_QUESTS = 4
+PERIL = 0.15                                                        # 气血不足此比例即命悬一线
 STALE = 12                                                          # 这么多回合未推进的未了之事，提示导演收束
 GROUP, THING = "group", "thing"
 SPAWN_KINDS = {GROUP, THING}
@@ -110,6 +111,11 @@ def follow(world, route: list[str]) -> list[str]:
 # ============================================================
 def captors(world, pid: str) -> list[str]:
     return [e["src"] for e in world.graph.edges if e["rel"] in CUSTODY and e["dst"] == pid]
+
+
+def imperiled(world) -> bool:
+    """命悬一线：气血不足 PERIL——兜底选项、幕间省略、导演后台共用这一个口径。"""
+    return world.player["hp"] <= world.player["max_hp"] * PERIL
 
 
 def captive(world) -> set[str]:

@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors、
+[INPUT]: 依赖 world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets，world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
 [OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
@@ -12,7 +12,6 @@ import re
 from . import access, adjudicate, effects, lexicon, pacing, perspective, situation
 
 SIZE = 3
-PERIL = 0.15  # 气血低于此比例即险境：兜底只给眼前的应对(与 rag.PERIL 同一口径)
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
 
 
@@ -43,7 +42,7 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     """兜底项看局面：导演旧写法或离线说书人给的选项；途中则先是续行；再是推进未了之事、与身边之人攀谈、
     近处一条不是来路的出路(按方向措辞，不报节点全名)、歇息——身处险境(命悬一线、受制于人)时只给眼前的应对，不给走开与歇息。"""
     me = world.player
-    peril = me["hp"] <= me["max_hp"] * PERIL or bool(situation.captors(world, "player"))
+    peril = situation.imperiled(world) or bool(situation.captors(world, "player"))
     out = [(o, []) for o in pack_options]
     if me.get("en_route") and not peril:
         out.append((f"继续赶往{me['en_route']['to']}", [me["en_route"]["to"]]))
@@ -53,7 +52,7 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in sorted(situation.around(world))[:2]]
     if not peril:
         out += [(e["way"], [e["name"]]) for e in access.exits(world) if e["days"] == 0 and not e["back"]][:2]
-        out.append(("歇息片刻", []))
+        out.append(("歇息", []))
     out.append(("四下察看", []))
     return out
 

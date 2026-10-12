@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
-[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，只给编剧)/本幕之问/场景实体/时长措辞/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
+[INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS（幕间省略措辞）；llm 参数鸭子类型（Gemini 或 None）
+[OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，只给编剧)/本幕之问/场景实体/时长措辞 pace 与幕间省略 cut/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象)/伏笔/可传之事，给 on_text 即边写边送）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
@@ -16,6 +16,7 @@ from . import prompts
 from .llm import LLMError
 from .prompts import TENSIONS
 from ..world.clock import PACES
+from ..world.pacing import CUTS
 
 log = logging.getLogger("tianlong")
 TAIL = re.compile(r"\n[ \t]*={3,}")  # 编剧正文之后的分隔线，其后是 梗概/传言 两行
@@ -69,7 +70,7 @@ def _plain_director(pack: dict, deed: str) -> dict:
                key=len, default=None)  # 「澜沧江边高崖」不被「澜沧江」截胡；兜底选项的方向措辞(出练武厅)也认得
     text = f"你动身前往{dest}。" if dest else f"你{deed}。" if deed else "你凝神四顾。"
     ops = [{"op": "set", "id": "player", "key": "location", "value": dest}] if dest else []
-    return {"beats": [{"who": "player", "text": text, "ops": ops}], "pace": "片刻" if deed else "瞬息",
+    return {"beats": [{"who": "player", "text": text, "ops": ops}], "pace": "片刻" if deed else "瞬息", "cut": None,
             "canon": {"unfolds": True, "why": ""}, "tension": "平",
             "question": {"ask": deed, "state": "resolved" if dest or not deed else "open", "by": None}}
 
@@ -94,13 +95,14 @@ def _plan(r: dict, pack: dict, deed: str) -> dict:
     beats = beats or [{"who": "player", "to": None, "text": "你凝神四顾。", "ops": []}]
     canon = r.get("canon") if isinstance(r.get("canon"), dict) else {}
     q = r.get("question") if isinstance(r.get("question"), dict) else {}
-    pace, tension = r.get("pace"), r.get("tension")
+    pace, cut, tension = r.get("pace"), r.get("cut"), r.get("tension")
     return {"beats": beats,
             "question": {"ask": str(q.get("ask") or deed)[:40],
                          "state": q.get("state") if q.get("state") in QUESTION_STATES else "open",
                          "by": q.get("by") if isinstance(q.get("by"), str) and q.get("by") else None},
             "spawn": _dicts(r.get("spawn"))[:3],
             "pace": pace if isinstance(pace, str) and pace in PACES else ("片刻" if deed else "瞬息"),
+            "cut": cut if isinstance(cut, str) and cut in CUTS else None,  # 幕间省略：「无」与不识的措辞都当没有
             "canon": {"unfolds": _yes(canon.get("unfolds"), True), "why": str(canon.get("why") or "")[:60]},
             "tension": tension if isinstance(tension, str) and tension in TENSIONS else "起",
             "options": [o[:20] for o in _texts(r.get("options"), split=True)][:3]}  # 旧写法的选项：编剧未拟时兜底
@@ -113,7 +115,7 @@ def direct(llm, pack: dict, gm: dict, deed: str) -> dict:
 
 def _draft(plan: dict) -> dict:
     """交还导演返工的上一稿：去掉系统补的字段，形状与它写的一样。"""
-    return {k: plan[k] for k in ("beats", "question", "spawn", "pace", "canon", "tension")}
+    return {k: plan[k] for k in ("beats", "question", "spawn", "pace", "cut", "canon", "tension")}
 
 
 def repair(llm, pack: dict, gm: dict, deed: str, plan: dict, problems: list[str]) -> dict | None:

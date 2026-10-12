@@ -1,7 +1,7 @@
 """
 [INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/途中去向与余程/出路按方向措辞、注明关口之类与来路）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
          dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
-[OUTPUT]: 对外提供 render() / render_backstage() / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
+[OUTPUT]: 对外提供 render() / render_backstage() / TIME_GUIDE（光阴分戏内 pace 与幕间省略 cut） / SHAPES（示例取值轮换） / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、set epithet 立名号） / THREATS / TENSIONS 与
           director / repair / writer / recap / simulator / chronicler 六组 (system, user) 组装器（场外两组可附江湖近闻）
 [POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
@@ -12,6 +12,7 @@
 import json
 
 from ..world.clock import PACES
+from ..world.pacing import CUTS
 
 STATUS = {"alive": "安好", "wounded": "负伤", "dead": "已故"}
 TENSIONS = ("平", "起", "高潮", "收")
@@ -143,6 +144,11 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 立了才能在 ops 里用它。群体须属于此地附近有据点或有人的门派，不得属于原著近事里尚未到场的势力；物件不得冒用原著器物之名——此地暗藏的原著器物被发现，直接用它的原名，不要另立。路人龙套只活在叙事里，不写 ops。
 不成立之事：新造人物/地点/原著器物、去不了的地方、拿此地没有的器物、死者复生、触碰不在身边的人、替主角做他没选的事（主角只做玩家所选之事；顺手取物、杀人、吸功须是玩家所指）。"""
 
+TIME_GUIDE = ("【光阴】时长分两段，都只选措辞、由系统换算。pace 是本回合拍里的事耗了多久：瞬息(一招一式、一句话)、片刻(几句对答、走几步、看一处)、"
+              "一顿饭(一场较量、一番长谈、细细搜寻、包扎伤口)、半日(练功、疗伤、等候、四处打听)、一夜(歇宿、守夜、彻夜长谈)、一日(整日练功或劳作)——照拍里的事如实取，研习至少一顿饭。"
+              "cut 是幕间省略：本幕之问了结、无人相逼时，最后一拍写成收束或过场，光阴随即跳到下一处有戏的时刻（" + "/".join(CUTS) + "）；说书人不逐刻细磨平静的光阴，一幕了了就该跳。"
+              "本幕未了、主角受制或命悬一线、仍有人拦阻追杀时写 无——系统会核对，不成立的 cut 作废。")
+
 NAMES = ("【称谓】标了「主角不知其名」的人，主角的台词里不得叫出其名或「姓+称谓」（钟姑娘、段公子），旁白也只写其外貌叫法；"
          "标了「不知你姓名」的人，不得叫出主角名号（王兄、王侠墨）。要让人知道名字，就让他在台词里自报家门（「小生段誉」「我叫钟灵」），"
          "或由认得他的人当面叫出；主角自报家门写「在下某某」。可给不知其名之人定一个外号：{\"op\":\"set\",\"id\":\"钟灵\",\"key\":\"epithet\",\"value\":\"绿衫少女\"}。")
@@ -150,14 +156,20 @@ NAMES = ("【称谓】标了「主角不知其名」的人，主角的台词里�
 THREATS = "威胁须有来源：打断、堵路、追击主角的，只能是在场或能赶来的人、已立的群体、或此刻上演的原著。"
 
 
+# 示例的结局、时长、幕间省略与张力轮换着给：写死一组值，小模型就回回照抄(43 回实录里 55 次导演输出有 45 次「片刻」、从无「收」)
+SHAPES = (("open", "片刻", "无", "起"), ("resolved", "一顿饭", "半日", "收"),
+          ("interrupted", "瞬息", "无", "高潮"), ("resolved", "片刻", "一夜", "平"))
+
+
 def _example(pack: dict) -> str:
-    """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错。"""
+    """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错；取值随时辰轮换，不给它一个可抄的默认值。"""
     who = pack["people"][0]["name"] if pack["people"] else "段誉"
+    state, pace, cut, tension = SHAPES[sum(map(ord, pack.get("time", ""))) % len(SHAPES)]
     ex = {"beats": [{"who": "player", "text": "你拱手自报来历，说明来意", "ops": []},
                     {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」",
                      "ops": [{"op": "link", "src": who, "dst": "player", "rel": "疑忌", "note": "你来路不明"}]}],
-          "question": {"ask": f"能否取信于{who}", "state": "open", "by": None},
-          "spawn": [], "pace": "片刻", "canon": {"unfolds": True, "why": ""}, "tension": "起"}
+          "question": {"ask": f"能否取信于{who}", "state": state, "by": who if state == "interrupted" else None},
+          "spawn": [], "pace": pace, "cut": cut, "canon": {"unfolds": True, "why": ""}, "tension": tension}
     return "【示例·只示格式，不示内容】" + json.dumps(ex, ensure_ascii=False)
 
 
@@ -173,10 +185,11 @@ def _director_system(pack: dict) -> str:
         "道路并非想走就走：主角要过后台所列的关口，须在节拍里兑现（应付守卫、攀崖涉险、备船渡水……）。"
         "每回合标出本幕之问：主角这一举所求的那件事，结局是了结(resolved)、悬而未决(open)还是被打断(interrupted，须写明 by 是谁)。"
         "选项不归你拟，你只写到此刻为止。\n"
-        + PLOT_GUIDE +
+        + PLOT_GUIDE + "\n" + TIME_GUIDE +
         '\n输出 JSON：{"beats":[{"who":"player或人物名","to":"对谁说话(可省；对主角说话写player)","text":"不超过40字，写清动作与对白要点","mood":"此刻情绪两三字(可省；只给编剧渲染，不入账)","ops":[…]}，共3~6拍],'
         '"question":{"ask":"本幕之问","state":"resolved/open/interrupted","by":"打断者，否则 null"},"spawn":[…],'
-        f'"pace":"本回合主角举动的时长，只可取 {"/".join(PACES)} 之一（远行路程由系统另算）",'
+        f'"pace":"本回合拍里的事耗时，只可取 {"/".join(PACES)} 之一（见【光阴】；远行路程由系统另算）",'
+        f'"cut":"幕间省略，取 {"/".join(CUTS)} 之一，局面未了写 无",'
         '"canon":{"unfolds":true或false,"why":"原著不能照常发生时的缘由，否则留空"},'
         f'"tension":"本回合张力，取 {"/".join(TENSIONS)} 之一"}}\n'
         + _example(pack)

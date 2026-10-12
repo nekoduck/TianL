@@ -1,14 +1,18 @@
 """
-[INPUT]: 只依赖 re；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
+[INPUT]: 依赖 re，world/situation 的 captors / imperiled（幕间省略的闸门）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
 [OUTPUT]: 对外提供 THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、
-          advise()（给导演后台的阻尼提示）、STREAK / WINDOW / LOG
+          advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：本幕了结、无人相逼才许光阴跳过）、CUTS、STREAK / WINDOW / LOG
 [POS]: world 层的阻尼器——慢变量之外，剧情还会在「快变量」上打转：连着几回合都是被拦、赔罪、催促，同一个人反复同一句诉求，
        主角在一处僵持多回合而局面纹丝不动（43 回与 25 回两份实录里都见过）。这里只做确定性统计：按词表给每回合打主题标签、
        记下谁对主角说了什么主题、局面有没有变；近 WINDOW 回合里有 STREAK 回合是同一题，即在后台写明「此题不得再起」「此人换个推进方式」「此地须推进」。
-       不调 LLM、不改世界，只给导演一句话——阻尼，不是禁令之外的另一套规则
+       不调 LLM、不改世界，只给导演一句话——阻尼，不是禁令之外的另一套规则。
+       光阴分两段：戏内光阴(pace，举动本身耗时)与幕间省略(cut，一幕了结后跳到下一处有戏的时刻)；后者是场面结构的决定，由 calm 把关——
+       25 回实录里导演回回取「片刻」，因为一回合只写到此刻为止的三五拍，戏内光阴本就是片刻，缺的是幕与幕之间的空白
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
+
+from . import situation
 
 # 主题词表：只认强字眼，宁漏勿滥——漏了不过少一句提示，滥了会把正常的戏也拦下
 THEMES = {
@@ -23,6 +27,8 @@ THEMES = {
 STREAK = 3   # 最近 WINDOW 回合里出现几回合算打转(25 回实录里「拦阻」是隔一回合又来，严格连续会漏)
 WINDOW = 4
 LOG = 6      # 节奏账只留最近几回合
+CUTS = ("一顿饭", "半日", "一夜", "一日")  # 幕间省略可取的措辞：戏内光阴归 pace，幕与幕之间的空白归 cut
+TENSE = {"拦阻", "追杀"}                   # 本回合还在写这些，局面就没有平静下来
 
 
 def tag(text: str) -> list[str]:
@@ -37,6 +43,19 @@ def record(world, beats: list[dict], changed: bool):
                     for t in tag(b.get("text"))})
     log = (me.get("pacing") or []) + [{"themes": themes, "pleas": pleas, "place": world.here, "still": not changed}]
     me.set("pacing", log[-LOG:])
+
+
+def calm(world, state: str, beats=()) -> str | None:
+    """幕间省略的闸门：本幕之问了结、无人相逼，光阴才可跳过；否则返回不许跳的缘由。
+    省略是场面结构的决定，不是举动的时长——刀架在脖子上时，没有「半日之后」。"""
+    if state != "resolved":
+        return "本幕之问未了"
+    if situation.captors(world, "player"):
+        return "主角受制于人"
+    if situation.imperiled(world):
+        return "主角命悬一线"
+    tense = TENSE & {t for b in beats for t in tag(b.get("text"))}
+    return f"局面仍紧（{'、'.join(sorted(tense))}）" if tense else None
 
 
 def tired(log: list[dict], field: str = "themes") -> list[str]:
@@ -62,6 +81,6 @@ def advise(world) -> list[str]:
             break
         still += 1
     if still >= STREAK:
-        out.append(f"主角在此地僵持{still}回合，局面纹丝未动：本回合必须推进——让光阴跳过(半日、一夜)、有人离场或到来、"
+        out.append(f"主角在此地僵持{still}回合，局面纹丝未动：本回合必须推进——了结此问后用 cut 跳过光阴(半日、一夜)、有人离场或到来、"
                    "主角得以脱身或有所得，或把近日将至的原著引到眼前；不要再写原地的周旋")
     return out

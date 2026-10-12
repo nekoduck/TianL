@@ -73,7 +73,7 @@ class FallbackTest(unittest.TestCase):
         effects.apply(self.w, [GO("剑湖宫")], "director")
         texts = self.texts()
         self.assertFalse(any("·" in t or "练武厅" in t for t in texts))              # 刚走出来的厅不再请主角回去
-        self.assertIn("歇息片刻", texts)
+        self.assertIn("歇息", texts)
 
     def test_on_the_road_the_first_fallback_is_to_go_on(self):
         effects.apply(self.w, [GO(FAR)], "director")
@@ -90,7 +90,7 @@ class FallbackTest(unittest.TestCase):
         me = self.w.player
         me.set("hp", me["max_hp"] // 10)
         texts = self.texts()
-        self.assertNotIn("歇息片刻", texts)
+        self.assertNotIn("歇息", texts)
         self.assertNotIn("出练武厅", texts)                                               # 命悬一线：不给走开
         self.assertIn("四下察看", texts)
 

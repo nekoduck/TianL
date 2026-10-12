@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 world/pacing 的 advise（阻尼），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
-         world/situation（近旁、同行、受制、久悬之事）、world/growth 的 progress（研习进度）
+[INPUT]: 依赖 world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
+         world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress（研习进度）
          与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
@@ -8,7 +8,7 @@
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
        backstage 给导演——焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、此地上演的原著、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
-       原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
+       原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问、局面平静则提示幕间省略，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -20,7 +20,6 @@ TIERS = ((15, "不会武功"), (35, "三流身手"), (60, "二流好手"), (85, 
 NEWS_WINDOW = 3
 PLACES_SHOWN = 15  # 后台只列最近的若干去处；更远之地导演仍可直呼其名，距离由系统结算
 SECRET_HORIZON = 30  # 隐情的揭示事件须在一月内到期（或已发生）才交给导演——第四十八回的真相不该在第一回就摆上桌
-PERIL = 0.15         # 气血低于此比例即濒危：本回合必须收场
 FEEBLE = 5           # 功力不及此者（孩童、文弱之辈）不入较量预裁
 
 
@@ -161,8 +160,8 @@ def _secret_open(world, edge: dict, canon_by_id: dict) -> bool:
 QUESTION = {"resolved": "已了结", "open": "悬而未决", "interrupted": "被打断"}
 
 
-def _tempo(tempo) -> str:
-    """节奏看本幕之问的结局，而不只看张力标签：一问已解宜开新问，连番被打断则本回合必须了结。"""
+def _tempo(world, tempo) -> str:
+    """节奏看本幕之问的结局，而不只看张力标签：一问已解宜开新问(局面平静则提示幕间省略)，连番被打断则本回合必须了结。"""
     if not tempo:
         return ""
     line = "近来本幕之问：" + "、".join(QUESTION.get(t, t) for t in tempo)
@@ -170,6 +169,8 @@ def _tempo(tempo) -> str:
         line += "——连番被打断，本回合必须让主角此问有个了结，不得再打断"
     elif tempo[-1] == "resolved":
         line += "——上一问已解，宜由人物的图谋或主角的所求引出新问，不必非起刀兵"
+        if pacing.calm(world, tempo[-1]) is None:
+            line += "；眼下无人相逼：本回合了结此问后宜用 cut 跳到下一处有戏的时刻，不必在此地逐刻细磨"
     elif list(tempo[-3:]) == ["open"] * 3:
         line += "——久悬未决，本回合宜推进或了结"
     return line
@@ -230,9 +231,9 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=()) -
                      f"{'今日稍后' if n <= 0 else f'{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],
         "ruling": ruling,
-        "tempo": _tempo(tempo),
+        "tempo": _tempo(world, tempo),
         "fatigue": pacing.advise(world),
-        "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if me["hp"] <= me["max_hp"] * PERIL else "",
+        "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if situation.imperiled(world) else "",
         "hidden": [f"{n}（{g.get(n, 'type')}）：{g.get(n, 'persona') or g.get(n, 'desc')}"
                    + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "")
                    + (f"｜发现即写 push player inventory {n}（拍文里怎么称呼都行，指令用此名，不要另立物件）"
