@@ -2,12 +2,14 @@
 [INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 around，World 门面（graph / player / aliases / knowledge）
 [OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
           audit()（逐拍：听来的名字入认知，叫出不该知道的名字即违例——主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔，不为旁人称谓耗一轮返工）、mask()（交编剧之前，主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称）、
-          veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露）
+          veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码）、
+          thing()（器物在主角眼中的叫法：名字里带着不识之人的名号就只叫那件东西本身）
 [POS]: world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
        识名是认知最表层的一环：主角初见钟灵，只知是「大眼圆脸的少女」；她自报姓名、或认得她的人当面叫她，主角才知道她叫钟灵。
        人物之间：原著里有关系、同一门派即互相识名，戏里听见的另记在人物节点的 knows 上；主角所识之人记在黑板的 acquaintances 上（系统维护，导演写不动）。
        纯规则、零调用：追认只增加认知，从不挪动任何人；查不出的旁白漏名，由 mask 在交编剧之前确定性地换掉——不给即不泄露
-       veil 连人物眼下之事(intent)一并过 mask——那一句是导演写的，里面的名字主角未必识得
+       veil 连人物眼下之事(intent)一并过 mask——那一句是导演写的，里面的名字主角未必识得；
+       v5：四十一件器物的名字本身带着人名(云中鹤钢爪)、近日传闻与器物描述也写着名字，都在交编剧之前换成主角看得见的说法
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -246,6 +248,18 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     return "".join(out)
 
 
+def thing(world, name: str) -> str:
+    """器物在主角眼中的叫法(v5)：名字里带着主角不识之人的名号(云中鹤钢爪、钟灵黄金钿盒)，便只叫那件东西本身——
+    编剧看见「钢爪」，看不见「云中鹤」；选项写「钢爪」，器物近似名照样落回原物。"""
+    if not name:
+        return name
+    tab = lexicon.table({s: p for s, p in _surfaces(world).items() if not knows(world, "player", p)})
+    out = name
+    for _, a, b in reversed(lexicon.find(out, tab)):
+        out = out[:a] + out[b:].removeprefix("的")
+    return out.strip() or name
+
+
 def _swap(text: str, tab, word, drop=None) -> str:
     """把名字换成 word(pid)；drop 命中名字之前的文字(已有叫法作同位语)则直接去掉名字。"""
     for pid, a, b in reversed(lexicon.find(text, tab)):
@@ -260,7 +274,8 @@ def veil(world, pack: dict) -> dict:
         pid = p["name"]
         if not knows(world, "player", pid):
             p.update(name=handle(world, pid), title="来历不明", faction="门派不明",
-                     toward_you=[mask(world, t) for t in p["toward_you"]], carrying=p["carrying"])
+                     toward_you=[mask(world, t) for t in p["toward_you"]])
+        p["carrying"] = [thing(world, c) for c in p["carrying"]]
         if p.get("intent"):
             p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
@@ -271,6 +286,11 @@ def veil(world, pack: dict) -> dict:
                      for p in sorted(situation.around(world) - shown)]
     out["dead"] = [handle(world, p) for p in out.get("dead", [])]
     out["journal"] = [mask(world, j) for j in out["journal"]]
+    out["news"] = [mask(world, n) for n in out.get("news", [])]  # 传闻也从主角的视角说：不识的人只剩叫法
+    out["items"] = [{"name": thing(world, i["name"]), "desc": mask(world, i["desc"] or "")} for i in out.get("items", [])]
+    out["scene"] = {**out["scene"], "state": mask(world, out["scene"]["state"]) if isinstance(out["scene"].get("state"), str) else out["scene"].get("state"),
+                    "lore": [mask(world, x) for x in out["scene"].get("lore") or []]}
     out["player"] = {**out["player"], "synopsis": mask(world, out["player"]["synopsis"]),
-                     "threads": [mask(world, t) for t in out["player"]["threads"]]}
+                     "threads": [mask(world, t) for t in out["player"]["threads"]],
+                     "inventory": [{"name": thing(world, i["name"]), "desc": mask(world, i["desc"] or "")} for i in out["player"]["inventory"]]}
     return out

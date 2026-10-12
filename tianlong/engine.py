@@ -8,13 +8,15 @@
 [POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
-       → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔(场外推演与新到期的远方原著同时在后台进行，其传闻下回合才到)
+       → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔
        → 编剧按三个槽位(此刻/此后/机缘)拟选项，正文写出账上没有的进境、得失、去留、生死、擒放(adjudicate.afterword)记作偏差(drift)交下回合导演
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
+       → 场外推演与新到期的远方原著(v5 在成文与验收之后：编剧、掩码与选项验收看的是同一个世界；其传闻下回合才到)
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
-       v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册，导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著
+       v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；
+       抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -79,6 +81,12 @@ def _staged(plan: dict, deed: str) -> dict:
     if plan.get("scene"):
         plan["question"] = scene.question(plan["scene"], deed)
     return plan
+
+
+def _arrival(w, origin: str) -> list[str]:
+    """抵达即遭遇(v5)：主角这一回合换了地方，那里眼前有谁——导演的节拍写在动身之前，编剧得知道到了之后看见了谁。"""
+    faces = [perspective.handle(w, p) for p in rag.scene(w)["people"]] if w.here != origin else []
+    return [f"到了此地，眼前有：{'、'.join(faces)}"] if faces else []
 
 
 def _cut_word(cut) -> str:
@@ -197,7 +205,7 @@ class Game:
         turn = {"time": w.clock.label(), "clock": w.clock.parts(), "place": w.here,
                 "region": w.graph.get(w.here, "region"), "text": "", "options": [],
                 "news": [{"id": e["id"], "witnessed": bool(e.get("witnessed")), "date": w.clock.label(e["day"]),
-                          "place": e["where"], "text": e["summary"]} for e in news],
+                          "place": e["where"], "text": perspective.mask(w, e["summary"])} for e in news],  # 界面也从主角的视角说
                 "status": rag.condition(w), "void": void}
         emit("stage", "write")
         emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
@@ -205,17 +213,15 @@ class Game:
         veil = lambda text, who=None: perspective.mask(w, text, who)
         frame = {"deed": deed or "环顾四周", "beats": [veil(b["text"], b["who"]) + (f"〔{b['mood']}〕" if b.get("mood") else "") for b in ruling.beats if b["text"]],
                  "void": [veil(v) for v in void], "span": span, "prev": self.last_text[-TAIL:],
-                 "notes": [veil(n) for n in ruling.notes + ([mend] if mend else [])], "addressed": [perspective.handle(w, p) for p in ruling.addressed],
+                 "notes": [veil(n) for n in ruling.notes + ([mend] if mend else []) + _arrival(w, origin)],
+                 "addressed": [perspective.handle(w, p) for p in ruling.addressed],
                  "candidates": [veil(c) for c in ruling.candidates],
-                 "news": [e["summary"] for e in arrived if not e.get("witnessed")],  # 亲历之事已在节拍里，不再当传闻
+                 "news": [veil(e["summary"]) for e in arrived if not e.get("witnessed")],  # 亲历之事已在节拍里，不再当传闻
                  "slots": choices.slots(w)}                # 选项先定槽位：此刻 / 此后 / 机缘
-        with ThreadPoolExecutor(max_workers=1) as pool:  # 场外推演与新到期的远方原著，与编剧落笔并行：其传闻本就迟到
-            offstage_job = pool.submit(self._offstage, days)
-            stream = on and _paragraphs(lambda d: emit("text", veil(d)))
-            page = agents.write(self.llm, view, frame, on_text=stream)
-            if stream:
-                stream.flush()
-            offstage_job.result()
+        stream = on and _paragraphs(lambda d: emit("text", veil(d)))
+        page = agents.write(self.llm, view, frame, on_text=stream)
+        if stream:
+            stream.flush()
         page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
         drift = growth.unearned(w, lexicon.mastery(page["text"], "player"))  # 只记账上没有的那一阶
         slips = adjudicate.afterword(w, page["text"])  # 正文写了账上没有的得失、去留、生死、擒放
@@ -232,10 +238,13 @@ class Game:
         turn["options"] = [text for text, _ in picked]
         facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))
         memory = veil(page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
+        if len(w.player["name"]) >= 2:  # 近事一律以「你」称主角：书记不会把「你」与主角名号当成两个人
+            memory = memory.replace(w.player["name"], "你")
         weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
+        self._offstage(days)  # 场外推演与新到期的远方原著(v5 在成文、验收之后)：编剧落笔、掩码、选项验收看的是同一个世界，其传闻本就迟到
         self._close(ruling, page, memory, moved=w.here != origin, deed=deed, spine=story["spine"])
         self.options, self.last_text = turn["options"], page["text"]
         self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]

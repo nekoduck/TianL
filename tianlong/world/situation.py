@@ -2,7 +2,7 @@
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
           near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
-          area() / cast() / enlist() / muster() / elsewhere() / debuted()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
+          area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
@@ -95,6 +95,13 @@ def around(world, loc: str | None = None) -> set[str]:
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
     return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
             and (not area(world, n.get("location")) or p in seen)}
+
+
+def inhabited(world) -> bool:
+    """这一片有没有人(不论在不在跟前)：传闻要有传话的人——独处石洞，江湖上的事传不进来。"""
+    g, spots = world.graph, near(world)
+    return bool(party(world)) or any(n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
+                                     for p, n in g.nodes.items())
 
 
 def debuted(world, pid: str) -> bool:

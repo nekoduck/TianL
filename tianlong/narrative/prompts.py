@@ -12,6 +12,7 @@
        导演只写到此刻为止、不拟选项，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
        编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；
        v5：场外推演与史官另有 OFFSTAGE 纲领(它们没有拍、没有主角，说法与指令逐句对账，见 world/lod)，史官另看【相关者此后的原著】及其前提(_premise 译成人话)；
+       示例在眼前无人时不出现任何人名；关系网标明是明面上的关系、主角未必都知道；书记知道「你」就是主角；
        主角眼前的原著可在近旁上演、或要把身边之人带往别处(交导演演出这一别)；后台另列「此地另有其人」(同在一片而不在眼前，要登场写 arrive)与「近处的熟人」；改文风、改叙事纲领只动这一个文件
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -53,7 +54,7 @@ def render(pack: dict) -> str:
         _section("在场遗体", pack["dead"]),
         _section("近旁·同一处所之内，喊一声就到", pack.get("nearby", [])),
         "【同行】" + "、".join(pack["party"]) if pack.get("party") else "",
-        _section("关系网·主角所知", pack["relations"]),
+        _section("关系网·在场之人明面上的关系（主角未必都知道，不得替他说破）", pack["relations"]),
         "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "")
                               + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),
         (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
@@ -185,13 +186,20 @@ SHAPES = (("转", "片刻", "无"), ("合", "一顿饭", "半日"), ("断", "瞬
 
 
 def _example(pack: dict) -> str:
-    """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错；取值随时辰轮换，不给它一个可抄的默认值。"""
-    who = pack["people"][0]["name"] if pack["people"] else "段誉"
+    """一个只示格式的完整输出，用本场真实 id——小模型照着写，id 才不会出错；取值随时辰轮换，不给它一个可抄的默认值。
+    眼前无人时示例里也不出现任何人名(v5)：写死的「段誉冷眼打量你」会让导演在空石洞里回回想起段誉。"""
     state, pace, cut = SHAPES[sum(map(ord, pack.get("time", ""))) % len(SHAPES)]
-    ex = {"beats": [{"who": "player", "text": "你拱手自报来历，说明来意", "ops": []},
-                    {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」", "mood": "戒备",
-                     "ops": [{"op": "set", "id": who, "key": "intent", "value": "要弄清你的来路"}]}],
-          "scene": {"state": state, "ask": f"能否取信于{who}", "by": who if state == "断" else None},
+    if pack["people"]:
+        who = pack["people"][0]["name"]
+        beats = [{"who": "player", "text": "你拱手自报来历，说明来意", "ops": []},
+                 {"who": who, "to": "player", "text": f"{who}冷眼打量你，手按剑柄：「来路不明之人，也敢多问？」", "mood": "戒备",
+                  "ops": [{"op": "set", "id": who, "key": "intent", "value": "要弄清你的来路"}]}]
+        ask, by = f"能否取信于{who}", who if state == "断" else None
+    else:
+        beats = [{"who": "player", "text": "你举火四下照看，摸索石壁上的缝隙", "ops": []},
+                 {"who": None, "text": "火光摇曳，四下寂然，只有水声隐隐", "ops": []}]
+        ask, by, state = "能否找到出路", None, "合" if state == "断" else state
+    ex = {"beats": beats, "scene": {"state": state, "ask": ask, "by": by},
           "spawn": [], "pace": pace, "cut": cut, "clock": [], "canon": {"unfolds": True, "why": ""}}
     return "【示例·只示格式，不示内容】" + json.dumps(ex, ensure_ascii=False)
 
@@ -266,7 +274,8 @@ def writer(pack: dict, frame: dict) -> tuple[str, str]:
 
 def recap(synopsis: str, lines: list[str]) -> tuple[str, str]:
     system = ("你是说书人的书记。把【旧梗概】与【新近事】合为一段不超过 200 字的前情梗概：保留人物恩怨、承诺、未了之事与主角处境，"
-              '删去细节与形容，按时间先后叙述。输出 JSON：{"synopsis":"…"}')
+              "删去细节与形容，按时间先后叙述。近事与梗概里的「你」就是主角，梗概也一律以「你」称他——不要把「你」与主角的名号当成两个人。"
+              '输出 JSON：{"synopsis":"…"}')
     return system, f"【旧梗概】{synopsis or '（无）'}\n{_section('新近事', lines)}"
 
 

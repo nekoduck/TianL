@@ -6,7 +6,8 @@
           一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
           账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、成文之后再对账、导演失声)；
           眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)；
-          P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)
+          P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)；
+          P2(LeakTest：器物名不带生人、地点现状与器物描述不泄底、石洞里听不到传闻、无人时示例不出人名、近事以「你」称主角)
 [POS]: tests 的连贯性验证——36 回实录里「段誉不来」「剧情前后打架」的病灶在这里逐条成为用例；与 test_state(v4 状态层)、test_story(v4 故事层)互补
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -19,7 +20,7 @@ from tianlong.engine import Game, _newsworthy
 from tianlong.narrative import agents, prompts
 from tianlong.narrative.llm import LLMError
 from tianlong.story import brief, choices, scene, timing
-from tianlong.world import body, bond, effects, graph, growth, lod, menu, rag, situation
+from tianlong.world import body, bond, effects, graph, growth, lod, menu, perspective, rag, situation
 from tianlong.world.clock import PACES, PER_DAY, span
 from tianlong.world.world import World
 
@@ -521,3 +522,46 @@ class NewsTest(unittest.TestCase):
         sworn = [{"op": "link", "src": "段誉", "dst": "player", "rel": "结义"}]
         self.assertEqual(_newsworthy(suspect, 5, 0), 0)
         self.assertEqual(_newsworthy(sworn, 5, 0), 1)
+
+
+# ============================================================
+#  P2 信息分级与账本杂症
+# ============================================================
+class LeakTest(unittest.TestCase):
+    def setUp(self):
+        self.w = World.create("秦天")
+        self.w.turn = {}
+
+    def test_things_do_not_name_strangers(self):
+        w = self.w
+        self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "钢爪")                    # 不识其人，只见其物
+        perspective.learn(w, "player", "云中鹤")
+        self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "云中鹤钢爪")
+
+    def test_the_vault_does_not_tell_where_the_scroll_is(self):
+        w = self.w
+        w.player.set("location", "琅嬛福地")
+        view = perspective.veil(w, rag.build(w))
+        self.assertNotIn("卷轴", str(view["scene"]))                                  # 地点现状不再写着「卷轴藏在蒲团内」
+        self.assertNotIn("段誉", w.graph.get("琅嬛洞烛台", "desc"))                     # 器物描述只写此刻看得见的样子
+
+    def test_a_sealed_cave_hears_no_rumors(self):
+        w = self.w
+        w.player.set("location", "琅嬛福地·书房")
+        ev = w.record("乔峰力战群雄", "聚贤庄", [], "canon", weight=2, day=w.clock.day - 30)
+        self.assertNotIn(ev["id"], [e["id"] for e in w.sync()])                        # 独处石洞：没有传话的人
+        w.player.set("location", "大理城")
+        self.assertIn(ev["id"], [e["id"] for e in w.sync()])                           # 见到人了，才听说
+
+    def test_the_example_names_nobody_when_alone(self):
+        w = self.w
+        w.player.set("location", "琅嬛福地·书房")
+        system = prompts._director_system(rag.build(w))
+        example = system[system.index("【示例"):]
+        self.assertFalse(any(p in example for p in ("段誉", "钟灵", "木婉清")))         # 空石室里不再回回想起段誉
+
+    def test_the_journal_calls_the_player_you(self):
+        w = self.w
+        llm = StubLLM({**director(), "小说家": "正文\n===\n梗概：秦天探查玉壁\n传言：无"})
+        Game(w, llm).act("看")
+        self.assertIn("你探查玉壁", w.player["journal"][-1])                            # 书记不会把「你」与「秦天」当成两个人

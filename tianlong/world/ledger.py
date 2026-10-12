@@ -3,7 +3,8 @@
 [OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS、FAME / famous()
 [POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）。
        开局常识只含地理、门派与 FAME(名号显赫或四大恶人)之人——无名之辈的下落与器物所在不是江湖常识，要亲见或听闻才知；
-       限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见
+       限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见；
+       传闻要有传话的人(v5)：主角这一片一个人也没有(独处石洞)时，旁人的事在外头等着，见到人再听说
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -108,14 +109,15 @@ class Messenger:
     def post(self, event: dict):
         self.pending.append(event["id"])
 
-    def deliver(self, truth: Truth, knowledge: Knowledge, dist: dict[str, int], today: int) -> list[dict]:
+    def deliver(self, truth: Truth, knowledge: Knowledge, dist: dict[str, int], today: int, listening: bool = True) -> list[dict]:
+        """listening 为假(v5)：主角身边一个传话的人也没有(独处石洞)，传闻在外头等着——亲历之事照记，旁人的事等他见到人再听说。"""
         arrived, waiting = [], []
         for eid in self.pending:
             event = truth.get(eid)
             if not event.get("public", True) and not event.get("witnessed"):
                 continue  # 限定知情者之事，江湖无从传开：主角不在场，便永不得闻
             reach = (today - event["day"]) * NEWS_SPEED * event["weight"]
-            seen = event.get("witnessed") or dist.get(event["where"], float("inf")) <= reach  # 亲历之事不必等传闻
+            seen = event.get("witnessed") or (listening and dist.get(event["where"], float("inf")) <= reach)  # 亲历之事不必等传闻
             (arrived if seen else waiting).append(event)
         self.pending = [e["id"] for e in waiting]
         for event in arrived:

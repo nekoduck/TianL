@@ -4,7 +4,7 @@
           remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表与 turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
        存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
-       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
+       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
        开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -12,7 +12,7 @@ import json
 import os
 from pathlib import Path
 
-from . import bond, effects, genesis, perspective, rag
+from . import bond, effects, genesis, perspective, rag, situation
 from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
 from .graph import PLIGHT, ROAD, Graph
@@ -91,8 +91,9 @@ class World:
         return self.clock.advance(shichen)
 
     def sync(self) -> list[dict]:
-        """投递已抵达的传闻，再以亲眼所见校正认知；返回本次抵达的传闻。"""
-        news = self.messenger.deliver(self.truth, self.knowledge, self.graph.distances(self.here), self.clock.day)
+        """投递已抵达的传闻(主角身边这一片得有人传话)，再以亲眼所见校正认知；返回本次抵达的传闻。"""
+        news = self.messenger.deliver(self.truth, self.knowledge, self.graph.distances(self.here), self.clock.day,
+                                      listening=situation.inhabited(self))  # 传闻要有传话的人
         self._observe()
         return news
 
