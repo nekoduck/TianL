@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 copy 做深拷贝
 [OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/所识之人 acquaintances/眼前的名册 cast(v5)/节奏账 pacing/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆；
-          v4 另有正文偏差 drift 与故事账 scene/clocks/arc/spines/setups）、ORIGINS、JOURNAL_CAP
+          v4 另有账文分歧 drift(v6：正文与账本对不上的几句，结算记下、下回合交导演圆回) 与故事账 scene/clocks/arc/spines/setups）、ORIGINS、JOURNAL_CAP
 [POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相；
        quests/study/hooks/turn/acquaintances/cast/pacing/came_from/en_route/drift 由系统(situation、growth、engine、perspective、pacing)维护，scene/clocks/arc/spines/setups 由 story/ 维护；内伤是境况里的分级词，由 body 升降，导演写不动。
        气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。
@@ -36,7 +36,7 @@ DEFAULTS = {
     "arc": None,         # 主角线：{goal, stage 起意→了结, since}（story/arc 维护）
     "spines": [],        # 近几回合场记主干的来源（story/brief 轮转用）
     "setups": {},        # 系统伏笔提过几回（story/setups 维护）
-    "drift": [],         # 上回合正文的偏差：编剧写了账上没有的进境(由 engine 记下，下回合交导演后台交代，随即清空)
+    "drift": [],         # 上回合的账文分歧(v6)：正文写了、账上却不成立的事(规则之事、落不了的变化、没有的进境)——结算记下，下回合交导演圆回，随即清空
     "turn": 0,           # 第几回合：未了之事据此判断久未推进
     "synopsis": "",      # 情节梗概：长期记忆
     "journal": [],       # 近事：工作记忆

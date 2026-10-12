@@ -3,6 +3,7 @@
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
+          named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（场景物件认作现场的原著器物）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
@@ -25,7 +26,10 @@
        原样不动的指令(人已在那里——主角「去」他正站着的地方也是，路线只有起点不是一程路、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
        事件先于状态(v4)：某人对主角的非结构性关系(疑忌、感激……)不再立边、不再覆盖与阻尼，而是记进 bond 的恩怨账、由系统折叠成立场；
-       结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边
+       结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边；
+       识名是一等指令(v6)：reveal 的 id 形 {"op":"reveal","id":某人,"key":"name"(,"to":某人)}——某人的姓名被说了出来，此刻在场的人都听见(to 则只那一人)；
+       导演宣告与闸门从文字里听出来的是同一条指令、同一条写入通道。宽松规整导演的几种写法(set epithet 为本名、reveal 关系形 rel=姓名、push acquaintances/knows)；
+       说出与听见的人须在眼前(perspective.audience)，场外无从得知；人人早已知道即原样不动；识名不是物理(落不了不废整拍)、不算因果污染
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -33,7 +37,7 @@
 #  指令集（只作用于既有实体）
 #    set/add/push/pull : 改人物、门派、器物流转或主角(id="player")的属性；地点与景物只可改 state
 #    link/unlink       : 增删关系边（恩怨、结义、师承……可带 secret）
-#    reveal            : 让主角得知一条既有隐情，或发现一条暗路（src/dst 为暗路两端的地点）
+#    reveal            : 让主角得知一条既有隐情，或发现一条暗路（src/dst 为暗路两端的地点）；id 形(v6)：某人的姓名被说了出来，在场者皆闻
 #    arrive            : 不在身边的人来到此地——系统按其所在与道路、本回合光阴判断赶不赶得到
 #    study / drain     : 研习秘籍或求教武学 / 以北冥神功吸人内力——增减多少由 world/growth 计算，不由 LLM 报数
 # ============================================================
@@ -59,10 +63,19 @@ ENTITY_LISTS = {"inventory", "skills"}           # 实体清单只可逐件得�
 NOTE_LEN = 40                                    # 关系边上的印象一句话
 SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN}  # 人物身上的一句话属性
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
+NAME = "name"                                    # reveal 的 id 形(v6)：某人的姓名被说了出来——认知唯一的落账通道
+NAMEISH = {"姓名", "名字", "名号", "名姓", "真名", "身份", "来历", "name"}  # reveal 写成关系形、rel 说的是姓名
 
 
 def _ids(op) -> list[str]:
-    return [op.get("src"), op.get("dst")] if op["op"] in ("link", "unlink", "reveal") else [op.get("id")]
+    if op["op"] in ("link", "unlink") or (op["op"] == "reveal" and op.get("key") != NAME):
+        return [op.get("src"), op.get("dst")]
+    return [op.get("id")]
+
+
+def named(op) -> bool:
+    """识名指令(v6)：reveal 的 id 形。"""
+    return isinstance(op, dict) and op.get("op") == "reveal" and op.get("key") == NAME
 
 
 def place(world, nid: str) -> str | None:
@@ -155,6 +168,9 @@ def describe(op) -> str:
         return f"主角研习{v}"
     if kind == "drain":
         return f"主角吸取{v}的内力"
+    if kind == "reveal" and key == NAME:
+        whose = "主角的名号" if nid == "player" else f"{nid}的姓名"
+        return f"{name(op['to'])}得知{whose}" if op.get("to") else f"在场之人得知{whose}"
     if kind == "reveal" and op.get("rel") == ROAD:
         return f"发现{op.get('src')}与{op.get('dst')}之间的暗路"
     if kind == "reveal":
@@ -180,9 +196,10 @@ def describe(op) -> str:
 # ------------------------------------------------------------
 def _normalize(world, op):
     g = world.graph
-    for k in ("id", "src", "dst"):
+    for k in ("id", "src", "dst", "to"):
         if k in op:
             op[k] = resolve(world, op[k])
+    _naming(world, op)
     if op.get("id") == "player":
         op["key"] = PLAYER_ALIASES.get(op.get("key"), op.get("key"))
     if (op.get("key") in RESOLVED_KEYS or op.get("op") in ("study", "drain")) and isinstance(op.get("value"), str):
@@ -204,6 +221,35 @@ def _normalize(world, op):
     if op.get("op") == "set" and op.get("key") == "location" and g.kind(op.get("id")) != "item" \
             and g.kind(op.get("value")) not in ("location", None):
         op["value"] = place(world, op["value"])  # 走向某人/某物 = 走向其所在之地
+
+
+def _naming(world, op):
+    """识名的几种写法规整成 reveal 的 id 形(v6)：导演想宣告「已知其名」时会写成——
+    set epithet 为其本名(给段誉立外号「段誉」)、reveal 的关系形 rel=姓名、push 主角的 acquaintances 或某人的 knows。"""
+    g, kind, key = world.graph, op.get("op"), op.get("key")
+    person = lambda x: x == "player" or g.kind(x) == "person"
+    if kind == "reveal" and op.get("rel") in NAMEISH and person(op.get("src")):
+        who, to = op["src"], op.get("dst")
+    elif kind == "reveal" and "src" not in op and "dst" not in op and op.get("id"):
+        who, to = op["id"], op.get("to")
+    elif kind == "set" and key == "epithet" and isinstance(op.get("value"), str) and g.kind(op.get("id")) == "person" \
+            and op["id"] in (op["value"].strip(), world.aliases.get(op["value"].strip())):
+        who, to = op["id"], None  # 给人立的「外号」就是他的本名：说的是他的名字被叫了出来
+    elif kind == "push" and key in ("acquaintances", perspective.KNOWS) and person(op.get("id")):
+        who, to = resolve(world, op.get("value")), op["id"]
+    else:
+        return
+    op.clear()
+    op.update({"op": "reveal", "id": who, "key": NAME, **({"to": to} if person(to) else {})})
+
+
+def naming(world, op) -> dict | None:
+    """这条指令若是在宣告识名(几种写法之一)，返回规整后的 reveal{id}；否则 None。不改动原指令——裁决器据此先核拍文有没有这回事。"""
+    if not isinstance(op, dict):
+        return None
+    probe = {k: (resolve(world, v) if k in ("id", "src", "dst", "to") else v) for k, v in op.items()}
+    _naming(world, probe)
+    return probe if named(probe) else None
 
 
 # ------------------------------------------------------------
@@ -248,6 +294,9 @@ def _handy(world, item: str, heading=frozenset()) -> bool:
 
 def _physics(world, op, heading=frozenset()) -> str | None:
     g, kind = world.graph, op["op"]
+    if named(op):
+        ends = [op.get("id"), *([op["to"]] if "to" in op else [])]
+        return None if all(x == "player" or g.kind(x) == "person" for x in ends) else "说出姓名与听见的须是人"
     if kind in ("link", "unlink", "reveal"):
         if not all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
             return "关系边缺字段"
@@ -360,6 +409,12 @@ def _travel(world, op, origin) -> str | None:
 #  在场性：谁能碰到谁
 # ------------------------------------------------------------
 def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
+    if named(op):  # 姓名是当面说出、当面听见的：说的人与听的人都得在眼前
+        if origin in OFFSCREEN:
+            return "主角不在场，无从听见"
+        here = perspective.audience(world)
+        far = [x for x in (op["id"], op.get("to")) if x and x not in here]
+        return f"{far[0]}不在你身边，说不出也听不见" if far else None
     if op["op"] == "reveal" and origin in OFFSCREEN:
         return "主角不在场，无从得知隐情"
     if op["op"] == "reveal" and origin == "director":
@@ -507,6 +562,9 @@ def _exec(world, op, origin):
     elif kind == "drain":
         art = next(a for a in growth.DRAINERS if a in world.player["skills"])
         _note(world, growth.drain(world, op["value"], art))
+    elif named(op):  # 姓名被说了出来：此刻在场的人都听见了(to 则只那一人)
+        for who in _hearers(world, op):
+            perspective.learn(world, who, op["id"])
     elif kind == "reveal":
         if origin == "director":  # 远方原著揭开的身世，主角不会当场知道：随事件入账，由 Knowledge.learn 按传闻或亲历送达
             world.knowledge.reveal(op["src"], op["dst"], op["rel"])
@@ -597,6 +655,8 @@ def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
     「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
     g, kind = world.graph, op.get("op")
+    if named(op):  # 人人早已知道他叫什么：不是一件事
+        return all(perspective.knows(world, who, op.get("id")) for who in _hearers(world, op))
     if kind in ("link", "unlink") and all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
         has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
         return has if kind == "link" else not has
@@ -608,6 +668,11 @@ def _noop(world, op) -> bool:
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
     return key in ("location", "holder", "faction", "hidden") and g.get(nid, key) == op.get("value")
+
+
+def _hearers(world, op) -> list[str]:
+    """识名指令的听者：写了 to 只那一人，否则此刻在场的人(说名字的人自己不算)。"""
+    return [op["to"]] if op.get("to") else sorted(perspective.audience(world) - {op.get("id")})
 
 
 def _moves_player(world, op) -> bool:
@@ -668,6 +733,6 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             continue
         _exec(world, op, origin)
         applied.append(op)
-        if origin == "director":
+        if origin == "director" and not named(op):  # 报个姓名不算扰动原著：因果污染只记碰过的人与物
             world.taint.update(i for i in _ids(op) if i and i != "player")
     return applied, rejected

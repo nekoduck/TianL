@@ -126,7 +126,7 @@ class DirectorTest(unittest.TestCase):
         game = Game(World.create(), llm)
         perspective.learn(game.world, "player", "段誉")  # 主角已识得段誉：写的是跨回合延续，不是称谓
         turn = game.act("替段誉解围")
-        self.assertEqual(turn["options"], ["替段誉挡下一掌", "偷看钟灵的布囊", "向左子穆讨教剑法"])
+        self.assertEqual(turn["options"], ["替段誉挡下一掌", "偷看大眼圆脸的少女的布囊", "向左子穆讨教剑法"])  # 主角叫不出钟灵：选项上只是叫法(v6)
         llm.replies = {**director(), "小说家": WRITER}
         game.act(turn["options"][0])  # 选项即原话，交回导演
         self.assertIn("【主角此刻】替段誉挡下一掌", llm.writer_prompts[-1])

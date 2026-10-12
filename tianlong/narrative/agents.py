@@ -2,12 +2,14 @@
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或括号里都认——括号写在文字末尾或对象之后皆可，说耗时路程的才是代价、其余是对象(v5)；至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
+          settle()（v6 账房：读定本正文与账本快照，开出账上缺的变化 {changes:[{据,谁,ops}], rifts}，离线或失声返回 None 交词表对账）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
        后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
        编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文；
-       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底
+       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底；
+       账房(v6)只整形不审内容：据与谁是文字、ops 是一批指令——收不收、成不成立归 world/settle 与 effects
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -245,6 +247,19 @@ def write(llm, pack: dict, frame: dict, on_text=None) -> dict:
     if on_text:
         on_text(page["text"])  # 不能流式时，整段作一次送出，调用方无须区分
     return page
+
+
+def settle(llm, books: dict) -> dict | None:
+    """账房(v6)：读本回合的定本(正文)与账本快照，开出正文确立而账上没有的变化 {changes:[{据, 谁, ops}], rifts:[{据, 账上}]}。
+    整形只保形状(据与谁是文字、ops 是一批指令)，收不收、成不成立归 world/settle 与 effects；离线或失声返回 None——由系统以词表对账。"""
+    if llm is None or not books.get("text"):
+        return None
+    r = _ask(llm, prompts.settler(books), lambda: None, tokens=1200)
+    if not isinstance(r, dict):
+        return None
+    changes = [{"据": str(c.get("据") or ""), "谁": c.get("谁") if isinstance(c.get("谁"), str) else None, "ops": _dicts(c.get("ops"))}
+               for c in _dicts(r.get("changes"))]
+    return {"changes": changes, "rifts": [{"据": str(x.get("据") or ""), "账上": str(x.get("账上") or "")} for x in _dicts(r.get("rifts"))]}
 
 
 def recap(llm, synopsis: str, lines: list[str]) -> str:

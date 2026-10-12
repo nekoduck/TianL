@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、rag、situation、perspective(编剧视角)、body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、
-         growth.SITTING / mastery / unearned(研习至少一顿饭、进境账)、lexicon.mastery(正文的进境措辞)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）、
+[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、rag、situation、perspective(编剧视角)、settle(v6 结算：正文出闸 Gate、账本快照 books、结算单落账 commit、词表对账 audit)、
+         body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、growth.SITTING(研习至少一顿饭)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）、
          story/（timing 规则主张时长与 cut 换算、canon 原著窗口的拉与消费、stakes 时限、scene 场、brief 场记与主干调度、arc 主角线、choices 选项槽位）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
@@ -9,14 +9,18 @@
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
        → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔
-       → 编剧按三个槽位(此刻/此后/机缘)拟选项，正文写出账上没有的进境、得失、去留、生死、擒放(adjudicate.afterword)记作偏差(drift)交下回合导演
+       → 编剧按三个槽位(此刻/此后/机缘)拟选项；正文经 settle.Gate 出闸(段里报了姓名先入账、再按说话人过掩码，放行即存档)
+       → 结算(v6 账文同构)：玩家读到的正文是本回合的定本，账房(agents.settle)读定本与账本快照开出账上缺的变化、每条附正文原句为据，
+         settle.commit 核据、只收叙述成立得了的事、经 effects 照常裁决入账(并入本回合的 applied)；规则之事、落不了的与词表查出的(settle.audit)记作账文分歧(drift)交下回合导演；
+         有分歧时编剧的梗概与传言不作数，以系统核实过的后果代记；身况在结算之后重算
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
        → 场外推演与新到期的远方原著(v5 在成文与验收之后：编剧、掩码与选项验收看的是同一个世界；其传闻下回合才到)
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
        v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；把人带去别处的那一桩，主角只看见人走(不记亲历)，事本身随传闻抵达；
-       抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著
+       抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著；
+       v6：此地原著的亲历以回合开始的所在为准(导演把它编在主角动身之前)；选项也从主角的视角说(叫不出的名字换成叫法，对象不变)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -27,7 +31,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, growth, lexicon, lod, menu, pacing, perspective, rag, situation
+from .world import access, adjudicate, body, bond, growth, lod, menu, pacing, perspective, rag, settle, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -55,26 +59,6 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
         return 0
     return 2 if any(op["op"] == "set" and op.get("key") == "status" and op.get("value") == "dead" for op in applied) else 1
 
-
-
-def _paragraphs(send):
-    """正文增量按段送出：一段齐了才过视角掩码——名字与引号不会被拦腰切开，整段掩码与整篇掩码逐字相同。"""
-    buf = []
-
-    def feed(delta):
-        buf.append(delta)
-        text = "".join(buf)
-        cut = text.rfind("\n") + 1
-        if cut:
-            send(text[:cut])
-            buf[:] = [text[cut:]]
-    def flush():
-        rest = "".join(buf)
-        buf.clear()
-        if rest:
-            send(rest)
-    feed.flush = flush
-    return feed
 
 def _staged(plan: dict, deed: str) -> dict:
     """导演报的场况译成裁决器认的本幕之问：场况(开/转/合/断)与本幕之问(open/resolved/interrupted)一一对应；旧写法只给 question 的照收。"""
@@ -218,31 +202,46 @@ class Game:
                  "candidates": [veil(c) for c in ruling.candidates],
                  "news": [veil(e["summary"]) for e in arrived if not e.get("witnessed")],  # 亲历之事已在节拍里，不再当传闻
                  "slots": choices.slots(w)}                # 选项先定槽位：此刻 / 此后 / 机缘
-        stream = on and _paragraphs(lambda d: emit("text", veil(d)))
-        page = agents.write(self.llm, view, frame, on_text=stream)
-        if stream:
-            stream.flush()
-        page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
-        drift = growth.unearned(w, lexicon.mastery(page["text"], "player"))  # 只记账上没有的那一阶
-        slips = adjudicate.afterword(w, page["text"])  # 正文写了账上没有的得失、去留、生死、擒放
-        if drift or slips:  # 正文已送出读者，改不回来：记下偏差，下回合交导演由剧情交代或圆回
-            arts = "；".join(a["detail"] for a in growth.mastery(w)) or "主角尚无武学"
-            w.player.set("drift", ([f"正文写主角「{'、'.join(drift)}」，账上：{arts}"] if drift else []) + slips)
-            log.info("正文偏差：%s", (drift, slips))
-        turn["text"] = page["text"]
+        gate = settle.Gate(w, near=settle.partners(ruling))  # 正文出闸：段里有人报了姓名先入账，再按说话人过主角的视角(编剧熟读原著，名字可能是它自己带来的)
+
+        def show(delta):
+            out = gate.feed(delta)
+            if out:
+                emit("text", out)
+        page = agents.write(self.llm, view, frame, on_text=show if on else None)
+        if not on:
+            gate.feed(page["text"])
+        rest = gate.close()
+        if on and rest:
+            emit("text", rest)
+        page["text"] = turn["text"] = gate.text  # 放行的就是存下的：玩家读到的正文是本回合的定本
+        bill = agents.settle(self.llm, settle.books(w, page["text"], applied))  # 结算(v6)：账房开出定本里确立而账上没有的变化，每条附原句为据
+        settled, rifts = settle.commit(w, bill, page["text"], aim) if bill else ([], [])  # 世界照常裁决：成立的落账，规则之事与落不了的记作分歧
+        if settled:
+            w.witness(settled)
+            applied = applied + settled
+            ruling.applied += settled
+            log.info("结算入账：%s", "；".join(describe(op) for op in settled))
+        rifts = settle.rifts(rifts, settle.audit(w, page["text"]))  # 结算之后仍对不上的(离线时只有这一道)：交下回合导演由剧情圆回
+        if rifts:
+            w.player.set("drift", rifts)
+            log.info("账文分歧：%s", rifts)
+        turn["status"] = rag.condition(w)  # 结算之后的身况：得失随正文入了账，界面与账本同一口径
         later = choices.later(w)                      # 此后槽的兜底：选项里没有一件持续之事，就补一项
         picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates, plan["options"], later=later)  # 兜底项看局面，归 menu
-        self.menu = {text: ids for text, ids in picked}
         scales = {o["text"]: o.get("scale") for o in page["options"]} | {t: "此后" for t, _ in later}
-        self.scales = {text: scales.get(text) for text, _ in picked}
-        turn["options"] = [text for text, _ in picked]
+        picked = [(veil(text), ids, scales.get(text)) for text, ids in picked]  # 选项也从主角的视角说：叫不出的名字不出现在选项上
+        self.menu = {text: ids for text, ids, _ in picked}
+        self.scales = {text: scale for text, _, scale in picked}
+        turn["options"] = [text for text, _, _ in picked]
         facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))
-        memory = veil(page["memory"] or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
+        sworn = None if rifts else page["memory"]  # 有账文分歧时，编剧的梗概与传言多半正写着那件不成立的事：以系统核实过的后果代记
+        memory = veil(sworn or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
         if len(w.player["name"]) >= 2:  # 近事一律以「你」称主角：书记不会把「你」与主角名号当成两个人
             memory = memory.replace(w.player["name"], "你")
         weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
-            told = page["headline"] or (page["memory"] or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
+            told = (None if rifts else page["headline"]) or (sworn or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
         self._offstage(days)  # 场外推演与新到期的远方原著(v5 在成文、验收之后)：编剧落笔、掩码、选项验收看的是同一个世界，其传闻本就迟到
         self._close(ruling, page, memory, moved=w.here != origin, deed=deed, spine=story["spine"])
@@ -274,6 +273,7 @@ class Game:
         """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
         被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
         adjudicate.imply(world, plan, aim)              # 拍里在习练玩家所指的秘籍、导演却没写 study：系统追认这一回研习
+        origin = world.here                             # 回合开始时主角所在：此地原著是在主角走开之前演完的
         floor, why = timing.claim(world, plan, deed, scale, aim, drop or ())  # 时间是后果：研习、求教、养伤、此后之举由规则主张下限(只看会成立的)
         studies = any(w.startswith(("研习", "求教")) for w in why)
         world.turn["minutes"] = max(world.clock.minutes(plan["pace"]), growth.SITTING if studies else 0, floor)
@@ -283,7 +283,7 @@ class Game:
             if not staged:
                 return
             if plan["canon"]["unfolds"] and not broken:  # 主角眼前上演，随即离开也是亲历；导演挪动过的人原著挪不动，成立的部分照落
-                seen = staged["where"] in situation.near(world)  # 原著来把人带去别处(away)：主角只看见他走，那桩事本身随传闻抵达
+                seen = staged["where"] in situation.near(world, origin)  # 导演把它编在主角动身之前：亲历以回合开始的所在为准；原著来把人带去别处(away)，主角只看见他走，那桩事随传闻抵达
                 lod.settle(world, staged, staged, "canon", day=day0, witnessed=seen, partial=True)
             else:
                 lod.settle(world, staged, {"happens": False}, "director", day=day0)

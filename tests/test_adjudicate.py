@@ -223,10 +223,10 @@ class MenuTest(unittest.TestCase):
                        "小说家": "正文\n===\n梗概：看\n选项：\n1. 与钟灵说话｜对象：钟灵\n2. 去剑湖宫｜对象：剑湖宫\n3. 歇一歇\n伏笔：远处有女子娇叱｜期限：2\n传言：无"})
         game = Game(World.create("测"), llm)
         turn = game.act("看")
-        self.assertEqual(turn["options"], ["与钟灵说话", "去剑湖宫", "歇一歇"])
-        self.assertEqual(game.menu["与钟灵说话"], ["钟灵"])
+        self.assertEqual(turn["options"], ["与大眼圆脸的少女说话", "去剑湖宫", "歇一歇"])  # v6 选项也从主角的视角说：叫不出的名字换成叫法
+        self.assertEqual(game.menu["与大眼圆脸的少女说话"], ["钟灵"])                    # 对象仍是她：授意不失准
         self.assertEqual(game.world.player["hooks"][0]["text"], "远处有女子娇叱")
-        game.act("与钟灵说话")
+        game.act("与大眼圆脸的少女说话")
         self.assertIn("【焦点·主角此举所指之物的真相（主角未必知道）】\n- 钟灵", llm.director_prompts[-1])
         self.assertIn("【未兑现的伏笔】\n- 远处有女子娇叱", llm.director_prompts[-1])
 

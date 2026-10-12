@@ -4,7 +4,8 @@
 [POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）。
        开局常识只含地理、门派与 FAME(名号显赫或四大恶人)之人——无名之辈的下落与器物所在不是江湖常识，要亲见或听闻才知；
        限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见；
-       传闻要有传话的人(v5)：主角这一片一个人也没有(独处石洞)时，旁人的事在外头等着，见到人再听说
+       传闻要有传话的人(v5)：主角这一片一个人也没有(独处石洞)时，旁人的事在外头等着，见到人再听说；
+       识名(v6，reveal 的 id 形)当场已由 effects 落给听见的人，不是隐情、不随传闻——事件里带着它也不误读
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -94,7 +95,7 @@ class Knowledge:
                     continue  # 迟到的旧闻：主角后来亲眼见过、或已听到更新的消息
                 self.beliefs.setdefault(op["id"], {})[op["key"]] = op["value"]
                 self.asof[op["id"]] = event["day"]
-            elif op["op"] == "reveal" and (event.get("public", True) or event.get("witnessed")):
+            elif op["op"] == "reveal" and "src" in op and (event.get("public", True) or event.get("witnessed")):  # 识名(id 形)当场已落，不随传闻
                 self.reveal(op["src"], op["dst"], op["rel"])
 
 

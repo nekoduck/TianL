@@ -1,7 +1,9 @@
 """
 [INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 seen（本回合见过的人），World 门面（graph / player / aliases / knowledge / turn）
-[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
-          audit()（逐拍：听来的名字入认知，叫出不该知道的名字即违例——主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔，不为旁人称谓耗一轮返工）、mask()（交编剧之前，主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称）、
+[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、audience()（听得见的人：主角与此刻耳边的人——眼前与同行，裁决器逐拍记下的那一拍听众优先）、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
+          hear()（v6 听写器：一段文字里被说出来的名字 → 识名指令 reveal{id}，拍文与正文共用；miss 收下认不出是谁的「互通姓名」）、speaker()（台词的说话人）、
+          audit()（逐拍：先听——听来的名字交调用方的 commit 落账；再查称谓——叫出不该知道的名字即违例，主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔）、
+          mask()（主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称；落不了账的自报家门只去掉名字）、
           veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码）、
           thing()（器物在主角眼中的叫法：名字里带着不识之人的名号就只叫那件东西本身）
 [POS]: world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
@@ -11,6 +13,11 @@
        veil 连人物眼下之事(intent)一并过 mask——那一句是导演写的，里面的名字主角未必识得；
        v5：四十一件器物的名字本身带着人名(云中鹤钢爪)、近日传闻与器物描述也写着名字，都在交编剧之前换成主角看得见的说法；
        mask 以本回合见过的人(situation.seen)为「当面」：刚从眼前走开的生人(原著来把他带走)仍只叫外貌——走开了就换回名字，等于替主角认出了他
+       v6 识名是一等事件、认知由叙述构成：玩家读到了谁的名字被说出来，就知道了它——听写器只产出指令(reveal 的 id 形)，落账归 effects，
+       认知与物理同一条写入通道(本模块不 import effects：audit 收调用方给的 commit)；导演的拍与编剧的正文过同一张词表——
+       自报家门(在下大理段誉、姓段单名一个誉字、小弟某某、某某便是在下)、旁白里的互报姓名与「自称某某」、认得的人当面点名；
+       说话人认不出时名字本身就是说话人(「小生段誉」只能是段誉说的)；旁白里的「他」「那少女」「二人」落到此刻与主角打交道的人(near)；
+       谁听见由文字定：当众说的满场皆闻，说给某人的(拍的 to、旁白里的「向某人」、低声耳语)只那人与主角知道；被主角甩在身后的人听不见
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -24,9 +31,24 @@ COMPOUND = ("慕容", "司空", "南宫", "欧阳", "上官", "东方", "诸葛"
 TITLE = "兄台|兄弟|兄|大哥|大侠|少侠|公子|姑娘|姐姐|妹子|妹妹|小姐|夫人|先生|前辈|老爷子|老爷|大爷|掌门|帮主|谷主|施主|师兄|师弟|师姐|师妹|娘子|大嫂|伯伯|叔叔|贤弟|贤侄|相公"
 QUOTE = re.compile(r"[「“『]([^」”』]*)[」”』]")
 APPOSITIVE = re.compile(r"(?:少年|少女|汉子|老者|女子|妇人|僧人|书生|弟子|姑娘|公子|青年|道人|孩童|老汉|大汉|壮汉)$")  # 「东宗少年龚光杰」：前面已有叫法，名字直接去掉
-SELF = re.compile(r"(?:小生|在下|我叫|我是|我乃|我便是|俺|老子|洒家|贫僧|老衲|贫道|本姑娘|姑娘我|晚辈|小女子|小人|名叫|叫做|唤作)\s*$")
-INTRO = re.compile(r"自报姓名|自报家门|自报来历|通了姓名|互通姓名|报上名号|通报姓名|报了姓名|道出姓名|报出名号")
-NOUN = re.compile(r"(?:少年|少女|女子|汉子|老者|妇人|书生|和尚|僧人|番僧|道人|道士|道姑|壮汉|姑娘|公子|老人|老妇|孩童|男子|丫头|童子|大汉|姑子|婢女)$")
+NOUNS = "少年|少女|女子|汉子|老者|妇人|书生|和尚|僧人|番僧|道人|道士|道姑|壮汉|姑娘|公子|老人|老妇|孩童|男子|丫头|童子|大汉|姑子|婢女"
+NOUN = re.compile(f"(?:{NOUNS})$")
+# 听写的词表(v6)：自称之后可隔一个地名或门派(在下大理段誉)，隔着动词与虚词的不算(在下久闻段誉、我是来找段誉的)
+SELF_WORDS = ("小生|在下|我叫|我是|我乃|我便是|我就是|本人|鄙人|区区|小可|晚生|晚辈|小弟|愚兄|小女子|小妹|奴家|妾身|老身|老夫|老衲|"
+              "贫僧|贫道|贫尼|洒家|俺|老子|本姑娘|姑娘我|本座|本公子|学生|后学|小人|名叫|叫做|唤作|名唤")
+GAP = r"[^，,。！？；;、…\s「」“”『』的之与和同跟替为给向对找寻见了着过把被让请也都还闻慕认识知听拜访想念问等候说道叫喊陪伴随带领将要会能可]"
+SELF = re.compile(rf"(?:{SELF_WORDS})(?:乃是|便是|就是|正是|即是|乃|是)?{GAP}{{0,8}}$")
+OWN = re.compile(r"^(?:便是|就是|正是|即是|乃是)(?:在下|我|小生|本人|老夫|贫僧|小女子|晚辈|小弟|区区|洒家|俺|本姑娘)|^是也")  # 「段誉便是在下」
+SPELLED = re.compile(r"(?:复姓|姓)([\u4e00-\u9fff]{1,2})[，,、\s]*(?:单名一个|单名|双名|名叫|名唤|名为|名字叫|名字是|叫做|唤作|名|叫|唤)"
+                     r"([\u4e00-\u9fff]{1,3}?)(?=字|[，,。！？；、\s」”』]|$)")  # 「小生姓段，单名一个誉字」
+MUTUAL = re.compile(r"(?:互|彼此|相互|互相|各自?)(?:通|报|道|叙|告)(?:了|过)?(?:姓名|名号|名姓|名字)|通名报姓|通了姓名|叙了姓名|通过姓名|互通了?名")
+TELL = re.compile(r"(?:自报|报上|报出|报了|报过|通报了?|道出|说出|说了|道了|告知|告以|自道)(?:了|过)?(?:自己的|他的|她的)?(?:姓名|名号|家门|来历|名字|名姓|身份)"
+                  r"|以(?:姓名|名号)相告")
+CALLED = re.compile(r"(?:自称|自报|名叫|叫做|唤作|名唤|原来叫|原来是|原来便是|正是|便是)$")  # 旁白点明：「那少年自称段誉」「原来她就叫钟灵」
+GROUP = re.compile(r"二人|两人|你们|你俩|他俩|她俩|双方|彼此")
+PLAIN = r"[^向对朝冲跟与和同把将被给替为从在见望看瞧听扯拉拽抓握扶，,。！？；;、\s「」“”『』]"  # 泛称之前的修饰语里没有介词与动作
+LEAD = re.compile(r"^(?:那|这|只见|却见|但见|忽见|只听|忽听|却听|但听|此时|这时|当下|旁边|一旁|身旁|身边|座上|梁上|门外|厅中|便|又|也|却|已|早已|当即|随即|于是|的)+")
+SAYS = re.compile(r"^[，,\s]*([^，,。！？「“『]{1,10}?)(?:道|说|问|答|喝|叫|喊|笑|叹|应)")
 
 
 # ============================================================
@@ -61,6 +83,17 @@ def learn(world, who: str, target: str) -> bool:
         node = world.graph.nodes[who]
         node[KNOWS] = (node.get(KNOWS) or []) + [target]
     return True
+
+
+def audience(world) -> set[str]:
+    """听得见的人(v6)：此刻在主角耳边的——主角、眼前之人与同行者(活着的)。回合开始时在、后来被主角甩在身后的人听不见：
+    主角在密林里报的名，剑湖宫厅上的人不会知道。裁决器逐拍听写时把那一拍的听众记在 turn["ears"](说话时在场的，连同这一拍赶来的)。"""
+    ears = (getattr(world, "turn", None) or {}).get("ears")
+    if ears is not None:
+        return set(ears) | {"player"}
+    g = world.graph
+    return {"player"} | {p for p in situation.around(world) | set(situation.party(world))
+                         if g.kind(p) == "person" and g.get(p, "status") != "dead"}
 
 
 HOSTS = re.compile(r"掌门|帮主|谷主|庄主|宫主|岛主|方丈")
@@ -153,23 +186,189 @@ def _calls(text: str, pid: str, name: str) -> list[tuple[int, int]]:
 
 
 # ============================================================
-#  逐拍体检：听来的名字入认知，叫出不该知道的名字即违例
+#  听写(v6)：文字里谁的名字被说了出来——拍文与正文共用一张词表；只产出指令，落账归 effects
 # ============================================================
-def audit(world, beats: list[dict], present: set[str]) -> list:
-    """beats: [{who, to, text}]（作废的拍 text 为空）。按拍序：先追认本拍里自报家门、当众点名而让在场者听来的名字，
-    再查说话者的台词——叫出在场之人的名字或「姓+称谓」而说话者并不知其名，或不知主角姓名者叫出主角的名号，记一条违例。"""
+HEDGE = re.compile(r"莫非|难道|或许|也许|大概|似乎|只怕|想必|多半|未必|不知|若是|倘若|如果|心想|暗想|寻思|想来|猜")
+
+
+def _unique(world, people) -> dict[str, str]:
+    """在场生人的叫法 → 其人；两人同一叫法(四个「无量剑东宗的少年」)就都不收——宁可认不出，不认错人。"""
+    out: dict[str, str | None] = {}
+    for p in sorted(people):
+        if p != "player" and world.graph.kind(p) == "person" and not knows(world, "player", p):
+            h = handle(world, p)
+            out[h] = None if h in out else p
+    return {h: p for h, p in out.items() if p}
+
+
+def _tables(world, present) -> tuple[list, list]:
+    """听写的两张名表：names 只收真名(人名、别名、主角名号)——台词里说出来的才算名字；
+    who 另收在场生人的叫法——认主语与说话人用(编剧笔下的「青衫少年」就是段誉)，叫法不是名字，说出叫法不算报了姓名。"""
+    me, names = world.player["name"], _surfaces(world)
+    if len(me) >= 2:
+        names[me] = "player"
+    return lexicon.table(names), lexicon.table({**_unique(world, present), **names})
+
+
+def _subject(world, clause: str, tab, near) -> str | None | bool:
+    """一个分句的主语：开头(去掉「那」「只见」之类)是人——「你」即主角，名字或叫法即其人，「他」「她」与泛称(那少女)落到 near 里唯一对得上的人；
+    开头是个认不出的人返回 False；开头不是人(动词起句：「扯住你的衣袖低呼」)返回 None，承上一分句。"""
+    c = LEAD.sub("", clause.strip().lstrip("「」“”『』"))  # 台词已换成「」占位：占位之后才是这一分句的主语
+    if not c:
+        return None
+    if c.startswith("你"):
+        return "player"
+    hit = lexicon.find(c[:16], tab)
+    if hit and hit[0][1] == 0:
+        return hit[0][0]
+    m = re.match(rf"^(他|她)|^{PLAIN}{{0,6}}?({NOUNS})", c)  # 「向那青衫少年抱拳」是介词短语，不是主语
+    if not m:
+        return None
+    g = world.graph
+    if m.group(1):
+        pool = [p for p in near if p != "player" and (g.get(p, "gender") == "女") == (m.group(1) == "她")]
+    else:
+        pool = [p for p in near if p != "player" and (_noun(g, p) == m.group(2) or handle(world, p).endswith(m.group(2)))]
+    pool = list(dict.fromkeys(pool))
+    return pool[0] if len(pool) == 1 else False
+
+
+def _agent(world, head: str, tab, near) -> str | None:
+    """一句话里、某处之前那件事是谁做的：离它最近的有主语的分句(动词起句的分句承上一分句)；认不出即 None。"""
+    for clause in reversed([c for c in re.split(r"[，,；;：:]", head) if c.strip()]):
+        who = _subject(world, clause, tab, near)
+        if who is not None:
+            return who or None
+    return None
+
+
+def speaker(world, text: str, start: int, end: int, tab=None, near=()) -> str | None:
+    """text[start:end] 这段台词是谁说的：台词之前同一句里离它最近的主语；台词之前没有人，看台词之后的「某某道」。
+    认不出即 None——宁可不认，不认错人(不认的台词照旧过掩码，只是不替说话人补上他不该知道的名字)。"""
+    tab = tab or _tables(world, audience(world))[1]
+    who = _agent(world, re.split(r"[。！？\n」”』]", text[:start])[-1], tab, near)
+    if who:
+        return who
+    m = SAYS.match(text[end:end + 14])
+    return (_subject(world, m.group(1), tab, near) or None) if m else None
+
+
+def _introduced(q: str, a: int, b: int) -> bool:
+    """台词 q 里 q[a:b] 这个名字是自报家门报出来的(「小生段誉」「在下大理段誉」「段誉便是在下」)，不是「我是段誉的朋友」。"""
+    return bool(SELF.search(q[max(0, a - 16):a]) and q[b:b + 1] not in ("的", "之", "们")) or bool(OWN.match(q[b:]))
+
+
+def _spell(tab, sur: str, given: str) -> str | None:
+    """「姓段，单名一个誉字」拼回全名，落到名表里的人。"""
+    names = dict(tab)
+    return next((names[f] for f in (sur + given, given, sur + given[:1], sur + given[:2]) if f in names), None)
+
+
+WHISPER = re.compile(r"低声|悄声|压低|附耳|耳语|凑近|俯身|轻声")
+TOWARD = re.compile(r"(?:向|对|朝|冲|跟)着?(?:那位|这位|那|这)?$")  # 「向那青衫少年」「对着这位姑娘」
+
+
+def _listeners(world, head: str, s, to, tab, near) -> set[str] | None:
+    """这段台词说给谁听(v6)：拍写了对象，或旁白写着「向那青衫少年」「压低嗓子」，就只有那人(与在场的主角)听见；
+    否则是当众说的，在场的人都听见(None)。满厅十几个人，主角凑上去低声报的名，梁上的人听不见。"""
+    if not to:
+        hit = [p for p, a, _ in lexicon.find(head, tab) if TOWARD.search(head[max(0, a - 4):a]) and p != s]
+        to = hit[-1] if hit else (near[0] if WHISPER.search(head) and len(near) == 1 and near[0] != s else None)
+    return None if not to or to == s else {to, "player"} - {s}
+
+
+def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) -> list[dict]:
+    """一段文字里被说出来的名字 → 识名指令 [{"op":"reveal","id":某人,"key":"name"(,"to":听者)}]。
+    当众说的在场者都听见；说给某人听的(拍的 to、旁白里的「向某人」、低声耳语)只那人与主角听见。
+    who/to：拍的说话人与对象(正文没有，台词的说话人由 speaker 认出)；near：此刻与主角打交道的人(旁白里的「他」「那少女」「二人」所指)；
+    present：听得见的人(缺省 audience)，说出名字的与被叫出名字的都得在其中。miss 给了就收下认不出是谁的「互通姓名」「自报家门」。"""
+    if not text:
+        return []
+    me = world.player["name"]
+    present = audience(world) if present is None else set(present) | {"player"}
+    names, whos = _tables(world, present)
+    who = "player" if who in ("player", "主角", me) else who
+    to = "player" if to in ("player", "主角", me) else to
+    to = to if to in present else None
+    near = [p for p in dict.fromkeys([who, to, *near]) if p and p in present]
+    said: list[tuple] = []
+
+    def say(pid, ears=None):
+        if pid not in present:
+            return
+        for ear in ([None] if ears is None else sorted(set(ears) - {pid})):
+            if (pid, ear) not in said:
+                said.append((pid, ear))
+
+    for m in QUOTE.finditer(text):  # 台词：自报家门、认得的人当面点名
+        q, head = m.group(1), re.split(r"[。！？\n」”』]", text[:m.start()])[-1]
+        s = who if who in present else speaker(world, text, m.start(), m.end(), whos, near)
+        aimed = to if who in present else None
+        ears = _listeners(world, head, s, aimed, whos, near)
+        for pid, a, b in lexicon.find(q, names):
+            if _introduced(q, a, b):  # 「小生段誉」「在下郑大风」只能是本人说的：名字本身就是说话人，听者按本人说给谁算
+                say(pid, ears if s == pid else _listeners(world, head, pid, aimed if who == pid else None, whos, near))
+            elif s and s != pid and knows(world, s, pid):
+                say(pid, ears)  # 认得他的人当面叫出
+        for x in SPELLED.finditer(q):  # 「姓段，单名一个誉字」：说的人认不认得都一样，读者读到了这个名字
+            pid = _spell(names, x.group(1), x.group(2))
+            if pid:
+                say(pid, ears)
+        if s:
+            for p in sorted(present - {s}):
+                if knows(world, s, p) and _calls(q, p, me if p == "player" else p):
+                    say(p, ears)
+    last: list[str] = []
+    for sent in re.split(r"[。！？\n]", QUOTE.sub("「」", text)):  # 旁白：互通姓名、自报家门、点明某人叫什么
+        people = [p for p, _, _ in lexicon.find(sent, whos) if p != "player" and p in present]
+        for clause in re.split(r"[，,；;：:]", sent):
+            if not clause.strip() or HEDGE.search(clause) or lexicon.NEGATE.search(clause) or lexicon.REMOTE.search(clause):
+                continue
+            for pid, a, _ in lexicon.find(clause, names):
+                if CALLED.search(clause[max(0, a - 4):a]):
+                    say(pid, {to, "player"} - {None} if to else None)
+            if MUTUAL.search(clause):
+                pair = list(dict.fromkeys((["player"] if "你" in sent else []) + people))
+                pool = [p for p in dict.fromkeys([*near, *last]) if p not in pair and p != "player"]
+                if len(pair) < 2 and len(pool) == 1 or (GROUP.search(clause) and not pair):
+                    pair += pool[:2 - len(pair)]
+                if len(pair) == 2:
+                    say(pair[0], {pair[1], "player"})  # 互通姓名：两人彼此知道了，主角在场也听见
+                    say(pair[1], {pair[0], "player"})
+                elif miss is not None:
+                    miss.append(sent)
+            elif (m := TELL.search(clause)):
+                head = sent[:sent.index(clause) + m.start()]
+                teller = _agent(world, head, whos, near or last) or (who if who in present else None)
+                if teller:
+                    say(teller, {to, "player"} - {None} if to else None)
+                elif miss is not None:
+                    miss.append(sent)
+        last = people or last
+    return [{"op": "reveal", "id": pid, "key": "name", **({"to": ear} if ear else {})} for pid, ear in said]
+
+
+# ============================================================
+#  逐拍体检：先听，再查称谓——叫出不该知道的名字即违例
+# ============================================================
+def audit(world, beats: list[dict], present: set[str], commit=None, start: int = 1) -> list:
+    """beats: [{who, to, text}]（作废的拍 text 为空）。按拍序：先听——本拍里自报家门、互通姓名、当面点名而让在场者听来的名字，
+    以识名指令交 commit 落账(调用方经 effects：认知与物理同一条写入通道)；再查说话者的台词——叫出在场之人的名字或「姓+称谓」
+    而说话者并不知其名，或不知主角姓名者叫出主角的名号，记一条违例。旁白的拍(who 为空)只听不查：说话人是猜的，不为猜测耗一轮返工。"""
     tab = lexicon.table(_surfaces(world))
     me = world.player["name"]
     people = set(present) | {"player"}
     out = []
-    for i, beat in enumerate(beats, 1):
+    for i, beat in enumerate(beats, start):
         text, who = beat.get("text") or "", beat.get("who")
         who = "player" if who in ("player", "主角", me) else who
-        if not text or (who != "player" and world.graph.kind(who) != "person"):
+        if not text:
             continue
-        speech = QUOTE.findall(text)
-        _overhear(world, who, beat.get("to"), text, speech, tab, people)
-        for q in speech:
+        if commit:
+            commit(hear(world, text, who, beat.get("to"), present=people))
+        if who != "player" and world.graph.kind(who) != "person":
+            continue
+        for q in QUOTE.findall(text):
             for pid, a, _ in lexicon.find(q, tab):
                 if pid != who and pid in people and not knows(world, who, pid):
                     out.append(lexicon.Finding("name", i, pid, f"第{i}拍{_who(who)}叫出了{pid}的名字，可{_who(who)}并不知{pid}姓名",
@@ -188,33 +387,6 @@ def _who(pid: str) -> str:
     return "主角" if pid == "player" else pid
 
 
-def _overhear(world, who, to, text, speech, tab, people):
-    """在场者听来的名字：说话者自报姓名（「小生段誉」「我叫钟灵」）、拍里写明自报家门、或认得某人的人当面叫出他。"""
-    me = world.player["name"]
-    for q in speech:
-        for pid, a, _ in lexicon.find(q, tab):
-            if pid == who and SELF.search(q[:a]):
-                for p in people:
-                    learn(world, p, who)
-            elif pid in people and pid != who and knows(world, who, pid):
-                for p in people:
-                    learn(world, p, pid)
-        if who == "player" and me in q and SELF.search(q[:q.index(me)]):
-            for p in people:
-                learn(world, p, "player")
-        for pid in people - {who}:
-            if knows(world, who, pid) and _calls(q, pid, me if pid == "player" else pid):
-                for p in people:
-                    learn(world, p, pid)
-    if INTRO.search(text):
-        for p in people:
-            learn(world, p, who)
-        mate = "player" if to in ("player", "主角", me) else to
-        if mate in people and ("互通" in text or "通了姓名" in text):
-            for p in people:
-                learn(world, p, mate)
-
-
 # ============================================================
 #  交编剧之前：不给即不泄露
 # ============================================================
@@ -229,7 +401,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     speaker = "player" if speaker in ("player", "主角", me) else speaker
 
     def speech(q: str) -> str:
-        q = _swap(q, tab, lambda p: address(world, p))
+        q = _swap(q, tab, lambda p: address(world, p), _introduced)  # 落不了账的自报家门只去掉名字：「小生，大理人氏」，不是「小生兄台」
         if speaker and speaker != "player" and world.graph.kind(speaker) == "person" and not knows(world, speaker, "player"):
             q = q.replace(me, "兄台")
             for a, b in reversed(_calls(q, "player", me)):
@@ -262,9 +434,10 @@ def thing(world, name: str) -> str:
 
 
 def _swap(text: str, tab, word, drop=None) -> str:
-    """把名字换成 word(pid)；drop 命中名字之前的文字(已有叫法作同位语)则直接去掉名字。"""
+    """把名字换成 word(pid)；drop 命中(名字之前已有叫法作同位语，或 drop(text, 起, 止) 为真：自报家门)则直接去掉名字。"""
     for pid, a, b in reversed(lexicon.find(text, tab)):
-        text = text[:a] + ("" if drop and drop.search(text[:a]) else word(pid)) + text[b:]
+        gone = drop and (drop(text, a, b) if callable(drop) else drop.search(text[:a]))
+        text = text[:a] + ("" if gone else word(pid)) + text[b:]
     return text
 
 
