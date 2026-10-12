@@ -169,8 +169,7 @@ class Game:
             offstage_job.result()
         page["text"] = veil(page["text"])            # 编剧熟读原著，名字可能是它自己带来的：成文也过一遍主角的视角
         turn["text"] = page["text"]
-        picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates,
-                            plan["options"] or agents.plain_options(rag.build(w)))
+        picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates, plan["options"])  # 兜底项看局面，归 menu
         self.menu = {text: ids for text, ids in picked}
         turn["options"] = [text for text, _ in picked]
         facts = "；".join(describe(op) for op in applied if op.get("key") not in ("threads", "conditions"))

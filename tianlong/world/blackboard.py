@@ -2,7 +2,7 @@
 [INPUT]: 依赖 copy 做深拷贝
 [OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/所识之人 acquaintances/节奏账 pacing/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆）、ORIGINS、JOURNAL_CAP
 [POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相；
-       quests/study/hooks/turn/acquaintances/pacing 由系统(situation、growth、engine、perspective、pacing)维护；内伤是境况里的分级词，由 body 升降，导演写不动。
+       quests/study/hooks/turn/acquaintances/pacing/came_from/en_route 由系统(situation、growth、engine、perspective、pacing)维护；内伤是境况里的分级词，由 body 升降，导演写不动。
        气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。
        记忆分两层：journal 是近事(工作记忆)，满 JOURNAL_CAP 行即挤出最早 FOLD 行交上层折叠进 synopsis(情节梗概)，上下文有界而记忆无界
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -26,6 +26,8 @@ DEFAULTS = {
     "study": {},         # 研习进度（秘籍/武学 → 累计分钟、所至之阶）：由 growth 维护
     "hooks": [],         # 编剧埋下、尚未兑现的伏笔（至多两条）
     "acquaintances": [], # 主角识得其名的人：出身带来的、戏里自报家门或被人当面叫出的（由 perspective 维护）
+    "came_from": None,   # 来路：主角上一程从哪里来（出路标出来路，兜底选项不给回头路）
+    "en_route": None,    # 途中：{to 去向, left 余程日数}，光阴走满在途中歇脚时记下，到达或改道即清
     "pacing": [],        # 节奏账：最近几回合的主题、谁对主角说了什么、局面动没动（由 pacing 维护）
     "turn": 0,           # 第几回合：未了之事据此判断久未推进
     "synopsis": "",      # 情节梗概：长期记忆

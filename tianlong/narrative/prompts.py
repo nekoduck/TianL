@@ -1,5 +1,5 @@
 """
-[INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/出路注明关口之类）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
+[INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/途中去向与余程/出路按方向措辞、注明关口之类与来路）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
          dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
 [OUTPUT]: 对外提供 render() / render_backstage() / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、spawn 场景实体与暗藏器物用原名） /
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、set epithet 立名号） / THREATS / TENSIONS 与
@@ -46,8 +46,9 @@ def render(pack: dict) -> str:
         _section("近旁·同一处所之内，喊一声就到", pack.get("nearby", [])),
         "【同行】" + "、".join(pack["party"]) if pack.get("party") else "",
         _section("关系网·主角所知", pack["relations"]),
-        "【出路】" + ("、".join(f"{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "") + "）"
-                              for e in pack["exits"]) or "无"),
+        "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "")
+                              + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),
+        (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
         f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}｜{me['tier']}"
         f"｜姿态：{me['posture']}｜武学：{'、'.join(me['skills']) or '无'}",
         _section("主角境况", me["conditions"]),
@@ -135,7 +136,8 @@ PLOT_GUIDE = """【剧情落账】世界里的人物、地点、器物、道路�
 - 研习秘籍或向身边人求教武学：{"op":"study","id":"player","value":"秘籍或武学"}；北冥吸人内力：{"op":"drain","id":"player","value":"某人"}——增减多少由系统算，不要写 power
 - {"op":"reveal","src":…,"dst":…,"rel":…}（揭开一条既有隐情；发现暗路时 src 为暗路起点、dst 为通往之地、rel 写"通路"）
 - 地点与景物只可改现状：{"op":"set","id":…,"key":"state","value":"…"}；暗藏之人或物被发现：{"op":"set","id":…,"key":"hidden","value":false}
-- 主角移动：{"op":"set","id":"player","key":"location","value":原著地点}（路程由系统结算，同行者随之；目的地门前有关口则止步关前）
+- 主角移动：{"op":"set","id":"player","key":"location","value":原著地点}（路程由系统结算，同行者随之；目的地门前有关口则止步关前；
+  一回合的光阴走不完的远路，会在途中的地点歇脚，下回合续行或在途中生事；拍文按【出路】里的方向写「出…」「往…」，不必报地名全称）
 - 败走：让此人 set location 到别处；系统记他新败，数日内不会再来
 场景实体：剧情需要一队人马或一件寻常物件（碎银、火折、金创药）时，在顶层 spawn 里立它：{"kind":"group","name":"万劫谷谷丁","faction":"万劫谷","count":8} 或 {"kind":"thing","name":"火折"}；
 立了才能在 ops 里用它。群体须属于此地附近有据点或有人的门派，不得属于原著近事里尚未到场的势力；物件不得冒用原著器物之名——此地暗藏的原著器物被发现，直接用它的原名，不要另立。路人龙套只活在叙事里，不写 ops。

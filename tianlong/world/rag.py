@@ -117,7 +117,7 @@ def build(world) -> dict:
         "player": {"name": me["name"], "hp": f"{me['hp']}/{me['max_hp']}", "tier": power_tier(me["power"]),
                    "posture": me["posture"], "skills": me["skills"], "inventory": carried,
                    "origin": me["origin"], "goal": me["goal"], "conditions": me["conditions"], "threads": me["threads"],
-                   "synopsis": me["synopsis"]},
+                   "synopsis": me["synopsis"], "en_route": me.get("en_route")},
         "scene": {"name": here, "region": g.get(here, "region"), "desc": g.get(here, "desc"),
                   "state": g.get(here, "state"), "lore": g.get(here, "lore", [])},
         "features": [{"name": f, "desc": g.get(f, "desc")} for f in s["features"]],

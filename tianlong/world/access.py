@@ -1,13 +1,14 @@
 """
 [INPUT]: 依赖 world/graph 的 matches / ROAD，依赖 World 门面的 graph / knowledge / player / here（鸭子类型）
-[OUTPUT]: 对外提供 barrier()（一步为何走不通）、stranded()（是否身陷绝境）、distances()（主角可走的里程）、walk()（主角远行的实际路线与止步缘由）、learn()（走过的路就认得）、
-          exits()（主角眼中的出路）、steps()（场外人物可去的相邻地）、passes()（此地出发的关口，供导演）、secret_ways()（近处未被发现的暗路，供导演）、
+[OUTPUT]: 对外提供 barrier()（一步为何走不通）、stranded()（是否身陷绝境）、distances()（主角可走的里程）、walk()（主角远行的实际路线与止步缘由，可按本回合光阴在途中歇脚）、heading()（局部方向措辞）、ON_ROAD、learn()（走过的路就认得）、
+          exits()（主角眼中的出路，带方向措辞并标出来路）、steps()（场外人物可去的相邻地）、passes()（此地出发的关口，供导演）、secret_ways()（近处未被发现的暗路，供导演）、
           hidden()（道路是否藏有暗路）
 [POS]: world 层的通行裁判——道路是地理，通行是物理与认知：blocked 与 requires 由系统硬判、拦住所有人（唯一的例外是主角身陷绝境——
        此地除不通之路外别无出路，如坠入谷底——此时不通之路交导演以奇遇兑现，世界不会把主角永远困死）；hidden 只拦尚未发现它的主角，
        暗路被剧情 reveal 或被主角走过之后按整条道路记入认知账本；how/risk 只能文字描述，交导演在剧情里兑现。
        主角远行：第一步的关导演已在后台看见、可在本回合兑现；途中的关一笔带过（原著某一阶段的情形未必是此刻的情形）；
-       目的地门前的关（通往目的地，或与目的地同在 0 日一簇）与绝路则止步于前，留给下一回合的导演——门前之关必成一场戏。传闻与 LOD 分层仍按纯地理
+       目的地门前的关（通往目的地，或与目的地同在 0 日一簇）与绝路则止步于前，留给下一回合的导演——门前之关必成一场戏；
+       光阴走满则在途中的原著地点歇脚(en_route 记着去向与余程)，千里之行分作几回合，途中可以遇事。出路按局部方向措辞(出/进/去/往)并标出来路。传闻与 LOD 分层仍按纯地理
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from .graph import ROAD, matches
@@ -72,8 +73,9 @@ def distances(world, src: str) -> dict[str, int]:
 # ============================================================
 #  主角远行：沿可走的最短路；无路可走时沿地理最短路走到绝路之前
 # ============================================================
-def walk(world, dest: str) -> tuple[list[str], str | None]:
-    """返回 (实际路线, 半途止步的缘由)。路线只有一站即寸步未移。"""
+def walk(world, dest: str, budget: int | None = None) -> tuple[list[str], str | None]:
+    """返回 (实际路线, 半途止步的缘由)。路线只有一站即寸步未移。
+    budget：本回合的光阴够走几日路——走满即在途中的原著地点歇脚(至少走完第一程)，余下的路留给下一回合，途中可以遇事。"""
     g, here = world.graph, world.here
     route = g.path(here, dest, _passable(world)) or g.path(here, dest)
     if route is None:
@@ -88,7 +90,22 @@ def walk(world, dest: str) -> tuple[list[str], str | None]:
         gate = _gate(edge, b)
         if gate and i and (b == dest or left[i] == 0):  # 门前之关：通往目的地，或与目的地同在 0 日一簇
             return route[:i + 1], f"行至{a}便止步，往{b}是一道关（{gate['kind']}）：{gate['how']}"
+        gone = sum(e["days"] for e in edges[:i])
+        if budget is not None and gone and gone + edge["days"] > budget:  # 光阴走满：在途中歇脚，不一步跨过千里
+            return route[:i + 1], f"{ON_ROAD}行至{a}歇脚，往{dest}尚余{left[i]}日路程"
     return route, None
+
+
+ON_ROAD = "途中："  # 走满光阴的止步与关前、绝路的止步不同：它不是受阻，是还在路上
+
+
+def heading(a: str, b: str) -> str:
+    """从 a 到 b 的局部方向措辞：同一处所之内说出入与去向，跨处所说往何处——选项与出路不报节点全名。"""
+    ra, _, sa = a.partition("·")
+    rb, _, sb = b.partition("·")
+    if ra == rb:
+        return f"出{sa}" if not sb else f"进{sb}" if not sa else f"去{sb.rpartition('·')[2]}"
+    return f"往{(sb or rb).rpartition('·')[2]}"
 
 
 def learn(world, route: list[str]):
@@ -104,7 +121,8 @@ def learn(world, route: list[str]):
 # ============================================================
 def exits(world) -> list[dict]:
     """主角眼中的出路：走不通、条件未备、未被发现的都不算；有关口的注明其类。"""
-    return [{"name": b, "days": e["days"], "kind": (_gate(e, b) or {}).get("kind")}
+    back = world.player.get("came_from")
+    return [{"name": b, "days": e["days"], "kind": (_gate(e, b) or {}).get("kind"), "way": heading(world.here, b), "back": b == back}
             for b, e in world.graph.ways(world.here, _passable(world))]
 
 

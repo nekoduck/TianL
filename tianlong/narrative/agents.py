@@ -1,11 +1,11 @@
 """
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，只给编剧)/本幕之问/场景实体/时长措辞/原著去留/张力）、repair()（导演返工一次：只改有问题的拍）、
-          write()（编剧：正文 + 梗概/选项(文字｜对象)/伏笔/可传之事，给 on_text 即边写边送）、plain_options()（离线朴素选项）、
+          write()（编剧：正文 + 梗概/选项(文字｜对象)/伏笔/可传之事，给 on_text 即边写边送）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
-       后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行。
+       后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
        编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -65,18 +65,13 @@ ME = {"player", "主角", "你"}
 
 def _plain_director(pack: dict, deed: str) -> dict:
     """离线兜底：只会走路与旁观的朴素说书人；原著照常上演。"""
-    exits = [e["name"] for e in pack["exits"]]
-    dest = max((e for e in exits if e in deed), key=len, default=None)  # 「澜沧江边高崖」不被「澜沧江」截胡
+    dest = max((e["name"] for e in pack["exits"] if e["name"] in deed or e.get("way") == deed),
+               key=len, default=None)  # 「澜沧江边高崖」不被「澜沧江」截胡；兜底选项的方向措辞(出练武厅)也认得
     text = f"你动身前往{dest}。" if dest else f"你{deed}。" if deed else "你凝神四顾。"
     ops = [{"op": "set", "id": "player", "key": "location", "value": dest}] if dest else []
     return {"beats": [{"who": "player", "text": text, "ops": ops}], "pace": "片刻" if deed else "瞬息",
             "canon": {"unfolds": True, "why": ""}, "tension": "平",
             "question": {"ask": deed, "state": "resolved" if dest or not deed else "open", "by": None}}
-
-
-def plain_options(pack: dict) -> list[str]:
-    opts = [f"与{p['name']}攀谈" for p in pack["people"][:2]] + [f"前往{e['name']}" for e in pack["exits"]]
-    return (opts + ["歇息片刻", "四下察看"])[:3]
 
 
 def _beat(x, me: str) -> dict | None:

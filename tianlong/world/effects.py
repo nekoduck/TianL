@@ -13,7 +13,7 @@
        在场即「近旁」：同一处所之内零日可达的子地点都算身边；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
        一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
-       主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，前半程成立、后半程回告编剧，走过的暗路记入认知；
+       主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
        场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
@@ -37,7 +37,7 @@ from .graph import ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing"}
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "pacing", "came_from", "en_route"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -580,14 +580,20 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
         if reason:
             rejected.append((op, reason))
             continue
-        if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，前半程照走，后半程回告编剧
-            route, why = access.walk(world, op["value"])
+        if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，光阴走满即途中歇脚；前半程照走，后半程回告编剧
+            dest, turn = op["value"], getattr(world, "turn", None)
+            budget = max(1, turn["minutes"] // PER_DAY) if turn and turn.get("minutes") else None
+            route, why = access.walk(world, dest, budget)
             if why:
                 rejected.append(({**op}, why))
                 if len(route) < 2 or not _progress(world, route):  # 受阻不倒退：近处绕了一圈仍过不去，便原地不动
                     continue
                 op["value"] = route[-1]
             access.learn(world, route)
+            me = world.player
+            me.set("came_from", route[-2])
+            me.set("en_route", {"to": dest, "left": world.graph.distances(route[-1]).get(dest, 0)}
+                   if why and why.startswith(access.ON_ROAD) else None)  # 途中：记着去向，下回合可续行，也可在途中生事
             _exec(world, op, origin)
             applied.append(op)
             turn = getattr(world, "turn", None)
