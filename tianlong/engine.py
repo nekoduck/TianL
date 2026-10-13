@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、rag、situation、perspective(编剧视角)、settle(v6 结算：正文出闸 Gate、账本快照 books、结算单落账 commit、词表对账 audit)、
+[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、rag、situation、perspective(编剧视角)、settle(v6/v7 结算：正文出闸 Gate(逐段逐句对齐到时刻、note 补记)、账本快照 books、结算单落账 commit、复核 disputes / waive、规则之事 ruled、首末两份账 glance / delta / unwritten)、
          body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、growth.SITTING(研习至少一顿饭)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）、
          story/（timing 规则主张时长与 cut 换算、canon 原著窗口的拉与消费、stakes 时限、scene 场、brief 场记与主干调度、arc 主角线、choices 选项槽位）与 narrative/agents；llm 可为 None（离线兜底）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
@@ -20,7 +20,10 @@
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
        v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；把人带去别处的那一桩，主角只看见人走(不记亲历)，事本身随传闻抵达；
        抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著；
-       v6：此地原著的亲历以回合开始的所在为准(导演把它编在主角动身之前)；选项也从主角的视角说(叫不出的名字换成叫法，对象不变)
+       v6：此地原著的亲历以回合开始的所在为准(导演把它编在主角动身之前)；选项也从主角的视角说(叫不出的名字换成叫法，对象不变)；
+       v7 账文同构的四条轴：叫法即主键(_distinguish：回合开始、编剧落笔之前、结算之后三处，撞了叫法的人各分一个稳定外号)；
+       两相对账(_settle_page：回合开始记下主角看得见的账 settle.glance，结算之后求差——账房开单入账是文→账，账上变了而正文没写到的由账本补记一段随流送出是账→文)；
+       双录复核(词表仍看出、账上仍没有的句子交账房复核，记账或驳回，之后仍对不上的才是分歧)；正文有时间轴(编剧得知主角从哪里到了哪里：动身另起一段、到了点明此地)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -68,9 +71,14 @@ def _staged(plan: dict, deed: str) -> dict:
 
 
 def _arrival(w, origin: str) -> list[str]:
-    """抵达即遭遇(v5)：主角这一回合换了地方，那里眼前有谁——导演的节拍写在动身之前，编剧得知道到了之后看见了谁。"""
-    faces = [perspective.handle(w, p) for p in rag.scene(w)["people"]] if w.here != origin else []
-    return [f"到了此地，眼前有：{'、'.join(faces)}"] if faces else []
+    """抵达即遭遇(v5)：主角这一回合换了地方，那里眼前有谁——导演的节拍写在动身之前，编剧得知道到了之后看见了谁。
+    v7 正文有时间轴：明告编剧从哪里到了哪里——写到动身另起一段、到了点明此地，出闸才分得清哪句话是在哪一处说的、谁听见。"""
+    if w.here == origin:
+        return []
+    spot = lambda loc: loc.split("·")[-1]
+    faces = [perspective.handle(w, p) for p in rag.scene(w)["people"]]
+    return [f"你从{spot(origin)}到了{spot(w.here)}：写到动身另起一段，到了之后点明「{spot(w.here)}」"] + \
+           ([f"到了此地，眼前有：{'、'.join(faces)}"] if faces else [])
 
 
 def _cut_word(cut) -> str:
@@ -121,6 +129,8 @@ class Game:
         w.turn = {}
         w.player.set("turn", w.player["turn"] + 1)
         origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
+        self._distinguish(w)                          # 叫法即主键(v7)：撞名的人在任何人落笔之前分到稳定的外号
+        glance0 = settle.glance(w)                    # 两相对账(v7)：回合开始时主角看得见的账，回合末与之求差
         aim = adjudicate.targets(w, deed, self.menu.get(deed, ()))  # 玩家所指：选项自带的对象 + 原话里认得出的名字
         scale = self.scales.get(deed)                 # 玩家所选之举的尺度：此后即一件持续之事
         offstage, staged = lod.split_due(w)
@@ -191,6 +201,7 @@ class Game:
                 "news": [{"id": e["id"], "witnessed": bool(e.get("witnessed")), "date": w.clock.label(e["day"]),
                           "place": e["where"], "text": perspective.mask(w, e["summary"])} for e in news],  # 界面也从主角的视角说
                 "status": rag.condition(w), "void": void}
+        self._distinguish(w)  # 本回合赶来的人若与眼前之人撞了叫法，落笔之前分开
         emit("stage", "write")
         emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
         view = perspective.veil(w, rag.build(w))  # 编剧从主角的视角写：不识名之人只剩叫法，不给即不泄露
@@ -215,14 +226,16 @@ class Game:
         if on and rest:
             emit("text", rest)
         page["text"] = turn["text"] = gate.text  # 放行的就是存下的：玩家读到的正文是本回合的定本
-        bill = agents.settle(self.llm, settle.books(w, page["text"], applied))  # 结算(v6)：账房开出定本里确立而账上没有的变化，每条附原句为据
-        settled, rifts = settle.commit(w, bill, page["text"], aim) if bill else ([], [])  # 世界照常裁决：成立的落账，规则之事与落不了的记作分歧
+        settled, rifts, notes = self._settle_page(w, page["text"], applied, aim, gate, glance0)  # 结算：文→账入账、双录复核、账→文补记
         if settled:
-            w.witness(settled)
             applied = applied + settled
             ruling.applied += settled
-            log.info("结算入账：%s", "；".join(describe(op) for op in settled))
-        rifts = settle.rifts(rifts, settle.audit(w, page["text"]))  # 结算之后仍对不上的(离线时只有这一道)：交下回合导演由剧情圆回
+        if notes:  # 账上变了、正文没写到的：由账本补记一句，接在正文之后(与正文同过视角掩码)
+            extra = gate.note(notes)
+            if on and extra:
+                emit("text", extra)
+            page["text"] = turn["text"] = gate.text
+            log.info("补记：%s", "；".join(notes))
         if rifts:
             w.player.set("drift", rifts)
             log.info("账文分歧：%s", rifts)
@@ -248,6 +261,41 @@ class Game:
         self.options, self.last_text = turn["options"], page["text"]
         self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]
         return turn
+
+    # ------------------------------------------------------------
+    #  结算(v6/v7 账文同构)：文→账入账、双录复核、账→文补记；叫法即主键
+    # ------------------------------------------------------------
+    @staticmethod
+    def _distinguish(w):
+        epithets = perspective.distinguish(w)
+        if epithets:
+            w.apply(epithets, "director")
+            log.info("立外号以分彼此：%s", "；".join(f"{op['id']}→{op['value']}" for op in epithets))
+
+    def _settle_page(self, w, text, applied, aim, gate, glance0) -> tuple[list, list[str], list[str]]:
+        """正文定稿之后的结算，返回 (成立的指令, 账文分歧, 补记)：
+        一、入账：账房读定本与账本快照开单，据须是正文原句、只收叙述成立得了的事，在据所在那一刻的听众里经 effects 裁决；
+        二、复核：词表这双眼睛仍看出、账上仍没有的句子交账房逐句裁定——记账或不记，复核之后仍对不上的才是分歧(离线时词表看出的一律是分歧)；
+        三、补记：回合首末两份主角看得见的账求差，账上变了而正文没写到的(账房判、字眼确凿的词表兜底)由账本生成一句补在正文之后。"""
+        before = settle.delta(w, glance0)  # 这一回合账上的变化(主角看得见的)：交账房对稿
+        bill = agents.settle(self.llm, settle.books(w, text, applied, before))
+        settled, rifts = settle.commit(w, bill, text, aim, gate) if bill else ([], [])
+        doubt = settle.disputes(w, text)
+        if doubt and bill is not None:
+            verdict = agents.recheck(self.llm, settle.books(w, text, applied + settled), doubt)
+            if verdict:
+                more, also = settle.commit(w, verdict, text, aim, gate)
+                settled, rifts = settled + more, rifts + also
+                doubt = settle.waive(settle.disputes(w, text), verdict)
+        rifts = settle.rifts(rifts, [f"正文「{d['句']}」：{d['看出']}，账上却没有" for d in doubt], settle.ruled(w, text))
+        if settled:
+            w.witness(settled)
+            log.info("结算入账：%s", "；".join(describe(op) for op in settled))
+        self._distinguish(w)  # 结算里来了的人、改了的叫法：撞名的再分开
+        missed = None if bill is None else {before[i - 1]["key"] for i in bill.get("未写到", []) if 0 < i <= len(before)}
+        mine = {c["key"] for c in before}  # 只补账本自己的变化：结算从正文里记下的，正文当然写到了
+        notes = settle.unwritten([c for c in settle.delta(w, glance0) if c["key"] in mine], text, missed)
+        return settled, rifts, [c["text"] for c in notes]
 
     # ------------------------------------------------------------
     #  试演与定稿：先在世界的副本上裁决，硬违例交导演返工一次；仍不成立的拍号交定稿作废

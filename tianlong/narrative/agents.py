@@ -2,7 +2,8 @@
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或括号里都认——括号写在文字末尾或对象之后皆可，说耗时路程的才是代价、其余是对象(v5)；至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
-          settle()（v6 账房：读定本正文与账本快照，开出账上缺的变化 {changes:[{据,谁,ops}], rifts}，离线或失声返回 None 交词表对账）、
+          settle()（v6 账房：读定本正文与账本快照，开出账上缺的变化 {changes:[{据,谁,ops}], rifts, 未写到(v7 对稿：账上变了而正文没写到的编号)}，离线或失声返回 None 交词表对账）、
+          recheck()（v7 双录复核：词表看出、账上没有的几句交账房逐句裁定 {changes, 不记}）、
           recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
@@ -257,9 +258,27 @@ def settle(llm, books: dict) -> dict | None:
     r = _ask(llm, prompts.settler(books), lambda: None, tokens=1200)
     if not isinstance(r, dict):
         return None
-    changes = [{"据": str(c.get("据") or ""), "谁": c.get("谁") if isinstance(c.get("谁"), str) else None, "ops": _dicts(c.get("ops"))}
-               for c in _dicts(r.get("changes"))]
-    return {"changes": changes, "rifts": [{"据": str(x.get("据") or ""), "账上": str(x.get("账上") or "")} for x in _dicts(r.get("rifts"))]}
+    return {"changes": _bills(r.get("changes")),
+            "rifts": [{"据": str(x.get("据") or ""), "账上": str(x.get("账上") or "")} for x in _dicts(r.get("rifts"))],
+            "未写到": [int(x) for x in (r.get("未写到") if isinstance(r.get("未写到"), list) else [])
+                     if isinstance(x, (int, str)) and str(x).strip().isdigit()]}
+
+
+def recheck(llm, books: dict, disputes: list[dict]) -> dict | None:
+    """双录复核(v7)：词表看出、账上没有的几句交账房逐句裁定 {changes:[{据,谁,ops}], 不记:[{据,缘由}]}；离线或失声返回 None(这几句只记分歧)。"""
+    if llm is None or not disputes:
+        return None
+    r = _ask(llm, prompts.rechecker(books, disputes), lambda: None, tokens=900)
+    if not isinstance(r, dict):
+        return None
+    return {"changes": _bills(r.get("changes")),
+            "不记": [{"据": str(x.get("据") or ""), "缘由": str(x.get("缘由") or "")} for x in _dicts(r.get("不记"))]}
+
+
+def _bills(xs) -> list[dict]:
+    """结算单的形状：据与谁是文字、ops 是一批指令。"""
+    return [{"据": str(c.get("据") or ""), "谁": c.get("谁") if isinstance(c.get("谁"), str) else None, "ops": _dicts(c.get("ops"))}
+            for c in _dicts(xs)]
 
 
 def recap(llm, synopsis: str, lines: list[str]) -> str:

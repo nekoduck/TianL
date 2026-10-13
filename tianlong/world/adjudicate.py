@@ -1,10 +1,10 @@
 """
 [INPUT]: 依赖 world/situation 的 shortnames（近处子地点的短名，与落账同一口径）、world/bond 的 before / derive（恩怨事件）、world/actor 的 feel（心境）、world/growth 的 studiable / arts_of / mastery / unearned（研习对象与进境账），
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
-         world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear（逐拍听写与称谓体检、那一拍的听众、导演宣告的识名须有拍文为据），
+         world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物），World 门面（graph / player / knowledge / here / turn / aliases）
 [OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 arrive、写 set player location)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
-          afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、names()（实体名表，含近处子地点的短名）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
+          afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
        v5 只剥掉越权的那几条，这一拍其余照演(玩家要走就照走)，拍文后注明哪件事未曾发生、【未能成立】里明告编剧，越权之举降为下回合的候选选项；拍里只有越权之事则整拍不演），
@@ -19,6 +19,9 @@
        主角的去留有账可依(v5)：拍文写「你走进X」「你离开X」而账上没到、没走即 move 违例(台词里的去处、导演写了要去而止步关前的不算)；
        识名(v6)：逐拍先听再查——每一拍落账之后就地听写(听众是说话时在场的，连同这一拍赶来的，记在 turn["ears"])，听来的名字是识名指令、经 effects 入账；
        导演宣告的识名须有拍文为据(_grounded)：拍里没人说出口的名字丢掉，说出口的换成拍文听出来的那几条——谁听见由文字定，低声说给一人的只那人知道；
+       时间轴(v7)：逐拍记下主角这一回合待过的每一处、那里的听众与眼前的遗体(turn["moments"]：{here, ears, bodies}，逐拍经 perspective.moment 进出那一刻)、
+       每一拍发生在哪一刻(turn["beats_at"])——正文出闸时逐段逐句对齐到这里；
+       view 公开回合起止两个切面，成文之后的对账与结算的复核共用；
        进境有账可依：主角的拍里写了账上没有的那一阶(「身如游龙」而未入门、「大成」而只初窥)即 mastery 违例，交返工不作废；同伴诸拍落定后才沿主角的路随行，擒者与人质须同处一地。纯规则、零 LLM 调用；同一份提议在同一世界上裁决两次结果相同（引擎据此先在副本上试演）
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -58,8 +61,10 @@ def names(world) -> tuple[list, dict]:
     surface.update({a: n for a, n in world.aliases.items() if n in surface})
     surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
     surface.update({short: loc for short, loc in situation.shortnames(world).items() if short not in surface})  # 「石级隧道」即琅嬛福地·石级隧道
-    surface.update({perspective.handle(world, p): p for p in situation.around(world)
-                    if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵
+    seen = {p for p in situation.seen(world) if world.graph.kind(p) == "person"}
+    surface.update({perspective.handle(world, p): p for p in seen
+                    if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵——本回合见过的都算(v7：正文写到被甩在身后的人也认得)
+    surface.update({c: p for c, p in perspective.calls(world, seen).items() if c not in surface})  # 「容师叔毙命」死的是容子矩，不是叫他的持剑少年(v7)
     kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else node["type"])
              for n, node in g.nodes.items() if n in surface.values()}
     return lexicon.table(surface), kinds
@@ -199,13 +204,15 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             r.hard.append(lexicon.Finding("spawn", 0, str(spec.get("name")), f"场景实体「{spec.get('name')}」不成立：{why}"))
     shown, touched, stripped, named = [], {}, set(), []
     beats = plan["beats"]
+    moments = world.turn["moments"] = []  # 时间轴(v7)：主角这一回合待过的每一处与那里的听众——正文逐段对齐到这里
+    world.turn["beats_at"] = []           # 每一拍发生在哪一刻：拍文与时刻，供正文对齐
 
     def commit(ops):  # 听来的名字是识名指令(v6)：与一切后果同一条写入通道，成立的入本回合的账
         r.applied.extend(effects.apply(world, ops, "director")[0])
     aimed = {effects.resolve(world, op.get("value")) for b in beats for op in b.get("ops") or [] if effects._moves_player(world, op)}
     for i, beat in enumerate(beats, 1):
         if i in drop:
-            r.void.append(f"{beat['text'] or '这一拍的后果'}——未曾发生：{'；'.join(drop[i])}")
+            r.void.append(f"{(beat['text'] or '这一拍的后果').rstrip('。！')}——未曾发生：{'；'.join(drop[i])}")  # 与那件事同一句：词表整句看否定
             shown.append({**beat, "text": ""})
             continue
         raw, aside = beat.get("ops") or [], ""
@@ -225,13 +232,19 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         ops, baseless = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"), beat.get("to"))
         r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
                    for op in baseless]
-        at, ears = world.here, perspective.audience(world)
+        at, ears, dead = world.here, perspective.audience(world), situation.bodies(world)
+        if not moments or moments[-1]["here"] != at:
+            moments.append({"here": at, "ears": set(), "bodies": set()})
         snap = bond.before(world, ops)
         applied, rejected = effects.apply(world, ops, "director")  # 落账会就地规整指令：提议本身留给返工与定稿
         r.applied += applied
-        world.turn["ears"] = ears | (perspective.audience(world) & set(world.turn.get("arrived", ())))  # 这一拍说话时在场的，连同这一拍赶来的
-        named += perspective.audit(world, [beat], world.turn["ears"], commit, start=i)  # 逐拍先听再查：主角走开之后说的话，厅上的人听不见
-        world.turn.pop("ears")
+        ears |= perspective.audience(world) & set(world.turn.get("arrived", ()))  # 这一拍说话时在场的，连同这一拍赶来的
+        dead |= situation.bodies(world) if world.here == at else set()            # 这一拍眼前的遗体，连同这一拍倒下的
+        with perspective.moment(world, ears, dead):
+            named += perspective.audit(world, [beat], ears, commit, start=i)  # 逐拍先听再查：主角走开之后说的话，厅上的人听不见
+        moments[-1]["ears"] |= ears
+        moments[-1]["bodies"] |= dead
+        world.turn["beats_at"].append((beat.get("text") or "", len(moments) - 1))
         bond.derive(world, beat.get("who"), applied, snap, beat.get("text") or "", beat.get("to"))  # 事件先于状态：恩怨从做了什么里推出
         actor.feel(world, beat.get("who"), beat.get("mood"))  # 拍上的情绪挂在此人脸上几回合
         for nid in (i2 for op in applied for i2 in effects._ids(op)):
@@ -254,6 +267,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         effects._note(world, situation.follow(world, route))
     if then:
         then()
+    if not moments or moments[-1]["here"] != world.here:  # 主角最后到了哪里：那一刻的听众到成文时再看
+        moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
     world.turn["start"] = {"here": here0, "inventory": inv0, "around": around0, "route": route, "aimed": aimed}  # 编剧成文之后的对账也以此为准
     _examine(world, r, shown, here0, inv0, around0, power0, stripped, named)
@@ -367,14 +382,19 @@ def _examine(world, r: Ruling, shown, here0, inv0, around0, power0, stripped=fro
 AFTER = {"acquire", "give", "kill", "drain", "bind", "free", "follow", "leave", "move"}  # 成文之后还要对账的变化
 
 
+def view(world) -> lexicon.View | None:
+    """本回合起止两个切面(裁决之后才有)：成文之后的对账与结算的复核共用。"""
+    start = (getattr(world, "turn", None) or {}).get("start")
+    return _view(world, start["here"], start["inventory"], start["around"], start["route"], start["aimed"]) if start else None
+
+
 def afterword(world, text: str) -> list[str]:
     """编剧成文之后再对一次账(v5)：正文写了账上没有的得失、去留、生死、擒放(与拍文同一口径，以回合起止两个切面为准)——
     读者已经读到，改不回来，记作偏差，下回合交导演由剧情交代或圆回。须在本回合裁决之后调用(world.turn["start"])。"""
-    start = (getattr(world, "turn", None) or {}).get("start")
-    if not start or not text:
+    v = view(world)
+    if not v or not text:
         return []
-    view = _view(world, start["here"], start["inventory"], start["around"], start["route"], start["aimed"])
-    found = lexicon.scan([{"who": None, "text": text}], view, *names(world))
+    found = lexicon.scan([{"who": None, "text": text}], v, *names(world))
     return [f.message.replace("第1拍", "正文") for f in found if f.kind in AFTER]
 
 

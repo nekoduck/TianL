@@ -1,7 +1,8 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
-[OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表）、
+[OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
           unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、ARRIVE / DEPART / QUOTED（主角的去留：完成体的到与离，台词不算）、
+          NEGATE / REMOTE / YET（否定、远处与回忆、未然——v7 正文时间轴判主角是否真动了身也用它们）、
           leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE / MOVE / HURT
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
@@ -11,7 +12,9 @@
        「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)，也是举动所指的线索(「继续摸索内功心法」：手边的秘籍就是所指)；
        主角的去留(v5)：「你走进X」「你离开X」要账上真到过、真离开(View.route / here / aimed)，「奔向」只是方向不算；
        场外(v5)：场外推演与史官的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)，
-       「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果
+       「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
+       不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
+       主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -161,7 +164,7 @@ def itemish(text: str) -> str | None:
 # ============================================================
 #  体检：逐拍逐分句，强动词 × 实体 × 起止切面
 # ============================================================
-def scan(beats: list[dict], view: View, tab, kinds: dict[str, str]) -> list[Finding]:
+def scan(beats: list[dict], view: View, tab, kinds: dict[str, str], dedupe: bool = True) -> list[Finding]:
     """beats: [{who, text}]；kinds: id → person/item/thing/...。返回违例清单；hard 违例交导演修复，soft 只入 trace。
     得失与现身按分句看（动词与实体须在同一分句）；去留、生死、擒放、吸功按整句看（主语常在前一分句）；
     否定、假设、回忆、远处所在的句子一概不算。"""
@@ -179,7 +182,7 @@ def scan(beats: list[dict], view: View, tab, kinds: dict[str, str]) -> list[Find
                 found, prev = _sentence(i, sent, who, view, tab, kinds, prev)
                 out += found
         out += _moves(i, text, who, view, tab, kinds)
-    return _dedupe(out)
+    return _dedupe(out) if dedupe else out  # 结算的复核要逐句定位：同一件事写在两句里，两句都要认出来
 
 
 def _moves(i, text, who, view, tab, kinds) -> list[Finding]:
@@ -188,7 +191,8 @@ def _moves(i, text, who, view, tab, kinds) -> list[Finding]:
     if view.here is None:
         return []
     out = []
-    for clause in _clauses(QUOTED.sub("", text)):
+    sentences = [s for s in SENTENCE.split(QUOTED.sub("", text)) if not NEGATE.search(s) and not YET.search(s)]  # 与生死擒放同一口径：整句否定即不算(「…——未曾发生」)
+    for clause in (c for s in sentences for c in _clauses(s)):
         if not (who == "player" or "你" in clause) or NEGATE.search(clause) or YET.search(clause) or REMOTE.search(clause):
             continue
         for nid, a, _ in find(clause, tab):
@@ -225,6 +229,18 @@ def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
     return out
 
 
+def _dying(sent: str, ents, die) -> list[str]:
+    """不及物的死：死者是死字之前(八字之内)离它最近的那个人，连同以「、与和及」并列在他前面的人——
+    「持剑少年见容师叔毙命」死的是容师叔，不是叫他的持剑少年；「段誉、钟灵俱已气绝」是两个人。"""
+    before = sorted((e for e in ents if 0 <= die.start() - e[2] <= 8), key=lambda e: -e[2])
+    group = before[:1]
+    for e in sorted((e for e in ents if group and e[2] <= group[-1][1]), key=lambda e: -e[2]):
+        if not re.fullmatch(r"[、与和及同跟]", sent[e[2]:group[-1][1]]):
+            break
+        group.append(e)
+    return [p for p, _, _ in group]
+
+
 def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list[str]]:
     """整句内：谁死、谁被吸、谁获救或被擒、谁随你走、谁离去。返回 (违例, 本句提到的人——下一句的「二人」多半指他们)。"""
     out = []
@@ -235,8 +251,9 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
         out += [Finding("drain", i, p, f"第{i}拍写{p}内力被吸，账上{p}的功力却分毫未减")
                 for p in (people or prev)[:2] if p not in view.drained]
     kill, die = KILL.search(sent), DIE.search(sent)
+    dying = _dying(sent, ents, die) if die else []
     for p, a, b in ents:  # 死者须紧挨着致死之词：「龚光杰刺死褚师弟」死的是褚师弟，「左子穆惊呼，容子矩早已气绝」死的是容子矩
-        if ((kill and 0 <= a - kill.end() <= 4) or (die and 0 <= die.start() - b <= 8)) and p not in view.dead:
+        if ((kill and 0 <= a - kill.end() <= 4) or p in dying) and p not in view.dead:
             out.append(Finding("kill", i, p, f"第{i}拍写{p}身亡，账上{p}却仍活着"))
     bind = BIND.search(sent)
     for p, a, b in ents:

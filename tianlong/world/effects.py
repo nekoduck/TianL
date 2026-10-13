@@ -29,7 +29,9 @@
        结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边；
        识名是一等指令(v6)：reveal 的 id 形 {"op":"reveal","id":某人,"key":"name"(,"to":某人)}——某人的姓名被说了出来，此刻在场的人都听见(to 则只那一人)；
        导演宣告与闸门从文字里听出来的是同一条指令、同一条写入通道。宽松规整导演的几种写法(set epithet 为本名、reveal 关系形 rel=姓名、push acquaintances/knows)；
-       说出与听见的人须在眼前(perspective.audience)，场外无从得知；人人早已知道即原样不动；识名不是物理(落不了不废整拍)、不算因果污染
+       名字是谁的要看得见、谁听见要在耳边(v7)：被叫出名字的人须在 perspective.sight(耳边的活人或眼前的遗体——对着遗体叫出「容师叔」，满厅皆知死者是谁)，
+       听的人须在 perspective.audience，场外无从得知；人人早已知道即原样不动；识名不是物理(落不了不废整拍)、不算因果污染；
+       v7 立外号(set epithet)亦不算因果污染——叫法是主角眼中的主键(perspective.distinguish)，不是对原著的扰动
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -409,12 +411,13 @@ def _travel(world, op, origin) -> str | None:
 #  在场性：谁能碰到谁
 # ------------------------------------------------------------
 def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
-    if named(op):  # 姓名是当面说出、当面听见的：说的人与听的人都得在眼前
+    if named(op):  # 名字是谁的要看得见(活人或眼前的遗体)，谁听见要在耳边(v7)：对着遗体叫出「容师叔」，满厅的人都知道了死者是谁
         if origin in OFFSCREEN:
             return "主角不在场，无从听见"
-        here = perspective.audience(world)
-        far = [x for x in (op["id"], op.get("to")) if x and x not in here]
-        return f"{far[0]}不在你身边，说不出也听不见" if far else None
+        if op["id"] not in perspective.sight(world):
+            return f"{op['id']}不在你眼前，名字落不到人身上"
+        to = op.get("to")
+        return f"{to}不在你身边，听不见" if to and to not in perspective.audience(world) else None
     if op["op"] == "reveal" and origin in OFFSCREEN:
         return "主角不在场，无从得知隐情"
     if op["op"] == "reveal" and origin == "director":
@@ -733,6 +736,6 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             continue
         _exec(world, op, origin)
         applied.append(op)
-        if origin == "director" and not named(op):  # 报个姓名不算扰动原著：因果污染只记碰过的人与物
+        if origin == "director" and not named(op) and op.get("key") != "epithet":  # 报个姓名、立个外号不算扰动原著：因果污染只记碰过的人与物
             world.taint.update(i for i in _ids(op) if i and i != "player")
     return applied, rejected

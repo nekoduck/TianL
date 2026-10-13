@@ -1,7 +1,10 @@
 """
-[INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 seen（本回合见过的人），World 门面（graph / player / aliases / knowledge / turn）
-[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、audience()（听得见的人：主角与此刻耳边的人——眼前与同行，裁决器逐拍记下的那一拍听众优先）、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
-          hear()（v6 听写器：一段文字里被说出来的名字 → 识名指令 reveal{id}，拍文与正文共用；miss 收下认不出是谁的「互通姓名」）、speaker()（台词的说话人）、
+[INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 seen / around / bodies（本回合见过的人、眼前之人、眼前的遗体），World 门面（graph / player / aliases / knowledge / turn）
+[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、audience()（听得见的人：主角与此刻耳边的人——眼前与同行，时间轴上那一刻的听众优先）、sight() / remains()（v7 名字落得到的人：耳边的活人，连同眼前的遗体）、
+          moment()（v7 在时间轴的某一刻听写与落账：那一刻的听众与遗体，出来即复原）、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
+          guise()（不论识不识名，此人在主角眼中的样子：外号或外貌）、distinguish()（v7 叫法即主键：撞了叫法的几人各分一个稳定外号，返回 set epithet 指令）、
+          calls()（v7「姓+称谓」→ 其人：称谓按男女分，同姓的几人都不收）、
+          hear()（v6 听写器：一段文字里被说出来的名字 → 识名指令 reveal{id}，拍文与正文共用；miss 收下认不出是谁的「互通姓名」）、speaker()（台词的说话人）、doer()（v7 某处那件事是谁做的：台词不隔断，写着别人却认不出即 False，没写主语即 None）、
           audit()（逐拍：先听——听来的名字交调用方的 commit 落账；再查称谓——叫出不该知道的名字即违例，主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔）、
           mask()（主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称；落不了账的自报家门只去掉名字）、
           veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码）、
@@ -17,18 +20,27 @@
        认知与物理同一条写入通道(本模块不 import effects：audit 收调用方给的 commit)；导演的拍与编剧的正文过同一张词表——
        自报家门(在下大理段誉、姓段单名一个誉字、小弟某某、某某便是在下)、旁白里的互报姓名与「自称某某」、认得的人当面点名；
        说话人认不出时名字本身就是说话人(「小生段誉」只能是段誉说的)；旁白里的「他」「那少女」「二人」落到此刻与主角打交道的人(near)；
-       谁听见由文字定：当众说的满场皆闻，说给某人的(拍的 to、旁白里的「向某人」、低声耳语)只那人与主角知道；被主角甩在身后的人听不见
+       谁听见由文字定：当众说的满场皆闻，说给某人的(拍的 to、旁白里的「向某人」、低声耳语)只那人与主角知道；被主角甩在身后的人听不见；
+       v7 叫法即主键：主角叫不出名字的人，叫法就是他在账上、正文、选项、补记里唯一的称呼——四个「无量剑东宗的少年」落笔之前各分一个外号
+       (手里有兵刃的叫持剑的，否则按 id 的稳定散列取一个外貌字眼，同组不重样)，立下不改，人散了也不改回；「容师叔」「钟姑娘」也是叫法，calls 让它落得回原人；
+       名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
+       称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import contextlib
 import copy
 import re
+import zlib
 
 from . import lexicon, situation
 
 KNOWS = "knows"                   # 人物节点属性：此人在戏里听来的名字（含 "player"）
 COMPOUND = ("慕容", "司空", "南宫", "欧阳", "上官", "东方", "诸葛", "公孙", "皇甫", "令狐", "司马", "独孤", "赫连", "完颜",
             "耶律", "端木", "呼延", "尉迟", "宇文", "长孙", "夏侯", "澹台", "萧远")
-TITLE = "兄台|兄弟|兄|大哥|大侠|少侠|公子|姑娘|姐姐|妹子|妹妹|小姐|夫人|先生|前辈|老爷子|老爷|大爷|掌门|帮主|谷主|施主|师兄|师弟|师姐|师妹|娘子|大嫂|伯伯|叔叔|贤弟|贤侄|相公"
+TITLE = "兄台|兄弟|兄|大哥|大侠|少侠|公子|姑娘|姐姐|妹子|妹妹|小姐|夫人|先生|前辈|老爷子|老爷|大爷|掌门|帮主|谷主|施主|师兄|师弟|师姐|师妹|师叔|师伯|师父|师傅|师娘|娘子|大嫂|伯伯|叔叔|贤弟|贤侄|相公"
+HERS = {"姑娘", "姐姐", "妹子", "妹妹", "小姐", "夫人", "师姐", "师妹", "师娘", "娘子", "大嫂"}  # 只叫女子的称谓
+HIS = {"兄台", "兄弟", "兄", "大哥", "大侠", "少侠", "公子", "先生", "老爷子", "老爷", "大爷", "师兄", "师弟", "师叔", "师伯",
+       "伯伯", "叔叔", "贤弟", "贤侄", "相公"}  # 只叫男子的称谓；其余(前辈、掌门、施主、师父……)男女皆可
 QUOTE = re.compile(r"[「“『]([^」”』]*)[」”』]")
 APPOSITIVE = re.compile(r"(?:少年|少女|汉子|老者|女子|妇人|僧人|书生|弟子|姑娘|公子|青年|道人|孩童|老汉|大汉|壮汉)$")  # 「东宗少年龚光杰」：前面已有叫法，名字直接去掉
 NOUNS = "少年|少女|女子|汉子|老者|妇人|书生|和尚|僧人|番僧|道人|道士|道姑|壮汉|姑娘|公子|老人|老妇|孩童|男子|丫头|童子|大汉|姑子|婢女"
@@ -96,6 +108,33 @@ def audience(world) -> set[str]:
                          if g.kind(p) == "person" and g.get(p, "status") != "dead"}
 
 
+def remains(world) -> set[str]:
+    """眼前的遗体(v7)：叫得出名字、却听不见的人——时间轴上的某一刻(turn["ears"] 设着)取那一刻的，否则取此刻的。"""
+    turn = getattr(world, "turn", None) or {}
+    return set(turn.get("bodies") or ()) if turn.get("ears") is not None else situation.bodies(world)
+
+
+def sight(world) -> set[str]:
+    """名字落得到的人(v7)：耳边的活人，连同眼前的遗体。名字是谁的(看得见)与谁听见(在耳边)是两回事——
+    对着遗体叫一声「容师叔」，满厅的人都知道了死者是谁；死者自己听不见，也不必听见。"""
+    return audience(world) | remains(world)
+
+
+@contextlib.contextmanager
+def moment(world, ears=None, bodies=()):
+    """在时间轴的某一刻听写与落账(v7)：那一刻耳边的活人听得见、那一刻眼前的遗体叫得出名字；ears 为 None 即此刻，不另设。
+    裁决器的逐拍听写、出闸的逐段听写、结算单的落账都经这里进出那一刻，出来即复原——不留在本回合的瞬时账上。"""
+    if ears is None:
+        yield
+        return
+    world.turn["ears"], world.turn["bodies"] = set(ears), set(bodies)
+    try:
+        yield
+    finally:
+        world.turn.pop("ears", None)
+        world.turn.pop("bodies", None)
+
+
 HOSTS = re.compile(r"掌门|帮主|谷主|庄主|宫主|岛主|方丈")
 
 
@@ -139,10 +178,15 @@ def _noun(g, pid: str) -> str:
 
 
 def handle(world, pid: str) -> str:
-    """主角眼中此人的叫法：识名则叫名字；不识名则叫导演起的外号(epithet)，没有就照外貌生成——前后一致。"""
-    g = world.graph
-    if pid == "player" or g.kind(pid) != "person" or knows(world, "player", pid):
+    """主角眼中此人的叫法：识名则叫名字；不识名则叫外号或外貌(guise)——前后一致。"""
+    if pid == "player" or world.graph.kind(pid) != "person" or knows(world, "player", pid):
         return pid
+    return guise(world, pid)
+
+
+def guise(world, pid: str) -> str:
+    """不论识不识名，此人在主角眼中的样子：导演或系统立的外号(epithet)，没有就照外貌、门派生成。补记「青衫少年原来名叫段誉」要用它。"""
+    g = world.graph
     if g.get(pid, "epithet"):
         return g.get(pid, "epithet")
     look = re.split(r"[，。；、]", g.get(pid, "appearance") or "")[0].strip()
@@ -162,6 +206,47 @@ def address(world, pid: str) -> str:
     return "大师" if _noun(g, pid) == "僧人" else "前辈" if _noun(g, pid) == "老者" else "兄台"
 
 
+# ============================================================
+#  叫法即主键(v7)：主角眼中叫不出名字的人，叫法两两不同——撞了名的几人在任何人落笔之前各分一个稳定的外号
+# ============================================================
+TRAITS = {"少年": ("高个", "瘦削", "黑脸", "白面", "方脸", "浓眉", "圆脸", "长脸"),
+          "少女": ("瓜子脸", "鹅蛋脸", "梳双髻", "细眉", "圆脸", "高挑"),
+          "女子": ("高挑", "瘦削", "细眉", "鹅蛋脸", "梳髻", "白净"),
+          "妇人": ("高挑", "清瘦", "微胖", "白净", "细眉", "梳髻"),
+          "汉子": ("络腮胡", "短须", "粗壮", "高个", "黑脸", "方脸", "独眼", "秃顶"),
+          "老者": ("白须", "清瘦", "驼背", "矮胖", "长眉", "秃顶"),
+          "僧人": ("高大", "瘦削", "长眉", "年轻", "黑脸", "矮胖")}
+ARMS = re.compile(r"[剑刀枪棍鞭杖扇钩爪斧锤戟]$")
+
+
+def distinguish(world) -> list[dict]:
+    """主角眼前(含近旁遗体)叫不出名字的人里，叫法撞了的几个各分一个外号：手里有兵刃的叫「持剑的」，否则按 id 的稳定散列取一个外貌字眼
+    (「无量剑东宗的高个少年」)，同组之内、同在眼前之人之间不重样。返回立外号的指令(set epithet)交 effects 落账——
+    外号一经立下就是此人在主角眼中的名字，人散了也不改回：叫法是主角眼中的主键，正文、选项、账房、导演说的是同一个人。"""
+    g = world.graph
+    view = sorted(situation.around(world) | situation.bodies(world))
+    groups: dict[str, list[str]] = {}
+    for p in view:
+        if not knows(world, "player", p):
+            groups.setdefault(guise(world, p), []).append(p)
+    taken, ops = set(groups), []
+    for h, group in groups.items():
+        if len(group) < 2:
+            continue
+        noun = next((n for n in NOUNS.split("|") if h.endswith(n)), "")
+        head = (h[:-len(noun)] if noun else "").removeprefix("一名")
+        for p in group:
+            arms = [thing(world, i) for i in g.where(type="item", holder=p) if not g.get(i, "hidden") and ARMS.search(thing(world, i))]
+            pool = [f"持{arms[0][-1]}"] if arms else []
+            pool += sorted(TRAITS.get(noun or _noun(g, p), TRAITS["汉子"]), key=lambda t: zlib.crc32(f"{p}{t}".encode()))
+            name = next((f"{head}{t}{noun}" if noun else f"{t}的{h}" for t in pool
+                         if (f"{head}{t}{noun}" if noun else f"{t}的{h}") not in taken), None)
+            if name:
+                taken.add(name)
+                ops.append({"op": "set", "id": p, "key": "epithet", "value": name})
+    return ops
+
+
 def by_handle(world, name: str) -> str | None:
     """「绿衫少女」落到在场的那个人：编剧与玩家只知道叫法。"""
     if not isinstance(name, str) or not name:
@@ -174,6 +259,21 @@ def _surfaces(world) -> dict[str, str]:
     g = world.graph
     out = {n: n for n, node in g.nodes.items() if node["type"] == "person"}
     out.update({a: n for a, n in world.aliases.items() if g.kind(n) == "person"})
+    return out
+
+
+def calls(world, people) -> dict[str, str]:
+    """这几个人被「姓 + 称谓」叫的说法 → 其人(v7 叫法即主键：容师叔、钟姑娘、段公子也落得回原人)。
+    称谓按男女分(马五德不是「马夫人」)；同姓的几人都不收——宁可认不出，不认错人。"""
+    g, by = world.graph, {}
+    for p in sorted(people):
+        if g.kind(p) == "person" and surname(p):
+            by.setdefault(surname(p), []).append(p)
+    out = {}
+    for s, (p, *more) in by.items():
+        if not more:
+            off = HIS if g.get(p, "gender") == "女" else HERS
+            out.update({s + t: p for t in TITLE.split("|") if t not in off})
     return out
 
 
@@ -242,6 +342,18 @@ def _agent(world, head: str, tab, near) -> str | None:
     return None
 
 
+def doer(world, text: str, at: int, near=(), tab=None) -> str | None | bool:
+    """text[at] 处那件事是谁做的(v7)：同一句里它之前离它最近的主语，台词不隔断(「你朗声道：「告辞！」出了练武厅」仍是你)——
+    主角即 "player"，认得的人即其 id，写着别人却认不出是谁即 False，整句没有主语即 None(第二人称叙事里多半是你)。"""
+    tab = tab or _tables(world, audience(world))[1]
+    head = re.split(r"[。！？\n]", QUOTE.sub("「」", text[:at]))[-1]
+    for clause in reversed([c for c in re.split(r"[，,；;：:]", head) if c.strip()]):
+        who = _subject(world, clause, tab, near)
+        if who is not None:
+            return who
+    return None
+
+
 def speaker(world, text: str, start: int, end: int, tab=None, near=()) -> str | None:
     """text[start:end] 这段台词是谁说的：台词之前同一句里离它最近的主语；台词之前没有人，看台词之后的「某某道」。
     认不出即 None——宁可不认，不认错人(不认的台词照旧过掩码，只是不替说话人补上他不该知道的名字)。"""
@@ -281,11 +393,13 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
     """一段文字里被说出来的名字 → 识名指令 [{"op":"reveal","id":某人,"key":"name"(,"to":听者)}]。
     当众说的在场者都听见；说给某人听的(拍的 to、旁白里的「向某人」、低声耳语)只那人与主角听见。
     who/to：拍的说话人与对象(正文没有，台词的说话人由 speaker 认出)；near：此刻与主角打交道的人(旁白里的「他」「那少女」「二人」所指)；
-    present：听得见的人(缺省 audience)，说出名字的与被叫出名字的都得在其中。miss 给了就收下认不出是谁的「互通姓名」「自报家门」。"""
+    present：听得见的人(缺省 audience)，说出名字的得在其中；被叫出名字的可以是其中之人，也可以是眼前的遗体(v7 remains)。
+    miss 给了就收下认不出是谁的「互通姓名」「自报家门」。"""
     if not text:
         return []
     me = world.player["name"]
     present = audience(world) if present is None else set(present) | {"player"}
+    faces = present | remains(world)  # 名字落得到的人：耳边的活人，连同眼前的遗体
     names, whos = _tables(world, present)
     who = "player" if who in ("player", "主角", me) else who
     to = "player" if to in ("player", "主角", me) else to
@@ -294,7 +408,7 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
     said: list[tuple] = []
 
     def say(pid, ears=None):
-        if pid not in present:
+        if pid not in faces:
             return
         for ear in ([None] if ears is None else sorted(set(ears) - {pid})):
             if (pid, ear) not in said:
@@ -315,7 +429,7 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
             if pid:
                 say(pid, ears)
         if s:
-            for p in sorted(present - {s}):
+            for p in sorted(faces - {s}):
                 if knows(world, s, p) and _calls(q, p, me if p == "player" else p):
                     say(p, ears)
     last: list[str] = []

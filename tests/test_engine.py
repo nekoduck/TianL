@@ -4,7 +4,7 @@
           跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判(v5：宫院与练武厅同属近旁，厅中之事交下一回合导演)、新造实体被驳回且账本不记未成立之事、
           众目之下的事入江湖账本、史官改写被扰动的大事(v5：改写是一个事务，筋骨落不了整桩不入账)、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
           流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房(分隔线被拆在两块之间也不漏一个等号)、编剧半途失声保留已写、无监听不流式、
-          回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角
+          回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角；v7 流式与整形的用例在大理城的静处(quiet)开局——账上不变，正文之后没有补记搅进逐字比对
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -63,6 +63,13 @@ def eve_of_month_after(world, day: int):
     world.clock.tick = (day // 30 + 1) * 30 * PER_DAY - 1
 
 
+def quiet() -> World:
+    """一处无事的所在(大理城)：这一回合账上什么也不变，正文之后不会有补记——只验流式与整形的机关。"""
+    w = World.create()
+    w.player.set("location", "大理城")
+    return w
+
+
 def director(**kw):
     return {"说书人与导演": {"beats": ["甲"], "pace": "瞬息", "options": ["一", "二", "三"], **kw}}
 
@@ -77,7 +84,7 @@ class CanonLoopTest(unittest.TestCase):
         self.assertEqual(w.done, ["无量剑第四场比剑"])                                 # 一回合只上演一桩
         self.assertEqual(w.graph.get("褚师弟", "status"), "wounded")
         seen = [n for n in turn["news"] if n["witnessed"]]
-        self.assertIn("无量剑东宗的少年刺伤无量剑西宗的少年，东宗四赛三胜", "".join(n["text"] for n in seen))  # 界面从主角的视角说(v5)：不识名的人只剩叫法
+        self.assertIn("无量剑东宗的持剑少年刺伤无量剑西宗的少年，东宗四赛三胜", "".join(n["text"] for n in seen))  # 界面从主角的视角说(v5)：不识名的人只剩叫法；四个东宗少年各有叫法(v7 叫法即主键)
         self.assertNotIn("【刚刚传到的消息】", llm.writer_prompts[-1])  # 亲历之事已在节拍里，不再当传闻
         self.assertEqual(turn["clock"], {"year": "元祐六年", "date": "二月初一", "hour": "辰时"})
         self.assertEqual(turn["status"][0], {"text": "安然无恙", "tone": "plain"})
@@ -290,7 +297,7 @@ class AgentShapeTest(unittest.TestCase):
     def test_a_separator_split_across_chunks_never_reaches_the_reader(self):
         llm = StreamLLM(director(), ["灯下如豆。\n=", "==\n梗概：看\n传言：无"])
         shown = []
-        Game(World.create(), llm).act("看", on=lambda kind, data: shown.append(data) if kind == "text" else None)
+        Game(quiet(), llm).act("看", on=lambda kind, data: shown.append(data) if kind == "text" else None)
         self.assertEqual("".join(shown), "灯下如豆。")
 
     def test_offline_travel_picks_the_place_named_in_full(self):
@@ -326,7 +333,7 @@ class StreamingTest(unittest.TestCase):
     def test_progress_is_reported_in_order(self):
         llm = StreamLLM(director(), ["剑光", "一闪，", "\n满堂寂然。"])
         events = []
-        turn = Game(World.create(), llm).act("看", on=lambda kind, data: events.append((kind, data)))
+        turn = Game(quiet(), llm).act("看", on=lambda kind, data: events.append((kind, data)))
         kinds = [k for k, _ in events]
         self.assertEqual(kinds, ["stage", "stage", "stage", "head", "text", "text"])          # 正文按段送出：一段齐了才过视角掩码
         self.assertEqual([d for k, d in events if k == "stage"], ["direct", "settle", "write"])
@@ -339,23 +346,23 @@ class StreamingTest(unittest.TestCase):
     def test_tail_is_kept_from_the_reader_but_feeds_the_ledger(self):
         llm = StreamLLM(director(), ["剑光一闪。", "\n===\n梗概：", "你看了一眼\n传言：无"])
         shown = []
-        game = Game(World.create(), llm)
+        game = Game(quiet(), llm)
         turn = game.act("看", on=lambda kind, data: shown.append(data) if kind == "text" else None)
         self.assertEqual(("".join(shown), turn["text"]), ("剑光一闪。", "剑光一闪。"))      # 读者只见正文
         self.assertTrue(game.world.player["journal"][-1].endswith("：你看了一眼"))           # 账房得到梗概
 
     def test_writer_falling_silent_midway_keeps_what_was_written(self):
         llm = StreamLLM(director(), ["前半句已写成，", LLMError("断流")])
-        turn = Game(World.create(), llm).act("看", on=lambda *_: None)
+        turn = Game(quiet(), llm).act("看", on=lambda *_: None)
         self.assertTrue(turn["text"].startswith("前半句已写成，\n"))  # 已写的保留
         self.assertIn("甲", turn["text"])                             # 只言片语：以已成立之事续成，读者不至于只看到半句
         long = "前半句已写成，" * 10
         llm = StreamLLM(director(), [long, LLMError("断流")])
-        self.assertEqual(Game(World.create(), llm).act("看", on=lambda *_: None)["text"], long)  # 写够了便是正文
+        self.assertEqual(Game(quiet(), llm).act("看", on=lambda *_: None)["text"], long)  # 写够了便是正文
 
     def test_without_listener_nothing_streams(self):
         llm = StreamLLM(director(), [AssertionError("不该流式")])
-        self.assertEqual(Game(World.create(), llm).act("看")["text"], "（正文）")
+        self.assertEqual(Game(quiet(), llm).act("看")["text"], "（正文）")
 
 
 if __name__ == "__main__":

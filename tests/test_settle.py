@@ -178,8 +178,8 @@ class GateTest(unittest.TestCase):
         llm = StreamLLM(director(), ["那青衫少年拱手道：「小生", "段誉。」\n\n", "你也报了姓名。", "\n===\n梗概：记\n传言：无"])
         shown = []
         turn = Game(self.w, llm).act("看", on=lambda kind, data: shown.append(data) if kind == "text" else None)
-        self.assertEqual("".join(shown), turn["text"])                               # 读者读到的逐字就是存下的
-        self.assertEqual(turn["text"], "那青衫少年拱手道：「小生段誉。」\n\n你也报了姓名。")
+        self.assertEqual("".join(shown), turn["text"])                               # 读者读到的逐字就是存下的(补记也在其中)
+        self.assertTrue(turn["text"].startswith("那青衫少年拱手道：「小生段誉。」\n\n你也报了姓名。"))
         self.assertTrue(perspective.knows(self.w, "player", "段誉"))
 
     def test_a_name_that_cannot_be_heard_is_dropped_not_mangled(self):
