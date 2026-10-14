@@ -12,6 +12,7 @@
        (易手仍是 set holder / push inventory，银两是 money，人群是 squad，造物是 forge，文书是 doc)，恩怨、兑现原著、江湖事件照旧从记录里读
        偷得无人察觉的记录带 stealth(恩怨账不记)；夺取一个人身上的东西看较量预裁(rag.WIN 那几档才夺得下)，偷取看身法；书写用过的纸笔、拿过一部分的原物记作经手(turn["traded"])，
        主角这一拍正要走进去的那一间，那里的纸笔也够得着(与取物同一口径)
+       v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import access, body, crowd, effects, scribe, situation, stock
@@ -144,8 +145,8 @@ def lower(world, a: dict) -> list[dict] | None:
         return [{"op": "push", "id": "player", "key": "threads", "value": goal}]
     if v == "了结":
         return [{"op": "pull", "id": "player", "key": "threads", "value": val}]
-    if v == "所求":
-        return [{"op": "set", "id": "player", "key": "goal", "value": val}]
+    if v == "所求":  # 主角的所求；某人的所求即他的志向(v11：眼前的剧情改了他的志向，往后的路交场外编剧)
+        return [{"op": "set", "id": who, "key": "goal" if who == "player" else "agenda", "value": val}]
     if v == "研习":
         return [{"op": "study", "id": "player", "value": a.get("物") or to}]
     if v == "吸功":
@@ -507,14 +508,14 @@ HANDLERS = {
 
 
 def perform(world, a: dict, origin: str, scope=None, heading=frozenset()) -> tuple[list, str | None]:
-    """一件规则之事落账：返回 (记录, 不成立的缘由)。场外推演与史官不动器物、人群与文书(它们写既有的指令)；
+    """一件规则之事落账：返回 (记录, 不成立的缘由)。场外剧情(衍生事件)不写事码：器物、人群与文书的规则之事只在主角跟前演(场外写既有的指令)；
     做这件事的人须在主角跟前(主角自己当然在)。"""
     v, who = a.get("做"), a.get("谁", "player")
     handler = HANDLERS.get(v)
     if handler is None:
         return [], f"不识的事码「{v}」：动作只用事码表里的那几个"
     if origin in effects.OFFSCREEN:
-        return [], "场外不动器物、人群与文书"
+        return [], "场外剧情不写事码：器物、人群与文书的规则之事只在主角跟前演"
     if who != "player" and (world.graph.kind(who) != "person" or not _present(world, who)):
         return [], f"{who}不在你身边"
     return handler(world, a, who, heading)

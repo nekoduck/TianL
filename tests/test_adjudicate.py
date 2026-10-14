@@ -2,7 +2,7 @@
 [INPUT]: 依赖 tianlong.world 的 adjudicate / situation / growth / menu / lod / lexicon / rag 与 data/canon 原著世界，tianlong.engine 的 Game；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——80 回对局暴露的病灶逐条转成离线验收：
           焦点检索让导演看见解药在谁身上、器物近似名归一、同伴随主角移动且过不去的关留下、救人即解押、未了之事谓词满足自动收束、
-          原著救人之事在人已获救时不再照演、一人一回合只听一处调遣、纠缠之人的场外原著不照本宣科、
+          原著救人之事在人已获救时不再照演、一人一回合只听一处调遣(v11 导演与日程两处：原著与场外剧情同一条轨道)、纠缠之人的场外原著不照本宣科、
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
@@ -81,10 +81,11 @@ class SituationTest(unittest.TestCase):
     def test_one_person_one_dispatcher_per_turn(self):
         w = self.w
         w.turn = {"days": 1}
-        w.graph.set("段誉", "location", "无量山")
-        w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "canon")
-        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量山"}], "lod1", {"无量山", "无量后山", "段誉"})
+        w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "剑湖宫·内堂"}], "director")  # 导演先挪动了他
+        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "canon")
         self.assertEqual(rejected[0][1], "段誉此日已另有去向")                        # 第 67 回：三处同时挪动段誉
+        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "derived", {"无量后山", "段誉"})
+        self.assertIn("主角身边", rejected[0][1])                                      # 场外剧情(v11)动不了主角身边的人
 
     def test_entangled_people_leave_the_canon_rails(self):
         ev = next(e for e in self.w.canon if e["id"] == "段誉坠入无量山谷")

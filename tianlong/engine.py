@@ -1,8 +1,8 @@
 """
-[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、rag、situation、perspective(编剧视角)、settle(v6/v7 结算：正文出闸 Gate(逐段逐句对齐到时刻、note 补记)、账本快照 books、结算单落账 commit、复核 disputes / waive、规则之事 ruled、首末两份账 glance / delta / unwritten)、
+[INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、plot(v11 场外编剧的规则层：awaken / idle / rewrite / sequel / brief / vet / render / adopt / postpone / origin)、rag、situation、perspective(编剧视角)、settle(v6/v7 结算：正文出闸 Gate(逐段逐句对齐到时刻、note 补记)、账本快照 books、结算单落账 commit、复核 disputes / waive、规则之事 ruled、首末两份账 glance / delta / unwritten)、
          body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、growth.SITTING(研习至少一顿饭)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）、
          story/（timing 规则主张时长与 cut 换算、canon 原著窗口的拉与消费、stakes 时限、scene 场、brief 场记与主干调度、arc 主角线、choices 选项槽位）与 narrative/agents；llm 可为 None（离线兜底）
-[OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概) / debug / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
+[OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概与场外编剧写好的剧情线) / debug(另列场外剧情线) / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
 [POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
@@ -14,18 +14,21 @@
          settle.commit 核据、只收叙述成立得了的事、经 effects 照常裁决入账(并入本回合的 applied)；规则之事、落不了的与词表查出的(settle.audit)记作账文分歧(drift)交下回合导演；
          有分歧时编剧的梗概与传言不作数，以系统核实过的后果代记；身况在结算之后重算
        → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本(v8 寻常之物易手不成江湖事)
-       → 场外推演与新到期的远方原著(v5 在成文与验收之后：编剧、掩码与选项验收看的是同一个世界；其传闻下回合才到)
+       → 新到期的远方之事与场外编剧(v5 在成文与验收之后：编剧、掩码与选项验收看的是同一个世界；其传闻下回合才到；v11 场外编剧在后台写，下回合开始前汇合)
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
        编剧没写梗概时，以意图与系统核实过的后果代记。一回合是原子的：中途抛错，世界与说书人的记忆都回到回合开始之时——重试不会把一件事做两遍。
        v5 一人一主：主角眼前的原著(此地、近旁，或要把身边之人带走的)交导演、其相关者若在这一片即上眼前的名册；把人带去别处的那一桩，主角只看见人走(不记亲历)，事本身随传闻抵达；
-       抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；场外推演只推自由之人，没有就不调模型；史官看得见相关者此后的原著；
+       抵达即遭遇(换了地方，编剧得知眼前有谁)；亲见与传闻出内核前过视角掩码；近事一律以「你」称主角；导演挪动过的人原著挪不动(partial 落账)；
        v6：此地原著的亲历以回合开始的所在为准(导演把它编在主角动身之前)；选项也从主角的视角说(叫不出的名字换成叫法，对象不变)；
        v7 账文同构的四条轴：叫法即主键(_distinguish：回合开始、编剧落笔之前、结算之后三处，撞了叫法的人各分一个稳定外号)；
        两相对账(_settle_page：回合开始记下主角看得见的账 settle.glance，结算之后求差——账房开单入账是文→账，账上变了而正文没写到的由账本补记一段随流送出是账→文)；
        双录复核(词表仍看出、账上仍没有的句子交账房复核，记账或驳回，之后仍对不上的才是分歧)；正文有时间轴(编剧得知主角从哪里到了哪里：动身另起一段、到了点明此地)
        v9 事码：导演与账房说同一种类代码(world/acts)，引擎照旧只转交；江湖事件的门槛认事码的记录——一群人里有人倒下即众目之下的伤亡(有人死即分量二)，银两流转、写一封信、封拆撕合不成江湖事
        v10：光阴推进、养伤之后结算无名之众的醒转(crowd.recover)，醒转的说明随连带交编剧
+       v11 场外编剧：到期的场外之事前提未变就照日程演(原著与衍生事件同一条轨道，不调模型)；前提破了，只差路程的延后，否则作罢(相关的活人原著线已变)，
+       附近的、分量重的原著另交场外编剧改写；回合收尾先查谁的心愿了了(plot.awaken)，跨过了日子再续写该有下一步的人(plot.idle)——
+       创作家写、规则审(world/plot.vet)、审稿，在后台对着世界的快照跑(_compose)，下一回合开始前(flush)对着真世界再过一遍规则审才排进日程(_adopt)；离线不写新剧情、作罢即止
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -36,7 +39,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, rag, scenery, settle, situation
+from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, plot, rag, scenery, settle, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -102,6 +105,8 @@ class Game:
         self.tempo: list[str] = []   # 近三回合本幕之问的结局：连番被打断则不得再打断
         self.scales: dict[str, str] = {}  # 选项文字 → 尺度(此刻/此后/机缘)：玩家选了此后，下一回合略写、时长按那件事结算
         self._recap = None           # 后台折叠中的梗概：下一回合开始前汇合
+        self._plots = None           # 后台的场外编剧(v11)：写好、审过的剧情线，下一回合开始前排进日程
+        self._tasks: list[dict] = [] # 本回合演不成、交场外编剧改写的原著
 
     def open(self, on=None) -> dict:
         return self._turn("", on)
@@ -111,10 +116,18 @@ class Game:
         return self._turn(deed.strip(), on)
 
     def flush(self):
-        """汇合后台折叠的梗概：存档之前、下一回合之前调用。"""
+        """汇合后台的活计——折叠好的梗概、场外编剧写好审过的剧情线(v11)：存档之前、下一回合之前调用。"""
         if self._recap is not None:
             self.world.player.set("synopsis", self._recap.result())
             self._recap = None
+        if self._plots is not None:
+            try:
+                done, failed = self._plots.result()
+            except Exception:  # 后台出了岔子：这一批剧情线作罢，世界照常(作罢的原著已记下原著线已变，往后照样续写)
+                log.exception("场外编剧失手")
+                done, failed = [], []
+            self._plots = None
+            self._adopt(done, failed)
 
     # ------------------------------------------------------------
     #  一个回合：原子的——要么整个成立，要么不曾发生
@@ -127,14 +140,14 @@ class Game:
         except Exception:
             dump, self.options, self.menu, self.last_text, self.tempo, self.scales = before
             self.world = World.from_dump(json.loads(dump))
-            self._recap = None
+            self._recap = self._plots = None
             raise
 
     def _play(self, deed: str, on=None) -> dict:
         """on(kind, data)：stage 报进度，head 在落笔前送出除正文与选项外的整回合，text 随编剧送出正文增量。"""
         emit = on or (lambda kind, data: None)
         w = self.world
-        w.turn = {}
+        w.turn, self._tasks = {}, []
         w.player.set("turn", w.player["turn"] + 1)
         origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
         self._distinguish(w)                          # 叫法即主键(v7)：撞名的人在任何人落笔之前分到稳定的外号
@@ -172,7 +185,7 @@ class Game:
         if 0 in drop and ruling.question.get("state") == "interrupted":
             ruling.question["state"] = "open"
         applied = ruling.applied
-        for ev in canon.consume(w, applied):          # 导演演掉的原著记作兑现：不再到期、不交史官
+        for ev in canon.consume(w, applied):          # 导演演掉的原著记作兑现：不再到期、不交场外编剧
             log.info("原著已由剧情兑现：%s", ev["id"])
         for spec in plan.get("clock") or []:          # 剧情里立下的期限：系统替导演记着
             stakes.plant(w, spec)
@@ -265,7 +278,7 @@ class Game:
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = (None if rifts else page["headline"]) or (sworn or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
-        self._offstage(days)  # 场外推演与新到期的远方原著(v5 在成文、验收之后)：编剧落笔、掩码、选项验收看的是同一个世界，其传闻本就迟到
+        self._offstage(days)  # 新到期的远方之事与场外编剧(v5 在成文、验收之后)：编剧落笔、掩码、选项验收看的是同一个世界，其传闻本就迟到
         self._close(ruling, page, memory, moved=w.here != origin, deed=deed, spine=story["spine"])
         self.options, self.last_text = turn["options"], page["text"]
         self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]
@@ -372,28 +385,84 @@ class Game:
             self._recap = ThreadPoolExecutor(max_workers=1).submit(agents.recap, self.llm, synopsis, evicted)
 
     def _settle(self, ev: dict, tier: int):
-        """场外原著的结算：干净照原著、被扰动的大事与近处破局交史官、远方小事破局作罢。"""
+        """到期的场外之事(v11 演绎与创作)：前提未变就照原著(或衍生事件)演，不调模型；前提破了，只差路程的延后，
+        否则作罢——相关的活人原著线已变(往后的路交场外编剧续写)；附近的、分量重的原著另交场外编剧改写(后台写、审，下回合排进日程)。"""
         w = self.world
         path, reasons = lod.verdict(w, ev, tier)
         if path == "canon":
-            lod.settle(w, ev, ev, "canon")
-        elif path == "skip":
-            lod.settle(w, ev, {"happens": False}, "canon")
-        else:
-            outcome = agents.chronicle(self.llm, ev, reasons, [rag.dossier(w, a) for a in ev["actors"]], lod.broken(w, ev),
-                                       rag.heard(w, [ev["where"]]), lod.ahead(w, ev))
-            lod.settle(w, ev, outcome, "chronicle")
+            lod.settle(w, ev, ev, plot.origin(ev))
+            return
+        if plot.postpone(w, ev):
+            log.info("原著延后：%s（%s）", ev["id"], "；".join(reasons))
+            return
+        lod.settle(w, ev, {"happens": False}, plot.origin(ev))
+        log.info("场外作罢：%s（%s）", ev["id"], "；".join(reasons))
+        if path == "rewrite" and self.llm is not None and len(self._tasks) < plot.MAX_TASKS:
+            self._tasks.append(plot.rewrite(w, ev, reasons))
 
     def _offstage(self, days: int):
+        """场外(v11)：时光流过后新到期的远方之事照日程结算(此地的留待下回合作主干)；再把原著线变了的人与事交场外编剧——
+        改写本回合演不成的原著，跨过了日子再续写该有下一步的人(没有就不调模型)。场外编剧只读世界的快照，在后台写、审，下回合开始前汇合。"""
         w = self.world
-        if days:  # LOD1：日级刷新，一次调用覆盖所有流逝的日子；只推演自由之人(一人一主)，没有就不调模型
-            actors, scope = lod.lod1_scope(w)
-            if actors:
-                reports = agents.simulate(self.llm, w.clock.label(), days, [rag.dossier(w, a) for a in actors],
-                                          rag.heard(w, [w.graph.get(a, "location") for a in actors]))
-                lod.absorb(w, reports, scope)
-        for ev, tier in lod.split_due(w)[0]:  # 时光流过后新到期的远方原著；此地的留待下回合作主干
+        for ev, tier in lod.split_due(w)[0]:
             self._settle(ev, tier)
+        for p in plot.awaken(w):  # 心愿了了、志向所系之人死了：原著线就此变了，往后的路交场外编剧
+            log.info("原著线已变：%s", p)
+        tasks, self._tasks = self._tasks[:plot.MAX_TASKS], []
+        if self.llm is None:
+            return
+        if days:
+            tasks += [plot.sequel(w, p) for p in plot.idle(w, plot.MAX_TASKS - len(tasks))]
+        if tasks:
+            self._plots = ThreadPoolExecutor(max_workers=1).submit(self._compose, copy.deepcopy(w), tasks)
+
+    def _compose(self, snap, tasks: list[dict]) -> tuple[list, list]:
+        """后台的场外编剧：创作家写一稿 → 规则审(world/plot.vet) → 审稿(过/改/否)，退回的连同缘由再写一稿，至多 plot.TRIES 稿。
+        只读快照，不碰真世界；返回 (过了的 [(任务, 草稿)], 没过的任务)——落地在 flush 里，对着真世界再过一遍规则审才排进日程。"""
+        briefs = {t["key"]: plot.brief(snap, t) for t in tasks}
+        todo, notes, done = list(tasks), {}, []
+        for _ in range(plot.TRIES):
+            if not todo:
+                break
+            drafts = agents.plot(self.llm, [briefs[t["key"]] for t in todo], notes)
+            passed, again = [], []
+            for t in todo:
+                plan, problems = plot.vet(snap, t, drafts.get(t["key"]))
+                if plan:
+                    passed.append((t, drafts[t["key"]], plan))
+                else:
+                    notes[t["key"]] = problems
+                    again.append(t)
+                    log.info("场外剧情规则审不过：%s（%s）", t["key"], "；".join(problems))
+            reviews = agents.review(self.llm, [{"key": t["key"], "brief": briefs[t["key"]], "lines": plot.render(snap, plan)}
+                                               for t, _, plan in passed])
+            for t, draft, plan in passed:
+                r = reviews.get(t["key"]) or {"verdict": "改", "why": "审稿人未置可否"}
+                if r["verdict"] == "过":
+                    done.append((t, draft))
+                    continue
+                notes[t["key"]] = [f"审稿判{r['verdict']}：{r['why'] or '不合理'}"]
+                again.append(t)
+                log.info("场外剧情审稿不过：%s（%s：%s）", t["key"], r["verdict"], r["why"])
+            todo = again
+        return done, todo
+
+    def _adopt(self, done: list, failed: list):
+        """场外编剧的成稿排进日程：对着真世界再过一遍规则审(快照之后世界若有变，以真世界为准)；写不出合理下一步的人，隔一个推力的日子再写。"""
+        w = self.world
+        for task, draft in done:
+            plan, problems = plot.vet(w, task, draft)
+            if plan is None:
+                log.info("场外剧情落地前复核不过：%s（%s）", task["key"], "；".join(problems))
+                failed = failed + [task]
+                continue
+            plot.adopt(w, task, plan)
+            log.info("场外剧情线「%s」排进日程：%s", plan["line"],
+                     "；".join(f"{w.clock.label(ev['day'])}·{ev['where']}：{ev['summary']}" for ev in plan["events"]))
+        for task in failed:
+            if task["kind"] == "续写":
+                w.plotted[task["who"]] = w.clock.day
+            log.info("场外编剧未能写出合理的剧情：%s", task["key"])
 
     # ------------------------------------------------------------
     #  调试视图：双账本对照
@@ -405,5 +474,6 @@ class Game:
                  if any(w.graph.get(nid, k) != v for k, v in b.items())}
         return {"tokens": getattr(self.llm, "tokens", 0), "pending_news": len(w.messenger.pending),
                 "canon_done": w.done, "taint": sorted(w.taint), "secrets_known": w.knowledge.secrets,
+                "lines": {k: f"{v['goal']}（{'、'.join(v['owners'])}）" for k, v in w.lines.items()},
                 "recent_truth": [f"{e['origin']}·{e['where']}：{e['summary']}" for e in w.truth.events[-5:]],
                 "belief_drift": drift}

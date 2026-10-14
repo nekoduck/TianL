@@ -2,7 +2,7 @@
 [INPUT]: 依赖 tianlong.engine 的 Game，tianlong.world 的 World 与 data/canon 原著世界；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——原著在主角眼前一回合一桩交导演上演且可被主角阻断、远方原著按距离延迟传来、剧情后果与自由选项跨回合延续、
           跋涉时日由道路结算、门前之关止步并交下一回合导演兑现、时长由措辞换算、同伴随行不被误判(v5：宫院与练武厅同属近旁，厅中之事交下一回合导演)、新造实体被驳回且账本不记未成立之事、
-          众目之下的事入江湖账本、史官改写被扰动的大事(v5：改写是一个事务，筋骨落不了整桩不入账)、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
+          众目之下的事入江湖账本、演不成的原著交场外编剧改写成新的剧情线(v11：后台写、规则审与审稿都过才排进日程，不合理的一律不入，离线即作罢)、写了不成立之事的拍整拍作废、选项在落账之后拟定(head 不带选项)、
           流式进度依序报告(head 为快照)、分隔线之后的梗概不给读者只给账房(分隔线被拆在两块之间也不漏一个等号)、编剧半途失声保留已写、无监听不流式、
           回合原子(中途抛错则世界与记忆回到回合开始)、终端的数字快捷写法只认半角；v7 流式与整形的用例在大理城的静处(quiet)开局——账上不变，正文之后没有补记搅进逐字比对
 [POS]: tests 的主循环验证，证明 LLM 编织剧情与选项、基础设施掌管原著世界并负责记住、裁决与校准
@@ -16,7 +16,7 @@ import unittest
 from tianlong import cli
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError
-from tianlong.world import access, perspective
+from tianlong.world import access, perspective, plot
 from tianlong.world.clock import PER_DAY
 from tianlong.world.world import World
 
@@ -206,22 +206,61 @@ class DirectorTest(unittest.TestCase):
         self.assertEqual([e for e in game.world.truth.events if e["origin"] == "director"], [])  # 未成立之事不入账
         self.assertNotIn("击毙", game.world.player["journal"][-1])                             # 前情也不记
 
-    def test_chronicler_rewrites_a_disturbed_major_event(self):
+    def _broken_gathering(self):
+        """主角早先改变了阿朱的命运：乔峰携阿朱赴聚贤庄演不成了，交场外编剧改写。"""
         w = World.create()
         ev = next(e for e in w.canon if e["id"] == "乔峰携阿朱赴聚贤庄")
         w.done.extend(e["id"] for e in w.canon if e["order"] < ev["order"])  # 前事已了
-        w.graph.set("阿朱", "status", "dead")  # 主角早先改变了阿朱的命运
-        llm = StubLLM({**director(), "史官": {"happens": True, "summary": "乔峰孤身闯庄", "effects": [
-            {"op": "set", "id": "乔峰", "key": "mood", "value": "万念俱灰"},
-            {"op": "set", "id": "段誉", "key": "status", "value": "dead"},
-            {"op": "add", "id": "player", "key": "power", "value": 100}]}})
-        game = Game(w, llm)
+        w.graph.set("阿朱", "status", "dead")
         eve_of_month_after(w, ev["day"])
+        return w, ev
+
+    def test_a_broken_canon_is_rewritten_into_a_new_line(self):
+        w, ev = self._broken_gathering()
+        key = f"改写·{ev['id']}"
+        llm = StubLLM({**director(), "审稿": {"reviews": [{"key": key, "verdict": "过", "why": "合乔峰性情"}]},
+                       "场外编剧": {"plans": [{"key": key, "line": "孤身闯庄", "goal": "乔峰为阿朱之死讨个说法", "events": [
+                           {"day": 3, "where": "聚贤庄", "actors": ["乔峰"], "summary": "乔峰孤身闯聚贤庄", "how": "单刀赴会",
+                            "motive": "阿朱之死", "drama": "群雄环伺", "weight": 2,
+                            "effects": [{"op": "set", "id": "乔峰", "key": "mood", "value": "万念俱灰"}]}]}]}})
+        game = Game(w, llm)
         game.act("歇息")
-        self.assertEqual(w.graph.get("段誉", "status"), "alive")  # 越出相关者
-        self.assertLess(w.player["power"], 100)                  # 场外碰不到主角
-        self.assertNotEqual(w.graph.get("乔峰", "mood"), "万念俱灰")  # 改写是一个事务(v5)：筋骨(段誉之死)落不了，整桩不入账，心境也不留半截
-        self.assertNotIn("乔峰孤身闯庄", [e["summary"] for e in w.truth.events])  # 说法里夹着不成立之事，不照录
+        game.flush()                                                                          # 场外编剧在后台写，下回合开始前汇合
+        w = game.world
+        self.assertIn(ev["id"], w.done)                                                        # 原著那一桩作罢
+        line = next(e for e in w.canon if e.get("derived"))
+        self.assertEqual((line["line"], line["where"], line["actors"]), ("孤身闯庄", "聚贤庄", ["乔峰"]))  # 新的剧情线排进日程
+        self.assertEqual(line["day"], w.clock.day + 3)
+        self.assertIn("孤身闯庄", w.lines)
+        self.assertFalse(w.graph.get("乔峰", "adrift"))                                       # 原著线的变动已有下文
+
+    def test_an_unreasonable_plot_never_reaches_the_schedule(self):
+        w, ev = self._broken_gathering()
+        key = f"改写·{ev['id']}"
+        bad = {"plans": [{"key": key, "line": "血洗", "events": [
+            {"day": 0, "where": "聚贤庄", "actors": ["乔峰", "段誉"], "summary": "乔峰血洗聚贤庄",
+             "effects": [{"op": "set", "id": "段誉", "key": "status", "value": "dead", "by": "乔峰"},
+                         {"op": "add", "id": "player", "key": "power", "value": 100}]}]}]}
+        for review in ({"reviews": [{"key": key, "verdict": "过"}]}, {"reviews": [{"key": key, "verdict": "否", "why": "乔峰不滥杀"}]}):
+            plan = bad if review["reviews"][0]["verdict"] == "过" else \
+                {"plans": [{"key": key, "line": "远走", "events": [{"day": 3, "where": "聚贤庄", "actors": ["乔峰"], "summary": "乔峰远走聚贤庄"}]}]}
+            llm = StubLLM({**director(), "审稿": review, "场外编剧": plan})
+            game = Game(copy.deepcopy(w), llm)
+            game.act("歇息")
+            game.flush()
+            self.assertFalse(any(e.get("derived") for e in game.world.canon))                   # 规则审(段誉在主角身边、一日赶不到、不写主角)或审稿不过：一律不入日程
+            self.assertEqual(game.world.graph.get("段誉", "status"), "alive")
+            self.assertLess(game.world.player["power"], 100)
+            self.assertTrue(game.world.graph.get("乔峰", "adrift"))                            # 原著线变了：往后的路照样交创作家续写
+
+    def test_offline_the_broken_canon_is_simply_dropped(self):
+        w, ev = self._broken_gathering()
+        game = Game(w, None)
+        game.act("歇息")
+        game.flush()
+        self.assertIn(ev["id"], game.world.done)
+        self.assertFalse(any(e.get("derived") for e in game.world.canon))                      # 离线不写新剧情：作罢即止
+        self.assertEqual(plot.mode(game.world, "乔峰"), "创作")
 
 
 class LedgerHonestyTest(unittest.TestCase):

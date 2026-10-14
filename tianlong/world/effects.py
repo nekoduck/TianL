@@ -18,7 +18,7 @@
        器物近似名分三层认：先现场(此地、近旁、身边人手里与暗藏的)，再主角认知，后全局；字面包含 > 最长公共子串过半 > 现场器物描述里的说法；
        在场即「近旁」：同一处所之内零日可达的子地点都算身边——片区(v5)里的人须被剧情带到跟前(赶来即上名册)，主角走出近旁名册即清空，
        导演碰得到的人只以「眼前」为准(situation.seen：此刻眼前、回合开始时在、本回合赶来)；原著里尚未登场的人赶不来；导演结关系(含随行、拘押)两端须在身边或回合开始时在身边，赶来(arrive)须本回合光阴够其路程；
-       一回合里一个人只听一处来源调遣(导演 / 原著与史官 / 场外推演)，LLM 写的场外移动第一程不得超过一日加流逝日数；
+       一回合里一个人只听一处来源调遣(导演 / 原著与场外剧情：衍生事件与原著同一条轨道)；
        随行入账即解押、主角走则同伴随之、过不去的关留下；一批指令里主角的移动最后执行；
        主角的移动交 access 裁定路线：途中遇关或绝路即止步于前，本回合光阴走满即途中歇脚(记下 en_route 去向与余程、came_from 来路)，前半程成立、后半程回告编剧，走过的暗路记入认知；
        reveal 只在主角在场（导演）时当场入认知，原著揭开的隐情只入真相，经传闻（公开者）或亲历抵达——双账本不被抄近路；
@@ -26,7 +26,7 @@
        取物只有一个口径(v5 _handy)：就在此地、或本批指令里主角要去的地方、或近旁而不是暗藏的——push inventory 与 set holder player 一样；
        形状守恒：数值仍是数值、清单仍是清单，写歪的指令被驳回而非让世界崩溃；器物流转经 _hand，持有与落地不兼存、随身账与图上永远对得上；
        原样不动的指令(人已在那里——主角「去」他正站着的地方也是，路线只有起点不是一程路、物已在那人手里、关系本就如此)不算一件事(v5)：既不成立也不驳回，不入账、不成传闻——剧情上的伤明写治好不在此列；
-       场外推演只碰得到推演区域之内的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
+       场外剧情(v11 衍生事件，origin=derived)只碰得到那一桩事所及的人与地，结恩怨亦然；纠缠者(situation.entangled)的去留、生死、拘押场外一概动不了；
        事件先于状态(v4)：某人对主角的非结构性关系(疑忌、感激……)不再立边、不再覆盖与阻尼，而是记进 bond 的恩怨账、由系统折叠成立场；
        结构性关系(随行、拘押、师徒、结义……)与暗中的心思仍是边；
        识名是一等指令(v6)：reveal 的 id 形 {"op":"reveal","id":某人,"key":"name"(,"to":某人)}——某人的姓名被说了出来，此刻在场的人都听见(to 则只那一人)；
@@ -37,10 +37,10 @@
        事码(v9)：一批后果先经 acts.expand——平常之事化为这十条指令照旧裁决，规则之事(拿取放下交给偷夺、撕合书写封拆读、脱身、对人群的杀伤)交 acts.perform 执行，
        记录写成下游认得的形状(易手仍是 set holder / push inventory，另有 money / squad / forge / doc 四种记录，describe 都说成人话)；
        银两(money)、器物的数量与钱袋(qty / purse / pages)、人群的人数伤亡与身上之物只经事码流转，直接写即驳回；人群只在近旁走动；被一群人围住(围攻)，主角的去留只有脱身
-       人群随剧情走(v10)：赶来认人群(按道路里程核光阴)，在场性与结关系以 crowd.present 为准；一群人前往去哪都行，换了地方即不再围着谁；原著与史官挪走带队之人，同处的人群随他走(_exec 外包一层)
-       远处没有自由发挥的导演(v11)：场外(场外推演与史官)叫不来人；场外推演只演小事(_charter)——人只改得动去留(一步、不进主角近旁)、气血生死、境况、打算神色(DRIFT)，
-       同处一地的人之间擒放结怨(结义师徒效忠之类的名分立不得)，听了传闻对主角起的心思照记；器物只许递交给同处之人，暗藏之物与秘籍信物宝物(PRECIOUS)取不得；
-       功力武学、门庭名分、地理陈设、门派、人群一概改不得(原著要用的人与物由 lod 另行把关)
+       人群随剧情走(v10)：赶来认人群(按道路里程核光阴)，在场性与结关系以 crowd.present 为准；一群人前往去哪都行，换了地方即不再围着谁；原著与场外剧情挪走带队之人，同处的人群随他走(_exec 外包一层)
+       场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
+       场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
+       近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -67,9 +67,7 @@ PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物�
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
 ITEM_FLOW = {"location", "holder", "hidden", "state", "spot"}  # 器物：定义不可改，只可流转、显隐、损耗，挪个方位(v8 spot：剑架上、茶几上)
-OFFSCREEN = {"lod1", "chronicle"}                # 场外推演：主角不在场，碰不到主角本人
-DRIFT = {"location", "hp", "status", "conditions", "intent", "mood"}  # 场外推演(v11)动得了的人的属性：去留(一步)、伤病、境况、心思
-PRECIOUS = {"秘籍", "信物", "宝物"}               # 要紧之物：易手只归原著与眼前的剧情，场外推演递交不得
+OFFSCREEN = {"derived"}                          # 场外剧情(v11 衍生事件)：主角不在场，碰不到主角本人
 RESOLVED_KEYS = {"location", "holder", "inventory", "skills", "faction"}  # 这些值是实体名，须经别名表归一
 NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或 add 一个数
 LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
@@ -420,13 +418,12 @@ def _growth(world, op) -> str | None:
     return f"世上没有「{v}」这部秘籍或武学"
 
 
-MOVERS = {"director": "director", "canon": "canon", "chronicle": "canon", "lod1": "lod1"}  # 调遣人物的三处来源
+MOVERS = {"director": "director", "canon": "canon", "derived": "canon"}  # 调遣人物的两处来源：导演，与日程(原著连同场外剧情)
 
 
 def _travel(world, op, origin) -> str | None:
-    """一回合里一个人只听一处来源调遣：原著(连同史官改写)依序走位是一条轨道，导演、场外推演各是一处——
-    谁先挪动了他，别处就不能再把他挪走；场外推演与史官是 LLM 写的，第一程还不得超过一日加本回合流逝的日数。
-    原著本身不受里程约束：它的日程本就压缩了旅途。"""
+    """一回合里一个人只听一处来源调遣：日程(原著连同场外编剧写的衍生事件)依序走位是一条轨道，导演是另一处——
+    谁先挪动了他，别处就不能再把他挪走。日程不受里程约束：原著的日程本就压缩了旅途，衍生事件的路程在排进日程时已由 plot 核过(到期再核赶不赶得到)。"""
     turn = getattr(world, "turn", None)
     if turn is None or origin == "director" or op.get("op") != "set" or op.get("key") != "location" \
             or world.graph.kind(op.get("id")) != "person":
@@ -438,59 +435,7 @@ def _travel(world, op, origin) -> str | None:
     prior = turn.get("movers", {}).get(pid)
     if prior and prior != mine:
         return f"{pid}此日已另有去向"
-    if origin in OFFSCREEN and cur and dst:
-        d = world.graph.distances(cur).get(dst, 99)
-        if d > 1 + turn.get("days", 0):
-            return f"{pid}身在{cur}，{d}日路程赶不到{dst}"
     return None
-
-
-# ------------------------------------------------------------
-#  场外推演的权限(v11)：远处没有自由发挥的导演
-# ------------------------------------------------------------
-def _charter(world, op, scope) -> str | None:
-    """一日之内的场外推演只演自由之人的小事：去留(一步、且不进主角近旁)、伤病境况、心思(听了传闻对主角起的心思也算)，同处一地的人之间擒放结怨、递交一件寻常之物。
-    功力武学归规则与原著，门庭名分归原著，地理陈设、门派、人群只随原著与眼前的剧情；暗藏之物、要紧之物场外取不得——
-    LLM 写的远方之事碰得到这些，近处导演演得再好，主角走过去也会撞上一个被改坏的世界。原著要用的人与物另由 lod 把关。"""
-    g, kind = world.graph, op["op"]
-    if kind in ("link", "unlink"):
-        rel, ends = op.get("rel"), [op.get("src"), op.get("dst")]
-        if ends[1] == "player" and g.kind(ends[0]) == "person" and not bond.structural(rel):
-            return None  # 听了传闻，对主角起了心思：记进恩怨账，不必与他同处
-        if "player" in ends:
-            return "场外推演不得改动主角本人"
-        if bond.structural(rel) and rel not in situation.CUSTODY:
-            return f"「{rel}」是名分，场外推演立不得、断不得"
-        if not all(g.kind(x) == "person" for x in ends):
-            return "场外推演只在人与人之间擒放结怨"
-        if g.get(ends[0], "location") != g.get(ends[1], "location"):
-            return f"{ends[0]}与{ends[1]}不在一处"
-        return None
-    nid, key = op.get("id"), op.get("key")
-    if nid == "player" or op.get("value") == "player":
-        return "场外推演不得改动主角本人"
-    if crowd.is_squad(g, nid):
-        return "人群只随原著与眼前的剧情走，场外推演挪不动"
-    if g.kind(nid) == "person":
-        if key not in DRIFT:
-            return f"{nid}的{key}场外推演改不得：功力武学归规则与原著，门庭名分归原著"
-        if key == "hp" and kind != "add":
-            return "气血只可增减"
-        if key == "location" and op.get("value") in situation.near(world):
-            return f"{op.get('value')}在主角近旁：主角跟前的事归近处导演"
-        return None
-    if g.kind(nid) == "item":
-        if key != "holder" or kind != "set":
-            return f"场外推演只让人递交东西，{nid}的{key}改不得"
-        if g.get(nid, "hidden"):
-            return f"{nid}暗藏未现，场外无从取得"
-        if g.get(nid, "grade") == "要物" or g.get(nid, "kind") in PRECIOUS:
-            return f"{nid}是要紧之物：易手只归原著与眼前的剧情"
-        to = op.get("value")
-        if to is not None and g.get(to, "location") != place(world, nid):
-            return f"{to}不在{nid}所在之处，接不过来"
-        return None
-    return "地理、陈设、门派与武学，场外推演改不得"
 
 
 # ------------------------------------------------------------
@@ -504,22 +449,22 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
             return f"{op['id']}不在你眼前，名字落不到人身上"
         to = op.get("to")
         return f"{to}不在你身边，听不见" if to and to not in perspective.audience(world) else None
-    if op["op"] == "reveal" and origin in OFFSCREEN:
-        return "主角不在场，无从得知隐情"
     if op["op"] == "reveal" and origin == "director":
         return _seen(world, op, heading)
     if op["op"] == "arrive" and origin in OFFSCREEN:  # 主角眼前的人只有一个来路：近处导演写赶来，系统核路程(v11)
         return "场外叫不来人：要谁来到主角跟前，归近处导演写赶来"
-    if origin == "lod1" and (why := _charter(world, op, scope)):
-        return why
-    if origin in OFFSCREEN:  # 纠缠者的去留、生死、拘押只听导演与此地剧情；史官与场外推演可写风声，动不了他们
+    if origin in OFFSCREEN:  # 纠缠者的去留、生死、拘押只听导演与此地剧情；主角身边的人(v11)场外一概动不了——主角跟前的事归近处导演
         bound = [i for i in _ids(op) if i in situation.entangled(world)]
         if bound and (op["op"] in ("link", "unlink", "arrive") or op.get("key") in ("location", "status", "hp")):
             return f"{bound[0]}的行止系于主角，场外动不了"
-    if op["op"] in ("link", "unlink") and origin in OFFSCREEN and scope is not None:  # 场外结恩怨，也只在推演区域之内
+        close = situation.around(world)
+        by = [i for i in _ids(op) + ([op.get("value")] if op.get("key") == "holder" else []) if i in close]
+        if by:
+            return f"{by[0]}正在主角身边：主角跟前的事归近处导演"
+    if op["op"] in ("link", "unlink") and origin in OFFSCREEN and scope is not None:  # 场外结恩怨，也只在那一桩事所及之处
         far = [i for i in (op["src"], op["dst"]) if i != "player" and i not in scope and place(world, i) not in scope]
         if far:
-            return f"{far[0]}不在推演区域内"
+            return f"{far[0]}不在这桩事所及之处"
     if origin == "director" and op["op"] in ("link", "unlink"):
         return _bond(world, op)
     if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
@@ -551,11 +496,9 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         return None if where in close else f"{nid}不在你身边，主角够不着"
     if origin in OFFSCREEN:
         if nid == "player" or op.get("value") == "player":
-            return "场外推演不得改动主角本人"
+            return "场外剧情不得改动主角本人"
         if scope is not None and nid not in scope and where not in scope:
-            return f"{nid}不在推演区域内"
-        if origin == "lod1" and op.get("key") == "location" and op["value"] not in access.steps(world, where):
-            return "一日之内只能移动到相邻且走得通的地点"
+            return f"{nid}不在这桩事所及之处"
         return None
     return f"未知来源:{origin}"
 
@@ -631,7 +574,7 @@ def _note(world, text: str | list):
 
 
 def _exec(world, op, origin):
-    """一条指令落账。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；原著与史官挪走带队之人，同在一处的这一门人群随他走。"""
+    """一条指令落账。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；日程(原著与场外剧情)挪走带队之人，同在一处的这一门人群随他走。"""
     g, nid = world.graph, op.get("id")
     moving = op["op"] == "set" and op.get("key") == "location"
     if (moving or op["op"] == "arrive") and crowd.is_squad(g, nid):
@@ -643,7 +586,7 @@ def _exec(world, op, origin):
         return
     old = g.get(nid, "location") if moving and g.kind(nid) == "person" else None
     _exec_one(world, op, origin)
-    if old is not None and origin in ("canon", "chronicle"):
+    if old is not None and origin in ("canon", "derived"):
         crowd.escort(world, nid, old)
 
 
@@ -653,6 +596,9 @@ def _exec_one(world, op, origin):
     if kind == "set" and op.get("key") == "location" and g.kind(op.get("id")) == "person" and turn is not None \
             and g.get(op["id"], "location") != op.get("value"):
         turn.setdefault("movers", {}).setdefault(op["id"], MOVERS.get(origin, origin))
+    if kind in ("set", "arrive") and (kind == "arrive" or op.get("key") == "location") and origin != "derived" \
+            and g.kind(op.get("id")) == "person":
+        g.nodes[op["id"]].pop("strayed", None)  # 原著与导演挪动了他：回到原著的轨道上(场外剧情带走的那一日由 lod.stray 记下)
     if kind == "link" and op["rel"] == situation.FOLLOW and op["dst"] == "player":
         _note(world, situation.join(world, op["src"]))
         if op["src"] not in situation.around(world):  # 主角已先走一步：随行者跟到主角身边
@@ -706,6 +652,8 @@ def _exec_one(world, op, origin):
     elif op["key"] == "status" and g.kind(op["id"]) == "person" and kind == "set":
         actor.declare(world, op["id"], op["value"])
         g.nodes[op["id"]][PLIGHT] = op["value"] == "wounded"  # 明写的负伤是剧情上的伤：气血养好不算痊愈，明写安好或身亡才消
+        if op["value"] == "dead":
+            g.nodes[op["id"]]["died"] = world.clock.day  # 死在这一局里(v11)：志向系于他的人，心愿了了或落了空(world/plot.awaken)
     elif op["key"] == "mood" and g.kind(op["id"]) == "person" and kind == "set":
         actor.feel(world, op["id"], op["value"])
     elif op["id"] == "player" and op["key"] == "inventory":  # 拾起则归主角随身，丢下则落在此地
@@ -718,6 +666,8 @@ def _exec_one(world, op, origin):
         _hand(world, op["id"], location=op["value"])
     else:
         node, key, value = g.nodes[op["id"]], op["key"], op["value"]
+        if kind == "set" and key == "agenda" and origin == "director" and node.get("type") == "person" and value != node.get(key):
+            node["adrift"] = True  # 眼前的剧情改了他的志向(心愿了了、另有所图)：原著线就此变了，往后的路交场外编剧(v11)
         if kind == "set":
             node[key] = value
         elif kind == "add":
@@ -814,7 +764,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     主角的移动排到最后：一回合内发生的事都发生在回合开始的所在，同伴随行、器物易手不会因主角先走一步而"不在此地"。
     一回合里一个人只听一处来源调遣；主角走了，同伴随行跟上。"""
     applied, rejected = [], []
-    ops = ops if isinstance(ops, list) else []  # 场外推演偶把一条指令写成单值：整批作废，不让世界崩
+    ops = ops if isinstance(ops, list) else []  # 偶有把一条指令写成单值的：整批作废，不让世界崩
     ops = acts.expand(world, ops)  # 事码(v9)：平常之事化为指令，规则之事留作一件事交 acts 执行；旧写法的指令原样照收
     ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
     heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, destination(op)), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西

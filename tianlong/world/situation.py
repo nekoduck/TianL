@@ -151,7 +151,7 @@ def elsewhere(world) -> list[str]:
 #  随行
 # ============================================================
 def entangled(world) -> set[str]:
-    """与主角的故事纠缠在一起的人：正随主角同行者、主角未了之事所系之人。他们的场外原著不再照本宣科，场外推演与史官也挪不动他们。"""
+    """与主角的故事纠缠在一起的人：正随主角同行者、主角未了之事所系之人。他们的场外原著不再照本宣科，场外剧情(v11)也挪不动他们。"""
     about = {a for meta in quests(world).values() for a in meta.get("about", [])}
     return set(party(world)) | {a for a in about if world.graph.kind(a) == "person"}
 

@@ -2,7 +2,7 @@
 [INPUT]: 依赖 tianlong.engine 的 Game、tianlong.world.world 的 World 与 blackboard 的 ORIGINS、world/situation 的 around / cast、narrative/llm 的 LLMError；
          读一份对局日志(markdown：每回合「#### 角色（trace 第 N 行…）」下有 <details> 里的系统提示与上下文，其后是模型的原始输出)
 [OUTPUT]: 命令行工具：python -m tools.rerun <日志.md> [--turns N] [--watch 人名,…] [--out 报告.md]——
-          用日志里真实的导演/返工/编剧/账房(v6)/复核(v7)/史官/推演/书记输出驱动当前引擎重演一遍，逐回合报告去处、未成立之事、体检、结算入账与账文分歧、补记与新立的外号(v7)、眼前之人、
+          用日志里真实的导演/返工/编剧/账房(v6)/复核(v7)/场外编剧与审稿(v11)/书记输出驱动当前引擎重演一遍，逐回合报告去处、未成立之事、体检、结算入账与账文分歧、补记与新立的外号(v7)、眼前之人、
           所盯人物的下落、亲见与传闻、场况，末尾附账本与原著结算；亦可 import：parse(text) → [{turn, deed, calls{角色: [输出…]}}]
 [POS]: 回放验收——不调用模型、不发网络请求：同一份真实模型输出交给新引擎，看裁决、在场、原著与账本还会不会打架。
        世界会与原局分叉(新引擎裁决不同)，越往后越只是「同样的模型话语落在新世界上」；它量的是新引擎能否接住真模型的写法，而不是复刻原局
@@ -25,7 +25,8 @@ TURN = re.compile(r"^## 第 (\d+) 回 · ", re.M)
 CALL = re.compile(r"^#### ([^（\s]+)(?:（[^（）]*）)?（trace 第 \d+ 行", re.M)  # 「书记（后台）（trace…」也认
 BLOCK = re.compile(r"```(?:json|text)?\n(.*?)\n```", re.S)
 DEED = re.compile(r"【主角此刻】(.*)")
-ROLES = {"导演初稿": "draft", "导演返工": "repair", "编剧": "writer", "账房": "settle", "复核": "recheck", "史官": "chronicle", "场外推演": "simulate", "书记": "recap"}
+ROLES = {"导演初稿": "draft", "导演返工": "repair", "编剧": "writer", "账房": "settle", "复核": "recheck", "场外编剧": "plot", "审稿": "review", "书记": "recap"}
+QUEUED = (("审稿", "review"), ("场外编剧", "plot"), ("书记", "recap"))  # 审稿人的系统提示里也有「场外编剧」：先认审稿
 
 
 # ============================================================
@@ -66,13 +67,13 @@ def _json(raw: str):
 
 
 class ReplayLLM:
-    """按回合吐出日志里的原始输出：导演首稿与返工、编剧正文、账房的结算单(v6)、复核的裁定(v7)按本回合取；史官、推演、书记按出现次序排队。没有的就当模型失声
+    """按回合吐出日志里的原始输出：导演首稿与返工、编剧正文、账房的结算单(v6)、复核的裁定(v7)按本回合取；场外编剧与审稿(v11，后台写)、书记按出现次序排队。没有的就当模型失声
     (账房失声即只以词表对账——v6 之前的日志没有账房；复核失声，那几句只记分歧)。"""
     strict = False
 
     def __init__(self, turns: list[dict]):
         self.turns, self.now, self.tokens = turns, 0, 0
-        self.queues = {k: [r for t in turns for r in t["calls"].get(k, [])] for k in ("chronicle", "simulate", "recap")}
+        self.queues = {k: [r for t in turns for r in t["calls"].get(k, [])] for _, k in QUEUED}
         self.used = {k: 0 for k in self.queues}
 
     def at(self, i: int):
@@ -104,7 +105,7 @@ class ReplayLLM:
             if not calls.get("settle"):
                 raise LLMError("这一回合日志里没有账房")
             return _json(calls["settle"][0])
-        for key, kind in (("史官", "chronicle"), ("场外推演", "simulate"), ("书记", "recap")):
+        for key, kind in QUEUED:
             if key in system:
                 return self._queued(kind)
         raise LLMError("日志里没有对应的调用")

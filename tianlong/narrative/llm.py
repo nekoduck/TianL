@@ -1,10 +1,10 @@
 """
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
-[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL，含收尾缘由 finishReason）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
+[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL，含收尾缘由 finishReason；v11 json 漏了末尾几个右括号按括号栈补齐(_mend)）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
        stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据。
        一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON、被安全策略半途截断）都化为 LLMError，交上层兜底——绝不让一回合半途炸开；
-       用量与 trace 加锁：场外推演、梗概折叠与编剧并行调用；strict=True(v5)：导演这一笔失败即整回合作废(agents._ask)，不以离线说书人代演
+       用量与 trace 加锁：场外编剧、梗概折叠与编剧并行调用；strict=True(v5)：导演这一笔失败即整回合作废(agents._ask)，不以离线说书人代演
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import http.client
@@ -53,7 +53,7 @@ class Gemini:
         self.key, self.model, self.timeout = key, model, timeout
         self.tokens = 0  # 累计消耗，用于自查成本
         self.trace = Path(trace) if trace else None  # 每次调用一行 JSONL：提示词、回答、用量、耗时、收尾缘由
-        self._lock = threading.Lock()  # 场外推演、梗概折叠与编剧并行：用量与 trace 一笔一锁
+        self._lock = threading.Lock()  # 场外编剧、梗概折叠与编剧并行：用量与 trace 一笔一锁
 
     def _log(self, system: str, user: str, text: str, used: int, t0: float, finish=None):
         with self._lock:
@@ -102,7 +102,13 @@ class Gemini:
         try:
             data = json.loads(raw)
         except json.JSONDecodeError as e:
-            raise LLMError(f"JSON 解析失败：{raw[:200]}") from e
+            mended = _mend(raw)
+            try:
+                data = json.loads(mended) if mended else None
+            except json.JSONDecodeError:
+                data = None
+            if data is None:
+                raise LLMError(f"JSON 解析失败：{raw[:200]}") from e
         if not isinstance(data, dict):
             raise LLMError("期望 JSON 对象")
         return data
@@ -123,6 +129,31 @@ class Gemini:
             self._log(system, user, "".join(parts), usage.get("total", 0), t0, usage.get("finish"))
         if usage.get("finish") not in (None, "STOP", "MAX_TOKENS"):  # 安全策略等半途截断：交上层判断已写出的够不够用
             raise LLMError(f"流式输出被截断：{usage['finish']}")
+
+
+def _mend(raw: str) -> str | None:
+    """模型偶尔漏写末尾的几个右括号(JSON 模式下、层层嵌套的清单里也会，收尾缘由照样是 STOP)：按括号栈补齐，字串没收口先收口。
+    括号对不上、或本就齐全，返回 None——那是别的毛病，照旧交兜底。"""
+    stack, quoted, escaped = [], False, False
+    for ch in raw:
+        if quoted:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                quoted = False
+        elif ch == '"':
+            quoted = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]" and (not stack or stack.pop() != ch):
+            return None
+    if not stack:
+        return None
+    body = raw + ('"' if quoted else "")
+    body = body.rstrip().rstrip(",")
+    return body + "".join(reversed(stack))
 
 
 def from_env(trace=None) -> Gemini | None:

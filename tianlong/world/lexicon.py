@@ -12,7 +12,8 @@
        进境(v4)：「练成、学会、身如游龙、功力大进」之类成就性措辞是第九类变化——说了就意味着账上该有一阶进境，没有即为违例；
        「练、参、研、演」之类习练措辞不是违例，是追认一回研习的线索(adjudicate.imply)，也是举动所指的线索(「继续摸索内功心法」：手边的秘籍就是所指)；
        主角的去留(v5)：「你走进X」「你离开X」要账上真到过、真离开(View.route / here / aimed)，「奔向」只是方向不算；
-       场外(v5)：场外推演与史官的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)，
+       场外(v5)：场外剧情(v11 衍生事件)的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)；
+       去的人认承上的主语或句中的人(v11：「乔峰……，赶赴少林探望玄苦」去的是乔峰，玄苦是去看的人)，
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
        不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
        主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
@@ -336,7 +337,7 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
 
 
 # ============================================================
-#  场外说法对账(v5)：场外推演与史官写的一句话，逐分句看它说了什么变化，账上须有相应的指令
+#  场外说法对账(v5)：场外剧情(v11 场外编剧写的衍生事件)的一句话，逐分句看它说了什么变化，账上须有相应的指令
 #  facts：moved {人: 去处} / dead / hurt / custody(擒放所涉之人) / items(易手或挪位之物) / player(主角的名号与称呼)
 # ============================================================
 def _root(loc: str) -> str:
@@ -354,11 +355,11 @@ def unbacked(text: str, tab, kinds: dict[str, str], facts: dict) -> list[str]:
             continue
         ents = find(clause, tab)
         people = [n for n, _, _ in ents if kinds.get(n) == "person"] or prev
-        prev = people
+        movers, prev = set(people) | set(prev), people  # 「乔峰……，赶赴少林探望玄苦」：去的是承上的乔峰，句中的玄苦是去看的人(v11)
         if NEGATE.search(clause) or YET.search(clause) or REMOTE.search(HEARSAY.sub("", clause)):
             continue  # 「企图逃往」「尚未离开」「心想」不是变化；「据说已坠崖」却是——传闻也要对账
         if MOVE.search(clause) or LEAVE.search(clause):
-            dests = {moved[p] for p in people if p in moved}
+            dests = {moved[p] for p in movers if p in moved}
             named = [n for n, a, _ in ents if kinds.get(n) == "location" and not FROM.search(clause[max(0, a - 2):a])]
             if not dests:
                 out.append(f"「{clause}」写了{'、'.join(people) or '有人'}的去留，账上却没有人挪动")

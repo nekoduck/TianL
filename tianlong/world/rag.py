@@ -17,6 +17,7 @@
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
        v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
+       v11：近事里场外编剧排进日程的衍生事件标作「场外剧情」，与原著一样只可借风声伏笔；dossier 是场外编剧任务书里一个人的底子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -251,9 +252,9 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
                   "away": sorted(set(stage["actors"]) & situation.around(world)) if stage["where"] not in situation.near(world) else [],
                   "coming": lod.coming(world, stage) if stage["where"] not in situation.near(world) else []}
         if stage else None,  # 近旁上演的原著、要把身边之人带往别处的原著、要把人送到主角这里的原著(v11)，都交导演
-        "upcoming": [f"原著里此时{ev['summary']}——本局已不成立，只作背景，不得写进任何人的台词" if lod.broken(world, ev) else
-                     f"{'相关者已到位，可随时上演' if ev['id'] in ready else '今日稍后' if n <= 0 else f'最迟{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
-                     for ev, n in upcoming],
+        "upcoming": [f"{'场外剧情' if ev.get('derived') else '原著'}里此时{ev['summary']}——本局已不成立，只作背景，不得写进任何人的台词" if lod.broken(world, ev) else
+                     f"{'场外剧情·' if ev.get('derived') else ''}{'相关者已到位，可随时上演' if ev['id'] in ready else '今日稍后' if n <= 0 else f'最迟{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
+                     for ev, n in upcoming],  # 场外剧情(v11)：场外编剧排进日程的衍生事件，与原著同样只可借风声伏笔
         "ruling": ruling,
         "crowd": crowd.lines(world),  # 群战预裁(v9)：整群之力、脱身、偷取
         "flocks": crowd.afar(world),  # 近处不在跟前的人群(v10)：要他们来写赶来，要几人从中分出
@@ -339,7 +340,7 @@ def heard(world, locs, limit: int = 5) -> list[str]:
 
 
 def dossier(world, pid: str) -> dict:
-    """单个人物的真相档案——供 LOD1/LOD2 场外推演使用（远端推演看真相，不看玩家认知）。"""
+    """单个人物的真相档案——场外编剧(v11)任务书里一个人的底子（远处看真相，不看玩家认知）。"""
     g = world.graph
     loc = g.get(pid, "location")
     return {"name": pid, "title": g.get(pid, "title"), "status": g.get(pid, "status"), "location": loc,

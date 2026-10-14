@@ -2,9 +2,9 @@
 [INPUT]: 消费 world/rag 的 build()（玩家视锥：在场/近旁/同行/途中去向与余程/出路按方向措辞、注明关口之类与来路）、backstage()（导演后台：焦点/受制/此地上演的原著/近事/较量与研习预裁/隐情/关口/暗路/研习进度/伏笔/久悬之事/节奏）、
          dossier()（场外档案），均为纯 dict；读 world/clock 的 PACES 作时长措辞表
 [OUTPUT]: 对外提供 render() / render_backstage() / TIME_GUIDE（光阴分戏内 pace 与幕间省略 cut(可等到某一刻)，clock 立时限） / SHAPES（示例的场况、时长、幕间省略轮换） / PLOT_GUIDE（逐拍挂后果、一拍一事务、气血须有伤疗之据、身体归规则、10 指令、器物一件也不得新造(v8：拍文台词里也不写清单外之物)、spawn 只立一队人马、暗藏器物用原名） /
-          OFFSTAGE（场外落账：说法只许写指令里有的变化、不写主角、不说破隐情、不把尚未发生的事说成已成、只碰列出的人与地） / SIM_OPS（v11 场外推演能写的五种指令） / CHRONICLE_OPS（v11 史官只挑原著结果：照抄、删去、减弱） /
+          PLOT_OPS / PLOT_RULES（v11 场外编剧能写的后果指令与天龙世界的规矩，与 world/plot 的规则审一一对应） /
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、外号立名号；v9 写成事码） / THREATS / TENSIONS 与
-          director / repair / writer / settler(v6 账房：入账 + v7 对稿) / rechecker(v7 双录复核) / recap / simulator / chronicler 八组 (system, user) 组装器（场外两组用 OFFSTAGE 而非 PLOT_GUIDE，可附江湖近闻）、
+          director / repair / writer / settler(v6 账房：入账 + v7 对稿) / rechecker(v7 双录复核) / recap / plotter(v11 场外编剧·创作家) / reviewer(v11 审稿人) 八组 (system, user) 组装器、
           SETTLE_OPS（账房能记的几种变化：识名、来去、随行擒放、易手、神色打算、看法、现状、外号、应承之事）
 [POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
        v4：导演上下文第一节是【场记】(story/brief 写的焦点：主干、场况、试过的路数、最急的时限、主角线)，导演报场况 scene(开/转/合/断)；
@@ -12,8 +12,10 @@
        编剧按【选项槽位】各拟一项并标尺度，进境不得越过账上那一阶；
        导演只写到此刻为止、不拟选项，节拍里不得出现后台术语；返工时原样拿回上一稿与账本对不上之处；
        编剧只看已成立之事、未成立之事与连带，看不见后台，写完正文再拟三个带对象的选项与一条伏笔；
-       v11：远处没有自由发挥的导演——SIM_OPS 与 world/effects._charter、CHRONICLE_OPS 与 world/lod._vet 一一对应；后台的此地原著另注明原著要把谁送到主角这里(把来人演出来)；
-       v5：场外推演与史官另有 OFFSTAGE 纲领(它们没有拍、没有主角，说法与指令逐句对账，见 world/lod)，史官另看【相关者此后的原著】及其前提(_premise 译成人话)；
+       v11 场外编剧：plotter 交给创作家几份任务书(改写：演不成的原著与缘由；续写：原著线变了的人)——每人的性情、剧情推力、志向、所求、心愿、手段、底线、关系、原著此后与走向、到事发之地几日，
+       恩怨所系之人此刻在哪、走得到的地方、手边的东西、已有的场外剧情线、江湖近闻，与上一稿退回的缘由；要它照志向与推力写合理又精彩的剧情线(原著线可以断：drops 写明哪几桩原著不再发生)；
+       reviewer 交审稿人逐条判 过/改/否(志向性情、天龙准则、精彩、连锁反应)，并明告这一局的江湖已被主角改变——此刻的生死所在就是事实，不以原著后来怎样退稿；
+       后台的此地原著另注明原著要把谁送到主角这里(把来人演出来)；场外剧情线到了主角跟前，后台写【场外剧情此刻…上演】连同动机、手段、戏眼；PLOT_GUIDE 教导演某人心愿了了写 所求(谁=某人)；
        示例在眼前无人时不出现任何人名；关系网标明是明面上的关系、主角未必都知道；书记知道「你」就是主角；
        主角眼前的原著可在近旁上演、或要把身边之人带往别处(交导演演出这一别)；后台另列「此地另有其人」(同在一片而不在眼前，要登场写 arrive)与「近处的熟人」；
        v6 账文同构：导演可宣告识名 reveal{id}(拍里须真有人说出口)；编剧知道正文是本回合的定本(写成了的事会照着记进账本，不在场的人不开口，叫不出名字的人沿用给定的叫法)；
@@ -135,9 +137,12 @@ def render_backstage(gm: dict) -> str:
         place = f"在近旁的{door}（同一处所之内，喊一声就到：主角或闻其声、或循声可见）" if door else \
             f"在{ev['where']}（{'、'.join(away)}此刻正在主角身边：原著里要往那里去）" if away else \
             f"在{ev['where']}（原著里{'、'.join(come)}要从那里来到主角这里）" if come else "在此"
-        parts.append(f"【原著此刻{place}上演】{ev['summary']}｜相关者：{'、'.join(ev['actors'])}"
-                     f"｜原著结局：{'；'.join(_outcome(ev)) or '无可记之变'}" + (f"｜前提有变：{'；'.join(dirt)}" if dirt else "") + broken
-                     + "\n  这是本回合的主干：把它编入节拍，让主角目睹或卷入，相关者的言行须合乎原著；原著结局由系统落账，不必写进 ops。"
+        src = "场外剧情" if ev.get("derived") else "原著"  # v11：场外编剧写的剧情线到了主角跟前，同原著一样交导演当面演出
+        why = f"｜动机：{ev.get('motive') or '—'}｜手段：{ev.get('how') or '—'}｜戏眼：{ev.get('drama') or '—'}" if ev.get("derived") else ""
+        parts.append(f"【{src}此刻{place}上演】{ev['summary']}｜相关者：{'、'.join(ev['actors'])}{why}"
+                     f"｜{src}结局：{'；'.join(_outcome(ev)) or '无可记之变'}" + (f"｜前提有变：{'；'.join(dirt)}" if dirt else "")
+                     + broken.replace("原著", src)
+                     + f"\n  这是本回合的主干：把它编入节拍，让主角目睹或卷入，相关者的言行须合乎{'其动机' if ev.get('derived') else '原著'}；{src}结局由系统落账，不必写进 ops。"
                      + (f"{'、'.join(away)}要离开主角身边：把这一别演出来(去意、告别、被人带走)，主角可以拦阻、同去或目送；" if away else "")
                      + (f"{'、'.join(come)}要来到主角这里：把来人演出来(到了、照面)，远处的那桩事主角只听来人说起；" if come else "")
                      + "若主角的举动使它不能照常发生，canon.unfolds 填 false 并在 why 说明，实际后果由你的 ops 写下。")
@@ -200,7 +205,8 @@ PLOT_GUIDE = """【剧情落账·事码】世界里的人物、地点、器物�
 - 脱身 {"做":"脱身","到":出路(可省)}——被一群人围住时唯一的走法，成败看【群战预裁】
 心：
 - 识名 {"做":"识名","谁":报出姓名的人或player,"听":只说给谁听(可省)}——拍里须真有人说出口
-- 神色 / 打算 / 外号 {"做":"打算","谁":某人,"为":"他眼下要做的事，一句话"}；所求 {"做":"所求","为":"主角新的所求"}
+- 神色 / 打算 / 外号 {"做":"打算","谁":某人,"为":"他眼下要做的事，一句话"}；所求 {"做":"所求","为":"主角新的所求"}；
+  某人心愿了了、志向变了(大仇得报、所爱已逝、被主角点醒)写 {"做":"所求","谁":某人,"为":"他新的志向"}——他往后的路，主角不在时江湖替他接着走
 - 揭开 {"做":"揭开","物":暗藏之人或物}，或 {"做":"揭开","秘":[甲,"关系",乙]}，或发现暗路 {"做":"揭开","路":[起点,通往之地]}
 - 现状 {"做":"现状","对":地点或景物,"为":"一句话"}；应承 {"做":"应承","为":"主角应下要办的事","直到":[["钟灵","~随行","player"]](可省)}；了结 {"做":"了结","为":那件事}
 功：研习 {"做":"研习","物":秘籍或身边人会的武学}；吸功 {"做":"吸功","对":某人}——增减多少由系统算，不写功力数字
@@ -391,70 +397,110 @@ def recap(synopsis: str, lines: list[str]) -> tuple[str, str]:
 
 
 # ============================================================
-#  场外落账(v5)：场外推演与史官专用——没有拍、没有主角、没有场景实体；说法只许写指令里有的变化
+#  场外编剧(v11)：主角不在的地方，江湖照样在走——创作家写剧情线，审稿人审合不合理、精不精彩
+#  规则审(时空、胜负、归属、名实、说法)在 world/plot，与 PLOT_RULES 一一对应
 # ============================================================
-OFFSTAGE = """【场外落账】主角不在这些地方。你写的每一桩变化都要写进 effects，系统据此裁决、记账、传开：
-说法(result/summary)只许写 effects 里有的变化——写了某人去了哪里、受了伤、死了、被擒或获救、得了什么东西，effects 里却没有，这句说法便作废，只记系统核实过的后果。
-说法会变成传闻传开：不写主角，不说破任何隐情(身世、真凶、私情)，不把尚未发生的事说成已成之事；指令只作用于下面列出的人物与地点，不得新造人物、地点、器物。"""
+PLOT_OPS = """后果指令(只写这几种，人、地、物、武学用任务书里的原名)：
+- 去向：{"op":"set","id":人,"key":"location","value":地点}——事后一日之内去得了的地方；再远的路另写一桩事
+- 伤与死：{"op":"add","id":人,"key":"hp","value":-30,"by":出手者}；{"op":"set","id":人,"key":"status","value":"wounded或dead","by":出手者}；自尽、病故、意外写进 how，不写 by
+- 擒与放：{"op":"link","src":擒者,"dst":被擒者,"rel":"囚禁","by":擒者}；放人写 unlink
+- 恩怨与名分：{"op":"link","src":甲,"dst":乙,"rel":"结仇/结义/师徒/效忠/私情……"}；某人听了传闻、念着旧事，对主角起了心思：{"op":"link","src":某人,"dst":"player","rel":"感激/记恨/挂念……"}
+- 易手：{"op":"set","id":器物,"key":"holder","value":接的人,"by":夺者(夺来的才写)}——东西须在事发之地，或在这桩事里的人手里
+- 武学与功力：{"op":"push","id":人,"key":"skills","value":武学}(秘籍在手、或会它的人在这桩事里)；{"op":"add","id":人,"key":"power","value":数}(传功吸功：一方得几分、一方失几分；照秘籍苦练也只得几分)
+- 心思与名位：{"op":"set","id":人,"key":"intent/mood/agenda/title/faction","value":…}——agenda 是新的志向(心愿了了必写)，faction 是改换门庭
+- 揭开隐情：{"op":"reveal","src":甲,"rel":隐情,"dst":乙}(当事人在这桩事里)；事发之地的现状：{"op":"set","id":地点,"key":"state","value":"一句话"}；门派易主：{"op":"set","id":门派,"key":"state","value":{"leader":人}}"""
 
-# 场外推演的权限(v11)：与 world/effects._charter、world/lod._foreign 一一对应——远处没有自由发挥的导演
-SIM_OPS = """你能写的只有这几种，其余一概驳回：
-- 去向：{"op":"set","id":人物,"key":"location","value":地点}——一日一程，只去【相邻】所列之地，不往主角那里去
-- 伤病生死：{"op":"add","id":人物,"key":"hp","value":-15}（须有交手或意外）；{"op":"set","id":人物,"key":"status","value":"wounded/dead/alive"}；{"op":"push","id":人物,"key":"conditions","value":"中毒"}
-- 擒放与结怨：{"op":"link"/"unlink","src":人物,"dst":人物,"rel":"擒获/囚禁/结仇……"}——两人须在一处；结义、师徒、效忠之类的名分立不得
-- 打算与心境：{"op":"set","id":人物,"key":"intent","value":"他眼下要做的事，一句话"}；{"op":"set","id":人物,"key":"mood","value":"两三字"}
-- 递交寻常之物：{"op":"set","id":器物,"key":"holder","value":人物}——接的人须在东西所在之处；秘籍、信物、宝物与暗藏之物递交不得
-功力、武学、门派、名号、地点与陈设、成群的门人，场外都改不得；要谁来到主角跟前，也不归你写。"""
-
-# 史官的权限(v11)：与 world/lod._vet 一一对应——只裁剪原著，不另写原著没有的事
-CHRONICLE_OPS = """effects 只能从【原著结果】里挑：照抄某一条、删去某一条，或把某一条减弱(死改为重伤 wounded、少扣些血)；另可写相关者的打算与心境(intent/mood)。
-原著结果里没有的去处、死伤、易手、关系、武学与功力一概写不出——写了，系统即视同你未作改写：前提都在就照原著，前提已破就作罢。"""
-
-
-# ============================================================
-#  LOD1：相邻区推演（结构化战报）
-# ============================================================
-def simulator(time: str, days: int, actors: list[dict], heard=()) -> tuple[str, str]:
-    system = ("你是武侠世界的场外推演者。依人物性情、功力与图谋，推演过去数日【推演人物】之间发生的事——"
-              "多半只是心思与打算有了变化，真正动手、易手、远行的是少数；只输出结构化战报，不写文学描写。\n" + OFFSTAGE + "\n" + SIM_OPS +
-              "\n场外限制：人物一日只走一程，只能去【相邻】所列之地；原著里另有安排的人不在推演人物之列，战报里不得写到他们。"
-              '\n输出 JSON：{"reports":[{"where":"地点","event":"不超过10字","result":"不超过24字","effects":[...]}]}，'
-              "至多 2 条，无进展则为空数组。")
-    lines = [f"{a['name']}｜{a['title']}｜{a['tier']}｜身在{a['location']}｜图谋：{a['agenda']}"
-             f"｜心境：{a.get('mood') or '平常'}｜相邻：{'、'.join(a['exits'])}" for a in actors]
-    return system, f"【时间】{time}\n【已过】{days}日\n{_section('推演人物', lines)}\n{_section('已传到此处的江湖近闻', heard)}"
+PLOT_RULES = """天龙世界的规矩(系统逐条核对，不合即退回重写)：
+- 只用世上有的人、地、物、武学；不写主角(只可写某人对主角起了心思)；主角身边、与主角同行的人不写
+- 时空：人从此刻所在走到事发之地要够日子(任务书里地点后注明几日)；同一人不分身；一桩事至多八人
+- 胜负：武功高低定胜负——伤人擒人夺物须有对方六成之力，杀人废人须不逊于对方(连同护着他的门人)；以弱胜强把手段写进 how(用毒、设伏、偷袭、以众凌寡)，也不能太悬殊
+- 武学来路：功力不凭空涨；暗藏之物只有知情者找得到；地理不动(只可改事发之地的现状)
+- 说法(summary)会传开：只写 effects 里有的变化，不说破这桩事之外的隐情，不提主角
+- 七日之内照原著要上场的人：原著前置未变就照原著演，排在那之后，或换人
+写到主角所在之处的事，到时由眼前的导演当面演出。"""
 
 
-# ============================================================
-#  LOD2：史官（被因果涟漪污染的原著事件重推演）
-# ============================================================
-PREMISE = {"wounded": "负伤", "dead": "已死", "alive": "安好"}
+def _plot_card(c: dict) -> str:
+    wishes = "；".join(str(w.get("wish") if isinstance(w, dict) else w) for w in c.get("wishes") or []) or "—"
+    far = "" if c.get("far") is None else "（就在此处）" if c["far"] == 0 else f"（到此要{c['far']}日）"
+    return (f"- {c['name']}｜{c.get('title') or ''}｜{STATUS.get(c['status'], c['status'])}｜身在{c['location']}{far}｜{c.get('faction') or '无门派'}"
+            f"｜功力{c.get('power') or 0}（{c['tier']}）｜武学：{'、'.join(c.get('skills') or []) or '—'}"
+            f"｜剧情推力{c['drive']}·{DRIVES_WORD.get(c['drive'], '')}（{c['mode']}）｜性情：{c.get('persona') or '—'}"
+            f"｜志向：{c.get('agenda') or '—'}" + ("（所系之人已死：心愿已了或落了空）" if c.get("moot") else "") +
+            f"｜终极所求：{c.get('goal') or '—'}｜心愿：{wishes}｜眼下：{c.get('intent') or '—'}"
+            + (f"｜惯用手段：{_joined(c['means'])}" if c.get("means") else "") + (f"｜底线：{_joined(c['limits'])}" if c.get("limits") else "")
+            + (f"｜门派所图：{c['sect']}" if c.get("sect") else "") + (f"｜原著走向：{c['arc']}" if c.get("arc") else "") +
+            f"｜关系：{'；'.join(c.get('ties') or []) or '—'}｜原著此后：{'；'.join(c.get('canon') or []) or '原著里已没有他的戏'}"
+            f"｜近来：{'；'.join(c.get('recent') or []) or '—'}")
 
 
-def _premise(nid: str, key: str, want) -> str:
-    """原著前提译成人话：给史官看后面几桩原著靠什么成立。"""
-    if key[:1] in ("~", "!"):
-        return f"{nid}与{want}之间{'仍有' if key[0] == '~' else '没有'}「{key[1:]}」"
-    if key == "status":
-        return f"{nid}{PREMISE.get(want, want)}"
-    if key == "holder":
-        return f"{nid}在{want}手中"
-    if key == "location":
-        return f"{nid}在{want}"
-    return f"{nid}的{key}为{want}"
+DRIVES_WORD = {0: "无欲无求", 1: "安于现状", 2: "守成", 3: "进取", 4: "不甘现状", 5: "野心炽烈"}
 
 
-def chronicler(ev: dict, reasons: list[str], actors: list[dict], heard=(), ahead=()) -> tuple[str, str]:
-    system = ("你是《天龙八部》的史官。一桩原著大事本应发生，但世界已被主角扰动。依据当前真相，重新推演其结局："
-              "可以照旧发生、可以删减或减弱、可以由其他既有人物代行(说法里换人，后果仍是原著的那几条)，也可以不发生。\n" + OFFSTAGE + "\n" + CHRONICLE_OPS +
-              "\n场外限制：只能触碰【相关者】与事发地点；这桩事是一个整体，effects 里有一条落不了(人不在、物已不存)，整桩便不入账。"
-              '\n输出 JSON：{"happens":true或false,"summary":"不超过60字的客观史笔，只写 effects 里有的变化","effects":[...]}')
-    lines = [f"{a['name']}｜{a['title']}｜{a['tier']}｜{STATUS.get(a['status'], a['status'])}"
-             f"｜身在{a['location']}｜{a['faction'] or '无门派'}｜性情：{a['persona']}" for a in actors]
-    later = [f"{e['where']}：{e['summary']}" + (f"（须{'、'.join(_premise(*r) for r in e['requires'])}）" if e["requires"] else "")
-             for e in ahead]
-    user = (f"【原著事件】{ev['id']}·{ev['where']}：{ev['summary']}\n"
-            f"【原著结果】{json.dumps(ev['effects'], ensure_ascii=False)}\n"
-            f"{_section('扰动', reasons)}\n{_section('相关者·当前真相', lines)}\n"
-            f"{_section('相关者此后的原著·改写这一桩时尽量不断了它们的前提', later)}\n{_section('已传到此处的江湖近闻', heard)}")
-    return system, user
+def _joined(x) -> str:
+    return "、".join(str(i) for i in x) if isinstance(x, list) else str(x)
+
+
+def _task(b: dict, notes=()) -> str:
+    if b["kind"] == "改写":
+        ev = b["event"]
+        head = (f"【任务 {b['key']}】改写：原著里{ev['when']}·{ev['where']}本该——{ev['summary']}（{'；'.join(ev['outcome']) or '无可记之变'}）\n"
+                f"演不成的缘由：{'；'.join(b['reasons']) or '前提已破'}")
+    else:
+        head = f"【任务 {b['key']}】续写：{b['who']}的下一步"
+    parts = [head, f"今日：{b['today']}", _section("相关的人", [_plot_card(c)[2:] for c in b["people"]]),
+             _section("恩怨所系之人", b["others"]), _section(f"从{b['home']}走得到的地方", ["、".join(b["places"])] if b["places"] else []),
+             _section("此处与他们手里的东西", b["things"]), _section("已有的场外剧情线", b["lines"]),
+             _section("已传到此处的江湖近闻", b["heard"])]
+    if notes:
+        parts.append(_section("上一稿退回的缘由·逐条改掉", notes))
+    return "\n".join(x for x in parts if x)
+
+
+def plotter(briefs: list[dict], notes: dict | None = None) -> tuple[str, str]:
+    """场外编剧(v11)：创作家——原著线变了的人与事，照志向、性情与剧情推力写新的剧情线。"""
+    system = ("你是《天龙八部》的场外编剧。主角不在的地方，江湖照样在走——原著前置未变的事，系统照原著演；交到你手里的，是原著线变了的人与事：\n"
+              "- 改写：一桩原著本该发生，前提却被主角改变了，演不成。按原著的逻辑或接近原著的手法，写这几人接下来怎样："
+              "原著里他们为何这样做，如今这份动机落在何处。不必硬接回原著——原著线可以断，断了不必接回。\n"
+              "- 续写：此人的原著线变了(心愿了了或落了空、被主角拦下、志向改了)，或原著里已没有他的戏。照他的志向、性情与剧情推力写他的下一步："
+              "推力强的人不甘现状，心愿了了也会生出新的图谋，接着往前走，写出前所未有的剧情；推力弱的人只做小事、不大动干戈。\n"
+              "要合理：合人物的志向与性情，合天龙世界的准则(江湖规矩、门派恩怨、身份地位、武功高低、因果报应)；还要精彩：有动机、有手段、有戏眼，读者想知道下文——像金庸写的。\n"
+              '每份任务写一条剧情线：{"key":任务名,"line":线名(四到八字),"goal":这条线要走到哪里(一句话),"events":[一到三桩事，按先后],'
+              '"drops":[原著事件名](可省)}——drops：这条线一走，这几人「原著此后」里哪几桩便不会再发生(写〔〕里的名字，至多五桩；改写时，那一桩在同一处的后续也可以写；不写，到期仍照原著演)\n'
+              '每桩事：{"day":几日之后(整数，0 即今日),"where":地点,"actors":[人物],"summary":"一句话，传闻口吻(会传开)","how":"手段",'
+              '"motive":"动机","drama":"戏眼","weight":1或2(有人死、门派易主、大仇得报写2),"public":true(江湖传得开)或false(只有在场的人知道),"effects":[后果指令]}\n'
+              f"{PLOT_OPS}\n{PLOT_RULES}\n"
+              '输出 JSON：{"plans":[每份任务一条]}')
+    notes = notes or {}
+    return system, "\n\n".join(_task(b, notes.get(b["key"]) or ()) for b in briefs)
+
+
+def _assignment(b: dict) -> str:
+    """审稿人看的任务：改写的是哪一桩原著、为何演不成；续写的是谁、他的推力与志向；连同相关的人此刻的处境(这一局的事实)。"""
+    if b["kind"] == "改写":
+        ev = b["event"]
+        head = f"改写：原著里{ev['when']}·{ev['where']}本该——{ev['summary']}；演不成的缘由：{'；'.join(b['reasons']) or '前提已破'}"
+    else:
+        c = b["people"][0]
+        wishes = "；".join(str(w.get("wish") if isinstance(w, dict) else w) for w in c.get("wishes") or []) or "—"
+        head = (f"续写：{c['name']}｜剧情推力{c['drive']}·{DRIVES_WORD.get(c['drive'], '')}｜性情：{c.get('persona') or '—'}"
+                f"｜志向：{c.get('agenda') or '—'}" + ("（所系之人已死）" if c.get("moot") else "") + f"｜心愿：{wishes}"
+                + (f"｜惯用手段：{_joined(c['means'])}" if c.get("means") else "") + (f"｜底线：{_joined(c['limits'])}" if c.get("limits") else ""))
+    now = [f"{c['name']}（{STATUS.get(c['status'], c['status'])}，身在{c['location']}，{c.get('faction') or '无门派'}，功力{c.get('power') or 0}"
+           f"｜近来：{'；'.join(c.get('recent') or []) or '—'}）" for c in b["people"]]
+    return head + "\n此刻(这一局的事实)：" + "；".join(now + list(b.get("others") or []))
+
+
+def reviewer(items: list[dict]) -> tuple[str, str]:
+    """审稿人(v11)：规则审之外的那一道——合不合理、精不精彩。items: [{key, brief(任务书), lines(plot.render 的人话)}]。"""
+    system = ("你是《天龙八部》的审稿人。场外编剧写了几条主角不在场时发生的剧情线，已过规则审(时空、武功高低、归属、名实都核对过)。"
+              "你只审合不合理、精不精彩，逐条判定：\n"
+              "1. 志向与性情：这人会不会这样做，动机从何而来；推力弱的人不会大动干戈，推力强的人不会坐着不动\n"
+              "2. 天龙世界的准则：江湖规矩、门派恩怨、身份地位、武功高低、因果——像不像金庸笔下会发生的事\n"
+              "3. 精彩：有戏眼、有悬念，读者看了想知道下文；平淡的流水账、无端的巧合、为闹而闹都不算\n"
+              "4. 连锁反应：会因此改变的原著，是不是合情合理的下文(原著线可以断，但断得要有道理)\n"
+              "这一局的江湖已被主角改变：任务里写的生死、所在、恩怨就是此刻的事实，原著后来怎样(谁哪年死在哪里)在这里不作数——"
+              "不以「原著里不是这样」退稿，只看在此刻的处境下，此人会不会这样做、合不合天龙世界的准则、精不精彩。\n"
+              "判定只有三种：过；改(写明要改哪里、怎么改)；否(写明这条线为何不该有，换个思路)。不合理的一律不过。\n"
+              '输出 JSON：{"reviews":[{"key":任务名,"verdict":"过/改/否","why":"一两句"}]}')
+    return system, "\n\n".join(f"【{x['key']}】{_assignment(x['brief'])}\n" + "\n".join(x["lines"]) for x in items)
