@@ -1,6 +1,6 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
-[OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
+[OUTPUT]: 对外提供 View、table()（实体名表，v11 Table 另按名字的头两字建索引：名表上万条，一段文字只看文中出现过的两字起头的名字，结果不变）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
           unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、ARRIVE / DEPART / QUOTED（主角的去留：完成体的到与离，台词不算）、
           NEGATE / REMOTE / YET（否定、远处与回忆、未然——v7 正文时间轴判主角是否真动了身也用它们）、
           leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、ware()（拿出、取来、递上之后紧跟的器物名词，v8）、mastery()（主角的进境措辞）、
@@ -115,15 +115,41 @@ class Finding:
     hard: bool = True
 
 
+class Table(list):
+    """名表(长名在前)；v11 另按名字的头两个字建索引——世界底座让名表上万条，一段文字只看以文中出现过的两字起头的名字，结果与逐条看一样。"""
+    _index = None
+
+    def index(self) -> tuple[dict, list]:
+        if self._index is None:
+            heads, short = {}, []
+            for pos, (surface, _) in enumerate(self):
+                if len(surface) >= 2:
+                    heads.setdefault(surface[:2], []).append(pos)
+                elif surface:
+                    short.append(pos)
+            self._index = (heads, short)
+        return self._index
+
+
 def table(names: dict[str, str]) -> list[tuple[str, str]]:
     """surface → id 的列表，长名在前：「闪电貂毒解药」先于「闪电貂」被认出，不让短名截胡。"""
-    return sorted(names.items(), key=lambda kv: -len(kv[0]))
+    return Table(sorted(names.items(), key=lambda kv: -len(kv[0])))
+
+
+def _candidates(text: str, tab):
+    if not isinstance(tab, Table) or len(tab) < 64:
+        return tab
+    heads, short = tab.index()
+    hits = set(short)
+    for i in range(len(text) - 1):
+        hits.update(heads.get(text[i:i + 2], ()))
+    return [tab[pos] for pos in sorted(hits)]
 
 
 def find(text: str, tab: list[tuple[str, str]]) -> list[tuple[str, int, int]]:
     """文中提到的实体 (id, 起, 止)：最长优先、互不重叠。"""
     taken, out = [False] * len(text), []
-    for surface, nid in tab:
+    for surface, nid in _candidates(text, tab):
         if not surface:
             continue
         start = text.find(surface)

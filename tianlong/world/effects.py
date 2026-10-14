@@ -6,7 +6,7 @@
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
-          place()（任一节点此刻所在之地）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
+          place()（任一节点此刻所在之地）、things()（v11 此刻在某几处的器物：地上的连同那里的人手里的，按索引取、与 place 同一口径）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)与方位 spot(v8 场景清单：
@@ -100,6 +100,25 @@ def place(world, nid: str) -> str | None:
     if g.kind(nid) == "item" and g.get(nid, "holder"):
         return place(world, g.get(nid, "holder"))
     return g.get(nid, "location")
+
+
+def things(world, spots) -> list[str]:
+    """此刻在这些地方的器物(v11 按索引取，不扫全部器物)：落在那里的，连同那里的人(主角在其中即主角)手里、怀里所装的——
+    与 place(器物) in spots 同一口径，按创世次序。"""
+    g, spots, out = world.graph, set(spots), set()
+    todo = ["player"] if world.here in spots else []
+    for s in spots:
+        for n in g.where(location=s):
+            if g.kind(n) == "item":
+                out.add(n)
+            if n != "player":
+                todo.append(n)
+    while todo:
+        for i in g.where(type="item", holder=todo.pop()):
+            if i not in out:
+                out.add(i)
+                todo.append(i)
+    return g.order(out)
 
 
 def usable(world, item: str) -> bool:

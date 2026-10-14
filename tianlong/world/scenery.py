@@ -12,7 +12,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import scribe, situation, stock
-from .effects import place, usable
+from .effects import things, usable
 
 GRADES = ("寻常", "器物", "要物")  # 与 genesis.GRADES 同一张表：寻常只有名字；器物带几样简单属性；要物详写，文书另有内容与底细
 TRIFLE, PLAIN, KEY = GRADES
@@ -66,8 +66,8 @@ def nicknames(world) -> dict[str, str]:
             return 1 if g.get(i, "location") == world.here else 2
         return 3 if holder in around else None
     pool: dict[str, list[tuple[int, str]]] = {}
-    for i in g.where(type="item"):
-        r = rank(i) if usable(world, i) and place(world, i) in close else None
+    for i in things(world, close):
+        r = rank(i) if usable(world, i) else None
         if r is not None:
             for k in range(1, len(i) - NICK + 1):
                 pool.setdefault(i[k:], []).append((r, i))
@@ -115,7 +115,7 @@ def rooms(world) -> list[str]:
 def dossiers(world) -> list[str]:
     """要物的内容与底细(只给导演)：主角身上的、此地与近旁摆着或藏着的、身边之人手里的——拍里有人翻看它就照此写，不另编内容。"""
     g, close, around, out = world.graph, situation.near(world), situation.around(world), []
-    for i in sorted(g.where(type="item")):
+    for i in sorted(things(world, close)):
         if grade(world, i) != KEY or not usable(world, i):
             continue
         holder = g.get(i, "holder")

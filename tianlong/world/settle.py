@@ -263,7 +263,7 @@ def books(world, text: str, applied=(), changes=()) -> dict:
         cells.append(f"此人{'知道' if perspective.knows(world, p, 'player') else '不知'}主角的名号")
         return "｜".join(cells)
     here = world.here
-    items = [i for i in g.where(type="item") if effects.place(world, i) in situation.near(world) and not g.get(i, "hidden")
+    items = [i for i in effects.things(world, situation.near(world)) if not g.get(i, "hidden")
              and g.get(i, "holder") is None and effects.usable(world, i)]
     ware = lambda i: i + (f"（{stock.measure(g, i)}）" if stock.measure(g, i) else "")  # 一叠几张、一堆几两(v9)：拿了多少由正文定
     flock = [f"{s}（叫作{crowd.handle(g, s)}，站着{stock.cn(crowd.standing(g, s))}人）" for s in crowd.squads(world)]

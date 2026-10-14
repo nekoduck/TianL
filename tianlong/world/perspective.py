@@ -262,7 +262,7 @@ def by_handle(world, name: str) -> str | None:
 def _surfaces(world) -> dict[str, str]:
     """人名的一切写法 → id：正名、别名、去「·」写法。"""
     g = world.graph
-    out = {n: n for n, node in g.nodes.items() if node["type"] == "person"}
+    out = {n: n for n in g.of("person")}
     out.update({a: n for a, n in world.aliases.items() if g.kind(n) == "person"})
     return out
 

@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -62,22 +62,45 @@ class Ruling:
 # ============================================================
 #  实体名表：原著实体 + 别名 + 本回合的场景实体
 # ============================================================
+NAMED = ("person", "item", "group", "location", "skill")
+
+
+def _base(world) -> tuple[dict, dict]:
+    """名表里不随回合变的一大半(v11 按图的结构版本、别名表与散了的人群缓存)：原著实体、别名、去「·」的写法，连同它们的类别。"""
+    g = world.graph
+    key = (g.stamp[0], len(world.aliases), tuple(s for s in g.of(crowd.GROUP) if g.get(s, "disbanded")))
+    hit = g.memo.get("names")
+    if hit and hit[0] == key:
+        return hit[1], hit[2]
+    surface = {n: n for n in g.order(n for t in NAMED for n in g.of(t))
+               if not g.get(n, "disbanded")}  # 散了的人群(v9)只是占住 id 的空壳，谁也看不见
+    surface.update({a: n for a, n in world.aliases.items() if n in surface})
+    surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    kinds = {n: _kind(g, n) for n in set(surface.values())}
+    g.memo["names"] = (key, surface, kinds)
+    return surface, kinds
+
+
+def _kind(g, n) -> str:
+    node = g.nodes[n]
+    return ("thing" if node.get("ephemeral") and node["type"] == "item" else
+            "trifle" if node["type"] == "item" and node.get("grade") == scenery.TRIFLE else node["type"])  # 寻常之物(v8)：端起茶碗不必记账，取用只记软违例
+
+
 def names(world) -> tuple[list, dict]:
     g = world.graph
-    surface = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group", "location", "skill")
-               and not node.get("disbanded")}  # 散了的人群(v9)只是占住 id 的空壳，谁也看不见
-    surface.update({a: n for a, n in world.aliases.items() if n in surface})
-    surface.update({crowd.handle(g, s): s for s in g.where(type=crowd.GROUP) if crowd.is_squad(g, s)})  # 「东宗弟子」即东宗弟子众(v9)
-    surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    base, known = _base(world)
+    surface = dict(base)
+    squads = {crowd.handle(g, s): s for s in g.where(type=crowd.GROUP) if crowd.is_squad(g, s)}  # 「东宗弟子」即东宗弟子众(v9)
+    surface.update(squads)
+    surface.update({n.replace("·", ""): n for n in squads.values() if "·" in n})
     surface.update({short: loc for short, loc in situation.shortnames(world).items() if short not in surface})  # 「石级隧道」即琅嬛福地·石级隧道
     seen = {p for p in situation.seen(world) if world.graph.kind(p) == "person"}
     surface.update({perspective.handle(world, p): p for p in seen
                     if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵——本回合见过的都算(v7：正文写到被甩在身后的人也认得)
     surface.update({c: p for c, p in perspective.calls(world, seen).items() if c not in surface})  # 「容师叔毙命」死的是容子矩，不是叫他的持剑少年(v7)
     surface.update({s: i for s, i in scenery.nicknames(world).items() if s not in surface})  # 「你取下青钢剑」说的是剑架青钢剑(v8 简称)
-    kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else
-                 "trifle" if node["type"] == "item" and node.get("grade") == scenery.TRIFLE else node["type"])
-             for n, node in g.nodes.items() if n in surface.values()}  # 寻常之物(v8)：端起茶碗不必记账，取用只记软违例
+    kinds = {**known, **{n: _kind(g, n) for n in set(surface.values()) - known.keys() if g.has(n)}}
     return lexicon.table(surface), kinds
 
 
@@ -544,8 +567,7 @@ def brief(world, ruling: Ruling) -> list[str]:
         if f.kind in ("acquire", "give", "void") and g.kind(f.entity) == "item":  # 暗藏在隔壁的东西：主角要先到那里(同一拍里先走过去也行)
             line += f"（{f.entity}现{_where(world, f.entity)}）"
         elif f.kind in ("unnamed", "conjure"):
-            near = [i for i in g.where(type="item") if effects.place(world, i) in situation.near(world)
-                    and not g.get(i, "hidden") and effects.usable(world, i)]
+            near = [i for i in effects.things(world, situation.near(world)) if not g.get(i, "hidden") and effects.usable(world, i)]
             line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）"
         elif f.kind == "absent":
             line += f"（{f.entity}现在{g.get(f.entity, 'location')}；要他来，写 赶来，系统按路程裁定赶不赶得到）"

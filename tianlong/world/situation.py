@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
-          near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
+          near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点；v11 零日而有里数(li)的路不算近旁，结果按图的戳记缓存——关口要看主角身上之物的不缓存）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
           area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited() / bodies() / seen()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
           shortnames() 近处子地点的短名(体检与落账同一口径)；
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
@@ -49,17 +49,29 @@ def _apart(edge: dict) -> bool:
     return any(gate.get("hidden") or gate.get("kind") in APART for gate in (edge.get("gates") or {}).values())
 
 
+def _volatile(edge: dict) -> bool:
+    """这条路的关口要看主角身上的东西(requires 写着 player)：近旁随主角而变，不缓存。"""
+    return any(r and r[0] == "player" for gate in (edge.get("gates") or {}).values() for r in gate.get("requires") or [])
+
+
 def near(world, loc: str | None = None) -> set[str]:
-    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。"""
+    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。
+    v11 零日而有里数(li)的路不算近旁：同城的另一坊、街对面的客栈当日走得到，却不是喊一声就到；结果按图的戳记缓存。"""
     g, loc = world.graph, loc or world.here
-    seen, todo = {loc}, [loc]
+    hit = g.memo.get(("near", loc))
+    if hit and hit[0] == g.stamp:
+        return set(hit[1])
+    seen, todo, volatile = {loc}, [loc], False
     while todo:
         a = todo.pop()
         for b, e in g.ways(a):
-            if b not in seen and e["days"] == 0 and _root(b) == _root(loc) and not _apart(e) \
+            if b not in seen and e["days"] == 0 and not e.get("li") and _root(b) == _root(loc) and not _apart(e) \
                     and access.barrier(world, a, b, e, player=False) is None:
                 seen.add(b)
                 todo.append(b)
+                volatile = volatile or _volatile(e)
+    if not volatile:
+        g.memo[("near", loc)] = (g.stamp, frozenset(seen))
     return seen
 
 
@@ -96,8 +108,7 @@ def around(world, loc: str | None = None) -> set[str]:
     """主角身边之人（此地 + 近旁，活着、未隐匿、未休眠）：片区里的人须在名册上或正随行——同在「中原」的四十人不同处一室。"""
     g, spots = world.graph, near(world, loc)
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
-    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
-            and (not area(world, n.get("location")) or p in seen)}
+    return {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and (not area(world, s) or p in seen)}
 
 
 def shortnames(world) -> dict[str, str]:
@@ -115,8 +126,8 @@ def shortnames(world) -> dict[str, str]:
 def bodies(world) -> set[str]:
     """近旁的遗体(v5)：死在主角眼前、或被抬到跟前的人(片区里亦须在名册上)——看得见、搜得着、抬得走，却叫不出名字。"""
     g, spots, roster = world.graph, near(world), cast(world)
-    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("status") == "dead" and n.get("location") in spots
-            and not n.get("hidden") and (not area(world, n.get("location")) or p in roster)}
+    return {p for s in spots for p in g.where(type="person", location=s) if g.get(p, "status") == "dead"
+            and not g.get(p, "hidden") and (not area(world, s) or p in roster)}
 
 
 def seen(world) -> set[str]:
@@ -129,8 +140,7 @@ def seen(world) -> set[str]:
 def inhabited(world) -> bool:
     """这一片有没有人(不论在不在跟前)：传闻要有传话的人——独处石洞，江湖上的事传不进来。"""
     g, spots = world.graph, near(world)
-    return bool(party(world)) or any(n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
-                                     for p, n in g.nodes.items())
+    return bool(party(world)) or any(_alive(g, p) for s in spots for p in g.where(type="person", location=s))
 
 
 def debuted(world, pid: str) -> bool:

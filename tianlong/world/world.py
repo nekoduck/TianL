@@ -150,7 +150,7 @@ class World:
             g.nodes[nid] = {**node, **({"state": kept["state"]} if kept and "state" in kept else {})}
             if kept is None and node["type"] == "location":  # 新入图的地点进入常识，与开局时一样
                 self.knowledge.observe(g, [nid])
-        roads = Graph(g.nodes)
+        roads = Graph()  # 只借它铺路：道路与关口不读节点
         _lay(roads, atlas)
         g.edges = roads.edges + [e for e in g.edges if e["rel"] != ROAD]
         marks = {(r["src"], r["dst"], r["rel"]): r for r in atlas.get("relations", [])}
