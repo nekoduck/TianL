@@ -1,5 +1,5 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/SCENE_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT、world/crowd 的 GROUP / DISBAND（v9 人群）
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/WORLD_PROMPT.md 第十四节；19~26 世界底座为 v11 草案，尚未编译），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT、world/crowd 的 GROUP / DISBAND（v9 人群）
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA、SCENES、GRADES
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
        处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、标出片区(area：下辖子地点或以自身为区域的大地名，同在片区不等于同处一室)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
@@ -8,7 +8,7 @@
        分三等的器物(寻常只有名字、器物带属性 props、要物另有内容 text 与底细 secret，方位 spot)在创世时布齐，新 id 不得与书中之名及别名相撞——剧情只调度、不新造
        v9 物量与人群：器物另可写 qty/unit(碎银 cash 以两计；可分的写 split)、purse(钱袋里几两)、full/pages(全本几份、所存几份)、uses(书写、纸)、doc(文书的状态)，形状错即拒绝开局(_stock_errors)；
        squads 编入无名之众(type=group)：须属已登记的门派、在场景之内、人数三到二百、每人的功力与零钱是数、身上之物各有不同的名字，pool 按人头算好总数(_squad)
-       v10 场景清单的顶层段落(交外部依 data/SCENE_PROMPT.md 抽取)：门下模板 kits 挂到门派节点(squad_kit)、人物零钱 money、原著器物补注 canon_items(只补 ENRICH 的字段)、不识字 illiterate；
+       v10 场景清单的顶层段落(v11 草案 data/WORLD_PROMPT.md 改归 23/22/21/22，此处仍认 v10 写法)：门下模板 kits 挂到门派节点(squad_kit)、人物零钱 money、原著器物补注 canon_items(只补 ENRICH 的字段)、不识字 illiterate；
        人群没写 kit 即用门下模板，leader/since/until 在 _validate 里核对；文书状态 doc 只取三态、残片 torn 须写全本几份
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
