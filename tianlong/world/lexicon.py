@@ -20,6 +20,7 @@
        DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
        物量(v9)：MONEYISH 说到了钱(查前先挖去实体名：钱光胜不是钱)、COIN 名词就是钱、WRITING 起意提笔、FELL 一群人里有人倒下；
        View 另有 traded(主角经手的东西：拿了一部分原物仍在原处的不算没拿、交出一部分仍在身上的不算没交)、银两起止(写你得了钱、交了钱而银两分文未动即漏记)、felled(人数少了的人群)
+       v10：View.funds 记主角与回合开始时眼前之人的银两起止——「段誉取出三两银子递给马五德」而两人的银两都没动，也是漏记
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -101,6 +102,7 @@ class View:
     felled: set[str] = field(default_factory=set)         # 本回合有人倒下(人数少了、散了)的人群(v9)
     money_start: float = 0.0                              # 主角回合开始与结束时身上的银两(v9)
     money_end: float = 0.0
+    funds: dict = field(default_factory=dict)             # 主角与回合开始时眼前之人身上的银两 {谁: (起, 止)}(v10：NPC 之间给钱也对账)
 
 
 @dataclass
@@ -242,17 +244,21 @@ def bare(text: str, ents) -> str:
 
 def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
     """分句内：你取得了什么、交出了什么，谁开口动手。v9：拿了一部分(原物仍在原处)、交出一部分(仍在身上)的不算漏记；
-    说你得了钱、交了钱，你的银两却分文未动，即为漏记。"""
+    说你得了钱、交了钱，你的银两却分文未动，即为漏记；v10 谁都一样：「段誉把三两银子递给马五德」而两人的银两都没动，也是漏记。"""
     out, ents = [], find(clause, tab)
     mine = who == "player" or "你" in clause
     things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle") and n not in view.traded]
-    m = ACQUIRE.search(clause)
-    still = abs(view.money_end - view.money_start) <= 1e-6 and "银两" not in view.traded  # 这一回合主角的银两分文未动
-    cash = still and MONEYISH.search(bare(clause, ents))
-    if mine and m and cash:
-        out.append(Finding("acquire", i, "银两", f"第{i}拍写你得了银钱，账上你的银两却分文未动：写拿取或交给，量写明多少"))
-    if mine and GIVE.search(clause) and cash:
-        out.append(Finding("give", i, "银两", f"第{i}拍写你交出银钱，账上你的银两却分文未动：写交给，量写明多少"))
+    m, give = ACQUIRE.search(clause), GIVE.search(clause)
+    funds = view.funds or {"player": (view.money_start, view.money_end)}
+    if (m or give) and "银两" not in view.traded and MONEYISH.search(bare(clause, ents)):
+        people = [n for n, _, _ in ents if kinds.get(n) == "person" and n in funds]
+        involved = (["player"] if mine else []) + [p for p in people if p not in ("player",)]
+        moved = {p for p, (a, b) in funds.items() if abs(a - b) > 1e-6}
+        if involved and not moved & set(involved):
+            kind = "give" if give else "acquire"
+            said = f"你{'交出' if give else '得了'}银钱" if mine else f"{'、'.join(people)}之间银钱易手"
+            whose = "你" if mine else "、".join(people)
+            out.append(Finding(kind, i, "银两", f"第{i}拍写{said}，账上{whose}的银两却分文未动：写交给或拿取，量写明多少"))
     if mine and m:  # 寻常之物(v8 trifle：茶碗、瓜子)端起放下不必记账，只记软违例
         out += [Finding("acquire", i, t, f"第{i}拍写你取得{t}，账上却没有这件东西到你手里", hard=kinds.get(t) != "trifle")
                 for t in things if t not in view.inventory_end and t not in view.inventory_start]

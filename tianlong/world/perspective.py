@@ -27,6 +27,7 @@
        名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
        称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
        v9：thing 让分出来的那一份(玉壁剑影图·1)叫回那件东西、剧中人写下的文书叫作「你写给某人的书信」(主角经手、读过或是收信人才知道谁写给谁，收信人照旧只叫外貌)；veil 另过人群的描述
+       v10：handle 让一群人叫他们的叫法(东宗弟子)，随行的人群在编剧那里也是叫法
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import contextlib
@@ -181,6 +182,8 @@ def _noun(g, pid: str) -> str:
 
 def handle(world, pid: str) -> str:
     """主角眼中此人的叫法：识名则叫名字；不识名则叫外号或外貌(guise)——前后一致。"""
+    if world.graph.kind(pid) == "group":  # 一群人(v10)叫的是他们的叫法(东宗弟子)，不是 id
+        return world.graph.get(pid, "handle") or pid
     if pid == "player" or world.graph.kind(pid) != "person" or knows(world, "player", pid):
         return pid
     return guise(world, pid)

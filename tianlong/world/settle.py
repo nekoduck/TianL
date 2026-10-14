@@ -25,6 +25,7 @@
        事码(v9)：账房的结算单与导演说同一种话——平常之事先化为指令照旧过 admit，规则之事(易手、撕合、书写、脱身)交世界照规则复核，人群倒下几人归规则(只记分歧)；
        事码写明主角做的，不论单子署谁都过授意；账本给账房看主角的银两、地上器物的数量与在场人群，回合首末两份账另记银两、人群人数与围攻——银两多了少了、人群倒下几人、被围与脱围，正文没写到即补记。
        纯规则、不调 LLM(账房在 narrative)、不新造实体
+       v10：账本里每个人写上身上的银两(NPC 之间给钱也有账可依)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -255,6 +256,7 @@ def books(world, text: str, applied=(), changes=()) -> dict:
         cells = [p, f"在{g.get(p, 'location')}", pf["wound"] or ("已故" if pf.get("status") == "dead" else "安好")]
         cells += [f"{k}：{v}" for k, v in (("神色", pf["mood"]), ("眼下之事", pf["intent"]),
                                           ("境况", "、".join(pf["conditions"])), ("随身", "、".join(pf["carrying"])),
+                                          ("银两", stock.say(pf["money"]) if pf.get("money", 0) > stock.EPS else ""),  # v10 NPC 的银两也在账上
                                           ("与你", "；".join(pf["ties"]))) if v]
         cells += ["随你同行"] * (p in party) + [f"受制于{'、'.join(situation.captors(world, p))}"] * (p in held)
         cells.append(f"主角{'叫得出' if perspective.knows(world, 'player', p) else '叫不出'}此人的名字")

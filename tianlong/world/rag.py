@@ -16,6 +16,7 @@
        v9：scene 另有眼前的人群(squads)，build 给出人群卡片(叫法、站着几人、人人带着什么、是否正围攻你)与主角的银两；
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
+       v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -254,6 +255,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
                      for ev, n in upcoming],
         "ruling": ruling,
         "crowd": crowd.lines(world),  # 群战预裁(v9)：整群之力、脱身、偷取
+        "flocks": crowd.afar(world),  # 近处不在跟前的人群(v10)：要他们来写赶来，要几人从中分出
         "money": _money(world, s["people"]),  # 各人身上的银两(v9)：掏得出多少由账定
         "tempo": _tempo(world, tempo),
         "fatigue": pacing.advise(world),

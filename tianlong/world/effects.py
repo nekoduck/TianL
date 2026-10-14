@@ -37,6 +37,7 @@
        事码(v9)：一批后果先经 acts.expand——平常之事化为这十条指令照旧裁决，规则之事(拿取放下交给偷夺、撕合书写封拆读、脱身、对人群的杀伤)交 acts.perform 执行，
        记录写成下游认得的形状(易手仍是 set holder / push inventory，另有 money / squad / forge / doc 四种记录，describe 都说成人话)；
        银两(money)、器物的数量与钱袋(qty / purse / pages)、人群的人数伤亡与身上之物只经事码流转，直接写即驳回；人群只在近旁走动；被一群人围住(围攻)，主角的去留只有脱身
+       人群随剧情走(v10)：赶来认人群(按道路里程核光阴)，在场性与结关系以 crowd.present 为准；一群人前往去哪都行，换了地方即不再围着谁；原著与史官挪走带队之人，同处的人群随他走(_exec 外包一层)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -342,7 +343,7 @@ def _physics(world, op, heading=frozenset()) -> str | None:
 
     if kind == "arrive":
         nid = op.get("id")
-        return None if g.kind(nid) == "person" else f"「{nid}」不是人，无从到来"  # 死者亦可：遗体被人抬来
+        return None if g.kind(nid) == "person" or crowd.is_squad(g, nid) else f"「{nid}」不是人，无从到来"  # 死者亦可：遗体被人抬来；一群人(v10)也赶得来
     if kind in ("study", "drain"):
         return _growth(world, op)
 
@@ -359,8 +360,6 @@ def _physics(world, op, heading=frozenset()) -> str | None:
         return "银两由规则结算：只经拿取、交给、偷取、夺取流转，不得直接增减"
     if crowd.is_squad(g, nid) and key in ("count", "down", "dead", "power", "pool", "kit", "disbanded", "hp", "status", "conditions"):
         return "人群的人数、伤亡与身上之物由规则结算：伤了倒了写打晕或杀死(数写几人)，拿东西写偷取、夺取"
-    if crowd.is_squad(g, nid) and key == "location" and value not in situation.near(world, g.get(nid, "location")):
-        return f"{crowd.handle(g, nid)}只在{g.get(nid, 'location')}近旁走动：一群人远行不归剧情调遣"
     if key == "spot" and g.kind(nid) != "item":
         return "方位只记器物摆在哪里"
     if g.kind(nid) in TERRAIN and key != "state":
@@ -485,6 +484,8 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
             if nid not in situation.seen(world):
                 return f"{nid}不在你身边，主角够不着"
+        if crowd.is_squad(g, nid) and not crowd.present(world, nid) and nid not in set(getattr(world, "turn", {}).get("flock0", ())):
+            return f"{crowd.handle(g, nid)}不在你跟前，要他们来写 赶来(系统按路程裁定)"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
             return f"{op['value']}不在此地，接不过{nid}"
@@ -531,21 +532,26 @@ def _bond(world, op) -> str | None:
     不在场的人结不下新的关系。"""
     g = world.graph
     close = situation.around(world) | set(situation.party(world)) | set(getattr(world, "turn", {}).get("present", ()))
+    flock = set(crowd.squads(world)) | set(getattr(world, "turn", {}).get("flock0", ()))  # 一群人(v10)：在跟前或回合开始时在跟前
     for end in (op["src"], op["dst"]):
         if end != "player" and g.kind(end) == "person" and end not in close:
             if op["op"] == "unlink" and op["rel"] == situation.FOLLOW:
                 continue
             return f"{end}不在你身边，结不下「{op['rel']}」"
+        if end != "player" and crowd.is_squad(g, end) and end not in flock and op["op"] == "link":
+            return f"{crowd.handle(g, end)}不在你跟前，结不下「{op['rel']}」"
     return None
 
 
 def _arrival(world, pid: str) -> str | None:
     """不在身边的人来到此地：须活着、在江湖中、不在溃退期，且本回合的光阴够他从所在之处赶来。"""
     g = world.graph
-    if pid in situation.around(world):
+    if pid in situation.around(world) or (crowd.is_squad(g, pid) and crowd.present(world, pid)):
         return None
-    if g.get(pid, "dormant") or g.get(pid, "hidden"):
+    if g.get(pid, "dormant") or g.get(pid, "hidden") or (crowd.is_squad(g, pid) and not crowd.active(world, pid)):
         return f"{pid}不在当下的江湖中"
+    if crowd.is_squad(g, pid) and crowd.standing(g, pid) <= 0:
+        return f"{crowd.handle(g, pid)}已无人站着"
     if situation.routed(world, pid):
         return f"{pid}新败而逃，不会这么快卷土重来"
     if situation.captors(world, pid):
@@ -555,6 +561,8 @@ def _arrival(world, pid: str) -> str | None:
     allow = getattr(world, "turn", {}).get("minutes", 0) // PER_DAY
     if days > allow:
         return f"{pid}身在{where}，距此{days}日路程，此刻赶不到"
+    if crowd.is_squad(g, pid):
+        return None  # 一群人的出没已由 active 判过
     return None if situation.debuted(world, pid) else f"{pid}此时还没在江湖上露面"  # 原著里还没登场的人：等他自己的那一回
 
 
@@ -566,6 +574,23 @@ def _note(world, text: str | list):
 
 
 def _exec(world, op, origin):
+    """一条指令落账。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；原著与史官挪走带队之人，同在一处的这一门人群随他走。"""
+    g, nid = world.graph, op.get("id")
+    moving = op["op"] == "set" and op.get("key") == "location"
+    if (moving or op["op"] == "arrive") and crowd.is_squad(g, nid):
+        crowd.relocate(world, nid, world.here if op["op"] == "arrive" else op.get("value"))
+        if op["op"] == "arrive":
+            situation.enlist(world, [nid])
+            if getattr(world, "turn", None) is not None:
+                world.turn.setdefault("arrived", set()).add(nid)
+        return
+    old = g.get(nid, "location") if moving and g.kind(nid) == "person" else None
+    _exec_one(world, op, origin)
+    if old is not None and origin in ("canon", "chronicle"):
+        crowd.escort(world, nid, old)
+
+
+def _exec_one(world, op, origin):
     g, kind = world.graph, op["op"]
     turn = getattr(world, "turn", None)
     if kind == "set" and op.get("key") == "location" and g.kind(op.get("id")) == "person" and turn is not None \

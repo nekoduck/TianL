@@ -6,7 +6,7 @@
 
 成员清单
 EXTRACT_PROMPT.md: 抽取规范，定义 meta/00_index~08_canon 的格式、度量衡（功力锚点/路程/历法）、开端时间切片、隐情标记与分步自检流程
-SCENE_PROMPT.md: 场景清单规范(v8；v9 增物量 qty/unit/cash/purse/split/full/uses 与人群 squads 的格式与校验)——18_scenes.json 的格式：建筑(places，parent 落在场景之内)、道路补丁、景物(features，desc 只写它自己)、三等器物(寻常只有名字/器物带属性/要物详写、文书另有内容与底细)、方位 spot，原著明写 inferred=false、推定写 basis，genesis 的校验条目
+SCENE_PROMPT.md: 场景清单抽取提示词(v10：可整段交给持有原著全文的 AI——按 08 的发生地整理出 40 个场景根、银两与人群功力人数的度量衡(整群之力约当一人功力加成表)、kits 门下模板/money 人物零钱/canon_items 原著器物补注/illiterate 不识字、人群 leader/since/until、分步工作流程、自检清单即 genesis 校验)(v8；v9 增物量 qty/unit/cash/purse/split/full/uses 与人群 squads 的格式与校验)——18_scenes.json 的格式：建筑(places，parent 落在场景之内)、道路补丁、景物(features，desc 只写它自己)、三等器物(寻常只有名字/器物带属性/要物详写、文书另有内容与底细)、方位 spot，原著明写 inferred=false、推定写 basis，genesis 的校验条目
 ACCESS_PROMPT.md: 通行条件补充规范，定义 14_access.json(有向通路的悬崖/机关/秘道/水路等条件、可硬判的 requires、隐秘通路)与 15_roads_patch.json(修正 0 日中枢造成的伪捷径)的格式
 canon/meta.json: 版本(世纪新修版)、开端(元祐六年二月，第一回第四场比剑前)、源文校验和、对规范的扩展约定(器物 state/holder、门派 state.leader、reveal_scope 等)
 canon/00_index.json: 全书统一 id 与别名(含通行补丁新增的 19 处地点)，另含 events 组供隐情揭示引用
@@ -17,7 +17,7 @@ canon/14_access.json: 179 条有向通行条件 {from,to,kind,blocked,hidden,how
 canon/15_roads_patch.json: 原路补丁 remove 17 / add 45 / change 4（外部抽取），genesis 读入时先删再加再改、各只一次，修去 0 日中枢的伪捷径；notes 记每处修正的原著依据，new_locations 已并入 01；不依 01 的 parent 自动连路
 canon/16_roads_fill.json: 走廊补丁，同 15 的格式、在其后读入，据既有数据补全而非另行抽取——汉中—长安(第47回段正淳自中原南行经梓潼)、陆凉州—洞庭湖(第9回少林使者南来至陆凉州、第10—11回鸠摩智一月内押段誉自大理抵姑苏)、吐蕃—大理城(两国比邻，鸠摩智自大轮寺赴天龙寺)；大理到中原、江南不再绕道西夏天山，合计 222 条道路连成一片
 canon/17_situation.json: 原著事件的情境前提补充 {requires: {事件: [[src, "~关系"/"!关系", dst]]}}——抽取数据只记属性前提，「钟灵仍被司空玄扣为人质」这类情境补在这里，genesis 并入 requires 并校验；救出被擒者的原著事件由系统自动要求拘押仍在，无须重复登记
-canon/18_scenes.json: 场景清单(v8，手工据原著布置，非外部抽取)——先只布剑湖宫一处：建筑 宫门、内堂(原著暗示其存在、名目推定)，道路补丁(出入剑湖宫改经宫门)，景物 练武厅屋梁/掌门座/宾客椅/练武厅剑架/内堂书案，器物 剑架青钢剑、宾客茶碗(寻常)、碎银(v9 二两)、剑会胜负簿(要物)、玉壁剑影图(要物，暗藏；v9 一叠十二张)、内堂笔墨(v9 用途书写)、内堂信笺(v9 二十张，用途纸)与人身上的段誉折扇、钟灵皮囊、钟灵瓜子(寻常，v9 二十粒)、马五德钱袋(v9 二十两)；v9 人群 东宗弟子众、西宗弟子众(各十五人，每人零钱三钱、长剑、衣衫)；每条带 src/inferred/basis；genesis 编入并校验，错一处拒绝开局
+canon/18_scenes.json: 场景清单(v8，手工据原著布置，非外部抽取；v10 起其余场景与 kits/money/canon_items/illiterate 由外部依 SCENE_PROMPT.md 抽取)——先只布剑湖宫一处：建筑 宫门、内堂(原著暗示其存在、名目推定)，道路补丁(出入剑湖宫改经宫门)，景物 练武厅屋梁/掌门座/宾客椅/练武厅剑架/内堂书案，器物 剑架青钢剑、宾客茶碗(寻常)、碎银(v9 二两)、剑会胜负簿(要物)、玉壁剑影图(要物，暗藏；v9 一叠十二张)、内堂笔墨(v9 用途书写)、内堂信笺(v9 二十张，用途纸)与人身上的段誉折扇、钟灵皮囊、钟灵瓜子(寻常，v9 二十粒)、马五德钱袋(v9 二十两)；v9 人群 东宗弟子众、西宗弟子众(各十五人，每人零钱三钱、长剑、衣衫)；每条带 src/inferred/basis；genesis 编入并校验，错一处拒绝开局
 canon/09_index_updates.json ~ 13_chapter_coverage.json: 抽取过程记录——索引增补、问题清单(含 6 名开端未明人物)、933 条原文证据、自检报告、50 回覆盖表；不入世，供核对与后续修订
 reports/: 通行补丁的过程记录，不入世——bundle_manifest(四个数据文件的校验和与应用顺序)、issues(未改的原数据矛盾、阶段条件的模型限制、与旧"父子直连"校验规则的冲突)、access/base_after_patch/bundle_validation(拓扑与引用自检)、source_evidence 与 candidate_evidence_history(原文证据)、zero_roads_audit(0 日道路审计)、chapter_coverage
 

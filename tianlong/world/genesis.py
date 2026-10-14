@@ -8,6 +8,8 @@
        分三等的器物(寻常只有名字、器物带属性 props、要物另有内容 text 与底细 secret，方位 spot)在创世时布齐，新 id 不得与书中之名及别名相撞——剧情只调度、不新造
        v9 物量与人群：器物另可写 qty/unit(碎银 cash 以两计；可分的写 split)、purse(钱袋里几两)、full/pages(全本几份、所存几份)、uses(书写、纸)、doc(文书的状态)，形状错即拒绝开局(_stock_errors)；
        squads 编入无名之众(type=group)：须属已登记的门派、在场景之内、人数三到二百、每人的功力与零钱是数、身上之物各有不同的名字，pool 按人头算好总数(_squad)
+       v10 场景清单的顶层段落(交外部依 data/SCENE_PROMPT.md 抽取)：门下模板 kits 挂到门派节点(squad_kit)、人物零钱 money、原著器物补注 canon_items(只补 ENRICH 的字段)、不识字 illiterate；
+       人群没写 kit 即用门下模板，leader/since/until 在 _validate 里核对；文书状态 doc 只取三态、残片 torn 须写全本几份
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -49,7 +51,9 @@ SITUATION = "17_situation.json"  # 原著事件的情境前提补充（某人仍
 SCENES = "18_scenes.json"  # 场景清单(v8 布景)：建筑、景物、分级器物——世界生成时一次布齐，剧情只调度、不新造
 GRADES = ("寻常", "器物", "要物")  # 器物的详略：寻常只有名字；器物带几样简单属性；要物详写(文书另有内容 text 与底细 secret)
 DRESSED = ("grade", "kind", "desc", "location", "holder", "hidden", "hint", "spot", "props", "text", "secret", "effect",
-           "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc")  # 布景器物入世的字段；v9 数量、银两、钱袋、可分、全本几份、用途、文书状态
+           "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc", "torn")  # 布景器物入世的字段；v9 数量、银两、钱袋、可分、全本几份(所存哪几份)、用途、文书状态、撕开的残片
+ENRICH = ("grade", "props", "text", "secret", "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc", "torn", "spot")  # v10 原著器物(05)可补注的字段：着落与持有归原著，不在此改
+DOC_STATES = ("写成", "封缄", "拆封")  # 文书的状态(与 world/scribe 同一张表)
 
 
 class GenesisError(Exception):
@@ -230,13 +234,89 @@ def _stock_errors(ctx: str, nid: str, node: dict) -> list[str]:
             out.append(f"{ctx}：文书「{nid}」的全本份数与所存的几份对不上")
     if "uses" in node and not (isinstance(node["uses"], list) and all(isinstance(u, str) for u in node["uses"])):
         out.append(f"{ctx}：器物「{nid}」的用途须是一列字")
+    if "doc" in node and not (isinstance(node["doc"], dict) and node["doc"].get("state", "写成") in DOC_STATES):
+        out.append(f"{ctx}：文书「{nid}」的状态须是 {'/'.join(DOC_STATES)} 之一")
+    if node.get("torn") and not node.get("full"):
+        out.append(f"{ctx}：撕开的残片「{nid}」须写全本几份(full)")
     return out
 
 
+def _kit_errors(ctx: str, who: str, kit, power) -> list[str]:
+    """一群人每人身上一样的东西(v9/v10)：零钱是数、功力是 0~100 的整数、器物各有不同的名字。"""
+    out = []
+    if not isinstance(kit, dict):
+        return [f"{ctx}：「{who}」的身上之物(kit)须是 {{money, items}}"]
+    items, money = kit.get("items") or [], kit.get("money", 0)
+    if not (isinstance(power, int) and 0 <= power <= 100) or not (isinstance(money, (int, float)) and not isinstance(money, bool) and money >= 0):
+        out.append(f"{ctx}：「{who}」每人的功力与零钱须是数")
+    names = [t.get("name") for t in items if isinstance(t, dict)]
+    if not isinstance(items, list) or len(names) != len(items) or not all(isinstance(n, str) and n for n in names) or len(set(names)) != len(names):
+        out.append(f"{ctx}：「{who}」身上的东西须各有不同的名字")
+    return out
+
+
+def _extras(data: dict, nodes: dict) -> list[str]:
+    """场景清单的顶层段落(v10，交外部依原著抽取)：门派的无名弟子模板 kits、有名有姓之人开端时身上的零钱 money、
+    原著器物(05)的补注 canon_items(等级、属性、内容、数量、全本几份、用途)、不识字的人 illiterate——错一处拒绝开局。"""
+    errors, ctx = [], "场景清单"
+    for faction, kit in (data.get("kits") or {}).items():
+        if nodes.get(faction, {}).get("type") != "faction":
+            errors.append(f"{ctx}·门下模板：「{faction}」不是已登记的门派")
+            continue
+        power = kit.get("power", 15) if isinstance(kit, dict) else None
+        bad = _kit_errors(f"{ctx}·门下模板", faction, kit, power)
+        errors += bad
+        if not bad:
+            nodes[faction]["squad_kit"] = {"handle": kit.get("handle") or f"{faction}弟子", "power": power, "money": kit.get("money", 0),
+                                           "items": [dict(t) for t in kit.get("items") or []], "desc": kit.get("desc")}
+    for row in data.get("money") or []:
+        pid, money = row.get("id"), row.get("money")
+        if nodes.get(pid, {}).get("type") != "person":
+            errors.append(f"{ctx}·零钱：「{pid}」不是已登记的人物")
+        elif not (isinstance(money, (int, float)) and not isinstance(money, bool) and money >= 0):
+            errors.append(f"{ctx}·零钱：「{pid}」身上的银两须是数")
+        else:
+            nodes[pid]["money"] = round(float(money), 3)
+    for row in data.get("canon_items") or []:
+        nid = row.get("id")
+        node = nodes.get(nid)
+        if not node or node.get("type") != "item" or node.get("grade"):  # 只补原著(05)里的器物，场景清单新布的器物在各场景里写全
+            errors.append(f"{ctx}·原著器物：「{nid}」不是原著登记的器物")
+            continue
+        extra = {k: row[k] for k in ENRICH if k in row}
+        wrong = sorted(set(row) - set(ENRICH) - {"id", "src", "inferred", "basis"})
+        if wrong:
+            errors.append(f"{ctx}·原著器物：「{nid}」只可补注 {'/'.join(ENRICH)}，不改 {'、'.join(wrong)}")
+        trial = {**node, **extra}
+        if trial.get("full") and "pages" not in trial:
+            trial["pages"] = list(range(int(trial.get("qty", trial["full"])))) if isinstance(trial.get("qty", trial["full"]), (int, float)) else []
+        if "pages" in trial and isinstance(trial["pages"], list):
+            trial["qty"] = len(trial["pages"])
+        if trial.get("cash"):
+            trial.setdefault("unit", "两")
+        if trial.get("grade", "器物") not in GRADES:
+            errors.append(f"{ctx}·原著器物：「{nid}」的等级须是 {'/'.join(GRADES)} 之一")
+        if trial.get("text") and trial.get("grade") != "要物":
+            errors.append(f"{ctx}·原著器物：只有要物才写内容(text)：「{nid}」")
+        if not isinstance(trial.get("props") or {}, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in (trial.get("props") or {}).items()):
+            errors.append(f"{ctx}·原著器物：「{nid}」的属性须是 {{名目: 一句话}}")
+        errors += _stock_errors(f"{ctx}·原著器物", nid, trial)
+        nodes[nid] = trial
+    for row in data.get("illiterate") or []:
+        pid = row.get("id") if isinstance(row, dict) else row
+        if nodes.get(pid, {}).get("type") != "person":
+            errors.append(f"{ctx}·不识字：「{pid}」不是已登记的人物")
+        else:
+            nodes[pid]["illiterate"] = True
+    return errors
+
+
 def _squad(ctx: str, row: dict, nodes: dict, inside: set) -> tuple[dict, list[str]]:
-    """一群无名之众(v9)：同属一门、十五人上下一体，每人身上一样的零钱与器物——总数(pool)按人头算好。"""
-    out, kit = [], row.get("kit") or {}
-    count, power, money = row.get("count"), row.get("power", 15), kit.get("money", 0)
+    """一群无名之众(v9)：同属一门、十五人上下一体，每人身上一样的零钱与器物——总数(pool)按人头算好。
+    v10：没写 kit 即用这一门的门下模板(kits)；leader 是带队的有名之人(原著挪他，同在一处的这一群随他走)；since/until 是出没的时段(原著事件 id)。"""
+    out, template = [], nodes.get(row.get("faction"), {}).get("squad_kit") or {}
+    kit = row.get("kit") or ({"money": template.get("money", 0), "items": template.get("items") or []} if template else {})
+    count, power, money = row.get("count"), row.get("power", template.get("power", 15)), kit.get("money", 0)
     items = kit.get("items") or []
     if nodes.get(row.get("faction"), {}).get("type") != "faction":
         out.append(f"{ctx}：人群「{row['id']}」须属于一个已登记的门派")
@@ -244,15 +324,13 @@ def _squad(ctx: str, row: dict, nodes: dict, inside: set) -> tuple[dict, list[st
         out.append(f"{ctx}：人群「{row['id']}」不在场景之内")
     if not (isinstance(count, int) and DISBAND <= count <= 200):
         out.append(f"{ctx}：人群「{row['id']}」的人数须在{DISBAND}到二百之间")
-    if not (isinstance(power, int) and 0 <= power <= 100) or not (isinstance(money, (int, float)) and money >= 0):
-        out.append(f"{ctx}：人群「{row['id']}」每人的功力与零钱须是数")
+    out += [e.replace("「", "人群「", 1) for e in _kit_errors(ctx, row["id"], kit, power)]
     names = [t.get("name") for t in items if isinstance(t, dict)]
-    if len(names) != len(items) or not all(isinstance(n, str) and n for n in names) or len(set(names)) != len(names):
-        out.append(f"{ctx}：人群「{row['id']}」身上的东西须各有不同的名字")
     pool = {"银两": round((count or 0) * money, 3), **{n: count or 0 for n in names if isinstance(n, str)}}
     node = {"type": GROUP, "faction": row.get("faction"), "location": row.get("location"), "count": count, "down": 0, "dead": 0,
-            "power": power, "handle": row.get("handle") or row["id"], "desc": row.get("desc"), "hidden": False, "status": "alive",
-            "kit": {"money": money, "items": [dict(t) for t in items if isinstance(t, dict)]}, "pool": pool}
+            "power": power, "handle": row.get("handle") or template.get("handle") or row["id"], "desc": row.get("desc") or template.get("desc"),
+            "hidden": False, "status": "alive", "kit": {"money": money, "items": [dict(t) for t in items if isinstance(t, dict)]}, "pool": pool,
+            **{k: row[k] for k in ("leader", "since", "until") if row.get(k)}}
     return node, out
 
 
@@ -261,8 +339,9 @@ def _stage(root: Path, nodes: dict) -> list[str]:
     景物与器物所在之处须在场景之内，持有者须是此刻身在场景里的人；等级只有三等，文书内容只给要物。建筑连的路由 _roads 打上。"""
     if not (root / SCENES).exists():
         return []
-    errors, raw = [], _raw_aliases(root)
-    for sc in _read(root, SCENES)["scenes"]:
+    data = _read(root, SCENES)
+    errors, raw = _extras(data, nodes), _raw_aliases(root)
+    for sc in data.get("scenes") or []:
         top = sc.get("scene")
         if nodes.get(top, {}).get("type") != "location":
             errors.append(f"场景清单：「{top}」不是已登记的地点")
@@ -342,6 +421,11 @@ def _validate(nodes, roads, gates, relations, canon) -> list[str]:
             need(n.get("parent"), ("location",), f"地点 {nid}.parent")
         elif n["type"] == "feature":
             need(n.get("location"), ("location",), f"景物 {nid}.location")
+        elif n["type"] == GROUP:  # 人群(v10)：带队之人是登记过的人物，出没的时段是原著事件
+            need(n.get("leader"), ("person",), f"人群 {nid}.leader")
+            for k in ("since", "until"):
+                if n.get(k) is not None and n[k] not in canon_ids:
+                    errors.append(f"人群 {nid}.{k}：「{n[k]}」不是原著事件")
     for a, b, days in roads:
         need(a, ("location",), "道路")
         need(b, ("location",), "道路")

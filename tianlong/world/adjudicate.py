@@ -29,6 +29,7 @@
        拿取、偷夺、毁撕须是玩家所指，对一群人杀伤须指着那一群，提笔书写须玩家起意(WRITE)；名表收人群的叫法(东宗弟子)，散了的人群不入；
        targets 认玩家说的钱(银子、钱)为够得着的碎银与钱袋、认写信留书为起意提笔；回合切面另记银两起止、经手之物(traded：拿了一部分、交出一部分)、有人倒下的人群；
        拍文里一群人有人倒下而账上人数没少即 fell(返工不作废)；forged 收紧为够得着之物(单字的名词须是器物名字的末字，「信」不是「内堂信笺」)，银两不是器物
+       v10：回合开始记下眼前的人群(turn["flock0"]，主角先走一步他们仍可在后面的拍里结下随行)与眼前之人的银两(funds，谁的钱易手都对账)；WOUND 认一记耳光
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -231,8 +232,10 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     money0 = stock.funds(world, "player")
+    funds0 = {p: stock.funds(world, p) for p in around0 | {"player"} if p == "player" or g.kind(p) == "person"}  # v10 谁都对银两账
     flock0 = {s: crowd.standing(g, s) for s in crowd.squads(world)}  # 人群(v9)：回合开始时站着几人
     world.turn["present"] = around0  # 回合开始时身边之人：主角先走一步，他们仍可在后面的拍里跟上
+    world.turn["flock0"] = set(crowd.squads(world))  # 回合开始时跟前的人群(v10)：主角先走一步，他们仍可在后面的拍里跟上
     world.turn["route"] = [here0]    # 主角本回合走过的路：同伴诸拍之后沿它跟上
     power0 = {p: g.get(p, "power") for p in around0}
     for spec in copy.deepcopy(plan.get("spawn") or []):
@@ -317,7 +320,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
     world.turn["start"] = {"here": here0, "inventory": inv0, "around": around0, "route": route, "aimed": aimed,
-                           "money": money0, "flock": flock0}  # 编剧成文之后的对账也以此为准
+                           "money": money0, "flock": flock0, "funds": funds0}  # 编剧成文之后的对账也以此为准
     _examine(world, r, shown, power0, stripped, named)
     _question(world, r, cast, no_interrupt and 0 not in drop)
     r.notes = list(world.turn.get("notes", []))
@@ -327,7 +330,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
 # ============================================================
 #  一拍一事务：哪些指令是这一拍的筋骨，落不了整拍便不成立；哪些指令在拍文里无据
 # ============================================================
-WOUND = re.compile(r"伤|血|痛|跌|摔|撞|刺中|刺入|刺伤|砍中|劈中|击中|打中|拍中|掌中|中掌|中剑|中毒|毒发|擦破|咳|呕|吐出|昏|晕|反噬|岔气|走火|灼|烫|咬|抓破|划破|骨折|断了")
+WOUND = re.compile(r"伤|血|痛|跌|摔|撞|刺中|刺入|刺伤|砍中|劈中|击中|打中|拍中|掌中|中掌|中剑|中毒|毒发|擦破|咳|呕|吐出|昏|晕|反噬|岔气|走火|灼|烫|咬|抓破|划破|骨折|断了|掴|耳光|巴掌")  # 一记耳光也是伤(v10 实测)
 PARRY = re.compile(r"荡开|架开|格开|挡开|拦开|拨开.{0,2}(?:剑|刀|掌|招)|避开|闪开|躲开|让开|落空|扑空|险险避过|堪堪避过|毫发无伤|毫发未伤")
 SCRATCH = 5                                      # 非较量场合一拍至多伤几点
 HEAL = re.compile(r"药|丹|丸|调息|运功|歇|养|疗|敷|包扎|吐纳|平复|好转|缓过|回复|恢复|止血|顺气|气色")
@@ -404,6 +407,7 @@ def _view(world, start: dict, power0=None) -> lexicon.View:
                         here=world.here, route=set(start["route"]) | {here0, world.here}, aimed=set(start["aimed"]),
                         traded=set(world.turn.get("traded", ())), money_start=start.get("money", 0.0),
                         money_end=stock.funds(world, "player"),
+                        funds={p: (v, stock.funds(world, p)) for p, v in (start.get("funds") or {}).items()},
                         felled={s for s, n in (start.get("flock") or {}).items() if not crowd.is_squad(g, s) or crowd.standing(g, s) < n})
 
 

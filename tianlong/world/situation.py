@@ -9,7 +9,7 @@
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
-          spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由）、FORGE、
+          spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
           entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
 [POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
@@ -77,7 +77,7 @@ def enlist(world, pids):
     g, now = world.graph, list(world.player.get("cast") or [])
     for p in pids:
         for q in [p, *(e["dst"] for e in g.edges if e["src"] == p and e["rel"] in CUSTODY)]:
-            if g.kind(q) == "person" and q not in now:
+            if g.kind(q) in ("person", GROUP) and q not in now:  # 一群人(v10)被带到跟前也上名册
                 now.append(q)
     world.player.set("cast", now)
 
@@ -255,21 +255,12 @@ def spawn(world, spec: dict, embargo: set[str] = frozenset()) -> tuple[str | Non
         return None, FORGE
     if kind not in SPAWN_KINDS or not name:
         return None, "场景实体须写明 kind(group) 与 name"
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    if crowd.is_squad(g, world.aliases.get(name)):  # 上回整群调来、叫作这个名字的那一群
+        return world.aliases[name], None
     if g.has(name) or name in world.aliases or name in ("player", "主角", world.player["name"]):
         return (name, None) if g.get(name, "ephemeral") else (None, f"「{name}」已是书中之名，不可另立")
-    faction = spec.get("faction")
-    faction = world.aliases.get(faction, faction)
-    if g.kind(faction) != "faction":
-        return None, f"群体「{name}」须属于一个已登记的门派"
-    if faction in embargo:
-        return None, f"{faction}的人马此时尚未到此（原著近事），不得先行登场"
-    if not _rooted(world, faction):
-        return None, f"{faction}在此地附近既无据点也无人手，凭空来不了一队人"
-    count = spec.get("count")
-    g.nodes[name] = {"type": GROUP, "ephemeral": True, "born": world.clock.day, "desc": str(spec.get("desc") or "")[:40],
-                     "location": world.here, "hidden": False, "faction": faction, "status": "alive",
-                     "count": count if isinstance(count, int) and 0 < count <= 200 else 10}
-    return name, None
+    return crowd.muster(world, spec, name, set(embargo), _rooted)  # 一队人马(v10)是既有人群的重组，或这一门补来的无名之众
 
 
 def _rooted(world, faction: str) -> bool:
@@ -283,12 +274,18 @@ def _rooted(world, faction: str) -> bool:
 
 
 def sweep(world) -> list[str]:
-    """主角离开一日路程以外，场景实体就地回收（主角带在身上的物件除外）。"""
+    """主角离开一日路程以外，场景实体就地回收（主角带在身上的物件除外）：从人群里分出去的一队并回原来那一群(v10，人头与身上之物守恒)，
+    补来的一队回到这一门的据点(不再记账)；随主角同行的不收。"""
+    from . import crowd
     g, dist = world.graph, world.graph.distances(world.here)
+    company = set(party(world))
     gone = [n for n, node in g.nodes.items() if node.get("ephemeral") and node.get("holder") != "player"
-            and dist.get(node.get("location"), 99) > 1]
+            and dist.get(node.get("location"), 99) > 1 and n not in company]
     for n in gone:
-        del g.nodes[n]
+        if g.kind(n) == GROUP:
+            crowd.rejoin(world, n)
+        else:
+            del g.nodes[n]
     if gone:
         g.edges = [e for e in g.edges if e["src"] not in gone and e["dst"] not in gone]
     return gone

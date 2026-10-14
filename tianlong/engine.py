@@ -25,6 +25,7 @@
        两相对账(_settle_page：回合开始记下主角看得见的账 settle.glance，结算之后求差——账房开单入账是文→账，账上变了而正文没写到的由账本补记一段随流送出是账→文)；
        双录复核(词表仍看出、账上仍没有的句子交账房复核，记账或驳回，之后仍对不上的才是分歧)；正文有时间轴(编剧得知主角从哪里到了哪里：动身另起一段、到了点明此地)
        v9 事码：导演与账房说同一种类代码(world/acts)，引擎照旧只转交；江湖事件的门槛认事码的记录——一群人里有人倒下即众目之下的伤亡(有人死即分量二)，银两流转、写一封信、封拆撕合不成江湖事
+       v10：光阴推进、养伤之后结算无名之众的醒转(crowd.recover)，醒转的说明随连带交编剧
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -35,7 +36,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, growth, lod, menu, pacing, perspective, rag, scenery, settle, situation
+from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, rag, scenery, settle, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -193,6 +194,7 @@ class Game:
             log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
         mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
+        mend = "；".join(x for x in [mend, *crowd.recover(w)] if x)  # 打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
         arrived = w.sync()
         void = ruling.void
         for v in void:
