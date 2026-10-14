@@ -837,6 +837,7 @@ def found(root: Path, nodes: dict, raw_aliases: dict, canon: list[dict], roads: 
     _factions(book, data["23_factions.json"], set(events))  # 门派先于场所：场所的主人、国法的官差要认得门派与门下模板
     lore_ids = {row.get("id") for row in data["25_lore.json"].get("lore") or []}
     out.atlas["venues"] = _venues(book, data["20_venues.json"], out.atlas["goods"], out.atlas["regions"])
+    out.atlas["services"] = sorted({s["name"] for sp in out.atlas["venues"].values() for s in sp["services"]})  # 服务名即事码(住宿、打尖、诊治……)
     _people(book, data["22_people.json"], lore_ids, set(events))
     _squads(book, data["23_factions.json"], set(events))  # 人群在场所之后：人群可以守在新立的场所里
     kits = {k["handle"] for n in nodes.values() if n["type"] == "faction" for k in n.get("squad_kits") or []}

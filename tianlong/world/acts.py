@@ -12,10 +12,11 @@
        (易手仍是 set holder / push inventory，银两是 money，人群是 squad，造物是 forge，文书是 doc)，恩怨、兑现原著、江湖事件照旧从记录里读
        偷得无人察觉的记录带 stealth(恩怨账不记)；夺取一个人身上的东西看较量预裁(rag.WIN 那几档才夺得下)，偷取看身法；书写用过的纸笔、拿过一部分的原物记作经手(turn["traded"])，
        主角这一拍正要走进去的那一间，那里的纸笔也够得着(与取物同一口径)
+       v11 世界底座：市——买下、卖出、服用、打探、办事(服务名即事码：住宿、打尖、诊治……)交 world/trade 执行，花主角的钱须是玩家起意(MARKET)；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import access, body, crowd, effects, scribe, situation, stock
+from . import access, body, crowd, effects, scribe, situation, stock, trade
 
 # ============================================================
 #  动词表：规范名 → 别名(模型常写的单字或口语)
@@ -36,13 +37,19 @@ VERBS = {
     "所求": ("立志", "志向"),
     # 功
     "研习": ("习", "练", "求教"), "吸功": ("吸",),
+    # 市(v11 世界底座)：买卖、服用、办事、打探——货架、价目、伙计与消息都在数据里
+    "买下": ("买", "购买", "采买", "沽"), "卖出": ("卖", "出售", "变卖", "典当", "当掉"),
+    "服用": ("服", "服下", "吃", "喝", "饮", "敷", "敷上"), "打探": ("打听", "探听", "听书", "问讯"),
+    "办事": ("雇", "托办", "请办"),
 }
 ALIAS = {a: v for v, aliases in VERBS.items() for a in (v, *aliases)}
-RULE = {"拿取", "放下", "交给", "偷取", "夺取", "毁去", "撕开", "拼合", "书写", "封缄", "拆封", "阅读", "脱身"}  # 在这里执行的规则之事
+RULE = {"拿取", "放下", "交给", "偷取", "夺取", "毁去", "撕开", "拼合", "书写", "封缄", "拆封", "阅读", "脱身",
+        "买下", "卖出", "服用", "打探", "办事"}  # 在这里执行的规则之事(v11 市：交 trade)
+MARKET = {"买下", "卖出", "服用", "打探", "办事"}  # 花主角的钱、用主角的东西：须是玩家起意(授意)
 RULED = {"伤人", "疗伤", "杀死", "打晕", "研习", "吸功"}  # 伤病生死、功力进境归规则：正文写了也改不了账(结算只记分歧)
 SOFT = {"神色", "打算", "外号", "现状", "看法", "应承", "了结", "识名", "所求"}  # 不是物理：落不了只丢这一条，拍照常成立
 MONEY = "银两"
-FIELDS = ("谁", "物", "量", "与", "自", "对", "数", "到", "为", "文", "致", "处", "因", "添", "消", "听", "秘", "路", "血", "份", "直到")
+FIELDS = ("谁", "物", "量", "与", "自", "对", "数", "到", "为", "文", "致", "处", "因", "添", "消", "听", "秘", "路", "血", "份", "直到", "事")
 ENTITY = ("谁", "与", "自", "对", "到", "致", "听")
 ME = {"你", "主角", "player", "自己"}
 
@@ -75,6 +82,9 @@ def _resolve(world, name):
 def normalize(world, act: dict) -> dict:
     v = ALIAS.get(str(act.get("做") or "").strip(), str(act.get("做") or "").strip())
     out = {"做": v, **{k: act[k] for k in FIELDS if k in act and act[k] not in (None, "", [])}}
+    if v not in ALIAS and v in ((getattr(world, "atlas", None) or {}).get("services") or ()):  # 服务名即事码(v11)：住宿、打尖、诊治、摆渡……
+        out.update({"做": "办事", "事": v})
+        v = "办事"
     for k in ENTITY:
         out[k] = _resolve(world, out[k]) if k in out else out.get(k)
         if out.get(k) is None:
@@ -86,8 +96,8 @@ def normalize(world, act: dict) -> dict:
         squad_side = crowd.is_squad(world.graph, out.get("自"))
         if raw in stock.MONEY_WORDS:
             out["物"] = MONEY
-        elif v == "书写":
-            out["物"] = raw  # 写的是一种文书(书信、字条)，不是既有之物
+        elif v in ("书写", "买下", "打探", "办事"):
+            out["物"] = raw  # 写的是一种文书、货架上的一样货、打听的事——不是既有之物
         elif not squad_side:  # 从人群身上偷夺：物是他们身上那一样(长剑)，交 crowd 认
             out["物"] = _resolve(world, raw)
     money = out.get("物") == MONEY or stock.is_cash(world.graph, out.get("物")) or bool(stock.purse(world.graph, out.get("物")))
@@ -204,6 +214,8 @@ def describe(a: dict) -> str:
         "封缄": f"{who}封缄{item}", "拆封": f"{who}拆开{item}", "阅读": f"{who}阅读{item}",
         "脱身": f"{who}从{src or '围困'}中脱身" + (f"，往{a['到']}" if a.get("到") else ""),
         "杀死": f"{who}杀死{to}" + (f"{stock.cn(a['数'])}人" if a.get("数") else ""),
+        "买下": f"{who}买下{thing}", "卖出": f"{who}卖出{thing}", "服用": f"{who}服用{item}" + (f"（给{to}）" if to else ""),
+        "打探": f"{who}向{_who(None, a.get('与'))}打探" + (f"「{item}」" if item else ""), "办事": f"{who}请人办{a.get('事') or '事'}",
         "打晕": f"{who}打晕{to}" + (f"{stock.cn(a['数'])}人" if a.get("数") else ""),
     }
     return lines.get(v, f"{who}{v}{item or to or ''}")
@@ -504,6 +516,7 @@ HANDLERS = {
     "拆封": lambda w, a, who, h: scribe.unseal(w, who, a.get("物")),
     "阅读": lambda w, a, who, h: scribe.read(w, who, a.get("物")),
     "脱身": _flee, "杀死": _strike, "打晕": _strike,
+    "买下": trade.buy, "卖出": trade.sell, "服用": trade.consume, "打探": trade.inquire, "办事": trade.serve,
 }
 
 

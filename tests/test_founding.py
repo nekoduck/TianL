@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tianlong.world import access, effects, genesis, lore, perspective, rag, situation, venue
+from tianlong.world import access, adjudicate, effects, genesis, lore, perspective, rag, situation, stock, trade, venue
 from tianlong.world.clock import PER_DAY, PER_SHICHEN
 from tianlong.world.world import World
 
@@ -189,3 +189,154 @@ class KnownTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MarketTest(unittest.TestCase):
+    """买卖与服务(v11)：货架上的货有价有存货，服务由当值的那个职名办，钱付到柜上；药接身体规则；打听来的照原样记。"""
+
+    def setUp(self):
+        self.w = at(World.create("测"), STREET)
+        go(self.w, INN)
+        shichen(self.w, "辰")
+        self.w.player.set("money", 5.0)
+
+    def do(self, act):
+        return effects.apply(self.w, [act], "director")
+
+    def test_buying_moves_money_to_the_till(self):
+        w, till = self.w, f"{INN}·柜银"
+        cash, shelf = stock.qty(w.graph, till), venue.wares(w, INN)["货·黄酒"]
+        left = shelf["stock"]
+        done, bad = self.do({"做": "买", "物": "黄酒", "量": 2})
+        self.assertEqual(bad, [])
+        cost = round(shelf["price"] * 2, 3)
+        self.assertAlmostEqual(w.player["money"], 5.0 - cost)
+        self.assertAlmostEqual(stock.qty(w.graph, till), cash + cost)                   # 钱付到柜上：总数守恒
+        self.assertEqual(shelf["stock"], left - 2)
+        wine = f"{INN}·黄酒"
+        self.assertIn(wine, w.player["inventory"])
+        self.assertEqual(stock.qty(w.graph, wine), 2)
+        self.do({"做": "喝", "物": wine})                                                # 喝一斤，剩一斤
+        self.assertEqual(stock.qty(w.graph, wine), 1)
+
+    def test_what_cannot_be_bought(self):
+        w = self.w
+        self.assertIn("不卖「人参」", self.do({"做": "买下", "物": "人参"})[1][0][1])        # 货架上没有
+        w.player.set("money", 0.0)
+        self.assertIn("买不起", self.do({"做": "买下", "物": "黄酒"})[1][0][1])
+        w.player.set("money", 5.0)
+        shichen(w, "子")
+        self.assertIn("没人照看", self.do({"做": "买下", "物": "黄酒"})[1][0][1])         # 伙计不当值
+        self.assertEqual(w.player["money"], 5.0)                                        # 不成即什么也不动
+
+    def test_lodging_and_inquiring(self):
+        w = self.w
+        done, bad = self.do({"做": "住宿", "为": "上房"})
+        self.assertEqual(bad, [])
+        self.assertTrue(w.here.startswith(f"{INN}·客房·上房"))                           # 住下即进那一间
+        go(w, f"{INN}·大堂")
+        before = w.player["money"]
+        done, bad = self.do({"做": "打听", "与": f"{INN}·店小二一"})
+        self.assertEqual(bad, [])
+        told = next(r for r in done if r["op"] == "lore")
+        self.assertIn(told["id"], lore.heard(w))
+        self.assertLess(w.player["money"], before)                                      # 赏钱付给他本人
+        self.assertIn("说起", effects.describe(told))
+
+    def test_medicine_follows_the_body_rules(self):
+        w = at(World.create("测"), STREET)
+        go(w, "大理城·东街药铺")
+        shichen(w, "辰")
+        w.player.set("money", 5.0)
+        w.player.set("hp", 50)
+        w.player.set("conditions", ["经脉受损"])
+        effects.apply(w, [{"做": "买下", "物": "金创药"}], "director")
+        salve = "大理城·东街药铺·金创药"
+        effects.apply(w, [{"做": "服用", "物": salve}], "director")
+        self.assertEqual(w.player["hp"], 60)                                            # 一服回十点
+        self.assertIn("经脉受损", w.player["conditions"])                               # 金创药不治内伤
+        self.assertFalse(w.graph.get(salve, "state")["exists"])                         # 一包用尽
+
+    def test_pawning_pays_from_the_till(self):
+        w = at(World.create("测"), "大理城·西市")
+        go(w, "大理城·西市当铺")
+        shichen(w, "辰")
+        sword = "木婉清·长剑"
+        w.graph.nodes[sword].update(holder="player", location=None)
+        w.player.push("inventory", sword)
+        before = w.player["money"]
+        done, bad = effects.apply(w, [{"做": "典当", "物": sword}], "director")
+        self.assertEqual(bad, [])
+        self.assertAlmostEqual(w.player["money"], before + round(w.graph.get(sword, "price") * trade.RATIO, 2))
+        self.assertNotIn(sword, w.player["inventory"])
+
+    def test_spending_needs_the_players_word(self):
+        w = self.w
+        allowed = adjudicate.targets(w, "四下看看")
+        hits = adjudicate.unbidden(w, [{"做": "买下", "物": "黄酒"}], allowed)
+        self.assertTrue(hits)                                                           # 玩家没说要买：不替他花钱
+        allowed = adjudicate.targets(w, "叫小二来一壶黄酒")
+        self.assertFalse(adjudicate.unbidden(w, [{"做": "买下", "物": "黄酒"}], allowed))
+
+
+class ViewTest(unittest.TestCase):
+    """近大远小的读者面：编剧与玩家看铺面(招牌、货与价目、能办的事)，导演另看伙计、存货、打听得到的消息(假的附真相)、国法与天时；
+    场外编剧的任务书带原著剧情线，审稿人照天龙世界的准则判。"""
+
+    def test_the_shop_front_and_the_back_room(self):
+        from tianlong.narrative import prompts
+        w = at(World.create("测"), STREET)
+        go(w, INN)
+        shichen(w, "辰")
+        front = prompts.render(perspective.veil(w, rag.build(w)))
+        self.assertIn("【此处铺面】", front)
+        self.assertIn("黄酒", front)
+        self.assertNotIn("存四十", front)                                                # 存货是店里的事
+        self.assertNotIn(f"{INN}·掌柜", front)                                           # 伙计的 id 不给编剧
+        back = prompts.render_backstage(rag.backstage(w))
+        for part in ("【铺子底细", f"{INN}·掌柜", "存四十", "【此处打听得到", "【国法与规矩", "【风物天时"):
+            self.assertIn(part, back)
+
+    def test_false_news_carries_its_truth_backstage(self):
+        from tianlong.world import locale
+        w = World.create("测")
+        entry = next(e for e in lore.entries(w).values() if e.get("true") is not True)
+        self.assertIn(entry["truth"], locale._line(entry))
+        lore.learn(w, entry["id"])
+        self.assertEqual(locale.heard(w), [entry["text"]])                              # 主角听来的照原样，不带真相
+
+    def test_offstage_briefs_carry_the_canon_lines(self):
+        from tianlong.narrative import prompts
+        from tianlong.world import plot
+        w = World.create("测")
+        ev = next(e for e in w.canon if e["id"] == "萧远山杀白世镜")
+        task = plot.rewrite(w, ev, ["白世镜已死"])
+        brief = plot.brief(w, task)
+        self.assertTrue(any("康敏情仇" in x for x in brief["canon_lines"]))             # 这一桩在哪条线上
+        self.assertTrue(any("前提破了" in x for x in brief["canon_lines"]))
+        self.assertIn("原著剧情线", prompts.plotter([brief])[1])
+        system, _ = prompts.reviewer([{"key": task["key"], "brief": brief, "lines": ["一条剧情线"]}])
+        self.assertIn("天龙世界的准则", system)
+        self.assertEqual(len(brief["precepts"]), 25)
+
+
+class LedgerTest(unittest.TestCase):
+    """账房读正文：导演这一回合已办过的买卖，正文复述了不再记一遍(一壶酒不付两回钱)，也不算分歧；导演没写而正文写成了的，照记。"""
+
+    def test_the_page_repeating_a_purchase_is_not_booked_twice(self):
+        from tianlong.world import settle
+        w = at(World.create("测"), STREET)
+        go(w, INN)
+        shichen(w, "辰")
+        w.player.set("money", 5.0)
+        w.turn = {}
+        effects.apply(w, [{"做": "买下", "物": "黄酒"}], "director")
+        paid = w.player["money"]
+        text = "你掏出三分银子，向掌柜买了一斤黄酒。"
+        applied, rifts = settle.commit(w, {"changes": [{"据": "向掌柜买了一斤黄酒", "谁": "player", "ops": [{"做": "买下", "物": "黄酒"}]}]},
+                                       text, {adjudicate.TRADE})
+        self.assertEqual((applied, rifts, w.player["money"]), ([], [], paid))
+        w.turn = {}
+        applied, rifts = settle.commit(w, {"changes": [{"据": "又要了一份馒头", "谁": "player", "ops": [{"做": "买下", "物": "馒头"}]}]},
+                                       "你又要了一份馒头。", {adjudicate.TRADE})
+        self.assertTrue(applied and not rifts and w.player["money"] < paid)

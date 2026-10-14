@@ -6,7 +6,8 @@
           NAMES（称谓：不识名者只用叫法、听来的名字才可叫、外号立名号；v9 写成事码） / THREATS / TENSIONS 与
           director / repair / writer / settler(v6 账房：入账 + v7 对稿) / rechecker(v7 双录复核) / recap / plotter(v11 场外编剧·创作家) / reviewer(v11 审稿人) 八组 (system, user) 组装器、
           SETTLE_OPS（账房能记的几种变化：识名、来去、随行擒放、易手、神色打算、看法、现状、外号、应承之事）
-[POS]: narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
+[POS]: v11 世界底座：视锥另有【此处铺面】【听来的消息】，后台另有【铺子底细】【此处打听得到】【人物底子】【国法与规矩】【风物天时】；PLOT_GUIDE 与 SETTLE_OPS 另有市井事码(买下、卖出、服用、打探、服务名即事码)；场外编剧的任务书另有【原著剧情线】，审稿人另看【天龙世界的准则】。
+        narrative 层的 Prompt 组装器——把基础设施的记忆、地图、算盘与原著日程翻译成 LLM 编织剧情的依据，并以 PLOT_GUIDE 教它把后果挂在每一拍上；
        v4：导演上下文第一节是【场记】(story/brief 写的焦点：主干、场况、试过的路数、最急的时限、主角线)，导演报场况 scene(开/转/合/断)；
        一时的看法由系统从 ops 记进恩怨账，link 只立结构性关系，人物自身可伤可病可改眼下之事；人物行带伤势、神色、眼下之事与对你的立场，主角武学以研习账为准；
        编剧按【选项槽位】各拟一项并标尺度，进境不得越过账上那一阶；
@@ -66,6 +67,18 @@ def _flock(q: dict) -> str:
             + "".join(f"｜{x}" for x in (q.get("desc"), q.get("kit")) if x) + ("｜正围攻你" if q.get("hostile") else ""))
 
 
+def _shop(shop: dict | None, staff: bool = False) -> str:
+    """此处的铺面(v11)：招牌、开闭、货与价目、能办的事；后台另有当值的伙计、存货与招工。"""
+    if not shop:
+        return ""
+    head = f"【此处铺面】{shop.get('sign') or shop['name']}（{shop.get('type')}" + (f"，{shop['hours']}开闭" if shop.get("hours") else "") + "）"
+    lines = [*(f"货·{w}" for w in shop.get("wares") or []), *(f"能办·{s}" for s in shop.get("services") or [])]
+    if staff:
+        lines = [*(f"伙计·{s}" for s in shop.get("staff") or []), *lines, *(f"招工·{j}" for j in shop.get("jobs") or [])]
+        lines += [f"柜上现银：{shop['till']}"] if shop.get("till") else []
+    return head + ("\n" + "\n".join(f"- {l}" for l in lines) if lines else "")
+
+
 def render(pack: dict) -> str:
     s, me = pack["scene"], pack["player"]
     people = [f"{p['name']}｜{p['title']}｜{p['faction'] or '无门派'}｜{p['tier']}｜{p.get('wound') or STATUS.get(p['status'], p['status'])}"
@@ -100,6 +113,8 @@ def render(pack: dict) -> str:
         _section("主角境况", me["conditions"]),
         _section("随身之物", [_card(i) for i in me["inventory"]]),
         _section("未了之事", me["threads"]),
+        _shop(pack.get("shop")),
+        _section("听来的消息·照原样记着，未必是真", pack.get("heard", [])),
         _section("近日传闻", pack["news"]),
         f"【前情梗概】{me['synopsis']}" if me["synopsis"] else "",
         _section("近来", pack["journal"]),
@@ -163,6 +178,11 @@ def render_backstage(gm: dict) -> str:
         _section("此地隐匿之人与暗藏之物", gm["hidden"]),
         _section("近旁各处·主角此刻不在那里：那里摆着、藏着的就是这些", gm.get("rooms", [])),
         _section("要物底细·拍里有人翻看时照此写，不另编内容；底细未经揭示不得说破", gm.get("dossiers", [])),
+        _shop(gm.get("shop"), staff=True).replace("【此处铺面】", "【铺子底细·买卖写 买下/卖出，办事就写服务名(住宿、打尖、诊治……)，钱由系统从主角身上付到柜上；不当值的伙计不在眼前】", 1),
+        _section("此处打听得到·打听写 打探(与：那人)，系统按赏钱记账、主角照原样听到；假的就照假的说，真相只给你", gm.get("asks", [])),
+        _section("人物底子·拿来打动、激怒、要挟；隐情不在此", gm.get("traits", [])),
+        _section("国法与规矩·犯了禁官差会来，几时赶到照此", gm.get("law", [])),
+        _section("风物天时", gm.get("season", [])),
         _section("未揭隐情·可伏笔，合乎情理方可揭开", gm["secrets"]),
         _section("关口·此地出发：主角要过，须在节拍里兑现其过法与风险；所述是原著某一阶段的情形，此刻是否仍然如此由你依剧情裁定；"
                  "注明过不去者，主角过不去", gm["passes"]),
@@ -210,6 +230,10 @@ PLOT_GUIDE = """【剧情落账·事码】世界里的人物、地点、器物�
 - 揭开 {"做":"揭开","物":暗藏之人或物}，或 {"做":"揭开","秘":[甲,"关系",乙]}，或发现暗路 {"做":"揭开","路":[起点,通往之地]}
 - 现状 {"做":"现状","对":地点或景物,"为":"一句话"}；应承 {"做":"应承","为":"主角应下要办的事","直到":[["钟灵","~随行","player"]](可省)}；了结 {"做":"了结","为":那件事}
 功：研习 {"做":"研习","物":秘籍或身边人会的武学}；吸功 {"做":"吸功","对":某人}——增减多少由系统算，不写功力数字
+市(底座里有的才买得到、办得成，看【铺子底细】与【此处打听得到】；花的是主角的钱，须是玩家起意)：
+- 买下 {"做":"买下","物":货架上的货名,"量":几(可省)}——价钱照价目、卖完了就没有、伙计不当值没人卖；卖出 {"做":"卖出","物":主角手里的东西}(铺子只收它卖的货，当铺什么都收，按估值的几成)
+- 服用 {"做":"服用","物":药、酒、吃食,"对":给谁用(可省)}——药力照数据接身体规则；办事就写服务名 {"做":"住宿","为":"上房","量":几夜}、{"做":"诊治"}、{"做":"打尖"}
+- 打探 {"做":"打探","与":问的那人,"物":想打听的事(可省)}——他知道的那几条照原样说给主角，赏钱由系统付；他不知道的就说不知道
 身体归规则：交手的胜负与失血看较量预裁；没人出手、不涉险地，主角一拍至多伤 5 点；研习的顺逆看研习预裁，照演进境，不得自编反噬、走火、扣血。
 器物一件也不得新造：此地与身边有什么，【景物】【此处器物】【随身之物】与各人的「随身」里都列着(隔壁有什么见后台【近旁各处】，暗藏的见【此地隐匿之人与暗藏之物】)。
 拍里有人拾起、交出、丢下、夺走的东西必须是清单里的；清单里没有的(火折、绳索、金创药、一封信……)就是此地没有，拍文与台词里也不写有人取出、去取、递来、用上它
@@ -351,7 +375,8 @@ SETTLE_OPS = """事码(人、地、物一律照抄【此刻账上】每行开头
 - 某人对主角的看法变了：{"做":"看法","谁":某人,"为":"感激/敬佩/记恨/起疑/亲近…","因":"缘由"}；境况：{"做":"境况","对":某人,"添":"被点穴/中毒/昏迷…"}，解除写 "消"
 - 此地的样子变了：{"做":"现状","对":地点,"为":"一句话"}
 - 正文给叫不出名字的人换了叫法：{"做":"外号","谁":某人,"为":"正文里的叫法"}
-- 主角应承了、立下了要办的事：{"做":"应承","为":"一句话"}"""
+- 主角应承了、立下了要办的事：{"做":"应承","为":"一句话"}
+- 买卖与服务(主角在铺子里)：{"做":"买下","物":货名,"量":几}；{"做":"卖出","物":器物}；{"做":"服用","物":药或吃食}；办了事写服务名 {"做":"住宿","为":"上房"}；打听写 {"做":"打探","与":那人}"""
 
 
 def _ledger(books: dict) -> str:
@@ -451,6 +476,7 @@ def _task(b: dict, notes=()) -> str:
     parts = [head, f"今日：{b['today']}", _section("相关的人", [_plot_card(c)[2:] for c in b["people"]]),
              _section("恩怨所系之人", b["others"]), _section(f"从{b['home']}走得到的地方", ["、".join(b["places"])] if b["places"] else []),
              _section("此处与他们手里的东西", b["things"]), _section("已有的场外剧情线", b["lines"]),
+             _section("原著剧情线·按原著的逻辑改写靠它；原著结局与「大约会」只是参考，不是规定", b.get("canon_lines") or []),
              _section("已传到此处的江湖近闻", b["heard"])]
     if notes:
         parts.append(_section("上一稿退回的缘由·逐条改掉", notes))
@@ -502,5 +528,6 @@ def reviewer(items: list[dict]) -> tuple[str, str]:
               "这一局的江湖已被主角改变：任务里写的生死、所在、恩怨就是此刻的事实，原著后来怎样(谁哪年死在哪里)在这里不作数——"
               "不以「原著里不是这样」退稿，只看在此刻的处境下，此人会不会这样做、合不合天龙世界的准则、精不精彩。\n"
               "判定只有三种：过；改(写明要改哪里、怎么改)；否(写明这条线为何不该有，换个思路)。不合理的一律不过。\n"
-              '输出 JSON：{"reviews":[{"key":任务名,"verdict":"过/改/否","why":"一两句"}]}')
+              + (_section("天龙世界的准则·判第 2 条照此", next((x["brief"].get("precepts") for x in items if x["brief"].get("precepts")), [])) + "\n")
+              + '输出 JSON：{"reviews":[{"key":任务名,"verdict":"过/改/否","why":"一两句"}]}')
     return system, "\n\n".join(f"【{x['key']}】{_assignment(x['brief'])}\n" + "\n".join(x["lines"]) for x in items)

@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -120,14 +120,15 @@ def targets(world, deed: str, given=()) -> set[str]:
         out |= {i for i in g.where(type="item") if (stock.is_cash(g, i) or stock.purse(g, i) > stock.EPS) and effects.usable(world, i)
                 and (g.get(i, "holder") in around or (g.get(i, "holder") is None and g.get(i, "location") in close))}
     out = {t for t in out if isinstance(t, str) and world.graph.has(t)}
-    return out | ({WRITE} if lexicon.WRITING.search(deed or "") else set())  # 起意提笔：书写没有实体可指，以此为记
+    return out | ({WRITE} if lexicon.WRITING.search(deed or "") else set()) | ({TRADE} if lexicon.TRADING.search(deed or "") else set())  # 起意提笔：书写没有实体可指，以此为记
 
 
 # ============================================================
 #  授意：主角做的事(主角的拍、或写「你」的旁白)里，取走他人或此地之物、毁物、杀人、吸功、研习，对象须在玩家所指之内
 # ============================================================
 TO_YOU = re.compile(r"(?:给|与|到|进|入)你|(?:向|朝)你(?:抛|掷|扔|递)")  # 你是收受的一方：东西是别人给的
-WRITE = "@书写"  # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
+WRITE = "@书写"
+TRADE = "@交易"  # 玩家原话里起意买卖、吃喝、住店、请医、打听(v11)：花的是主角的钱，以此为记  # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
 
 
 def _by_player(beat: dict) -> bool:
@@ -192,6 +193,8 @@ def _overreach(world, a: dict, allowed: set, ok) -> tuple[str, str] | None:
         return f"{v}{item}", item
     if v == "书写" and WRITE not in allowed:
         return "提笔书写", WRITE
+    if v in acts.MARKET and TRADE not in allowed and not (isinstance(item, str) and item in allowed):  # 花主角的钱、用主角的东西(v11)
+        return f"{v}{item or a.get('事') or ''}", TRADE
     return None
 
 

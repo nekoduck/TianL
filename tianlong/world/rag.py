@@ -5,7 +5,8 @@
          与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单）、world/crowd 的 squads / card / lines / agility / besiegers / handle / STEAL_ROLL（v9 人群）、world/stock 的 funds / say / measure / purses / purse（v9 银两），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
-[POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
+[POS]: v11 世界底座：视锥另有此处铺面(shop：招牌、货与价目、能办的事)与主角听来的消息(heard)；后台另有铺子底细、此处打听得到(假的附真相)、国法与规矩、风物天时、人物底子(取自 world/locale)；近处去向不列近旁的房间。
+        world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        状态字段一律取自 profile(v4 单一投影)：condition、build、backstage 只取不同切面，不各算一遍——进境、伤势、心境、眼下之事、立场三处同时看得见；
        场景清单(v8)：视锥里的景物与器物按等级详略(寻常只有名字与方位，器物另有类别、描述与属性，主角身上的要物连内容)，后台另列近旁各处摆着、藏着什么与要物的内容底细；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
@@ -21,7 +22,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, actor, body, crowd, growth, lod, pacing, perspective, scenery, situation, stock
+from . import access, actor, body, crowd, growth, locale, lod, pacing, perspective, scenery, situation, stock
 from .effects import usable
 from .ledger import NEWS_SPEED
 from .profile import TIERS, power_tier, profile, ties
@@ -147,6 +148,8 @@ def build(world) -> dict:
         "exits": access.exits(world),
         "news": news,
         "journal": me["journal"],
+        "shop": locale.shop(world, writer=True),  # 此处的铺面(v11)：招牌、货与价目、能办的事——进了店都看得见
+        "heard": locale.heard(world),             # 主角听来的消息(v11)：照原样，未必是真
     }
 
 
@@ -285,12 +288,18 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "arts": _arts(world, ["player", *s["people"]]),
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
-        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
+        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
+                   if loc != here and loc not in situation.near(world)][:PLACES_SHOWN],  # 近旁的房间不占名额(v11)：它们在【近旁】里
         "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带"  # 有过交集的、怀有图谋的在前
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
         "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置
         "dossiers": scenery.dossiers(world),  # 要物的内容与底细：有人翻看就照此写
+        "shop": locale.shop(world),           # 铺子底细(v11)：当值的伙计、货架存货、能办的事、招工
+        "asks": locale.asks(world),           # 此处打听得到的消息(v11)：向谁、怎么问、赏钱多少，假的附真相
+        "law": locale.law(world),             # 此地的国法与在场门派的规矩(v11)
+        "season": locale.season(world),       # 天时：四季气候、节令集期、此地的险(v11)
+        "traits": locale.traits(world),       # 在场有名之人的底子(v11)：名声、好恶软肋、手段底线、能替人做的事
     }
 
 

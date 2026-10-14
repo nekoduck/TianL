@@ -10,7 +10,8 @@
           commit()（账房的结算单落账：据须是正文原句、规则之事正文改不了、主角之举须经授意，按据所在时刻的听众经 effects 裁决 → (成立的指令, 分歧)）、
           disputes()（词表这双眼睛：结算之后正文仍写着、账上仍没有的句子——交账房复核）、ruled()（正文写了账上没有的规则之事：生死、吸功、进境——只记分歧）、audit()（离线的对账：词表查出的一律只记分歧、不改账）、waive()（复核裁定不记的句子划掉）、
           glance() / delta()（回合首末两份主角看得见的账，两份之差即这一回合主角该读到的变化）、unwritten() / note()（差里正文没写到的，由账本生成补记）、admit()、rifts()
-[POS]: world 层的结算——账文同构的执行者。病根是双写：导演的指令进账本、编剧的正文给玩家，两份由模型各写各的；v6 让正文成为定本、账本是它经裁决的投影。
+[POS]: v11 正文复述导演这一回合已办过的买卖、服用、办事、打探不再记一遍(_repeat)，也不算分歧；账房买的是货架上的货名，不是账上的 id。
+        world 层的结算——账文同构的执行者。病根是双写：导演的指令进账本、编剧的正文给玩家，两份由模型各写各的；v6 让正文成为定本、账本是它经裁决的投影。
        v7 把对账补齐成四条轴：
        方向(两相对账)：文→账由账房开单入账；账→文由回合首末两份「主角看得见的账」(glance)求差(delta)——账上变了而正文没写到的(账房判、词表兜底)，由账本生成补记接在正文之后，一句一事、过视角掩码；
        身份(叫法即主键)：撞名的人在任何人落笔之前由 perspective.distinguish 分到稳定外号，账房的叫法对照、补记、正文说的是同一个人；
@@ -31,7 +32,7 @@
 import logging
 import re
 
-from . import acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock
+from . import acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock, venue
 from .body import INNER
 from .profile import profile
 
@@ -288,8 +289,8 @@ def _known(world, op) -> bool:
     if acts.is_act(op):
         a = acts.normalize(world, op)
         ends = [a.get(k) for k in acts.ENTITY if a.get(k) is not None]
-        ends += [a["物"]] if isinstance(a.get("物"), str) and a["物"] != acts.MONEY and a["做"] != "书写" \
-            and not crowd.is_squad(world.graph, a.get("自")) else []
+        ends += [a["物"]] if isinstance(a.get("物"), str) and a["物"] != acts.MONEY and a["做"] not in ("书写", "买下", "打探", "办事") \
+            and not crowd.is_squad(world.graph, a.get("自")) else []  # 买的是货架上的货名、打听的是一件事(v11)：不是账上的 id
         ok = all(isinstance(x, str) and (x == "player" or world.graph.has(x)) for x in ends)
         if not ok:
             log.info("账房写错了 id，不收：%s", op)
@@ -299,6 +300,24 @@ def _known(world, op) -> bool:
     if not ok:
         log.info("账房写错了 id，不收：%s", op)
     return ok
+
+
+def _repeat(world, op) -> bool:
+    """正文复述了导演这一回合已经办过的买卖、服用、办事、打探(v11)：不再记一遍(否则一壶酒付两回钱)，也不是分歧。"""
+    if not acts.is_act(op) or acts.verb(op) not in acts.MARKET:
+        return False
+    from . import trade  # 用时才引
+    turn, v = getattr(world, "turn", None) or {}, acts.verb(op)
+    if v == "办事":
+        return op.get("事") in turn.get("served", ())
+    if v == "打探":
+        return bool(turn.get("asked")) and op.get("与") in (None, *turn["asked"])
+    item = op.get("物")
+    if v == "买下":
+        vid = trade.shop(world)
+        gid = trade.ware_of(world, vid, item) if vid else None
+        item = (venue.wares(world, vid).get(gid) or {}).get("id") if gid else item
+    return item in turn.get("traded", ())
 
 
 def admit(world, op) -> str | None:
@@ -336,7 +355,7 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
         if len(_plain(basis)) < BASIS or _plain(basis) not in plain:
             continue
         ops = [op for op in acts.expand(world, [op for op in ch.get("ops") or [] if isinstance(op, dict) and _known(world, op)])
-               if isinstance(op, dict)]  # 写错了 id 是账房的错，不是账文分歧；事码(v9)先化为指令，规则之事留作一件事
+               if isinstance(op, dict) and not _repeat(world, op)]  # 写错了 id 是账房的错，不是账文分歧；事码(v9)先化为指令，规则之事留作一件事
         keep = []
         for op in ops:
             why = admit(world, op)

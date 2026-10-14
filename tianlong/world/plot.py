@@ -7,7 +7,8 @@
           vet()（规则审：合不合天龙世界的物理与规矩——落地的剧情安排，或退回的缘由；安排可写 drops：这条线一走，自己这几人原著里哪几桩不再发生）、
           render()（交审稿人看的人话）、adopt()（排进日程、登记剧情线、断掉 drops 那几桩原著）、
           postpone()（只差路程的原著延后到赶得到之日）、origin()、lines_of()、DRIVES / CADENCE / MAX_TASKS / MAX_EVENTS / MAX_DAYS / QUIET / TRIES
-[POS]: world 层的场外剧情线(v11)——主角不在的地方，江湖照样在走。场外编剧是两个角色：
+[POS]: v11 世界底座：任务书另有原著剧情线 canon_lines(27：这一桩在哪条线上、因果动机结局、线上还没演的几桩、情理前提与前提破了大约会怎样)与天龙世界的准则 precepts(24，审稿人用)。
+        world 层的场外剧情线(v11)——主角不在的地方，江湖照样在走。场外编剧是两个角色：
        演绎家——原著前置未变，就照原著演：原著事件照日程由系统结算，不调模型(lod.verdict 的 canon)；七日之内照原著要上场的人归原著，创作家不先一步改掉他；
        创作家——原著线变了(他的原著演不成了、被主角拦下、心愿了了或落了空、志向被眼前的剧情改了，记作 adrift)或原著里已没有他的戏，此人往后的路交 LLM：
        照志向与剧情推力(drive：不甘现状者推力强，心愿了了也会生出新的图谋，写得勤；安于现状者少动；无欲无求者不写)创作前所未有的剧情线，
@@ -181,6 +182,8 @@ def brief(world, task: dict) -> dict:
             "things": [f"{i}（{g.get(i, 'kind') or '杂物'}，{'在' + g.get(i, 'holder') + '手里' if g.get(i, 'holder') else '在' + str(g.get(i, 'location'))}）"
                        for i in things[:10]],
             "lines": lines_of(world, people),
+            "canon_lines": canon_lines(world, task.get("event"), people),  # 原著剧情线(v11 27)：按原著的逻辑改写要靠它
+            "precepts": precepts(world),                                   # 天龙世界的准则(v11 24)：审稿人据此判合不合理
             "heard": rag.heard(world, sorted({g.get(p, "location") for p in people} - {None}))}
 
 
@@ -219,6 +222,30 @@ def _card(world, p: str) -> dict:
              canon=[f"〔{e['id']}〕{world.clock.label(e['day'])}·{e['where']}：{e['summary']}" for e in _pending(world, derived=False) if p in e["actors"]][:2],
              recent=[f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}" for e in reversed(world.truth.events) if p in e["summary"]][:3])
     return d
+
+
+def canon_lines(world, ev_id=None, persons=()) -> list[str]:
+    """原著剧情线(v11 27)：这一桩在哪条线上、这几人是哪几条线的主人——因果、动机、原著结局、线上还没演的几桩；
+    这一桩自己的情理前提与「前提破了按原著的逻辑大约会怎样」。只是参考，不是规定：原著线可以断。"""
+    atlas = getattr(world, "atlas", None) or {}
+    lines, notes, done = atlas.get("lines") or {}, atlas.get("notes") or {}, set(world.done)
+    picked = [notes[ev_id]["line"]] if ev_id in notes and notes[ev_id].get("line") in lines else []
+    picked += [lid for lid, ln in lines.items() if set(ln.get("owners") or []) & set(persons) and lid not in picked]
+    out = []
+    for lid in picked[:3]:
+        ln = lines[lid]
+        todo = [e for e in ln.get("events") or [] if e not in done]
+        out.append(f"「{ln.get('name')}」因果：{ln.get('spine')}｜动机：{ln.get('motive')}｜原著结局：{ln.get('outcome')}"
+                   + (f"｜线上还没演的：{'→'.join(todo[:4])}" if todo else "｜已走完"))
+    if ev_id in notes:
+        n = notes[ev_id]
+        out.append(f"〔{ev_id}〕在线里是「{n.get('role')}」｜靠什么成立：{n.get('needs')}｜前提破了，按原著的逻辑大约会：{n.get('if_broken') or '—'}")
+    return out
+
+
+def precepts(world) -> list[str]:
+    """天龙世界的准则(v11 24)：这部书里事情怎样发生的道理，审稿人判一条剧情线合不合理用。"""
+    return [f"{p.get('id', '')[2:]}：{p.get('text')}" for p in ((getattr(world, "atlas", None) or {}).get("precepts") or {}).values()]
 
 
 def lines_of(world, persons) -> list[str]:

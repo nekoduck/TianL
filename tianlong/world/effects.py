@@ -7,7 +7,7 @@
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
           place()（任一节点此刻所在之地）、things()（v11 此刻在某几处的器物：地上的连同那里的人手里的，按索引取、与 place 同一口径）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
-[POS]: v11 世界底座：主角走进一处新立的场所即进它的前堂(venue.door)，走到哪里近处的场所便布好(venue.settle)，过关付关钱。
+[POS]: v11 世界底座：RULED_BY 规则自己落的账(药力、医治)不算哪一方写的剧情、不顺带降内伤；describe 说买卖(trade)、服务(service)、打听来的话(lore)；主角走进一处新立的场所即进它的前堂(venue.door)，走到哪里近处的场所便布好(venue.settle)，过关付关钱。
        world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)与方位 spot(v8 场景清单：
@@ -69,6 +69,7 @@ PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物�
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
 ITEM_FLOW = {"location", "holder", "hidden", "state", "spot"}  # 器物：定义不可改，只可流转、显隐、损耗，挪个方位(v8 spot：剑架上、茶几上)
 OFFSCREEN = {"derived"}                          # 场外剧情(v11 衍生事件)：主角不在场，碰不到主角本人
+RULED_BY = "rule"                                # 规则自己落的账(v11 药力、医治)：调用方(trade)已核过在场，不算哪一方写的剧情
 RESOLVED_KEYS = {"location", "holder", "inventory", "skills", "faction"}  # 这些值是实体名，须经别名表归一
 NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或 add 一个数
 LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
@@ -198,6 +199,14 @@ def describe(op) -> str:
                                                                         else f"（从{src}）" if op.get("from") and v > 0 else "")
     if kind == "squad":
         return f"{nid}被{'杀' if key == 'dead' else '打倒'}{stock.cn(v)}人"
+    if kind == "trade":  # 买卖与服用(v11)
+        word = {"bought": "买下", "sold": "卖出", "pawned": "当掉", "used": "服用了"}.get(key, key)
+        return f"主角{word}{nid}" + (f"，花了{stock.say(op['price'])}" if key == "bought" and op.get("price")
+                                    else f"，得了{stock.say(op['price'])}" if key in ("sold", "pawned") and op.get("price") else "")
+    if kind == "service":
+        return f"{op.get('by')}替主角办了{key}" + (f"（{stock.say(op['price'])}）" if op.get("price") else "")
+    if kind == "lore":  # 打听来的话照原样说(可以是假的)：编剧照这句写进台词
+        return f"{op.get('by')}说起：{v}"
     if kind == "forge":
         return f"{'主角' if op.get('by') == 'player' else op.get('by')}写成了{nid}"
     if kind == "doc":  # 逐键说成人话(不预先格式化：撕成几份只对 torn 有数可说)
@@ -487,7 +496,7 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
             return f"{far[0]}不在这桩事所及之处"
     if origin == "director" and op["op"] in ("link", "unlink"):
         return _bond(world, op)
-    if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
+    if origin in ("canon", RULED_BY) or op["op"] in ("link", "unlink", "reveal"):
         return None
     g, nid = world.graph, op.get("id")
     where = place(world, nid)
