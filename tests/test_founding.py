@@ -340,3 +340,28 @@ class LedgerTest(unittest.TestCase):
         applied, rifts = settle.commit(w, {"changes": [{"据": "又要了一份馒头", "谁": "player", "ops": [{"做": "买下", "物": "馒头"}]}]},
                                        "你又要了一份馒头。", {adjudicate.TRADE})
         self.assertTrue(applied and not rifts and w.player["money"] < paid)
+
+
+class LiveFixTest(unittest.TestCase):
+    """真模型实测抓到的两处：小二把没买的酒「端上」桌(凭空出现，返工清单提示写买下)；打听来的原话进连带，编剧照它写。"""
+
+    def setUp(self):
+        self.w = at(World.create("测"), STREET)
+        go(self.w, INN)
+        shichen(self.w, "辰")
+        self.w.player.set("money", 3.0)
+
+    def test_unbought_wine_is_conjured(self):
+        from tests.test_adjudicate import judge, plan
+        w = self.w
+        r = judge(w, plan((f"{INN}·店小二一", "店小二端上一壶酒，给你斟满。", [])), {adjudicate.TRADE})
+        self.assertIn("conjure", [f.kind for f in r.hard])
+        self.assertTrue(any("买下" in line for line in adjudicate.brief(w, r)))
+
+    def test_the_words_heard_reach_the_writer(self):
+        w = self.w
+        w.turn = {}
+        done, _ = effects.apply(w, [{"做": "打探"}], "director")
+        told = next(r for r in done if r["op"] == "lore")
+        self.assertEqual(w.graph.get(told["by"], "role"), "店小二")                      # 没写问谁：先问办打探的伙计
+        self.assertTrue(any(lore.entries(w)[told["id"]]["text"] in n for n in w.turn.get("notes", [])))

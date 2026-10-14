@@ -310,8 +310,8 @@ def _repeat(world, op) -> bool:
     turn, v = getattr(world, "turn", None) or {}, acts.verb(op)
     if v == "办事":
         return op.get("事") in turn.get("served", ())
-    if v == "打探":
-        return bool(turn.get("asked")) and op.get("与") in (None, *turn["asked"])
+    if v == "打探":  # 一回合打听过了，正文怎么复述(问的是哪个伙计)都是那一回
+        return bool(turn.get("asked"))
     item = op.get("物")
     if v == "买下":
         vid = trade.shop(world)

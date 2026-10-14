@@ -6,10 +6,10 @@
 [POS]: world 层的买卖与服务——底座里有的才买得到、办得成：货架上的货有价有存货(买走即少、每日补回)，服务由当值的那个职名办、价钱照价目，
        钱从主角身上付到柜上(柜银是一堆碎银，总数守恒)；收购与典当按估值的几成、柜上的银两不够即不收；
        药与毒接身体规则(一服回几点气血、内伤降几级、治什么解什么，毒发添上症状)；打探从消息表里取——此处向当值的哪个职名、要多少赏钱，
-       听来的照原样记(可以是假的)。一件事一个事务：前提不成整条不成并给出人话缘由，什么也不动；记录写成下游认得的形状(money 与 inventory 照旧，另有 trade/service/lore)。
+       听来的照原样记(可以是假的)，原话进连带交编剧照它写；没写问谁先问办打探的伙计，想打听的事是偏好、不是筛子。一件事一个事务：前提不成整条不成并给出人话缘由，什么也不动；记录写成下游认得的形状(money 与 inventory 照旧，另有 trade/service/lore)。
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import actor, effects, lore, situation, stock, venue
+from . import actor, effects, lore, perspective, situation, stock, venue
 
 RATIO = 0.4                                              # 收购、典当按估值的几成(4.2：当价三到五成)
 LODGING = {"住宿", "借宿"}                               # 住下：主角进那一间(住满两个时辰即算歇息养伤，归 body)
@@ -293,12 +293,13 @@ def _tell(world, person: str, topic=None, free=False) -> tuple[list, str | None]
         heard = set(lore.heard(world))
         mine += [{"id": lid, "how": "问", "by": person, "price": 0, "need": None} for lid in lore.tells(world, person)
                  if lid not in heard and lid not in {m["id"] for m in mine}]
-    if topic:
+    if topic:  # 想打听的事是偏好，不是筛子：问「江湖传闻」，他就说他知道的那几条里最贴的
         key = str(topic)
-        mine = [m for m in mine if key in m["id"] or key in (table[m["id"]].get("text") or "")
-                or any(key in str(x) for x in table[m["id"]].get("about") or [])] or []
+        hit = [m for m in mine if key in m["id"] or key in (table[m["id"]].get("text") or "")
+               or any(key in str(x) for x in table[m["id"]].get("about") or [])]
+        mine = hit or mine
     if not mine:
-        return [], f"{person}不知道" + (f"「{topic}」的事" if topic else "什么新鲜事")
+        return [], f"{person}不知道什么新鲜事"
     pick = mine[0]
     price = 0 if free else round(pick.get("price") or 0, 3)
     if price > stock.EPS:
@@ -307,6 +308,7 @@ def _tell(world, person: str, topic=None, free=False) -> tuple[list, str | None]
         stock.earn(world, person, price)
     lore.learn(world, pick["id"])
     entry = table[pick["id"]]
+    _note(world, f"{perspective.handle(world, person)}说起：「{entry.get('text')}」——打听来的就是这一句，台词照它说，不另编消息")
     return ([{"op": "money", "id": person, "value": price, "from": "player"}] if price > stock.EPS else []) + \
         [{"op": "lore", "id": pick["id"], "by": person, "value": entry.get("text"), "how": pick.get("how")}], None
 
@@ -316,8 +318,9 @@ def inquire(world, a, who, heading):
         return [], "打探只记主角的：旁人之间说了什么交导演写进台词"
     person = a.get("与") or a.get("对")
     people = situation.around(world)
-    if person is None:
-        found = [s for s in lore.sources(world) if s["by"]]
+    if person is None:  # 没写问谁：先找办打探的伙计(店小二)，再找此处知道消息的人
+        g = world.graph
+        found = sorted((s for s in lore.sources(world) if s["by"]), key=lambda s: "打探" not in (g.get(s["by"], "services") or []))
         person = found[0]["by"] if found else next(iter(sorted(people)), None)
     if person not in people:
         return [], f"{person or '没有人'}不在跟前，问不着"
