@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 copy 做深拷贝
-[OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/所识之人 acquaintances/眼前的名册 cast(v5)/节奏账 pacing/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆；
+[OUTPUT]: v11 tags 主角干哪一行(出身带来：消息与知者的行当标签)、lore 主角听来的消息；
+           对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/所识之人 acquaintances/眼前的名册 cast(v5)/节奏账 pacing/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆；
           v4 另有账文分歧 drift(v6：正文与账本对不上的几句，结算记下、下回合交导演圆回) 与故事账 scene/clocks/arc/spines/setups；v9 另有身上的零钱 money(两)，三种出身各带一点）、ORIGINS、JOURNAL_CAP
 [POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相；
        quests/study/hooks/turn/acquaintances/cast/pacing/came_from/en_route/drift 由系统(situation、growth、engine、perspective、pacing)维护，scene/clocks/arc/spines/setups 由 story/ 维护；内伤是境况里的分级词，由 body 升降，导演写不动。
@@ -28,6 +29,8 @@ DEFAULTS = {
     "study": {},         # 研习进度（秘籍/武学 → 累计分钟、所至之阶）：由 growth 维护
     "hooks": [],         # 编剧埋下、尚未兑现的伏笔（至多两条）
     "acquaintances": [], # 主角识得其名的人：出身带来的、戏里自报家门或被人当面叫出的（由 perspective 维护）
+    "tags": [],          # 主角干哪一行(v11)：消息与知者的行当标签(江湖、行情、官府…)，出身带来
+    "lore": [],          # 主角听来的消息(v11)：25 的 id，照原样记(可以是假的)，由 lore 维护
     "cast": [],          # 眼前的名册：片区里被剧情带到主角跟前的人（赶来、原著带上台；由 situation 维护，走出近旁即清空）
     "came_from": None,   # 来路：主角上一程从哪里来（出路标出来路，兜底选项不给回头路）
     "en_route": None,    # 途中：{to 去向, left 余程日数}，光阴走满在途中歇脚时记下，到达或改道即清
@@ -46,9 +49,12 @@ JOURNAL_CAP, FOLD = 10, 5  # 近事满十行，最早五行折叠进梗概
 
 # 开局出身：给主角一个站在剑湖宫的理由与一条所求。原著里马五德正是带客人来观剑会之人
 ORIGINS = {
-    "随从": {"origin": "普洱茶商马五德的随从，随他来无量山观五年一度的剑会", "goal": "在江湖上挣得一个名字", "power": 10, "money": 0.5},
-    "武师": {"origin": "落魄的外家武师，受马五德接济，随行充作护院", "goal": "求一门真正的武学", "power": 22, "money": 0.3},
-    "小吏": {"origin": "镇南王府的小吏，奉命暗中照看出游的世子段誉", "goal": "护世子周全，回府复命", "power": 10, "money": 2.0},
+    "随从": {"origin": "普洱茶商马五德的随从，随他来无量山观五年一度的剑会", "goal": "在江湖上挣得一个名字", "power": 10, "money": 0.5,
+           "tags": ["行情", "过客"]},
+    "武师": {"origin": "落魄的外家武师，受马五德接济，随行充作护院", "goal": "求一门真正的武学", "power": 22, "money": 0.3,
+           "tags": ["江湖"]},
+    "小吏": {"origin": "镇南王府的小吏，奉命暗中照看出游的世子段誉", "goal": "护世子周全，回府复命", "power": 10, "money": 2.0,
+           "tags": ["官府"]},
 }
 
 

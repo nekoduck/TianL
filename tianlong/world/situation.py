@@ -12,13 +12,14 @@
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
           entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
-[POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
+[POS]: v11 世界底座：不当值的伙计不在眼前(venue.on_duty)；上了锁的房门隔开人(锁着的库房不是隔壁)；带时辰的关口让近旁随光阴而变(不缓存)；场所房间的短名认得最后一截。
+       world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
        「在眼前」只有一个口径(around)：裁决、选项、视锥、认知校正、见证人数、原著的分身之禁都读它。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import access
+from . import access, venue
 from .graph import holds
 
 FOLLOW = "随行"                                                     # X —随行→ player
@@ -46,12 +47,14 @@ APART = {"悬崖", "险径", "水路", "秘道", "机关", "阵法", "其他"}  
 
 
 def _apart(edge: dict) -> bool:
-    return any(gate.get("hidden") or gate.get("kind") in APART for gate in (edge.get("gates") or {}).values())
+    """隔开了人的关口：悬崖暗门之类，v11 另有上了锁的房门(锁着的库房不是隔壁——东西要开了锁才拿得着)。"""
+    return any(gate.get("hidden") or gate.get("kind") in APART or gate.get("key") for gate in (edge.get("gates") or {}).values())
 
 
 def _volatile(edge: dict) -> bool:
-    """这条路的关口要看主角身上的东西(requires 写着 player)：近旁随主角而变，不缓存。"""
-    return any(r and r[0] == "player" for gate in (edge.get("gates") or {}).values() for r in gate.get("requires") or [])
+    """这条路的关口要看主角身上的东西(requires 写着 player)或时辰(v11 hours)：近旁随主角、随光阴而变，不缓存。"""
+    return any(gate.get("hours") or any(r and r[0] == "player" for r in gate.get("requires") or [])
+               for gate in (edge.get("gates") or {}).values())
 
 
 def near(world, loc: str | None = None) -> set[str]:
@@ -108,7 +111,8 @@ def around(world, loc: str | None = None) -> set[str]:
     """主角身边之人（此地 + 近旁，活着、未隐匿、未休眠）：片区里的人须在名册上或正随行——同在「中原」的四十人不同处一室。"""
     g, spots = world.graph, near(world, loc)
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
-    return {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and (not area(world, s) or p in seen)}
+    return {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and venue.on_duty(world, p)
+            and (not area(world, s) or p in seen)}  # 不当值的伙计(v11)回屋歇着了，不在眼前
 
 
 def shortnames(world) -> dict[str, str]:
@@ -117,9 +121,10 @@ def shortnames(world) -> dict[str, str]:
     local = near(world) | set(access.steps(world, world.here))
     out: dict[str, str] = {}
     for loc in sorted(local):
-        if "·" in loc:
-            short = loc.split("·", 1)[1]
-            out[short] = None if short in out else loc
+        parts = loc.split("·")
+        for k in range(1, len(parts)):  # v11 场所的房间多一截：「东街客栈·大堂」「大堂」都认得，「客房·上房一」「上房一」亦然
+            short = "·".join(parts[k:])
+            out[short] = None if short in out and out[short] != loc else loc
     return {k: v for k, v in out.items() if v}
 
 
@@ -140,7 +145,7 @@ def seen(world) -> set[str]:
 def inhabited(world) -> bool:
     """这一片有没有人(不论在不在跟前)：传闻要有传话的人——独处石洞，江湖上的事传不进来。"""
     g, spots = world.graph, near(world)
-    return bool(party(world)) or any(_alive(g, p) for s in spots for p in g.where(type="person", location=s))
+    return bool(party(world)) or any(_alive(g, p) for s in spots for p in g.where(type="person", location=s))  # 歇着的伙计也传得了话
 
 
 def debuted(world, pid: str) -> bool:

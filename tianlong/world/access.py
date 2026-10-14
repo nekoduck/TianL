@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 world/graph 的 matches / ROAD，依赖 World 门面的 graph / knowledge / player / here（鸭子类型）
-[OUTPUT]: 对外提供 barrier()（一步为何走不通）、stranded()（是否身陷绝境）、distances()（主角可走的里程）、walk()（主角远行的实际路线与止步缘由，可按本回合光阴在途中歇脚）、heading()（局部方向措辞）、ON_ROAD、learn()（走过的路就认得）、
+[OUTPUT]: v11 世界底座：barrier 另认关口的时辰(拦所有人)、钥匙与关钱(只拦主角)，tolls 一条路要付的关钱，stroll 同城零日之路按里数的步行分钟；walk 近旁之内挪几步不算「门前之关」(房间都接在正堂上)。
+          对外提供 barrier()（一步为何走不通）、stranded()（是否身陷绝境）、distances()（主角可走的里程）、walk()（主角远行的实际路线与止步缘由，可按本回合光阴在途中歇脚）、heading()（局部方向措辞）、ON_ROAD、learn()（走过的路就认得）、
           exits()（主角眼中的出路，带方向措辞并标出来路）、steps()（场外人物可去的相邻地）、reach()（v11 场外人物可走的里程：场外剧情线排日程、到期核赶不赶得到）、passes()（此地出发的关口，供导演）、secret_ways()（近处未被发现的暗路，供导演）、
           hidden()（道路是否藏有暗路）
 [POS]: world 层的通行裁判——道路是地理，通行是物理与认知：blocked 与 requires 由系统硬判、拦住所有人（唯一的例外是主角身陷绝境——
@@ -11,6 +12,7 @@
        光阴走满则在途中的原著地点歇脚(en_route 记着去向与余程)，千里之行分作几回合，途中可以遇事。出路按局部方向措辞(出/进/去/往)并标出来路。传闻与 LOD 分层仍按纯地理
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+from .clock import PER_DAY, PER_SHICHEN
 from .graph import ROAD, matches
 
 STATE_WORDS = {"exists": "存在", "accessible": "可通行"}
@@ -47,7 +49,36 @@ def barrier(world, a: str, b: str, edge: dict, player: bool = True, strict: bool
         return f"此路不通（{gate['kind']}）：{gate['how']}"
     value = lambda nid, key: world.player.get(key) if nid == "player" else world.graph.get(nid, key)
     lack = [_need(*r) for r in gate["requires"] if not matches(value(r[0], r[1]), r[2])]
-    return f"条件未备：{'；'.join(lack)}" if lack else None
+    if lack:
+        return f"条件未备：{'；'.join(lack)}"
+    return _kept(world, gate, player)
+
+
+def _kept(world, gate: dict, player: bool) -> str | None:
+    """世界底座的关口另有三样(v11)：时辰之外即关闭(城门夜闭、府门按时开关，拦所有人)；门上了锁要有钥匙、过关要付关钱(只拦主角——
+    场外之人自有守门人放行)。把守之人(guard)不拦脚步，交导演在剧情里兑现。"""
+    from . import stock, venue  # 用时才引：venue 引 situation、situation 引本模块
+    hours = gate.get("hours")
+    if hours and not venue.open_at(hours, (world.clock.tick % PER_DAY) // PER_SHICHEN):
+        return f"关口已闭（{gate['kind']}，{hours}开闭）：{gate.get('how') or '到时辰才开'}"
+    if not player:
+        return None
+    keys = gate.get("key") or []
+    if keys and not any(k in world.player["inventory"] for k in keys):
+        return f"门上了锁：须有{'或'.join(k.rpartition('·')[2] for k in keys)}"
+    toll = gate.get("toll")
+    if toll and stock.funds(world, "player") + stock.EPS < toll:
+        return f"过此须付关钱{stock.say(toll)}，身上不够"
+    return None
+
+
+def tolls(world, route: list[str]) -> float:
+    """沿这条路过关要付的关钱(v11)：主角走过的每一道带关钱的关口。"""
+    g, total = world.graph, 0.0
+    for a, b in zip(route, route[1:]):
+        gate = _gate(g.road(a, b) or {}, b)
+        total += (gate or {}).get("toll") or 0
+    return round(total, 3)
 
 
 def _known(world, edge: dict) -> bool:
@@ -63,6 +94,25 @@ def _passable(world, player: bool = True):
 def stranded(world, loc: str) -> bool:
     """绝境：此地除了此路不通者别无出路（坠入谷底、困于绝壁之下）——原著里萧远山也是这样脱谷的，只是"方法未载"。"""
     return not world.graph.ways(loc, lambda a, b, edge: barrier(world, a, b, edge, strict=True) is None)
+
+
+def stroll(world, a: str, b: str) -> int:
+    """同城零日之路的步行分钟(v11)：沿主角走得通的零日之路，按里数求最短；不在同一片零日之路上即 0(远行的光阴按日数另算)。"""
+    import heapq
+    from .venue import LI_MINUTES
+    g, ok = world.graph, _passable(world)
+    dist, heap = {a: 0.0}, [(0.0, a)]
+    while heap:
+        d, loc = heapq.heappop(heap)
+        if loc == b:
+            return round(d * LI_MINUTES)
+        if d > dist[loc]:
+            continue
+        for nxt, e in g.ways(loc, ok):
+            if e["days"] == 0 and d + (e.get("li") or 0) < dist.get(nxt, 1e9):
+                dist[nxt] = d + (e.get("li") or 0)
+                heapq.heappush(heap, (dist[nxt], nxt))
+    return 0
 
 
 def distances(world, src: str) -> dict[str, int]:
@@ -82,13 +132,15 @@ def walk(world, dest: str, budget: int | None = None) -> tuple[list[str], str | 
         return [here], f"{dest}与此地不相通"
     edges = [g.road(a, b) for a, b in zip(route, route[1:])]
     left = [sum(e["days"] for e in edges[i:]) for i in range(len(edges))]  # 每一站距目的地还有几日
+    from .situation import near  # situation 引本模块：用时才引
+    close = near(world)  # 近旁之内挪几步(v11 房间都接在正堂上)：门就在跟前，不算「门前之关」
     for i, ((a, b), edge) in enumerate(zip(zip(route, route[1:]), edges)):
         why = barrier(world, a, b, edge)
         if why:  # 绝路：暗路只说找不到去路，不点出通往何处；断在半途才点明断在哪一步
             told = why if why == LOST or b == dest else f"往{b}{why}"
             return route[:i + 1], f"行至{a}便止步，{'再往前' if why == LOST else ''}{told}" if i else told
         gate = _gate(edge, b)
-        if gate and i and (b == dest or left[i] == 0):  # 门前之关：通往目的地，或与目的地同在 0 日一簇
+        if gate and i and a not in close and (b == dest or left[i] == 0):  # 门前之关：通往目的地，或与目的地同在 0 日一簇
             return route[:i + 1], f"行至{a}便止步，往{b}是一道关（{gate['kind']}）：{gate['how']}"
         gone = sum(e["days"] for e in edges[:i])
         if budget is not None and gone and gone + edge["days"] > budget:  # 光阴走满：在途中歇脚，不一步跨过千里

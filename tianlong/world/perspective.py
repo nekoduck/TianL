@@ -10,7 +10,8 @@
           veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码；
           v8 器物是 world/scenery 的卡片(名字、等级、方位、类别、描述、属性、内容)，名字过 thing、其余过 mask，景物的描述与现状亦然）、
           thing()（器物在主角眼中的叫法：名字里带着不识之人的名号就只叫那件东西本身）
-[POS]: world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
+[POS]: v11 伙计(staff)只有职名：guise 叫他的职名(掌柜、店小二)，同职几人再由 distinguish 分外号。
+        world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
        识名是认知最表层的一环：主角初见钟灵，只知是「大眼圆脸的少女」；她自报姓名、或认得她的人当面叫她，主角才知道她叫钟灵。
        人物之间：原著里有关系、同一门派即互相识名，戏里听见的另记在人物节点的 knows 上；主角所识之人记在黑板的 acquaintances 上（系统维护，导演写不动）。
        纯规则、零调用：追认只增加认知，从不挪动任何人；查不出的旁白漏名，由 mask 在交编剧之前确定性地换掉——不给即不泄露
@@ -194,6 +195,8 @@ def guise(world, pid: str) -> str:
     g = world.graph
     if g.get(pid, "epithet"):
         return g.get(pid, "epithet")
+    if g.get(pid, "staff") and g.get(pid, "role"):  # 伙计(v11)只有职名：掌柜、店小二、坐堂大夫——人人这样叫他
+        return g.get(pid, "role")
     look = re.split(r"[，。；、]", g.get(pid, "appearance") or "")[0].strip()
     if look and NOUN.search(look) and len(look) <= 6:
         return look

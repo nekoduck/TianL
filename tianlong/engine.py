@@ -5,7 +5,8 @@
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概与场外编剧写好的剧情线) / debug(另列场外剧情线) / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
-[POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
+[POS]: v11 世界底座：回合开始布好主角近处的场所(venue.settle)，同城的街巷按里数记光阴(access.stroll)，跨了日子补货(venue.restock)。
+        两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
        → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔
@@ -39,7 +40,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, plot, rag, scenery, settle, situation
+from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, plot, rag, scenery, settle, situation, venue
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -150,6 +151,7 @@ class Game:
         w.turn, self._tasks = {}, []
         w.player.set("turn", w.player["turn"] + 1)
         origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
+        venue.settle(w)                               # 近大远小(v11)：主角所在与一步之遥的场所布好近景——伙计、陈设、货架
         self._distinguish(w)                          # 叫法即主键(v7)：撞名的人在任何人落笔之前分到稳定的外号
         glance0 = settle.glance(w)                    # 两相对账(v7)：回合开始时主角看得见的账，回合末与之求差
         aim = adjudicate.targets(w, deed, self.menu.get(deed, ()))  # 玩家所指：选项自带的对象 + 原话里认得出的名字
@@ -191,7 +193,8 @@ class Game:
             stakes.plant(w, spec)
         w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
         stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
-        journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
+        journey = sum(access.distances(w, a).get(b, 0) * PER_DAY or access.stroll(w, a, b)  # 每一程都算，不由 LLM 估算；同城的街巷按里数(v11)
+                      for a, b in zip(stops, stops[1:]))
         spent = max(w.turn["minutes"], journey)
         days, _ = w.advance(spent)                    # 时长由措辞换算，不由 LLM 报数
         scene_end = w.clock.label()
@@ -206,6 +209,7 @@ class Game:
         elif veto:
             log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
+        venue.restock(w, days)                        # 跨了日子(v11)：店里每日补货的货补回原数
         mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
         mend = "；".join(x for x in [mend, *crowd.recover(w)] if x)  # 打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
         arrived = w.sync()
