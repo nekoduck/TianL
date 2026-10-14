@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/graph 的 matches / ROAD，依赖 World 门面的 graph / knowledge / player / here（鸭子类型）
 [OUTPUT]: 对外提供 barrier()（一步为何走不通）、stranded()（是否身陷绝境）、distances()（主角可走的里程）、walk()（主角远行的实际路线与止步缘由，可按本回合光阴在途中歇脚）、heading()（局部方向措辞）、ON_ROAD、learn()（走过的路就认得）、
-          exits()（主角眼中的出路，带方向措辞并标出来路）、steps()（场外人物可去的相邻地）、passes()（此地出发的关口，供导演）、secret_ways()（近处未被发现的暗路，供导演）、
+          exits()（主角眼中的出路，带方向措辞并标出来路）、steps()（场外人物可去的相邻地）、reach()（v11 场外人物可走的里程：场外剧情线排日程、到期核赶不赶得到）、passes()（此地出发的关口，供导演）、secret_ways()（近处未被发现的暗路，供导演）、
           hidden()（道路是否藏有暗路）
 [POS]: world 层的通行裁判——道路是地理，通行是物理与认知：blocked 与 requires 由系统硬判、拦住所有人（唯一的例外是主角身陷绝境——
        此地除不通之路外别无出路，如坠入谷底——此时不通之路交导演以奇遇兑现，世界不会把主角永远困死）；hidden 只拦尚未发现它的主角，
@@ -129,6 +129,11 @@ def exits(world) -> list[dict]:
 def steps(world, loc: str) -> list[str]:
     """场外人物一日可去的相邻地：不通与条件未备之路拦住所有人；暗路不拦——知情与否只对主角建模。"""
     return [b for b, _ in world.graph.ways(loc, _passable(world, player=False))]
+
+
+def reach(world, src: str) -> dict[str, int]:
+    """场外人物可走的里程(日，v11)：与 steps 同一口径——不通与条件未备之路拦住所有人，暗路不拦。场外剧情线排日程、到期核前提都用它。"""
+    return world.graph.distances(src, _passable(world, player=False))
 
 
 def passes(world) -> list[str]:

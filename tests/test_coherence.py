@@ -1,9 +1,9 @@
 """
-[INPUT]: 依赖 tianlong.world 的 World / lod / body / bond / effects / rag / graph / situation / menu 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
+[INPUT]: 依赖 tianlong.world 的 World / lod / plot(v11 场外编剧的规则审) / body / bond / effects / rag / graph / situation / menu 与 data/canon 原著世界，tianlong.engine 的 Game（离线 llm=None 结算场外原著），
          tianlong.narrative 的 prompts（后台成文）/ agents（选项解析）与 llm.LLMError，tianlong.story 的 brief / choices / scene / timing，tests/test_engine 的 StubLLM / director（桩导演），tests/test_adjudicate 的 plan / judge
 [OUTPUT]: unittest 用例——v5「连贯性」的离线验收，每一类对应 PR #2 review 里一条 P0：
           剧情前提与体征分开(原著宣告的负伤不被养伤抹掉、明写痊愈才消、读路径不写气血、原著主线离线连演不断)；
-          一人一主(OneMasterTest)、场外说法对账(OffstageProseTest)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
+          一人一主(OneMasterTest：v11 原著前置未变归演绎家、近旁与见过主角的人场外编剧不写、七日内照原著的人创作家不先改)、场外说法对账(OffstageProseTest：v11 衍生事件的说法)、场外事务(TransactionTest)、近旁(NextDoorTest)、原著来要主角身边的人(FarewellTest)；
           账文一致(AgreementTest：只剥越权的那条、旁白里的「你」、走进而没走、暗路与隐情的来由、取物口径、返工写明东西在哪、摸索心法即研习、成文之后再对账、导演失声)；
           眼前(PresenceTest：片区不是一间屋子、名册、尚未登场、走出近旁、原著上台、此地另有其人、近处的熟人、兜底攀谈)；
           P1(TimeTableTest 一张时长表、StudyStallTest 受阻不跨门槛、SceneTest 合要有账与主干不换题、BondTest 恩怨口径、OptionTest 括号、NewsTest 江湖大事)；
@@ -22,7 +22,7 @@ from tianlong.engine import Game, _newsworthy
 from tianlong.narrative import agents, prompts
 from tianlong.narrative.llm import LLMError
 from tianlong.story import brief, choices, scene, timing
-from tianlong.world import adjudicate, body, bond, effects, graph, growth, lod, menu, perspective, rag, situation
+from tianlong.world import adjudicate, body, bond, effects, graph, growth, lod, menu, perspective, plot, rag, situation
 from tianlong.world.clock import PACES, PER_DAY, span
 from tianlong.world.world import World
 
@@ -79,10 +79,19 @@ class PlightTest(unittest.TestCase):
 
 
 # ============================================================
-#  P0-2 一人一主：场外推演、原著结算与散文验真
+#  P0-2 一人一主：场外编剧、日程结算与散文验真(v11 场外推演换成场外编剧：规则审在 world/plot)
 # ============================================================
-def report(where, event, result, *ops):
-    return {"where": where, "event": event, "result": result, "effects": list(ops)}
+def derived(w, where, actors, summary, *ops, day=None):
+    """一桩场外编剧写好、排进日程的衍生事件：与原著同一格式，先把人摆到事发之地。"""
+    day = w.clock.day if day is None else day
+    place = [{"op": "set", "id": a, "key": "location", "value": where} for a in actors]
+    return {"id": f"衍·测·{len(w.canon)}", "order": 0.5, "day": day, "where": where, "weight": 1, "public": True,
+            "actors": list(actors), "requires": [], "effects": place + list(ops), "summary": summary,
+            "derived": True, "line": "测", "made": w.clock.day}
+
+
+def freed(w, pid):
+    w.done.extend(e["id"] for e in w.canon if pid in lod._cast(e))  # 此人再无原著之约：原著里已没有他的戏
 
 
 class OneMasterTest(unittest.TestCase):
@@ -90,65 +99,73 @@ class OneMasterTest(unittest.TestCase):
         self.w = World.create("测")
         self.w.turn = {}
 
-    def test_only_free_people_are_simulated(self):
-        actors, scope = lod.lod1_scope(self.w)
-        self.assertEqual(actors, ["秦红棉"])                     # 段誉在近旁归导演，木婉清、甘宝宝、钟万仇七日内有原著
-        self.assertTrue({"段誉", "木婉清", "甘宝宝", "钟万仇"}.isdisjoint(scope))
+    def test_people_with_canon_ahead_are_performed_not_invented(self):
+        w = self.w
+        self.assertEqual(plot.mode(w, "秦红棉"), "演绎")                 # 原著前置未变：照原著演
+        freed(w, "秦红棉")
+        self.assertEqual(plot.mode(w, "秦红棉"), "创作")                 # 原著里已没有她的戏：往后的路交创作家
 
     def test_people_next_door_belong_to_the_director(self):
         w = self.w
-        w.done.extend(e["id"] for e in w.canon if "秦红棉" in lod._cast(e))  # 秦红棉再无原著之约
+        freed(w, "秦红棉")
+        w.graph.nodes["秦红棉"]["adrift"] = True
         w.graph.set("秦红棉", "location", "剑湖宫·练武厅")
         w.player.set("location", "剑湖宫")
-        self.assertNotIn("秦红棉", lod.lod1_scope(w)[1])        # 喊一声就到的人，场外推演碰不得
+        self.assertNotIn("秦红棉", plot.idle(w))                          # 喊一声就到的人，场外编剧不写
+        _, problems = plot.vet(w, plot.sequel(w, "秦红棉"), {"events": [{"day": 0, "where": "剑湖宫·练武厅", "actors": ["秦红棉"], "summary": "秦红棉拂袖而去"}]})
+        self.assertTrue(any("主角身边" in p for p in problems))
 
     def test_people_who_met_the_player_wait_for_the_story(self):
         w = self.w
+        freed(w, "秦红棉")
+        w.graph.nodes["秦红棉"]["adrift"] = True
+        self.assertIn("秦红棉", plot.idle(w))
         bond.event(w, "秦红棉", 1.5, "你替她挡过一箭")
-        self.assertNotIn("秦红棉", lod.lod1_scope(w)[1])
+        self.assertNotIn("秦红棉", plot.idle(w))                          # 一日之内与主角有过交集：等着主角的故事
 
-    def test_the_simulator_cannot_touch_the_canon_cast(self):
+    def test_the_creator_cannot_beat_the_canon_to_its_cast(self):
         w = self.w
-        actors, scope = lod.lod1_scope(w)
-        told = lod.absorb(w, [report("木婉清居所", "秦红棉寻仇", "一掌打死了甘宝宝",
-                                     {"op": "set", "id": "甘宝宝", "key": "status", "value": "dead"},
-                                     {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"},
-                                     {"op": "set", "id": "秦红棉", "key": "mood", "value": "恨极"})], scope)
-        self.assertEqual(told, [])                                                    # 心思变了，不成江湖事
-        self.assertEqual(w.graph.get("甘宝宝", "status"), "alive")                     # 原著认领之人
-        self.assertEqual(w.graph.get("秦红棉", "location"), "木婉清居所")               # 尚有原著之约，去向归原著
-        self.assertEqual(w.graph.get("秦红棉", "mood"), "恨极")
+        freed(w, "秦红棉")
+        task = plot.sequel(w, "秦红棉")
+        _, problems = plot.vet(w, task, {"events": [{"day": 0, "where": "木婉清居所", "actors": ["秦红棉", "甘宝宝"], "summary": "秦红棉一掌打死了甘宝宝",
+                                                      "effects": [{"op": "set", "id": "甘宝宝", "key": "status", "value": "dead", "by": "秦红棉"}]}]})
+        self.assertTrue(any("七日之内照原著" in p for p in problems))     # 原著前置未变就照原著演：创作家不先一步改掉她
+        self.assertEqual(w.graph.get("甘宝宝", "status"), "alive")
 
 
 class OffstageProseTest(unittest.TestCase):
+    """衍生事件的说法是 LLM 写的：到期结算时与账对得上才照录，提到主角即只记核实过的后果。"""
+
     def setUp(self):
         self.w = World.create("测")
         self.w.turn = {}
-        self.w.done.extend(e["id"] for e in self.w.canon if "秦红棉" in lod._cast(e))  # 让秦红棉成为可以走动的自由之人
-        self.scope = lod.lod1_scope(self.w)[1]
+        freed(self.w, "秦红棉")
 
-    def absorb(self, *reports):
-        return [e["summary"] for e in lod.absorb(self.w, list(reports), self.scope)]
+    def settle(self, summary, *ops):
+        ev = derived(self.w, "木婉清居所", ["秦红棉"], summary, *ops)
+        self.w.canon.append(ev)
+        e = lod.settle(self.w, ev, ev, "derived")
+        return [e["summary"]] if e else []
 
     def test_a_fall_without_a_move_is_not_news(self):
-        told = self.absorb(report("木婉清居所", "秦红棉坠崖大难不死", "跌落崖下幸免于难，探寻谷底别寻出路",
-                                  {"op": "set", "id": "秦红棉", "key": "intent", "value": "寻找出谷之路"}))
+        told = self.settle("秦红棉跌落崖下幸免于难，探寻谷底别寻出路",
+                           {"op": "set", "id": "秦红棉", "key": "intent", "value": "寻找出谷之路"})
         self.assertEqual(told, [])                                                    # 36 回实录里「段誉坠崖」的传闻就是这样来的
         self.assertEqual(self.w.graph.get("秦红棉", "location"), "木婉清居所")
 
     def test_words_that_match_the_ledger_are_kept(self):
-        told = self.absorb(report("木婉清居所", "秦红棉下山", "秦红棉穿林往万劫谷·谷外树林疾驰",
-                                  {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"}))
-        self.assertEqual(told, ["秦红棉下山：秦红棉穿林往万劫谷·谷外树林疾驰"])
+        told = self.settle("秦红棉穿林往万劫谷·谷外树林疾驰",
+                           {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"})
+        self.assertEqual(told, ["秦红棉穿林往万劫谷·谷外树林疾驰"])
 
     def test_a_wrong_destination_falls_back_to_facts(self):
-        told = self.absorb(report("木婉清居所", "秦红棉远行", "秦红棉动身前往大理城",
-                                  {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"}))
+        told = self.settle("秦红棉动身前往大理城",
+                           {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"})
         self.assertEqual(told, ["秦红棉前往万劫谷·谷外树林"])
 
     def test_the_player_is_never_in_offstage_news(self):
-        told = self.absorb(report("木婉清居所", "秦红棉追敌", "秦红棉与测一同前往万劫谷·谷外树林",
-                                  {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"}))
+        told = self.settle("秦红棉与测一同前往万劫谷·谷外树林",
+                           {"op": "set", "id": "秦红棉", "key": "location", "value": "万劫谷·谷外树林"})
         self.assertEqual(told, ["秦红棉前往万劫谷·谷外树林"])                          # 主角不在场：说法换成核实过的后果
 
 
@@ -178,18 +195,17 @@ class TransactionTest(unittest.TestCase):
         self.assertEqual(path, "skip")
         self.assertTrue(any("落不了" in r for r in reasons))
 
-    def test_a_chronicle_lands_whole_or_not_at_all(self):
+    def test_an_offstage_plot_lands_whole_or_not_at_all(self):
         w = self.w
         w.player.set("location", "大理城")
-        ev = canon(w, "段誉赴万劫谷求解药")
-        torn = {"happens": True, "summary": "段誉转投后山求药，路遇南海鳄神",
-                "effects": [{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"},
-                            {"op": "set", "id": "南海鳄神", "key": "location", "value": "无量后山"}]}  # 南海鳄神不是相关者
-        self.assertIsNone(lod.settle(w, ev, torn, "chronicle"))
-        self.assertEqual(w.graph.get("段誉", "location"), "剑湖宫·练武厅")
-        whole = {"happens": True, "summary": "段誉独自赶往无量后山求药",
-                 "effects": [{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}]}
-        self.assertEqual(lod.settle(w, ev, whole, "chronicle")["summary"], "段誉独自赶往无量后山求药")
+        w.graph.set("钟万仇", "status", "dead")
+        ev = derived(w, "无量后山", ["段誉"], "段誉转投后山求药，钟万仇死而复生",
+                     {"op": "set", "id": "钟万仇", "key": "status", "value": "alive"})  # 死者不能复生：这一条落不了
+        self.assertIsNone(lod.settle(w, ev, ev, "derived"))
+        self.assertEqual(w.graph.get("段誉", "location"), "剑湖宫·练武厅")             # 筋骨落不了一条：整桩不半截照演
+        self.assertTrue(w.graph.get("段誉", "adrift"))                                # 没演成：他的原著线变了
+        whole = derived(w, "无量后山", ["段誉"], "段誉独自赶往无量后山求药")
+        self.assertEqual(lod.settle(w, whole, whole, "derived")["summary"], "段誉独自赶往无量后山求药")
 
 
 class NextDoorTest(unittest.TestCase):

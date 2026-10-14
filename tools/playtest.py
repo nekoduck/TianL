@@ -5,7 +5,8 @@
           逐回合的举动、正文、选项、亲见与传闻、身况，以及后台视角(眼前之人、名册、所盯人物的真实下落、场况、原著结算)；
           举动写成「1」「2」「3」即选上一回合的第几项
 [POS]: 本地试玩——发网络请求的只有这一个工具(经 narrative/llm)；同一条路线前后各打一局，对局记录可直接对比：
-       段誉什么时候、在哪里与主角相遇，原著主线断没断，传闻与账本对不对得上。说书人失声的回合记为作罢，接着打下一回合
+       段誉什么时候、在哪里与主角相遇，原著主线断没断，传闻与账本对不对得上；v6 逐回合摊开结算(账房记进账本的、与账本对不上的)与所盯人物的识名(v7 另摊开补记与新立的外号；v11 另摊开场外编剧的作罢、改写、续写与审稿，末附场外剧情线)，
+       正文与账本对不对得上一眼可见。说书人失声的回合记为作罢，接着打下一回合
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
@@ -16,7 +17,7 @@ from pathlib import Path
 
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError, from_env
-from tianlong.world import situation
+from tianlong.world import perspective, situation
 from tianlong.world.world import World
 
 # 剑湖宫 → 后山 → 谷底 → 琅嬛福地 → 出洞：原著里段誉坠崖、入洞、得北冥的那条路，主角先走一遍
@@ -43,21 +44,41 @@ def _deed(raw: str, options: list[str]) -> str:
     return raw.strip()
 
 
-def _backstage(game, watch) -> str:
+class _Ledger(logging.Handler):
+    """收下引擎这一回合的结算日志(v6)：账房记进账本的、与账本对不上的；v7 另收账本替正文补记的、为分清撞名之人新立的外号——对局记录里逐回合摊开，账与文对不对得上一眼可见。"""
+
+    def __init__(self):
+        super().__init__(logging.INFO)
+        self.lines: list[str] = []
+
+    def emit(self, record):
+        msg = record.getMessage()
+        if msg.startswith(("结算入账", "账文分歧", "补记", "立外号", "场外", "原著延后", "原著线已变")):  # v11 场外编剧：作罢、改写、续写、规则审与审稿
+            self.lines.append(msg)
+
+
+def _backstage(game, watch, ledger=()) -> str:
     w = game.world
     sc = w.player["scene"] or {}
     lines = [f"- 眼前：{'、'.join(sorted(situation.around(w))) or '无人'}｜名册：{'、'.join(sorted(situation.cast(w))) or '—'}"
              f"｜同在这一片：{'、'.join(situation.elsewhere(w)) or '—'}",
              f"- 场：第{sc.get('id')}场·{sc.get('state')}「{sc.get('ask')}」｜原著已结算 {len(w.done)} 桩"]
-    lines += [f"- 盯着 {p}：{w.graph.get(p, 'location')}（{w.graph.get(p, 'status')}）" for p in watch]
+    lines += [f"- 盯着 {p}：{w.graph.get(p, 'location')}（{w.graph.get(p, 'status')}）"
+              f"｜主角{'叫得出' if perspective.knows(w, 'player', p) else '叫不出'}其名｜其人{'知道' if perspective.knows(w, p, 'player') else '不知'}主角名号"
+              for p in watch]
+    lines += [f"- {line}" for line in ledger]
     return "\n".join(lines)
 
 
 def play(deeds: list[str], llm, name=None, origin=None, watch=("段誉",), limit=None) -> str:
     game, out = Game(World.create(name, origin=origin), llm), []
-    options, turn = [], None
+    options, turn, ledger = [], None, _Ledger()
+    log = logging.getLogger("tianlong")
+    log.addHandler(ledger)
+    log.setLevel(logging.INFO)
     for i, raw in enumerate(([""] + deeds)[:limit] if limit else [""] + deeds):  # limit 与 rerun 同一口径：连开卷共几回合
         deed = _deed(raw, options)
+        ledger.lines.clear()
         try:
             turn = game.open() if i == 0 else game.act(deed)
         except LLMError as e:
@@ -69,12 +90,15 @@ def play(deeds: list[str], llm, name=None, origin=None, watch=("段誉",), limit
                    f"- **身况**：{'、'.join(t['text'] for t in turn['status'])}\n"
                    + "".join(f"- **{'亲见' if n['witnessed'] else '传闻'}**（{n['date']}·{n['place']}）：{n['text']}\n" for n in turn["news"])
                    + "".join(f"- 未成立：{v}\n" for v in turn["void"])
-                   + "\n<details><summary>后台</summary>\n\n" + _backstage(game, watch) + "\n</details>\n")
+                   + "\n<details><summary>后台</summary>\n\n" + _backstage(game, watch, ledger.lines) + "\n</details>\n")
     game.flush()
+    log.removeHandler(ledger)
     w = game.world
     out.append("## 附录 · 客观账本\n" + "".join(f"- [{e['origin']}·{w.clock.label(e['day'])}·{e['where']}{'·亲历' if e.get('witnessed') else ''}] {e['summary']}\n"
                                           for e in w.truth.events))
     out.append(f"## 附录 · 原著\n- 已结算：{'、'.join(w.done)}\n- 前情梗概：{w.player['synopsis']}\n")
+    out.append("## 附录 · 场外剧情线\n" + ("".join(f"- 「{k}」{v['goal']}（{'、'.join(v['owners'])}，自{v['from']}）：{'；'.join(v['events'])}\n"
+                                              for k, v in w.lines.items()) or "- 无\n"))
     return "\n".join(out)
 
 

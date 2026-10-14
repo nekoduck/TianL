@@ -97,7 +97,7 @@ def set_conditions(world, who: str, value: list[str]):
 
 
 # ============================================================
-#  心境与眼下之事：拍上的情绪留几回合；intent 是一句话，可由导演或场外推演改写
+#  心境与眼下之事：拍上的情绪留几回合；intent 是一句话，可由导演或场外剧情改写
 # ============================================================
 def feel(world, who: str, mood: str):
     if who and who != "player" and world.graph.kind(who) == "person" and mood:

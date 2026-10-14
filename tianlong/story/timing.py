@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/growth 的 stage_of / SITTING / STAGES / TEACH_MINUTES（研习的规则时长）、world/body 的 REST（养伤半日）、
-         world/situation 的 captors / imperiled（险境不许歇）、world/pacing 的 CUTS / UNTIL（幕间省略的措辞）、world/effects 的 resolve；World 门面的 clock / player / graph
+         world/situation 的 captors / imperiled（险境不许歇）、world/pacing 的 CUTS / UNTIL（幕间省略的措辞）、world/effects 的 resolve、world/acts 的 expand（v9 事码的研习也主张时长）；World 门面的 clock / player / graph
 [OUTPUT]: 对外提供 claim()（规则主张的戏内光阴下限与缘由，只看真会成立的拍）、study_minutes()（研习一回的规则时长）、cut_minutes()（幕间省略换算成分钟：一段长度或「到某一刻」）、LATER（选了「此后」之举的下限）、REST_WORDS
 [POS]: story 层的时间结算——「时间是后果」(宪法第 10 条 v4)：导演只选措辞(pace/cut)，戏内光阴取措辞与规则主张的较大者：
        研习一部秘籍主张到下一阶的合理时长(初窥半个时辰、此后每回两个时辰)，求教主张一个时辰，歇息养伤主张两个时辰——
@@ -12,7 +12,7 @@
 """
 import re
 
-from ..world import body, effects, growth, situation
+from ..world import acts, body, effects, growth, situation
 from ..world.clock import PER_DAY, PER_SHICHEN
 from ..world.pacing import CUTS, UNTIL
 
@@ -43,7 +43,7 @@ def claim(world, plan: dict, deed: str = "", scale: str | None = None, allowed=N
     if allowed is not None:  # 与授意同一口径：指着某人即可向他求教，指着秘籍即指着它所载的武学
         allowed = set(allowed) | {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []} \
             | {k for x in allowed if g.kind(x) in ("item", "skill") for k in growth.arts_of(g, x)}
-    for op in (op for b in beats for op in b.get("ops") or [] if isinstance(op, dict)):
+    for op in (op for b in beats for op in acts.expand(world, b.get("ops") or []) if isinstance(op, dict)):  # 事码(v9)先化为指令
         if op.get("op") != "study":
             continue
         src = effects.resolve(world, op.get("value"))

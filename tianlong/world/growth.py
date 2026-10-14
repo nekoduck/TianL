@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/body 的 forecast / injure（研习预裁与岔气）、world/actor 的 declare（被吸者负伤），World 门面（graph / player / clock / turn，鸭子类型）
+[INPUT]: 依赖 world/body 的 forecast / injure（研习预裁与岔气）、world/actor 的 declare（被吸者负伤）、world/stock 的 cap / base（v9 残卷），World 门面（graph / player / clock / turn，鸭子类型）
 [OUTPUT]: 对外提供 study()（研习一部秘籍或向人求教一门武学：累计时长、分阶兑现武学与功力）、drain()（北冥吸功：双边结算）、
           stage_of()、progress()（后台用的研习进度一句话）、mastery()（主角每门武学的进境投影：已会者带阶名、习练中者带已习时长）、
           studiable()（够得着的研习对象：手边与此地的秘籍、身边有人会的武学）、arts_of()、STAGES、DRAINERS、SITTING（研习一回至少一顿饭，引擎据此给本回合光阴兜底）、TEACH_MINUTES
@@ -10,9 +10,10 @@
        十五分钟的调息不会再让人从二流升到一流；吸功按北冥阶段取对方功力的一定比例，吸者有损耗，被吸者当场负伤。
        进境是一等状态(v4)：mastery 把研习账投影成「凌波微步：未入门（已习练40分钟，初窥须60分钟）」，界面、编剧、导演同看这一份——
        文字里写「身如游龙」而账上未入门，是文字错了，不是账错了；兑现阶段时记下 turn["advanced"]，裁决器据此辨认进境措辞有没有账可依
+       残卷(v9)：一部书撕散的几份共一本研习账(按 base 记)，只存几份的残卷只研习得到 stock.cap 那一阶——功夫只在书上有的那几页里，拼全了接着练
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import actor, body, situation
+from . import actor, body, situation, stock
 
 # (阶名, 累计研习分钟, 距上一阶至少几日, 兑现 grants.power 的比例)
 STAGES = (("初窥门径", 60, 0, 0.4), ("小有所成", 12 * 60, 1, 0.3), ("登堂入室", 48 * 60, 3, 0.3))
@@ -33,6 +34,9 @@ def stage_of(world, source: str) -> int:
 def study(world, source: str, minutes: int) -> str:
     """主角研习 source（随身或此地的秘籍 / 身边人会的武学）minutes 分钟；返回一句连带说明（写给编剧）。"""
     g, me, day = world.graph, world.player, world.clock.day
+    top = stock.cap(g, source) if g.kind(source) == "item" else len(STAGES)  # 残卷(v9)：只存几页，功夫也只到那几页
+    if g.kind(source) == "item" and g.has(stock.base(g, source)):
+        source = stock.base(g, source)  # 同一部书撕散的几份共一本研习账：拼全了接着练
     rec = _log(world).setdefault(source, {"minutes": 0, "stage": 0, "since": day})
     luck = body.forecast(world, source)
     before, stall = rec["minutes"], luck["tier"] in STALL
@@ -43,7 +47,7 @@ def study(world, source: str, minutes: int) -> str:
     if luck["strain"]:
         said += "；" + body.injure(world, "真气走岔")
     if not stall:
-        return said + "：" + _gain(world, source, rec)
+        return said + "：" + _gain(world, source, rec, top)
     held = f"你随人习练{source}，尚未入门（已{rec['minutes']}分钟）" if g.kind(source) == "skill" else progress(world, source)
     return said + "：" + held
 
@@ -58,7 +62,7 @@ def _need(g, source: str, stage: int) -> int:
     return STAGES[stage][1] if stage < len(STAGES) else float("inf")
 
 
-def _gain(world, source: str, rec: dict) -> str:
+def _gain(world, source: str, rec: dict, top: int = len(STAGES)) -> str:
     g, me, day = world.graph, world.player, world.clock.day
     if g.kind(source) == "skill":  # 求教：入门即会，不涨功力
         if rec["stage"] == 0 and rec["minutes"] >= TEACH_MINUTES:
@@ -70,7 +74,9 @@ def _gain(world, source: str, rec: dict) -> str:
     grants = g.get(source, "grants") or {}
     skills = [grants.get("skill")] + [x.get("skill") for x in g.get(source, "grants_extra") or []]
     told = []
-    while rec["stage"] < len(STAGES):
+    if rec["stage"] >= top and top < len(STAGES):
+        return f"{source}只是残卷，功夫只到「{STAGES[top - 1][0]}」，余下的在别的几份上"
+    while rec["stage"] < top:
         name, need, gap, share = STAGES[rec["stage"]]
         if rec["minutes"] < need or (rec["stage"] and day - rec["since"] < gap):
             break

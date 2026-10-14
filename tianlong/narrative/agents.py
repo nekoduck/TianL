@@ -2,12 +2,16 @@
 [INPUT]: 依赖 narrative/prompts 的提示词组装器与 TENSIONS，narrative/llm 的 LLMError，world/clock 的 PACES（时长措辞表）、world/pacing 的 CUTS / UNTIL（幕间省略措辞与可等到的时刻）；llm 参数鸭子类型（Gemini 或 None）
 [OUTPUT]: 对外提供 direct()（导演：逐拍{who,to,text,mood,ops}(mood 是情绪快变量，给编剧渲染、挂在此人脸上几回合)/场况 scene(开/转/合/断，旧写法的本幕之问亦收)/场景实体/时长措辞 pace 与幕间省略 cut(长度或到某一刻)/时限 clock/原著去留）、repair()（导演返工一次：只改有问题的拍）、
           write()（编剧：正文 + 梗概/选项(文字｜对象｜尺度｜代价，代价写在字段或括号里都认——括号写在文字末尾或对象之后皆可，说耗时路程的才是代价、其余是对象(v5)；至多八字，写不下就不写、不截半句)/伏笔/可传之事，给 on_text 即边写边送）、
-          recap()（书记：把挤出的近事折叠进梗概）、simulate()（LOD1 场外剧情，可附江湖近闻）、chronicle()（LOD2 改写原著，可附江湖近闻与相关者此后的原著(v5)）
+          settle()（v6 账房：读定本正文与账本快照，开出账上缺的变化 {changes:[{据,谁,ops}], rifts, 未写到(v7 对稿：账上变了而正文没写到的编号)}，离线或失声返回 None 交词表对账）、
+          recheck()（v7 双录复核：词表看出、账上没有的几句交账房逐句裁定 {changes, 不记}）、
+          recap()（书记：把挤出的近事折叠进梗概）、plot()（v11 场外编剧·创作家：每份任务书一条剧情线草稿）、review()（v11 审稿人：过/改/否 与缘由）
 [POS]: narrative 层的 Agent——每个都是「组装→调用→整形→兜底」：整形只保证输出形状可用，不审查内容
        （一句话的旧拍也收、顶层 effects 挂到一个无文字的拍上、单条指令当一批、"false"当否；绝不把「拔剑」拆成「拔」「剑」），
        后果成不成立交给 world/adjudicate 与 effects，选项能不能用交给 world/menu，时长换算交给 world/clock；llm 为 None 或调用失败时走朴素兜底，离线亦可运行(离线说书人认全名，也认兜底选项的方向措辞；兜底选项统一归 world/menu 看局面生成)。
        编剧的梗概与传言宽松读取；没写就是没写（None），由引擎以系统核实过的后果代记；流式被拦腰截断只得只言片语时，以已成立之事续成正文；
-       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底
+       导演失声不演假戏(v5)：严格的模型(llm.strict)导演调用失败即抛出，整回合作废、玩家重试；桩与离线照旧兜底；
+       账房(v6)只整形不审内容：据与谁是文字、ops 是一批指令——收不收、成不成立归 world/settle 与 effects；
+       场外编剧(v11)只认回任务名，规则审归 world/plot；审稿人读不出判定的当作「改」，失声即都不过——不合理的一律不过
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -247,6 +251,37 @@ def write(llm, pack: dict, frame: dict, on_text=None) -> dict:
     return page
 
 
+def settle(llm, books: dict) -> dict | None:
+    """账房(v6)：读本回合的定本(正文)与账本快照，开出正文确立而账上没有的变化 {changes:[{据, 谁, ops}], rifts:[{据, 账上}]}。
+    整形只保形状(据与谁是文字、ops 是一批指令)，收不收、成不成立归 world/settle 与 effects；离线或失声返回 None——由系统以词表对账。"""
+    if llm is None or not books.get("text"):
+        return None
+    r = _ask(llm, prompts.settler(books), lambda: None, tokens=1200)
+    if not isinstance(r, dict):
+        return None
+    return {"changes": _bills(r.get("changes")),
+            "rifts": [{"据": str(x.get("据") or ""), "账上": str(x.get("账上") or "")} for x in _dicts(r.get("rifts"))],
+            "未写到": [int(x) for x in (r.get("未写到") if isinstance(r.get("未写到"), list) else [])
+                     if isinstance(x, (int, str)) and str(x).strip().isdigit()]}
+
+
+def recheck(llm, books: dict, disputes: list[dict]) -> dict | None:
+    """双录复核(v7)：词表看出、账上没有的几句交账房逐句裁定 {changes:[{据,谁,ops}], 不记:[{据,缘由}]}；离线或失声返回 None(这几句只记分歧)。"""
+    if llm is None or not disputes:
+        return None
+    r = _ask(llm, prompts.rechecker(books, disputes), lambda: None, tokens=900)
+    if not isinstance(r, dict):
+        return None
+    return {"changes": _bills(r.get("changes")),
+            "不记": [{"据": str(x.get("据") or ""), "缘由": str(x.get("缘由") or "")} for x in _dicts(r.get("不记"))]}
+
+
+def _bills(xs) -> list[dict]:
+    """结算单的形状：据与谁是文字、ops 是一批指令。"""
+    return [{"据": str(c.get("据") or ""), "谁": c.get("谁") if isinstance(c.get("谁"), str) else None, "ops": _dicts(c.get("ops"))}
+            for c in _dicts(xs)]
+
+
 def recap(llm, synopsis: str, lines: list[str]) -> str:
     """近事溢出时折叠进梗概：上下文有界，记忆无界。"""
     fallback = lambda: {"synopsis": "；".join(x for x in [synopsis, *lines] if x)[-300:]}
@@ -255,16 +290,37 @@ def recap(llm, synopsis: str, lines: list[str]) -> str:
 
 
 # ============================================================
-#  LOD1 / LOD2：场外剧情，后果落账在 world/lod + world/effects
+#  场外编剧(v11)：创作家写剧情线、审稿人审合不合理；规则审在 world/plot
 # ============================================================
-def simulate(llm, time: str, days: int, actors: list[dict], heard=()) -> list[dict]:
-    r = _ask(llm, prompts.simulator(time, days, actors, heard), lambda: {"reports": []}, tokens=800)
-    return _dicts(r.get("reports"))[:2]
+VERDICTS = ("过", "改", "否")
 
 
-def chronicle(llm, ev: dict, reasons: list[str], actors: list[dict], broken: bool, heard=(), ahead=()) -> dict:
-    fallback = lambda: {"happens": not broken, "summary": ev["summary"], "effects": ev["effects"]}
-    r = _ask(llm, prompts.chronicler(ev, reasons, actors, heard, ahead), fallback, tokens=800)
-    effects = _dicts(r.get("effects"))
-    return {"happens": _yes(r.get("happens"), bool(r.get("summary") or effects)),
-            "summary": str(r.get("summary") or ev["summary"])[:120], "effects": effects}
+def _keyed(xs, keys: list[str]) -> dict:
+    """按任务名认回每一份：写了 key 就认 key，没写按次序。"""
+    out = {}
+    for i, x in enumerate(_dicts(xs)):
+        key = x.get("key") if x.get("key") in keys else (keys[i] if i < len(keys) else None)
+        if key and key not in out:
+            out[key] = x
+    return out
+
+
+def plot(llm, briefs: list[dict], notes: dict | None = None) -> dict:
+    """创作家：每份任务书一条剧情线草稿 {key: {line, goal, events}}。整形只认回任务名，合不合理交 world/plot 规则审与审稿；离线或失声返回空(交系统兜底)。"""
+    if llm is None or not briefs:
+        return {}
+    r = _ask(llm, prompts.plotter(briefs, notes), dict, tokens=800 + 900 * len(briefs))  # 一条剧情线连同动机、手段、戏眼，汉字吃 token：给足，免得 JSON 被拦腰截断
+    return _keyed(r.get("plans") if isinstance(r, dict) else None, [b["key"] for b in briefs])
+
+
+def review(llm, items: list[dict]) -> dict:
+    """审稿人：{key: {verdict: 过/改/否, why}}。读不出判定的当作「改」——不合理的一律不过；离线或失声返回空(都不过)。"""
+    if llm is None or not items:
+        return {}
+    r = _ask(llm, prompts.reviewer(items), dict, tokens=300 + 200 * len(items))
+    out = {}
+    for key, x in _keyed(r.get("reviews") if isinstance(r, dict) else None, [i["key"] for i in items]).items():
+        v = str(x.get("verdict") or "").strip()
+        verdict = "否" if v.startswith(("否", "不过", "驳")) else "过" if v.startswith(("过", "通过", "pass")) else "改"
+        out[key] = {"verdict": verdict, "why": str(x.get("why") or "")[:120]}
+    return out

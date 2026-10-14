@@ -2,7 +2,8 @@
 [INPUT]: 依赖 tianlong.world 全部基础设施与 data/canon 原著硬知识（不接入 LLM）
 [OUTPUT]: unittest 用例——创世导入(含章节成簇日程、别名表、道路补丁严丝合缝、关口须落在道路上、补上的走廊让大理直通中原与江南)、历法、剧情后果落账、地理器物武学归基础设施、器物易手(持有与落地不兼存、随身账与图上对得上)、形状守恒(写歪的指令被驳回而非崩溃)、
           世界物理、场外在场性、通行(此路不通拦所有人、暗路须经剧情发现且回头路认得、硬前提由系统判、远行止步门前)、
-          消息延迟、隐情与隐秘字段(含揭示门控、原著揭开的隐情随传闻或亲历抵达)、LOD 按距离分层、到期原著远近分流与依序结算、裁定、存读档(旧档读入即换上新地图)
+          消息延迟、隐情与隐秘字段(含揭示门控、原著揭开的隐情随传闻或亲历抵达)、LOD 按距离分层、到期原著远近分流(v11 前提未变照演、破了交改写或作罢)、
+          场外剧情叫不来人、碰不到主角而可以对主角起心思、不通之路场外人物也过不去(plot 的路程口径)与依序结算、裁定、存读档(旧档读入即换上新地图)
 [POS]: tests 的状态层验证，以真实原著世界为对象，证明剧情能自由改变既有世界，而人、地、物、武学只由系统掌管
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -12,7 +13,7 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-from tianlong.world import access, genesis, lod, rag, situation
+from tianlong.world import access, genesis, lod, plot, rag, situation
 from tianlong.world.clock import PER_DAY, Clock, day_of
 from tianlong.world.world import World
 
@@ -182,9 +183,9 @@ class PlotTest(unittest.TestCase):
         ops = [{"op": "add", "id": "player", "key": "hp", "value": -50},
                {"op": "link", "src": "段正淳", "dst": "player", "rel": "起了疑心"},
                {"op": "set", "id": "段正淳", "key": "status", "value": "wounded"},
-               {"op": "set", "id": "段正淳", "key": "location", "value": "聚贤庄"},  # 一日千里
-               {"op": "set", "id": "段正淳", "key": "location", "value": "大理城"}]
-        applied, rejected = self.w.apply(ops, "lod1", {"镇南王府"})
+               {"op": "arrive", "id": "段正淳"},                                    # 场外叫不来人
+               {"op": "set", "id": "段正淳", "key": "location", "value": "大理城"}]  # 路程在排进日程时由 plot 核过
+        applied, rejected = self.w.apply(ops, "derived", {"镇南王府"})
         self.assertEqual((len(applied), len(rejected)), (3, 2))
         self.assertEqual(self.w.player["hp"], 100)
 
@@ -238,8 +239,9 @@ class AccessTest(unittest.TestCase):
         self.assertNotIn("不老长春谷", EXITS(w))
         self.assertIn("此路不通，主角过不去", "".join(rag.backstage(w)["passes"]))   # 导演知道为何
         w.graph.set("乔峰", "location", "长春谷外山岭")
-        cross = {"op": "set", "id": "乔峰", "key": "location", "value": "不老长春谷"}
-        self.assertEqual(len(w.apply([cross], "lod1", {"长春谷外山岭"})[1]), 1)      # 场外之人也过不去
+        self.assertIn("不老长春谷", w.graph.distances("长春谷外山岭"))                  # 地理上只隔两日
+        self.assertNotIn("不老长春谷", access.reach(w, "长春谷外山岭"))               # 场外之人也过不去(v11 场外剧情的路程口径)
+        self.assertTrue(any("无路可通" in e for e in plot._travel(w, ["乔峰"], "不老长春谷", w.clock.day + 9, {})))
 
     def test_a_dead_end_is_left_to_a_miracle_not_a_prison(self):
         w = self.w
@@ -420,10 +422,12 @@ class LodTest(unittest.TestCase):
         w.graph.set("阿朱", "status", "wounded")  # 让大事的前提成立，只剩"被扰动"
         w.taint.update({"段誉", "乔峰"})
         self.assertEqual(lod.verdict(w, minor, 0)[0], "canon")       # 小事被扰动但前提仍在：照常
-        self.assertEqual(lod.verdict(w, major, 2)[0], "chronicle")   # 大事被扰动：史官改写
+        self.assertEqual(lod.verdict(w, major, 2)[0], "canon")       # 大事被扰动、前提仍在：演绎家照原著演(v11)
         w.graph.set("龚光杰", "status", "dead")
         self.assertEqual(lod.verdict(w, minor, 2)[0], "skip")        # 远方小事破局：悄然作罢
-        self.assertEqual(lod.verdict(w, minor, 1)[0], "chronicle")   # 近处破局：史官改写
+        self.assertEqual(lod.verdict(w, minor, 1)[0], "rewrite")     # 近处破局：交场外编剧改写
+        w.graph.set("阿朱", "status", "dead")
+        self.assertEqual(lod.verdict(w, major, 2)[0], "rewrite")     # 远方大事破局：交场外编剧改写
 
     def test_implicit_premises_of_canon(self):
         w = World.create()
@@ -440,11 +444,10 @@ class LodTest(unittest.TestCase):
 
     def test_offstage_claims_are_recorded_only_as_far_as_they_came_true(self):
         w = World.create()
-        report = {"where": "少林寺", "event": "玄慈圆寂", "result": "方丈坐化",
-                  "effects": [{"op": "set", "id": "玄慈", "key": "status", "value": "dead"}]}
-        self.assertEqual(lod.absorb(w, [report], {"无量山"}), [])                               # 推演区域之外的战报不收
-        report["where"] = "无量山"
-        self.assertEqual(lod.absorb(w, [report], {"无量山"}), [])                               # 后果不成立，说法不入账
+        ev = {"id": "衍·测·1", "order": 0.5, "day": w.clock.day, "where": "少林寺", "weight": 2, "public": True, "actors": ["玄慈"],
+              "requires": [], "summary": "少林方丈玄慈坐化", "derived": True, "made": w.clock.day,
+              "effects": [{"op": "set", "id": "玄慈", "key": "location", "value": "少林寺"}, {"op": "set", "id": "段誉", "key": "status", "value": "dead"}]}
+        self.assertIsNone(lod.settle(w, ev, ev, "derived"))                                      # 碰了主角身边的人：整桩不入账
         self.assertEqual(w.graph.get("玄慈", "status"), "alive")
 
     def test_requires_on_lists(self):

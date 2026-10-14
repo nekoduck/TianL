@@ -2,7 +2,7 @@
 [INPUT]: 依赖 story/scene（场）、story/stakes（时限）、story/arc（主角线）、story/setups（系统伏笔），world/situation 的 around，World 门面的 graph / player（鸭子类型）
 [OUTPUT]: 对外提供 compose()（本回合的场记：几行字 + 主干的来源 canon/clock/setup/scene/arc/agenda/deed）、allow_pull()（轮转：原著连占三场主干，就不再提前拉原著）、remember()（记下本回合主干的来源）、SPINES
 [POS]: story 层的戏剧调度器与场记——给导演的焦点：确定性地选出本回合的主干，优先级(v5，与 L1 宪法同构)
-       主角眼前上演的原著 > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(无人、或主角线刚有进展则是主角线) > 顺着主角的举动推进；
+       主角眼前上演的原著(v11 场外编剧写到主角跟前的那一桩同此) > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(无人、或主角线刚有进展则是主角线) > 顺着主角的举动推进；
        一场之内主干不换题，换题看哪条线有了进展，不再按回合在主角线与图谋之间机械轮换；
        轮转：最近 SPINES 回合的主干都来自原著，就不再提前拉原著(到期的照演)，让主角线有机会作主干——「段誉占四成」由此回落。
        场记是导演上下文的第一节、「至少要处理什么」而非「只处理什么」：场况与问题、主干、开场时眼前有谁(抵达即遭遇)、
@@ -45,7 +45,7 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     schemers = _schemers(world)
     fresh = bool(me["arc"]) and me["arc"].get("since", -1) >= me["turn"] - 1  # 主角线刚跨进一阶
     if staged:
-        spine, trunk = "canon", f"原著「{staged['summary']}」在主角眼前上演（见后台）"
+        spine, trunk = "canon", f"{'场外剧情' if staged.get('derived') else '原著'}「{staged['summary']}」在主角眼前上演（见后台）"  # v11 场外编剧写到主角跟前的一桩，同原著一样作主干
     elif due:
         spine, trunk = "clock", f"时限已到——{'；'.join(c['what'] for c in due)}：本回合让它有个结果"
     elif seed:

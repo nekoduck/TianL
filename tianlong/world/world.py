@@ -1,10 +1,11 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag、perspective(开局相识) 全部基础设施
 [OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
-          remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表与 turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
+          remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表、lines 场外剧情线与 plotted 上回写某人的日子(v11，入存档)、
+          turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
-       存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
-       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
+       存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图(v9 场景清单新布下的人群也补上，散了的人群留着空壳、不复活)；
+       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；场景清单(v8)的景物同地点一样定义随数据走、现状照存档，旧档里没有的布景器物补上(已有的照存档)；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
        开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -41,6 +42,8 @@ class World:
         self.seed: int = seed
         self.aliases: dict[str, str] = aliases or {}  # 别名→id：LLM 写「萧峰」「乔帮主」亦能落到乔峰
         self.turn: dict = {}                # 本回合的瞬时账（谁被谁挪动过、谁到场、连带说明）——不入存档
+        self.lines: dict = {}               # 场外剧情线(v11)：线名 → {name, goal, owners, from, made, events}——场外编剧写过什么，续写要接得上
+        self.plotted: dict = {}             # 场外编剧上回写某人的日子(v11)：按剧情推力隔几日再写
 
     # ------------------------------------------------------------
     #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试
@@ -114,7 +117,8 @@ class World:
                 "truth": self.truth.events, "beliefs": self.knowledge.beliefs, "known": self.knowledge.known,
                 "secrets": self.knowledge.secrets, "asof": self.knowledge.asof,
                 "pending": self.messenger.pending, "canon": self.canon, "done": self.done,
-                "taint": sorted(self.taint), "seed": self.seed, "aliases": self.aliases}
+                "taint": sorted(self.taint), "seed": self.seed, "aliases": self.aliases,
+                "lines": self.lines, "plotted": self.plotted}
 
     @classmethod
     def from_dump(cls, d: dict, atlas: dict | None = None) -> "World":
@@ -122,6 +126,7 @@ class World:
         world = cls(Graph.load(d["graph"]), Blackboard(d["player"]), Clock(d["tick"]), Truth(d["truth"]),
                     Knowledge(d["beliefs"], d["known"], d.get("secrets"), d.get("asof")), Messenger(d["pending"]), d["canon"], d["done"],
                     set(d["taint"]), d["seed"], d.get("aliases"))
+        world.lines, world.plotted = d.get("lines") or {}, d.get("plotted") or {}  # 旧档没有场外剧情线(v11)：从零写起
         world.remap(atlas or genesis.load())
         if "acquaintances" not in d["player"]:  # 旧档没有识名账：出身里的人与已有交情的人算作相识
             perspective.seed(world, {e["src"] if e["dst"] == "player" else e["dst"] for e in world.graph.edges
@@ -137,11 +142,13 @@ class World:
         旧档由此用上新地图；道路补丁只在创世时打一次，存档从不重放补丁，重绘多少次都是同一张图。"""
         g = self.graph
         for nid, node in atlas["nodes"].items():
-            if node["type"] != "location":
+            if node["type"] in ("item", "group") and nid not in g.nodes:  # 场景清单(v8)新布下的器物与人群(v9)：旧档里没有就补上，有了便是存档里的现状(散了的人群留着空壳，不复活)
+                g.nodes[nid] = node
+            if node["type"] not in ("location", "feature"):
                 continue
-            kept = g.nodes.get(nid)
+            kept = g.nodes.get(nid)  # 地点与景物：定义随数据走，现状照存档
             g.nodes[nid] = {**node, **({"state": kept["state"]} if kept and "state" in kept else {})}
-            if kept is None:  # 新入图的地点进入常识，与开局时一样
+            if kept is None and node["type"] == "location":  # 新入图的地点进入常识，与开局时一样
                 self.knowledge.observe(g, [nid])
         roads = Graph(g.nodes)
         _lay(roads, atlas)

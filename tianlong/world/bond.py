@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/situation 的 FOLLOW / CUSTODY / around（结构性关系与身边之人）、world/actor 的 vitals（伤人之前的气血），World 门面的 graph / player（鸭子类型）
-[OUTPUT]: 对外提供 event()（记一件与主角有关的互动事件）、before() / derive()（从一拍已成立的指令里推出互动事件）、attitude()（导演写的态度 link 化作事件）、
+[OUTPUT]: 对外提供 event()（记一件与主角有关的互动事件）、before() / derive()（从一拍已成立的指令里推出互动事件；v9 认事码的物、银两的赠夺，偷得无人察觉的不记）、attitude()（导演写的态度 link 化作事件）、
           stance()（折叠出此人此刻对主角的立场与最近缘由）、structural()、migrate()（旧档的态度边折成事件）、STRUCTURAL、LOG
 [POS]: world 层的关系账——「事件先于状态」(宪法第 15 条)的第一处落地：LLM 宣告发生了什么，系统推导这意味着什么。
        某人对主角的看法不再是一条可覆盖的边(写新即覆盖旧，再以五回合阻尼冻住)，而是恩与怨两本账：
@@ -112,7 +112,7 @@ def before(world, ops: list) -> dict:
     for op in ops:
         if not isinstance(op, dict):
             continue
-        for v in (op.get("id"), op.get("value")):
+        for v in (op.get("id"), op.get("value"), op.get("物")):  # 事码(v9)的物也算：夺来的、交出的
             if isinstance(v, str) and g.kind(v) == "item":
                 holders[v] = g.get(v, "holder")
     for p in situation.around(world):
@@ -128,6 +128,8 @@ def derive(world, who, applied: list, snap: dict, text: str = "", to=None):
     mine = who in (None, "player")
     for op in applied:
         kind, key, v = op.get("op"), op.get("key"), op.get("value")
+        if op.get("stealth"):
+            continue  # 偷得无人察觉(v9)：他不知道，恩怨账上便没有这一笔
         if kind == "link" and (op.get("src"), op.get("dst"), op.get("rel")) in snap["edges"]:
             continue  # 重写一条已有的关系不是又一件事：擒住一回，记一回
         if kind == "link" and op.get("rel") == situation.FOLLOW and op.get("dst") == "player":
@@ -143,6 +145,10 @@ def derive(world, who, applied: list, snap: dict, text: str = "", to=None):
             event(world, v, 2, f"你赠他{op['id']}")
         elif kind == "push" and op.get("id") == "player" and key == "inventory" and g.kind(snap["holders"].get(v)) == "person":
             event(world, snap["holders"][v], -3, f"你夺了他的{v}")
+        elif kind == "money" and op.get("from") == "player" and g.kind(op.get("id")) == "person":
+            event(world, op["id"], 2, "你赠他银两")  # 银两(v9)：是数，不是器物
+        elif kind == "money" and op.get("id") == "player" and g.kind(op.get("from")) == "person":
+            event(world, op["from"], -3, "你夺了他的银两")
         elif kind == "drain":
             event(world, v, -4, "你吸了他的内力")
         elif kind == "study" and g.kind(v) == "skill":

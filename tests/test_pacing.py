@@ -141,8 +141,8 @@ class EntangledTest(unittest.TestCase):
 
     def test_offstage_canon_of_a_companion_is_dropped_not_rewritten(self):
         path, _ = lod.verdict(self.w, self.ev, 1)
-        self.assertEqual(path, "skip")                                                 # 不交史官：同行者的行止只听导演
-        _, rejected = effects.apply(self.w, [{"op": "set", "id": "钟灵", "key": "location", "value": "无量山"}], "chronicle")
+        self.assertEqual(path, "skip")                                                 # 不交场外编剧：同行者的行止只听导演
+        _, rejected = effects.apply(self.w, [{"op": "set", "id": "钟灵", "key": "location", "value": "无量山"}], "derived")
         self.assertIn("场外动不了", rejected[0][1])
 
     def test_broken_canon_is_background_only(self):

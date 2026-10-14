@@ -2,8 +2,8 @@
 [INPUT]: 依赖 tianlong.world 的 adjudicate / situation / growth / menu / lod / lexicon / rag 与 data/canon 原著世界，tianlong.engine 的 Game；以桩 LLM 替代 Gemini
 [OUTPUT]: unittest 用例——80 回对局暴露的病灶逐条转成离线验收：
           焦点检索让导演看见解药在谁身上、器物近似名归一、同伴随主角移动且过不去的关留下、救人即解押、未了之事谓词满足自动收束、
-          原著救人之事在人已获救时不再照演、一人一回合只听一处调遣、纠缠之人的场外原著不照本宣科、
-          研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令、
+          原著救人之事在人已获救时不再照演、一人一回合只听一处调遣(v11 导演与日程两处：原著与场外剧情同一条轨道)、纠缠之人的场外原著不照本宣科、
+          研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
@@ -81,10 +81,11 @@ class SituationTest(unittest.TestCase):
     def test_one_person_one_dispatcher_per_turn(self):
         w = self.w
         w.turn = {"days": 1}
-        w.graph.set("段誉", "location", "无量山")
-        w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "canon")
-        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量山"}], "lod1", {"无量山", "无量后山", "段誉"})
+        w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "剑湖宫·内堂"}], "director")  # 导演先挪动了他
+        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "canon")
         self.assertEqual(rejected[0][1], "段誉此日已另有去向")                        # 第 67 回：三处同时挪动段誉
+        _, rejected = w.apply([{"op": "set", "id": "段誉", "key": "location", "value": "无量后山"}], "derived", {"无量后山", "段誉"})
+        self.assertIn("主角身边", rejected[0][1])                                      # 场外剧情(v11)动不了主角身边的人
 
     def test_entangled_people_leave_the_canon_rails(self):
         ev = next(e for e in self.w.canon if e["id"] == "段誉坠入无量山谷")
@@ -99,8 +100,9 @@ class SituationTest(unittest.TestCase):
         w = self.w
         _, why = situation.spawn(w, {"kind": "thing", "name": "神功卷轴"})
         self.assertIsNotNone(why)                                                     # 与原著之物相混
-        nid, _ = situation.spawn(w, {"kind": "thing", "name": "火折"})
-        self.assertEqual(nid, "火折")
+        nid, why = situation.spawn(w, {"kind": "thing", "name": "火折"})
+        self.assertEqual((nid, why), (None, situation.FORGE))                        # v8：器物在创世时布齐，剧情不新造物件
+        self.assertFalse(w.graph.has("火折"))
         _, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮"}, embargo={"神农帮"})
         self.assertIn("尚未到此", why)                                                # 原著近事里尚未到场的势力
         _, why = situation.spawn(w, {"kind": "group", "name": "少林僧众", "faction": "少林派"})
@@ -223,10 +225,10 @@ class MenuTest(unittest.TestCase):
                        "小说家": "正文\n===\n梗概：看\n选项：\n1. 与钟灵说话｜对象：钟灵\n2. 去剑湖宫｜对象：剑湖宫\n3. 歇一歇\n伏笔：远处有女子娇叱｜期限：2\n传言：无"})
         game = Game(World.create("测"), llm)
         turn = game.act("看")
-        self.assertEqual(turn["options"], ["与钟灵说话", "去剑湖宫", "歇一歇"])
-        self.assertEqual(game.menu["与钟灵说话"], ["钟灵"])
+        self.assertEqual(turn["options"], ["与大眼圆脸的少女说话", "去剑湖宫", "歇一歇"])  # v6 选项也从主角的视角说：叫不出的名字换成叫法
+        self.assertEqual(game.menu["与大眼圆脸的少女说话"], ["钟灵"])                    # 对象仍是她：授意不失准
         self.assertEqual(game.world.player["hooks"][0]["text"], "远处有女子娇叱")
-        game.act("与钟灵说话")
+        game.act("与大眼圆脸的少女说话")
         self.assertIn("【焦点·主角此举所指之物的真相（主角未必知道）】\n- 钟灵", llm.director_prompts[-1])
         self.assertIn("【未兑现的伏笔】\n- 远处有女子娇叱", llm.director_prompts[-1])
 
