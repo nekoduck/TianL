@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外的战报与史笔共用）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -178,11 +178,9 @@ def _overreach(world, a: dict, allowed: set, ok) -> tuple[str, str] | None:
 DEATH = re.compile(f"{lexicon.KILL.pattern}|{lexicon.DIE.pattern}|死了|已死|遇害")
 
 
-def _foretold(world, shown, tab) -> list:
-    """台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知说出——那是后台的原著近事，不是此刻的江湖。
-    原著已演、或剧情里已成事实的(拘押边已在、人已死)不算。"""
-    g, done, out = world.graph, set(world.done), []
-    fates = []
+def _fates(world) -> list[tuple]:
+    """尚未发生的原著里谁将被擒、谁将死：原著已演、或剧情里已成事实的(拘押边已在、人已死)不算。"""
+    g, done, fates = world.graph, set(world.done), []
     for ev in world.canon:
         if ev["id"] in done:
             continue
@@ -191,6 +189,24 @@ def _foretold(world, shown, tab) -> list:
                 fates.append((op["src"], op["dst"], lexicon.BIND))
             elif op.get("key") == "status" and op.get("value") == "dead" and g.get(op.get("id"), "status") != "dead":
                 fates.append((op["id"], op["id"], DEATH))
+    return fates
+
+
+def spoilers(world, text: str) -> list[str]:
+    """一段要传开的话(场外的战报、史官的史笔)里的剧透(v11)：说破未揭的隐情、把尚未发生的原著说成已成之事、带出后台术语。
+    台词之外整段都查——它会变成传闻、传到编剧与玩家眼前。"""
+    tab = names(world)[0]
+    named = {nid for nid, _, _ in lexicon.find(text, tab)}
+    out = [f"说破了{s}与{d}之间的隐情" for s, _, d in lexicon.secret_hits(text, _secrets(world), tab)]
+    out += [f"把尚未发生的事（{b}{'被擒' if verb is lexicon.BIND else '身死'}）说成了已成之事"
+            for a, b, verb in _fates(world) if {a, b} <= named and verb.search(text)]
+    return out + [f"带出了后台术语「{x}」" for x in lexicon.leaks(text)]
+
+
+def _foretold(world, shown, tab) -> list:
+    """台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知说出——那是后台的原著近事，不是此刻的江湖。
+    原著已演、或剧情里已成事实的(拘押边已在、人已死)不算。"""
+    fates, out = _fates(world), []
     for i, beat in enumerate(shown, 1):
         for q in perspective.QUOTE.findall(beat.get("text") or ""):
             named = {nid for nid, _, _ in lexicon.find(q, tab)}

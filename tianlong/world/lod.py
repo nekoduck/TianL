@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve / _note（场外后果的试演与落账、只记成立之事时的代笔、名字归一、原著挪人的连带）、
          world/adjudicate 的 names（实体名表）、world/lexicon 的 unbacked（场外说法对账）、world/perspective 的 knows（谁叫得出主角名号），
          World 门面（graph / clock / canon / done / taint / turn / player / here / apply / record）
-[OUTPUT]: 对外提供 entangled()、tiers()、claimed()、held()、lod1_scope()、absorb()、split_due()、onstage()、upcoming()、ahead()、verdict()、dirt()、broken()、settle()、NEAR、HORIZON、LATE
+[OUTPUT]: 对外提供 entangled()、tiers()、claimed()、held()、lod1_scope()、absorb()、split_due()、coming()、onstage()、upcoming()、ahead()、verdict()、dirt()、broken()、settle()、NEAR、HORIZON、LATE
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、谁归谁调遣、何事到期、是否被污染），
        把需要 LLM 的工作以"任务"形式交给 engine：远方到期原著场外结算，主角眼前(onstage)到期的原著一回合一桩交导演作主干；
        场外剧情的后果经 effects 落账为真相，并盖原著排定之日的日戳（此地亲见者盖今日）。
@@ -16,11 +16,14 @@
        场外的结算是一个事务：原著与史官的后果先在副本上试演，筋骨(去留、生死伤病、易手、擒放随行)有一条落不了，整桩不半截照演——原著视同前提已破，史官的改写不入账；
        原著的隐含前提——死者不再登场、正与主角同在一处(含近旁)的人分身不得、主角手中之物不会凭空飞走、救人之事须那人仍受制；
        情境前提(~关系/!关系)与属性前提同一口径(graph.holds)；与主角故事纠缠之人(同行者、未了之事所系者)的场外原著前提已破即作罢、不唤史官——他们的行止只听导演与此地剧情
+       远处只减不增(v11)：原著还要用的人与物(未结原著的相关者、后果与前提里写到的)场外擒不走、递交不得(_foreign)；史官只裁剪原著(_vet：照抄、删去、减弱，另可写相关者的心思；写成事码的先化成指令，给旁人写的心境丢掉不算越界)，
+       越界即视同失声——前提都在就照原著、前提已破就作罢；场外的说法(战报、史笔)另过剧透的筛子(adjudicate.spoilers：未揭隐情、尚未发生的擒与死、后台术语)，命中即只记核实过的后果；
+       一地一主(v11)：原著要把人送到主角这里(事发在远处、后果却是来人，coming)，同样交导演演出来人，远处的结算不把人悄悄塞到主角跟前
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
 
-from . import adjudicate, effects, lexicon, perspective, situation
+from . import acts, adjudicate, effects, lexicon, perspective, situation
 from .effects import describe
 from .graph import holds
 
@@ -53,9 +56,10 @@ def claimed(world, within: int = HORIZON) -> set[str]:
 
 
 def _tracked(world) -> set[str]:
-    """尚有未结原著的人(不论远近)：场外推演挪不动他们的去向、要不了他们的命。"""
+    """原著还要用的人与物(不论远近)：未结原著的相关者，后果与前提里写到的一切——
+    场外推演挪不动他们的去向、要不了他们的命、擒不走他们，原著要用的东西也递交不得。"""
     done = set(world.done)
-    return {a for ev in world.canon if ev["id"] not in done for a in _cast(ev)}
+    return {x for ev in world.canon if ev["id"] not in done for x in _cast(ev) | {r[0] for r in ev["requires"]}}
 
 
 def held(world) -> set[str]:
@@ -124,17 +128,17 @@ def _unbacked(world, text: str, applied: list) -> list[str]:
 def _told(world, claim: str, applied: list, rejected: list, bare: bool = True, verify: bool = False) -> str | None:
     """场外之事入账的一句话：后果全数成立、且说法逐句对得上账(verify)才照录；有不成立的、或说法对不上账，只记成立的要事
     （说法里多半正写着那不成立之事）；一事无成则不入账。bare 为真时，本无后果的叙事(原著里的一番谈话)照录；
-    场外推演只动了心思而无要事，不成江湖事。"""
+    场外推演只动了心思而无要事，不成江湖事。LLM 写的说法(verify)另过剧透的筛子(v11)：它会变成传闻、传到编剧与玩家眼前。"""
     facts = "；".join(describe(op) for op in applied if _material(op)).replace("主角", world.player["name"])
     if not bare and not facts:
         return None
-    if rejected or (verify and _unbacked(world, claim, applied)):
-        return facts or None
+    if rejected or (verify and (_unbacked(world, claim, applied) or adjudicate.spoilers(world, claim))):
+        return facts or None  # 说破未揭的隐情、把尚未发生的原著说成已成之事(v11)：这话要随传闻传到主角耳边，只记核实过的后果
     return claim
 
 
 def _foreign(world, op, scope: set, tracked: set) -> str | None:
-    """一人一主：场外推演只碰得到推演范围之内的自由之人；尚有原著之约的人，去向与生死归原著。"""
+    """一人一主：场外推演只碰得到推演范围之内的自由之人；原著还要用的人，去向、生死与擒放归原著，原著要用的东西场外递交不得(v11)。"""
     if not isinstance(op, dict):
         return None  # 形状交 effects 驳回
     g = world.graph
@@ -148,6 +152,10 @@ def _foreign(world, op, scope: set, tracked: set) -> str | None:
     if pid in tracked and op.get("op") == "set" and \
             (op.get("key") == "location" or (op.get("key") == "status" and op.get("value") == "dead")):
         return f"{pid}尚有原著之约，去向与生死归原著"
+    if op.get("op") == "link" and op.get("rel") in situation.CUSTODY and who[2] in tracked:
+        return f"{who[2]}尚有原著之约，场外擒不走"
+    if g.kind(pid) == "item" and pid in tracked:
+        return f"{pid}原著另有安排，场外推演动不得"
     return None
 
 
@@ -216,16 +224,28 @@ def _premises(world, ev: dict) -> list[tuple]:
     return unmet
 
 
+def coming(world, ev: dict) -> list[str]:
+    """原著要把哪几人送到主角这里(此地或近旁)：事发在远处，后果却让人来到主角眼前(v11)。"""
+    g, close = world.graph, situation.near(world)
+    return sorted({op["id"] for op in ev["effects"] if isinstance(op, dict) and op.get("op") == "set" and op.get("key") == "location"
+                   and g.kind(op.get("id")) == "person" and op.get("value") in close
+                   and g.get(op["id"], "location") not in close and g.get(op["id"], "status") != "dead"})
+
+
 def onstage(world, ev: dict) -> bool:
     """这桩原著是否发生在主角眼前：事发之地是此地或近旁；或相关者正在主角身边、前提都在、正当其时(迟不过 LATE 日)——
     原著要把人从主角身边带走(段誉该去后山了)，不在场外悄悄把他传送走、也不就此作罢，交导演演出这一别：主角可以拦、可以同去、可以目送。
-    同行者与未了之事所系之人不在此列：主角把人带在身边，他的原著便不再来要人(场外作罢，见 verdict)；过了时候的旧事也不回头拽人。"""
+    同行者与未了之事所系之人不在此列：主角把人带在身边，他的原著便不再来要人(场外作罢，见 verdict)；过了时候的旧事也不回头拽人。
+    原著要把人送到主角这里(v11)，同样交导演演出来人：主角眼前的变化只有一个主，远处的结算不把人悄悄塞到他跟前。"""
     if ev["where"] in situation.near(world):
+        return True
+    fresh = world.clock.day - ev["day"] <= LATE
+    if coming(world, ev) and fresh and not _premises(world, ev):
         return True
     with_me = set(ev["actors"]) & situation.around(world)
     if not with_me or with_me & entangled(world):
         return False
-    return world.clock.day - ev["day"] <= LATE and not _premises(world, ev)
+    return fresh and not _premises(world, ev)
 
 
 def _unmet(world, ev: dict) -> list[tuple]:
@@ -309,12 +329,61 @@ def verdict(world, ev: dict, tier: int) -> tuple[str, list[str]]:
     return ("chronicle" if ev["weight"] >= 2 else "canon"), reasons
 
 
+SOFT = {"intent", "mood"}  # 心思与神色：史官可写相关者的，不算原著之外的事
+
+
+def _sig(world, op) -> tuple:
+    r = lambda x: effects.resolve(world, x) if isinstance(x, str) else x
+    if op.get("op") in ("link", "unlink", "reveal"):
+        return op.get("op"), r(op.get("src")), r(op.get("dst")), op.get("rel")
+    return op.get("op"), r(op.get("id")), op.get("key")
+
+
+def _within(world, ev: dict, op) -> bool:
+    """史官的一条后果在不在原著的范围之内：照抄原著的一条，或把它减弱(死改为伤、扣血少些)；另可写相关者的心思与神色。"""
+    if not isinstance(op, dict) or acts.is_act(op):
+        return False
+    if op.get("op") == "set" and op.get("key") in SOFT:
+        return effects.resolve(world, op.get("id")) in ev["actors"]
+    mine, b = _sig(world, op), op.get("value")
+    for c in ev["effects"]:
+        if not isinstance(c, dict) or _sig(world, c) != mine:
+            continue
+        a = c.get("value")
+        if c.get("op") in ("link", "unlink", "reveal") or a == b or \
+                (isinstance(a, str) and isinstance(b, str) and effects.resolve(world, a) == effects.resolve(world, b)):
+            return True
+        if c.get("key") == "status" and a == "dead" and b == "wounded":
+            return True  # 减弱：该死的人只受了重伤
+        if c.get("op") == "add" and all(isinstance(x, (int, float)) for x in (a, b)) and a * b > 0 and abs(b) <= abs(a):
+            return True  # 减弱：伤得轻些、得得少些
+    return False
+
+
+def _vet(world, ev: dict, outcome: dict) -> tuple[dict, str]:
+    """史官只裁剪原著，不另写原著没有的事(v11)：去处、死伤、易手、关系、武学功力，原著结果里没有的一概写不出。
+    越了界即视同史官失声：前提都在就照原著，前提已破就作罢——远处的改写只会让原著落空或减弱，不会凭空长出一桩大事。"""
+    ops = copy.deepcopy(outcome.get("effects") if isinstance(outcome.get("effects"), list) else [])
+    try:
+        ops = acts.expand(world, ops)  # 史官写成事码的也认：平常之事化为指令再比对
+    except (TypeError, AttributeError, KeyError, ValueError):
+        pass
+    keep = [op for op in ops if _within(world, ev, op)]
+    soft = lambda op: isinstance(op, dict) and op.get("op") == "set" and op.get("key") in SOFT
+    if all(op in keep or soft(op) for op in ops):  # 顺手给旁人写的一句心境不算越界，丢掉即可
+        return {**outcome, "effects": keep}, "chronicle"
+    return {"happens": not broken(world, ev), "summary": ev["summary"], "effects": ev["effects"]}, "canon"
+
+
 def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None, witnessed: bool | None = None,
            partial: bool = False) -> dict | None:
     """结算一桩原著事件。outcome: {happens, summary, effects}；干净事件直接传入 ev 本身。
     场外结算是一个事务：后果先在副本上试演，筋骨落不了即整桩不入账(verdict 已据此把原著改道，这里是最后一道闸)；
     此地上演的原著(partial)在导演诸拍之后落账，导演挪动过的人原著挪不动——成立的部分照落，账上只记成立之事。
+    史官的改写先过 _vet：只能照抄、删去或减弱原著的后果(v11)，越界即照原著或作罢。
     真相盖原著排定之日的日戳——主角亲眼所见的那一桩则盖今日(day)：迟到才演的戏，传闻不该已在路上走了十天。"""
+    if origin == "chronicle":
+        outcome, origin = _vet(world, ev, outcome)
     world.done.append(ev["id"])
     if not outcome.get("happens", True):
         return None

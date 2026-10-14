@@ -10,7 +10,7 @@
        场景清单(v8)：视锥里的景物与器物按等级详略(寻常只有名字与方位，器物另有类别、描述与属性，主角身上的要物连内容)，后台另列近旁各处摆着、藏着什么与要物的内容底细；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
        backstage 给导演——此地另有其人(v5：同在近旁片区、此刻不在眼前，要他们登场写 arrive)、近处的熟人(一日之内主角认得或有过交集的人)、上回合的账文分歧(v6：正文写了、账上却不成立的事)、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、
-       主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
+       主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away)；v11 或要把哪几人送到主角这里(coming))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
        原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问、局面平静则提示幕间省略，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
        v9：scene 另有眼前的人群(squads)，build 给出人群卡片(叫法、站着几人、人人带着什么、是否正围攻你)与主角的银两；
@@ -248,8 +248,9 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "fate": fate,
         "stage": {"event": stage, "dirt": lod.dirt(world, stage), "broken": lod.broken(world, stage),
                   "next_door": stage["where"] if stage["where"] != here and stage["where"] in situation.near(world) else None,
-                  "away": sorted(set(stage["actors"]) & situation.around(world)) if stage["where"] not in situation.near(world) else []}
-        if stage else None,  # 近旁上演的原著、要把身边之人带往别处的原著，都交导演
+                  "away": sorted(set(stage["actors"]) & situation.around(world)) if stage["where"] not in situation.near(world) else [],
+                  "coming": lod.coming(world, stage) if stage["where"] not in situation.near(world) else []}
+        if stage else None,  # 近旁上演的原著、要把身边之人带往别处的原著、要把人送到主角这里的原著(v11)，都交导演
         "upcoming": [f"原著里此时{ev['summary']}——本局已不成立，只作背景，不得写进任何人的台词" if lod.broken(world, ev) else
                      f"{'相关者已到位，可随时上演' if ev['id'] in ready else '今日稍后' if n <= 0 else f'最迟{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],
