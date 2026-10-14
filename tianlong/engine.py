@@ -13,7 +13,7 @@
        → 结算(v6 账文同构)：玩家读到的正文是本回合的定本，账房(agents.settle)读定本与账本快照开出账上缺的变化、每条附正文原句为据，
          settle.commit 核据、只收叙述成立得了的事、经 effects 照常裁决入账(并入本回合的 applied)；规则之事、落不了的与词表查出的(settle.audit)记作账文分歧(drift)交下回合导演；
          有分歧时编剧的梗概与传言不作数，以系统核实过的后果代记；身况在结算之后重算
-       → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本
+       → 选项过出口检查(含此后槽覆盖)、对象记入 menu 作下一回合的授意、尺度记入 scales(选了此后，下一回合略写) → 事件门槛判定入江湖账本(v8 寻常之物易手不成江湖事)
        → 场外推演与新到期的远方原著(v5 在成文与验收之后：编剧、掩码与选项验收看的是同一个世界；其传闻下回合才到)
        → 场的推进与合场、主角线、主干来源 → 近事、未了之事的推进与了结、伏笔账(至多两条，身体不作伏笔)、节奏账(主题，下回合交导演作阻尼)、场景实体回收；近事溢出交后台折叠梗概。
        节奏看本幕之问的结局：连番被打断，下一回合不得再打断。主角做完便走的事，以亲历之人、事发之日、事发之地入账；
@@ -34,7 +34,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, growth, lod, menu, pacing, perspective, rag, settle, situation
+from .world import access, adjudicate, body, bond, growth, lod, menu, pacing, perspective, rag, scenery, settle, situation
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -47,8 +47,9 @@ BODILY = re.compile(r"伤|毒|病|血|疼|痛|反噬|岔气|走火|经脉|内息
 HOOKS = 2         # 未兑现的伏笔至多记这么多条：悬念是稀缺品，多了便成了催债
 
 
-def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
-    """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉；见证者是眼前之人(rag.scene)，轻描淡写的态度 link 不算大事。"""
+def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset()) -> int:
+    """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉；见证者是眼前之人(rag.scene)，轻描淡写的态度 link 不算大事；
+    寻常之物(v8 场景清单：一只茶碗)易手不是江湖事。"""
     def grave(op) -> bool:
         kind, key = op["op"], op.get("key")
         if kind in ("link", "unlink"):  # 结义、擒放、随行、结仇结交才是江湖上传得开的事；一句试探里的提防不是(v5)
@@ -57,7 +58,7 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int) -> int:
             return True
         if op.get("id") == "player":
             return kind == "push" and key == "skills"
-        return (kind, key) in {("set", "status"), ("set", "holder")}
+        return (kind, key) in {("set", "status"), ("set", "holder")} and op.get("id") not in trifles
     if witnesses < WITNESSES or (hp_loss < GRAVE_LOSS and not any(grave(op) for op in applied)):
         return 0
     return 2 if any(op["op"] == "set" and op.get("key") == "status" and op.get("value") == "dead" for op in applied) else 1
@@ -252,7 +253,7 @@ class Game:
         memory = veil(sworn or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
         if len(w.player["name"]) >= 2:  # 近事一律以「你」称主角：书记不会把「你」与主角名号当成两个人
             memory = memory.replace(w.player["name"], "你")
-        weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"])
+        weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"], scenery.trifles(w))
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = (None if rifts else page["headline"]) or (sworn or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)

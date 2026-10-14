@@ -4,11 +4,12 @@
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
-          unearth()（场景物件认作现场的原著器物）、
+          unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
           place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
-       地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)。
+       地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)与方位 spot(v8 场景清单：
+       剑架上、茶几上——软的：_hand 流转即清，到了谁手里没有方位、落下便是「地上」；「去掉方位」之类的写法与主角的方位不算错也不入账，原样不动的方位不是一件事)。
        数值归规则：导演不得直接增减功力或凭空授武学——研习写 study、吸功写 drain，多少由 growth 算；
        内伤归 body：导演往境况里写内伤(岔气、经脉、内息…)即按分级升一级、去掉即降一级，有据的疗伤(气血回升)顺带降一级，每回合每人各至多一级；
        主角与 NPC 同构(v4)：add hp、push/pull conditions 对任何活人成立，NPC 的气血归 actor、status 由气血推出(写 set status 则气血随之对齐)，
@@ -56,14 +57,14 @@ FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
-ITEM_FLOW = {"location", "holder", "hidden", "state"}  # 器物：定义不可改，只可流转、显隐、损耗
+ITEM_FLOW = {"location", "holder", "hidden", "state", "spot"}  # 器物：定义不可改，只可流转、显隐、损耗，挪个方位(v8 spot：剑架上、茶几上)
 OFFSCREEN = {"lod1", "chronicle"}                # 场外推演：主角不在场，碰不到主角本人
 RESOLVED_KEYS = {"location", "holder", "inventory", "skills", "faction"}  # 这些值是实体名，须经别名表归一
 NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或 add 一个数
 LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
 ENTITY_LISTS = {"inventory", "skills"}           # 实体清单只可逐件得失：整体改写会绕过"世上有没有此物"的校验
 NOTE_LEN = 40                                    # 关系边上的印象一句话
-SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN}  # 人物身上的一句话属性
+SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN, "spot": 16}  # 人物身上的一句话属性；器物在一处地方的方位(v8)
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 NAME = "name"                                    # reveal 的 id 形(v6)：某人的姓名被说了出来——认知唯一的落账通道
 NAMEISH = {"姓名", "名字", "名号", "名姓", "真名", "身份", "来历", "name"}  # reveal 写成关系形、rel 说的是姓名
@@ -183,6 +184,8 @@ def describe(op) -> str:
         return f"{who}{STATUS_WORDS.get(v, v)}"
     if kind == "set" and key == "holder":
         return f"{nid}归{name(v)}所有"
+    if kind == "set" and key == "spot":
+        return f"{nid}放到了{v}"
     if kind == "add":
         return f"{who}的{key}{'+' if isinstance(v, (int, float)) and v >= 0 else ''}{v}"
     if kind in ("push", "pull"):
@@ -329,6 +332,8 @@ def _physics(world, op, heading=frozenset()) -> str | None:
         return f"玩家属性「{key}」不可写"
     if g.kind(nid) == "item" and key not in ITEM_FLOW:
         return f"器物由系统掌管，{nid}的定义不可改"
+    if key == "spot" and g.kind(nid) != "item":
+        return "方位只记器物摆在哪里"
     if g.kind(nid) in TERRAIN and key != "state":
         return f"地理由系统掌管，{nid}只可改变现状(state)"
     if g.kind(nid) == "skill":
@@ -629,10 +634,13 @@ def _quest(world, value):
 
 
 def _hand(world, item: str, holder: str | None = None, location: str | None = None):
-    """器物流转：持有与落地不兼存；交到主角手里即入随身，离开主角手里即出随身——黑板与图上的器物永远对得上账。"""
+    """器物流转：持有与落地不兼存；交到主角手里即入随身，离开主角手里即出随身——黑板与图上的器物永远对得上账。
+    方位(v8 spot)随流转而变：到了谁手里就没有方位，落在某处便是地上；原地没动(只是显露出来)则方位照旧。"""
     node = world.graph.nodes[item]
     if node.get("holder") == "player" and holder != "player":
         world.player.pull("inventory", item)
+    if (node.get("holder"), node.get("location")) != (holder, location):
+        node["spot"] = None if holder else "地上"
     node.update(holder=holder, location=location)
     if holder == "player":
         world.player.push("inventory", item)
@@ -670,7 +678,7 @@ def _noop(world, op) -> bool:
         return False
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
-    return key in ("location", "holder", "faction", "hidden") and g.get(nid, key) == op.get("value")
+    return key in ("location", "holder", "faction", "hidden", "spot") and g.get(nid, key) == op.get("value")
 
 
 def _hearers(world, op) -> list[str]:
@@ -699,6 +707,8 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             _normalize(world, op)
             if op.get("id") == "player" and op.get("key") in SENTENCE:
                 continue  # 主角的心思与神色归玩家：导演替他写下的打算不算错，只是不入账，免得为此返工
+            if op.get("key") == "spot" and (op.get("op") != "set" or not op.get("value")):
+                continue  # 方位是软的(v8)：拿走时清掉方位由系统记，「去掉方位」之类不必写、也不算错
             _summon(world, op, origin)
             if _noop(world, op):
                 continue  # 本就如此：既非成立也非驳回

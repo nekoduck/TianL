@@ -9,7 +9,7 @@
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
-          spawn() / sweep()（场景实体：群体与寻常物件，入账、有归属、离远即回收）、
+          spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由）、FORGE、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
           entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
 [POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
@@ -28,7 +28,8 @@ MAX_QUESTS = 4
 PERIL = 0.15                                                        # 气血不足此比例即命悬一线
 STALE = 12                                                          # 这么多回合未推进的未了之事，提示导演收束
 GROUP, THING = "group", "thing"
-SPAWN_KINDS = {GROUP, THING}
+SPAWN_KINDS = {GROUP}  # v8 场景清单：器物在创世时布齐，剧情不得新造物件(thing)；场景实体只剩一队人马
+FORGE = "器物由世界掌管，不得新造：此地与身边有什么，清单里都列着——用清单里的原名，清单里没有的就是此地没有"
 
 
 def _root(loc: str) -> str:
@@ -242,41 +243,32 @@ def rout(world, pid: str) -> str | None:
 
 
 # ============================================================
-#  场景实体：群体(一队谷丁)与寻常物件(碎银、火折、两颗明珠)——入账、有归属、离远即回收
+#  场景实体：群体(一队谷丁)——入账、有归属、离远即回收；物件不再另立(v8：器物在创世时由场景清单布齐，旧档里立过的照旧回收)
 #  不得冒用原著实体之名；群体须有据可依：所属门派在附近有人或有据点，且不是原著近事里尚未到场的势力
 # ============================================================
-def _similar(a: str, b: str) -> bool:
-    return len(a) >= 2 and len(b) >= 2 and (a in b or b in a)
-
-
 def spawn(world, spec: dict, embargo: set[str] = frozenset()) -> tuple[str | None, str | None]:
-    """按 spec 立一个场景实体；返回 (id, None) 或 (None, 不成立的缘由)。embargo：原著近事里尚未到场的势力。"""
+    """按 spec 立一个场景实体；返回 (id, None) 或 (None, 不成立的缘由)。embargo：原著近事里尚未到场的势力。
+    物件一概不立(v8)：要的若就是现场的某件器物，裁决器先已用 effects.unearth 认回它。"""
     g = world.graph
     kind, name = spec.get("kind"), str(spec.get("name") or "").strip()[:12]
+    if kind == THING:
+        return None, FORGE
     if kind not in SPAWN_KINDS or not name:
-        return None, "场景实体须写明 kind(group/thing) 与 name"
+        return None, "场景实体须写明 kind(group) 与 name"
     if g.has(name) or name in world.aliases or name in ("player", "主角", world.player["name"]):
         return (name, None) if g.get(name, "ephemeral") else (None, f"「{name}」已是书中之名，不可另立")
-    canon = [n for n, node in g.nodes.items() if node["type"] in ("person", "item") and not node.get("ephemeral")]
-    clash = next((n for n in canon if _similar(name, n)), None)
-    if clash and kind == THING:
-        return None, f"「{name}」与原著之物「{clash}」相混，请直接用「{clash}」或换个寻常之名"
-    node = {"type": "item" if kind == THING else GROUP, "ephemeral": True, "born": world.clock.day,
-            "desc": str(spec.get("desc") or "")[:40], "location": world.here, "hidden": False}
-    if kind == THING:
-        node.update(kind="物件", holder=None, grants=None, effect=None, state={"exists": True, "available": True})
-    else:
-        faction = spec.get("faction")
-        faction = world.aliases.get(faction, faction)
-        if g.kind(faction) != "faction":
-            return None, f"群体「{name}」须属于一个已登记的门派"
-        if faction in embargo:
-            return None, f"{faction}的人马此时尚未到此（原著近事），不得先行登场"
-        if not _rooted(world, faction):
-            return None, f"{faction}在此地附近既无据点也无人手，凭空来不了一队人"
-        count = spec.get("count")
-        node.update(faction=faction, status="alive", count=count if isinstance(count, int) and 0 < count <= 200 else 10)
-    g.nodes[name] = node
+    faction = spec.get("faction")
+    faction = world.aliases.get(faction, faction)
+    if g.kind(faction) != "faction":
+        return None, f"群体「{name}」须属于一个已登记的门派"
+    if faction in embargo:
+        return None, f"{faction}的人马此时尚未到此（原著近事），不得先行登场"
+    if not _rooted(world, faction):
+        return None, f"{faction}在此地附近既无据点也无人手，凭空来不了一队人"
+    count = spec.get("count")
+    g.nodes[name] = {"type": GROUP, "ephemeral": True, "born": world.clock.day, "desc": str(spec.get("desc") or "")[:40],
+                     "location": world.here, "hidden": False, "faction": faction, "status": "alive",
+                     "count": count if isinstance(count, int) and 0 < count <= 200 else 10}
     return name, None
 
 

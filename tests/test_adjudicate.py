@@ -3,7 +3,7 @@
 [OUTPUT]: unittest 用例——80 回对局暴露的病灶逐条转成离线验收：
           焦点检索让导演看见解药在谁身上、器物近似名归一、同伴随主角移动且过不去的关留下、救人即解押、未了之事谓词满足自动收束、
           原著救人之事在人已获救时不再照演、一人一回合只听一处调遣、纠缠之人的场外原著不照本宣科、
-          研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令、
+          研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
@@ -99,8 +99,9 @@ class SituationTest(unittest.TestCase):
         w = self.w
         _, why = situation.spawn(w, {"kind": "thing", "name": "神功卷轴"})
         self.assertIsNotNone(why)                                                     # 与原著之物相混
-        nid, _ = situation.spawn(w, {"kind": "thing", "name": "火折"})
-        self.assertEqual(nid, "火折")
+        nid, why = situation.spawn(w, {"kind": "thing", "name": "火折"})
+        self.assertEqual((nid, why), (None, situation.FORGE))                        # v8：器物在创世时布齐，剧情不新造物件
+        self.assertFalse(w.graph.has("火折"))
         _, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮"}, embargo={"神农帮"})
         self.assertIn("尚未到此", why)                                                # 原著近事里尚未到场的势力
         _, why = situation.spawn(w, {"kind": "group", "name": "少林僧众", "faction": "少林派"})

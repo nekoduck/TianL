@@ -2,11 +2,12 @@
 [INPUT]: 依赖 world/profile 的 profile / power_tier / TIERS（单一投影：人与主角此刻的状态切面）、world/actor 的 mood（场外档案的心境），
          world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress / mastery / studiable（研习进度、进境投影、研习对象）
-         与 world/ledger 的 NEWS_SPEED，依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
+         与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        状态字段一律取自 profile(v4 单一投影)：condition、build、backstage 只取不同切面，不各算一遍——进境、伤势、心境、眼下之事、立场三处同时看得见；
+       场景清单(v8)：视锥里的景物与器物按等级详略(寻常只有名字与方位，器物另有类别、描述与属性，主角身上的要物连内容)，后台另列近旁各处摆着、藏着什么与要物的内容底细；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
        backstage 给导演——此地另有其人(v5：同在近旁片区、此刻不在眼前，要他们登场写 arrive)、近处的熟人(一日之内主角认得或有过交集的人)、上回合的账文分歧(v6：正文写了、账上却不成立的事)、原著近事相关者到位时写「可随时上演」、焦点(玩家所指之物此刻在谁手里、多远、主角以为在哪)、受制、
        主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
@@ -15,7 +16,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, actor, body, growth, lod, pacing, perspective, situation
+from . import access, actor, body, growth, lod, pacing, perspective, scenery, situation
 from .effects import usable
 from .ledger import NEWS_SPEED
 from .profile import TIERS, power_tier, profile, ties
@@ -113,7 +114,7 @@ def build(world) -> dict:
                "conditions": pf["conditions"],
                "seen_as": None if perspective.knows(world, "player", p) else perspective.handle(world, p),  # 主角不知其名：只叫得出外貌
                "knows_you": perspective.knows(world, p, "player")} for p in s["people"]]
-    carried = [{"name": i, "desc": g.get(i, "desc")} for i in me["inventory"]]
+    carried = [scenery.card(world, i, inside=True) for i in me["inventory"]]  # 主角身上的要物连内容一起给：读得到
     news = [f"{world.clock.label(e['day'])}·{e['where']}：{e['summary']}"  # 主角自己的作为已在【近来】里，不再当传闻
             for e in (world.truth.get(i) for i in world.knowledge.known) if e["origin"] != "director"][-NEWS_WINDOW:]
     return {
@@ -125,8 +126,8 @@ def build(world) -> dict:
                    "synopsis": me["synopsis"], "en_route": me.get("en_route")},
         "scene": {"name": here, "region": g.get(here, "region"), "desc": g.get(here, "desc"),
                   "state": g.get(here, "state"), "lore": g.get(here, "lore", [])},
-        "features": [{"name": f, "desc": g.get(f, "desc")} for f in s["features"]],
-        "items": [{"name": i, "desc": g.get(i, "desc")} for i in s["items"]],
+        "features": [scenery.feature(world, f) for f in s["features"]],
+        "items": [scenery.card(world, i) for i in s["items"]],  # 场景清单(v8)：寻常之物只有名字与方位，器物另有类别、描述与属性
         "people": people,
         "dead": s["dead"],
         "relations": _relation_lines(world, s["people"] + s["dead"], visible),
@@ -270,6 +271,8 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带"  # 有过交集的、怀有图谋的在前
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
+        "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置
+        "dossiers": scenery.dossiers(world),  # 要物的内容与底细：有人翻看就照此写
     }
 
 

@@ -4,7 +4,7 @@
           remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表与 turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
        存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图；
-       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
+       旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；场景清单(v8)的景物同地点一样定义随数据走、现状照存档，旧档里没有的布景器物补上(已有的照存档)；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
        开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -137,11 +137,13 @@ class World:
         旧档由此用上新地图；道路补丁只在创世时打一次，存档从不重放补丁，重绘多少次都是同一张图。"""
         g = self.graph
         for nid, node in atlas["nodes"].items():
-            if node["type"] != "location":
+            if node["type"] == "item" and nid not in g.nodes:  # 场景清单(v8)新布下的器物：旧档里没有就补上，有了便是存档里的现状
+                g.nodes[nid] = node
+            if node["type"] not in ("location", "feature"):
                 continue
-            kept = g.nodes.get(nid)
+            kept = g.nodes.get(nid)  # 地点与景物：定义随数据走，现状照存档
             g.nodes[nid] = {**node, **({"state": kept["state"]} if kept and "state" in kept else {})}
-            if kept is None:  # 新入图的地点进入常识，与开局时一样
+            if kept is None and node["type"] == "location":  # 新入图的地点进入常识，与开局时一样
                 self.knowledge.observe(g, [nid])
         roads = Graph(g.nodes)
         _lay(roads, atlas)

@@ -2,7 +2,8 @@
 [INPUT]: 依赖 world/perspective 的 hear / speaker / doer / mask / handle / guise / thing / knows / audience / moment / QUOTE（识名听写、说话人与行事者、视角掩码、叫法、时间轴上的那一刻）、world/profile 的 profile（单一投影：账房看的账本快照）、
          world/effects 的 apply / describe / resolve / place（唯一写入通道）、world/adjudicate 的 view / names / unbidden（回合起止切面、实体名表、授意）、
          world/situation 的 seen / around / near / party / captors / captive / bodies（在场、近处、随行、受制）、world/body 的 INNER（内伤分级词）、
-         world/growth 的 unearned / mastery、world/lexicon 的 scan / mastery / SENTENCE / DEPART / NEGATE / REMOTE / YET（词表：结算的第二双眼睛，也判主角是否真动了身）
+         world/growth 的 unearned / mastery、world/lexicon 的 scan / mastery / SENTENCE / DEPART / NEGATE / REMOTE / YET（词表：结算的第二双眼睛，也判主角是否真动了身）、
+         world/scenery 的 nicknames（v8 器物的简称）、world/adjudicate 的 forged（v8 世上没有的器物）
 [OUTPUT]: 对外提供 Gate（正文出闸：逐段逐句对齐到时刻 → 听 → 掩 → 放行，放行即存档；note 把补记接在正文之后(同过掩码与存档，但戏里没有人听见)；at 给一句话所在那一刻的听众与遗体）、partners()、
           books()（账房看的账本：定本正文、叫法对照、此刻账上、本回合已落账、本回合账上的变化、近处地点）、
           commit()（账房的结算单落账：据须是正文原句、规则之事正文改不了、主角之举须经授意，按据所在时刻的听众经 effects 裁决 → (成立的指令, 分歧)）、
@@ -18,13 +19,15 @@
        台词里说的、别人的来去、想起与听说的、正欲与尚未的都不算；只进不退。从某一截听出的名字、从某句开出的变化，都在那一刻的听众里生效——
        同一段里动身之前在厅上报的名厅上的人听见，到了后山报的名后山的人听见。
        物理照旧只由世界裁定：账房只把正文里已发生的事交世界复核；伤病数值、生死、功力进境、远行归规则，只记分歧(player.drift)交下回合导演圆回。
+       场景清单(v8)：寻常之物的取用不交复核、不记分歧；补记的「写到没有」认器物的简称(写「那柄青钢剑」就是写到了剑架青钢剑)；
+       正文凭空写出世上没有的器物(有人拿出、去取、递上它)记作分歧(ruled)，下回合交导演圆回。
        纯规则、不调 LLM(账房在 narrative)、不新造实体
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
 import re
 
-from . import adjudicate, effects, growth, lexicon, perspective, situation
+from . import adjudicate, effects, growth, lexicon, perspective, scenery, situation
 from .body import INNER
 from .profile import profile
 
@@ -341,7 +344,7 @@ def disputes(world, text: str) -> list[dict]:
     sentences = [s for s in lexicon.SENTENCE.split(text) if s.strip()]
     out = []
     for f in lexicon.scan([{"who": None, "text": s} for s in sentences], v, *adjudicate.names(world), dedupe=False):
-        if f.kind in DOUBT:
+        if f.kind in DOUBT and f.hard:  # 寻常之物(v8)端起放下不对账：不交复核、不记分歧
             out.append({"句": sentences[f.beat - 1].strip(), "看出": f.message.split("，", 1)[0].replace(f"第{f.beat}拍", "正文")})
     return out
 
@@ -353,6 +356,8 @@ def ruled(world, text: str) -> list[str]:
     if v and text:
         out += [f.message.replace("第1拍", "正文") for f in lexicon.scan([{"who": None, "text": text}], v, *adjudicate.names(world))
                 if f.kind in ("kill", "drain")]
+    out += [f"正文写到「{f.entity}」，世上并无此物" for f in lexicon.scan([{"who": None, "text": text}], v, *adjudicate.names(world))
+            if f.kind == "conjure" and adjudicate.forged(world, f.entity)] if v and text else []  # 器物不得新造(v8)：正文凭空写出的东西交下回合导演圆回
     words = growth.unearned(world, lexicon.mastery(text, "player"))
     if words:
         arts = "；".join(a["detail"] for a in growth.mastery(world)) or "主角尚无武学"
@@ -432,10 +437,13 @@ def delta(world, before: dict) -> list[dict]:
     for p in sorted(set(now["wounded"]) - set(before["wounded"]) - dead):
         if p in was:
             add(f"hurt:{p}", f"{face(p)}受了伤", *marks(p))
+    nick: dict[str, list[str]] = {}  # 器物的简称(v8)：正文写「那柄青钢剑」就是写到了剑架青钢剑
+    for short, i in scenery.nicknames(world).items():
+        nick.setdefault(i, []).append(short)
     for i in sorted(set(now["inventory"]) - set(before["inventory"])):
-        add(f"got:{i}", f"{perspective.thing(world, i)}到了你手上", i, perspective.thing(world, i))
+        add(f"got:{i}", f"{perspective.thing(world, i)}到了你手上", i, perspective.thing(world, i), *nick.get(i, ()))
     for i in sorted(set(before["inventory"]) - set(now["inventory"])):
-        add(f"lost:{i}", f"{perspective.thing(world, i)}已不在你身上", i, perspective.thing(world, i))
+        add(f"lost:{i}", f"{perspective.thing(world, i)}已不在你身上", i, perspective.thing(world, i), *nick.get(i, ()))
     for p in sorted(set(now["known"]) - set(before["known"])):
         if g.kind(p) == "person":
             add(f"name:{p}", f"{before['guise'].get(p) or now['guise'].get(p) or perspective.guise(world, p)}原来名叫{p}", p)

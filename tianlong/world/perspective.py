@@ -7,7 +7,8 @@
           hear()（v6 听写器：一段文字里被说出来的名字 → 识名指令 reveal{id}，拍文与正文共用；miss 收下认不出是谁的「互通姓名」）、speaker()（台词的说话人）、doer()（v7 某处那件事是谁做的：台词不隔断，写着别人却认不出即 False，没写主语即 None）、
           audit()（逐拍：先听——听来的名字交调用方的 commit 落账；再查称谓——叫出不该知道的名字即违例，主角叫错与 NPC 叫出主角姓名交返工，NPC 之间只记一笔）、
           mask()（主角不识名之人换成叫法、不知主角姓名者口中的主角换成泛称；落不了账的自报家门只去掉名字）、
-          veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码）、
+          veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码；
+          v8 器物是 world/scenery 的卡片(名字、等级、方位、类别、描述、属性、内容)，名字过 thing、其余过 mask，景物的描述与现状亦然）、
           thing()（器物在主角眼中的叫法：名字里带着不识之人的名号就只叫那件东西本身）
 [POS]: world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
        识名是认知最表层的一环：主角初见钟灵，只知是「大眼圆脸的少女」；她自报姓名、或认得她的人当面叫她，主角才知道她叫钟灵。
@@ -575,10 +576,20 @@ def veil(world, pack: dict) -> dict:
     out["dead"] = [handle(world, p) for p in out.get("dead", [])]
     out["journal"] = [mask(world, j) for j in out["journal"]]
     out["news"] = [mask(world, n) for n in out.get("news", [])]  # 传闻也从主角的视角说：不识的人只剩叫法
-    out["items"] = [{"name": thing(world, i["name"]), "desc": mask(world, i["desc"] or "")} for i in out.get("items", [])]
+    out["items"] = [_card(world, i) for i in out.get("items", [])]
     out["scene"] = {**out["scene"], "state": mask(world, out["scene"]["state"]) if isinstance(out["scene"].get("state"), str) else out["scene"].get("state"),
                     "lore": [mask(world, x) for x in out["scene"].get("lore") or []]}
     out["player"] = {**out["player"], "synopsis": mask(world, out["player"]["synopsis"]),
                      "threads": [mask(world, t) for t in out["player"]["threads"]],
-                     "inventory": [{"name": thing(world, i["name"]), "desc": mask(world, i["desc"] or "")} for i in out["player"]["inventory"]]}
+                     "inventory": [_card(world, i) for i in out["player"]["inventory"]]}
+    out["features"] = [{**f, "desc": mask(world, f.get("desc") or ""), "state": mask(world, f["state"]) if isinstance(f.get("state"), str) else f.get("state")}
+                       for f in out.get("features", [])]
     return out
+
+
+def _card(world, c: dict) -> dict:
+    """一件器物在主角眼中(v8 场景清单)：名字不带生人名号，描述、方位、属性与内容一并过掩码；形状与 world/scenery.card 相同。"""
+    return {**c, "name": thing(world, c["name"]), "desc": mask(world, c.get("desc") or ""),
+            "spot": mask(world, c["spot"]) if c.get("spot") else c.get("spot"),
+            "props": {k: mask(world, v) for k, v in (c.get("props") or {}).items()},
+            "text": mask(world, c["text"]) if c.get("text") else c.get("text")}

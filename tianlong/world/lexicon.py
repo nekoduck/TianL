@@ -3,7 +3,8 @@
 [OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
           unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、ARRIVE / DEPART / QUOTED（主角的去留：完成体的到与离，台词不算）、
           NEGATE / REMOTE / YET（否定、远处与回忆、未然——v7 正文时间轴判主角是否真动了身也用它们）、
-          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、mastery()（主角的进境措辞）、MASTERY / PRACTICE / MOVE / HURT
+          leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、ware()（拿出、取来、递上之后紧跟的器物名词，v8）、mastery()（主角的进境措辞）、
+          MASTERY / PRACTICE / MOVE / HURT / PRODUCE / WARE
 [POS]: world 层的变化词表与一致性体检——"文字只渲染已成立之事"的第一道闸：拍文写了得失、去留、生死、擒放、吸功、
        或让不在场的人开口，账本里却没有对应的变化，即为一条 Finding；纯函数、零调用，裁决器(adjudicate)在落账后用它查遗漏，
        回放工具(tools/replay.py)用它统计旧对局的违例。只认"动词与实体同在一个分句"的强证据，否定、假设、回忆、远处一律不算；
@@ -14,7 +15,9 @@
        场外(v5)：场外推演与史官的一句话也逐分句对账(unbacked)——主语承上一分句，说了去处就要对得上账上的去处(来处不算)，
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
        不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
-       主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开
+       主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
+       场景清单(v8)：寻常之物(trifle：茶碗、瓜子)的取用与交出只记软违例；谁都一样，拿出、取来、递上的东西若不是名表里的任何一件，即 conjure(世上有没有由调用方对账)；
+       DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -34,7 +37,7 @@ LEAVE = re.compile(r"逃走|逃去|逃离|逃遁|遁走|遁去|遁入|飞遁|远
 FOLLOW = re.compile(r"携着|携了|携起|携|带着|带了|揽住|揽着|扶着|背着|抱着|拉住|拉着|领着|同行|随你|跟着你|随后跟上|紧随")
 KILL = re.compile(r"杀死|杀了|刺死|打死|劈死|砍死|击杀|害死|杀害|击毙|掌毙|斩杀|格杀")       # 及物：死者在动词之后
 DIE = re.compile(r"身亡|毙命|气绝|殒命|丧命|断气|死于|一命呜呼")                                 # 不及物：死者在动词之前
-DRAIN = re.compile(r"吸尽|吸干|吸走|吸取|吸去|吸了|吸夺|夺人功力|(?:内力|真气|功力)[^，。；！？]{0,6}(?:尽失|全失|被吸|溃堤|倒灌|流泻|涌入你|源源不绝地涌入)|化去.{0,2}(?:内力|功力)")
+DRAIN = re.compile(r"吸尽|吸干|吸走|吸取|吸去|吸了(?!过去|进去|口|一口)|吸夺|夺人功力|(?:内力|真气|功力)[^，。；！？]{0,6}(?:尽失|全失|被吸|溃堤|倒灌|流泻|涌入你|源源不绝地涌入)|化去.{0,2}(?:内力|功力)")
 FREE = re.compile(r"救出|救下|斩断.{0,4}(?:绳|索|锁)|割断.{0,4}(?:绳|索)|松绑|解开.{0,3}(?:绳|索|绑)|放走|放了")
 BIND = re.compile(r"擒住|擒下|擒获|生擒|绑了|绑住|捆住|押走|押着|扣下|扣为人质|挟为人质|劫走|劫持|掳走|掳去|掳了|掳在|掳")
 # 场外说法(v5)：行止与伤病的措辞——说了就意味着人换了地方、身上带了伤
@@ -58,6 +61,13 @@ MASTERY = re.compile("|".join(rx for _, rx in MASTERY_LEVELS))
 PRACTICE = re.compile(r"练|演|参研|参悟|参详|钻研|研习|研读|修习|习练|运功|拆解|揣摩|照着.{0,6}(?:图|谱|卷|书)|比划|修炼|吐纳|打坐|依法|按图|"
                       r"摸索.{0,4}(?:心法|内功|功夫|步法|招式|口诀)")
 YET = re.compile(r"尚未|还未|未曾|不曾|远未|仍未|未能|没能|不能|难以|无法|何时才能|若能|但愿|盼着|梦想")
+# 器物入戏(v8 场景清单)：有人拿出、取来、递上一件东西——动词后紧跟的器物名词由 ware() 摘出，那东西须是世上有的(调用方对账)
+PRODUCE = re.compile(r"取出|掏出|摸出|拿出|翻出|捧出|端出|取来|拿来|捧来|端来|送来|递来|递上|递过|呈上|献上|奉上|送上|交给|递给|塞给|交与|递与|"
+                     r"拾起|捡起|拿起|抓起|抄起|捧起|去取|取下|取走|取过|取回|取得|取了|取(?!信于)")
+WARE = (r"(?:书信|令牌|令箭|包袱|火折|火把|匕首|银子|银两|金子|铜钱|钥匙|药粉|图|谱|册|簿|卷|信|笺|帖|函|契|令|牌|符|印|匣|盒|箱|瓶|罐|坛|壶|囊|袋|包|"
+        r"碗|杯|盏|灯|烛|剑|刀|枪|棍|鞭|杖|钩|爪|斧|锤|戟|弓|箭|镖|针|珠|钏|镯|佩|簪|镜|玉|银|钱|药|丹|丸|散|膏|草|锁|绳|索|纸)")
+WARE_NOUN = re.compile(r"^(?:你|他|她|我|众人)?(?:[一两几数半那这此][封张叠卷本册柄把只块包瓶枚锭串颗粒面根条盏副对件个份壶碗杯袋]?)?"
+                       r"([^，。；！？、的了着在与和你他她我]{0,3}" + WARE + ")")  # 贪婪：「青瓷药瓶」不截成「青瓷药」
 ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|丸|散|膏|秘籍|秘笈|卷轴|帛卷|经书|剑谱|刀谱|图谱|珠|钏|镯|盒|匣|瓶|信|令牌|钥匙|锦囊|宝剑|宝刀|草)")
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
@@ -161,6 +171,12 @@ def itemish(text: str) -> str | None:
     return m.group(0) if m else None
 
 
+def ware(text: str) -> str | None:
+    """紧跟在拿出、取来、递上之后的那件东西(v8)：「向内堂取密图备御」→ 密图；「交给他一封信」→ 信。不是器物名词即 None。"""
+    m = WARE_NOUN.match(text)
+    return m.group(1) if m else None
+
+
 # ============================================================
 #  体检：逐拍逐分句，强动词 × 实体 × 起止切面
 # ============================================================
@@ -210,16 +226,22 @@ def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
     """分句内：你取得了什么、交出了什么，谁开口动手。"""
     out, ents = [], find(clause, tab)
     mine = who == "player" or "你" in clause
-    things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing")]
+    things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle")]
     m = ACQUIRE.search(clause)
-    if mine and m:
-        out += [Finding("acquire", i, t, f"第{i}拍写你取得{t}，账上却没有这件东西到你手里")
+    if mine and m:  # 寻常之物(v8 trifle：茶碗、瓜子)端起放下不必记账，只记软违例
+        out += [Finding("acquire", i, t, f"第{i}拍写你取得{t}，账上却没有这件东西到你手里", hard=kinds.get(t) != "trifle")
                 for t in things if t not in view.inventory_end and t not in view.inventory_start]
         noun = None if things or any(kinds.get(n) == "person" for n, _, _ in ents) else itemish(clause[m.end():][:10])
         if noun:
-            out.append(Finding("unnamed", i, noun, f"第{i}拍写你取得「{noun}」，世上却没有这件器物：用既有之物，或以 spawn 立一件寻常物件"))
+            out.append(Finding("unnamed", i, noun, f"第{i}拍写你取得「{noun}」，世上却没有这件器物：器物不得新造，只能用此地与身边清单里既有之物"))
+    for pm in PRODUCE.finditer(clause):  # 谁都一样(v8)：拿出、取来、递上的东西若不是账上任何一件，便是凭空造了一件器物
+        w = WARE_NOUN.match(clause[pm.end():][:10])
+        lo, hi = (pm.end() + w.start(1), pm.end() + w.end(1)) if w else (0, 0)
+        if w and not any(a < hi and b > lo for _, a, b in ents):  # 那个名词本身就是(或压着)名表里的某件东西：不是凭空造的
+            out.append(Finding("conjure", i, w.group(1), f"第{i}拍写到「{w.group(1)}」，世上却没有这件器物：器物不得新造——改用此地与身边清单里的，或删去"))
+            break
     if mine and GIVE.search(clause):
-        out += [Finding("give", i, t, f"第{i}拍写你交出{t}，它却仍在你身上")
+        out += [Finding("give", i, t, f"第{i}拍写你交出{t}，它却仍在你身上", hard=kinds.get(t) != "trifle")
                 for t in things if t in view.inventory_start and t in view.inventory_end]
     for nid, _, end in ents:
         if far or kinds.get(nid) != "person" or nid == "player" or nid in view.dead:
