@@ -9,7 +9,8 @@
        节点表与边表是记着版本的容器(谁往里加、删、整个换掉都让版本加一)，按类型的节点清单、道路邻接表、关系边的查找表与每个节点的关系边都按版本惰性重建；
        节点的属性就地改不影响类型、边的属性就地改不影响两端与关系名，所以索引只在结构变了时才作废；深拷贝只拷数据，索引在副本上重建；
        节点的属性表是 _Node：location/holder 改了就地挪动属性索引(where(location=…)/where(holder=…) 只看那一处、那一人，结果仍按创世次序)，
-       任何属性改动都让戳记 stamp 变——memo 是调用方按戳记作废的缓存(近旁、名表)，不入存档、深拷贝不带；order 把索引取出的一把节点排回创世次序
+       任何属性改动都让戳记 stamp 变——memo 是调用方按戳记作废的缓存(近旁、名表)，不入存档、深拷贝不带；order 把索引取出的一把节点排回创世次序；
+       link 新添一条边就地记进索引(创世铺上千条路不必每条重建)，道路按两端查找表认
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -313,34 +314,45 @@ class Graph:
     # ------------------------------------------------------------
     #  关系边（有向；道路边视作无向）
     # ------------------------------------------------------------
+    @staticmethod
+    def _file_edge(adj: dict, pairs: dict, rels: dict, e: dict):
+        if e["rel"] == ROAD:
+            adj.setdefault(e["src"], []).append(e)
+            adj.setdefault(e["dst"], []).append(e)
+            pairs.setdefault((ROAD, frozenset((e["src"], e["dst"]))), e)
+        else:
+            pairs.setdefault((e["src"], e["dst"], e["rel"]), e)
+            rels.setdefault(e["src"], []).append(e)
+            if e["dst"] != e["src"]:
+                rels.setdefault(e["dst"], []).append(e)
+
     def _index(self) -> tuple[dict, dict, dict]:
         version, adj, pairs, rels = self._edge_index
         if version != self._edge_version:
             adj, pairs, rels = {}, {}, {}
             for e in self._edges:
-                if e["rel"] == ROAD:
-                    adj.setdefault(e["src"], []).append(e)
-                    adj.setdefault(e["dst"], []).append(e)
-                    pairs.setdefault((ROAD, frozenset((e["src"], e["dst"]))), e)
-                else:
-                    pairs.setdefault((e["src"], e["dst"], e["rel"]), e)
-                    rels.setdefault(e["src"], []).append(e)
-                    if e["dst"] != e["src"]:
-                        rels.setdefault(e["dst"], []).append(e)
+                self._file_edge(adj, pairs, rels, e)
             self._edge_index = (self._edge_version, adj, pairs, rels)
         return adj, pairs, rels
 
     def _find(self, src, dst, rel):
-        if rel == ROAD:
-            return next((e for e in self._edges if e["src"] == src and e["dst"] == dst and e["rel"] == rel), None)
+        if rel == ROAD:  # 道路按两端认(不论朝向)，再看存储朝向是否一致
+            e = self._index()[1].get((ROAD, frozenset((src, dst))))
+            return e if e is not None and e["src"] == src and e["dst"] == dst else None
         return self._index()[1].get((src, dst, rel))
 
     def link(self, src: str, dst: str, rel: str, **attrs):
         edge = self._find(src, dst, rel)
         if edge:
             edge.update(attrs)
-        else:
-            self.edges.append({"src": src, "dst": dst, "rel": rel, **attrs})
+            return
+        edge = {"src": src, "dst": dst, "rel": rel, **attrs}
+        version, adj, pairs, rels = self._edge_index
+        fresh = version == self._edge_version
+        self.edges.append(edge)
+        if fresh:  # 新添一条边就地记进索引，不必整个重建(创世时连铺上千条路)
+            self._file_edge(adj, pairs, rels, edge)
+            self._edge_index = (self._edge_version, adj, pairs, rels)
 
     def unlink(self, src: str, dst: str, rel: str):
         self.edges = [e for e in self.edges if not (e["src"] == src and e["dst"] == dst and e["rel"] == rel)]

@@ -2,13 +2,14 @@
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag、perspective(开局相识) 全部基础设施
 [OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
           remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表、lines 场外剧情线与 plotted 上回写某人的日子(v11，入存档)、
-          turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）
-[POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。
+          turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）、atlas（v11 世界底座的静态表：场所的近景、货品、国法、消息、风物、剧情线——只读，不入存档，副本共用一份）
+[POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。v11 道路带里数(零日之路的步行里数)铺上图；深拷贝(试演、场外编剧的快照)逐项拷贝现状、atlas 共用。
        存档只存现状、地理随数据走：读档即以当前创世数据重绘地点定义、道路关口、关系的静态标注(secret/revealed_by)与别名，旧档自动用上新地图(v9 场景清单新布下的人群也补上，散了的人群留着空壳、不复活)；
        旧档里「某人→主角」的态度边读档即折进 bond 的恩怨账；场景清单(v8)的景物同地点一样定义随数据走、现状照存档，旧档里没有的布景器物补上(已有的照存档)；传闻要有传话的人(v5：这一片无人时只记亲历之事)；认知校正以「眼前」为准(v5)：以为在此、实则不在此地的人才记作下落不明，同在片区而未到跟前的不算；旧档里此刻带伤的人补记剧情上的伤(graph.PLIGHT，v5)；
        开局即播下相识(出身带来的人互相识名、当众主持的掌门主角识名)，旧档以已与主角结下关系之人补种；主角名号不得与书中人物、地名、别名重名——否则剧情里写到这个名字，系统分不清是谁
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import copy
 import json
 import os
 from pathlib import Path
@@ -21,9 +22,9 @@ from .ledger import Knowledge, Messenger, Truth
 
 
 def _lay(graph: Graph, d: dict):
-    """道路铺上图，有向关口挂在道路边上、以去向为键。"""
-    for a, b, days in d["roads"]:
-        graph.link(a, b, ROAD, days=days)
+    """道路铺上图，有向关口挂在道路边上、以去向为键。v11 零日之路另带步行里数 li(同一座建筑之内记 0，不写)。"""
+    for a, b, days, *li in d["roads"]:
+        graph.link(a, b, ROAD, days=days, **({"li": li[0]} if li and li[0] else {}))
     for a, b, gate in d.get("gates", []):
         graph.road(a, b).setdefault("gates", {})[b] = gate
 
@@ -44,6 +45,16 @@ class World:
         self.turn: dict = {}                # 本回合的瞬时账（谁被谁挪动过、谁到场、连带说明）——不入存档
         self.lines: dict = {}               # 场外剧情线(v11)：线名 → {name, goal, owners, from, made, events}——场外编剧写过什么，续写要接得上
         self.plotted: dict = {}             # 场外编剧上回写某人的日子(v11)：按剧情推力隔几日再写
+        self.atlas: dict = {}               # 世界底座的静态表(v11)：场所的近景、货品、国法、消息、风物、剧情线——只读，不入存档，副本共用一份
+
+    def __deepcopy__(self, memo):
+        """世界的副本(试演、场外编剧的快照)：现状逐项深拷贝，静态的 atlas 共用。"""
+        new = copy.copy(self)
+        memo[id(self)] = new
+        for k, v in self.__dict__.items():
+            if k != "atlas":
+                setattr(new, k, copy.deepcopy(v, memo))
+        return new
 
     # ------------------------------------------------------------
     #  创世：以原著硬知识(genesis)为蓝本；data 可注入，便于测试
@@ -61,6 +72,7 @@ class World:
         player = Blackboard({**d["player"], **birth, **({"name": name} if name else {})})
         world = cls(graph, player, Clock(d["start_tick"]), Truth(), Knowledge.from_truth(graph),
                     Messenger(), d["canon"], [], set(), d["seed"], d.get("aliases"))
+        world.atlas = d.get("atlas") or {}
         perspective.seed(world)
         world.sync()
         return world
@@ -159,6 +171,7 @@ class World:
             if r:
                 e.update({k: r[k] for k in ("secret", "revealed_by") if k in r})
         self.aliases = atlas.get("aliases") or self.aliases
+        self.atlas = atlas.get("atlas") or self.atlas
 
     def save(self, path, extra: dict | None = None):
         """整世界存档；extra 供上层附带自己的段落（如 Web 的回合记录），读档时被 from_dump 忽略。

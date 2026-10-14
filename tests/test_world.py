@@ -51,13 +51,15 @@ class GenesisTest(unittest.TestCase):
         self.assertEqual(w.aliases["剑湖宫练武厅"], START)
 
     def test_roads_are_ridden_not_walked(self):
-        raw = {frozenset((a, b)): d for a, b, d in genesis._roads(genesis.DATA)}  # 打过补丁的步行日数
+        raw = {frozenset((a, b)): d for a, b, d, _ in genesis._roads(genesis.DATA)}  # 打过补丁的步行日数
         w = World.create()
         for e in w.graph.edges:
-            if e["rel"] == "road":
+            if e["rel"] == "road" and frozenset((e["src"], e["dst"])) in raw:
                 walk = raw[frozenset((e["src"], e["dst"]))]
                 self.assertEqual(e["days"], genesis._ride(walk))
                 self.assertTrue(e["days"] <= walk and (walk == 0) == (e["days"] == 0))
+            elif e["rel"] == "road":  # 世界底座(v11)的城中之路与场所接路：零日，另有步行里数
+                self.assertEqual(e["days"], 0)
 
     def test_unconfirmed_persons_are_dormant(self):
         w = World.create()
@@ -95,7 +97,7 @@ class GenesisTest(unittest.TestCase):
         w = World.create()
         self.assertIsNone(w.graph.road("无量后山", "无量山·谷底"))        # 后山平路下不到谷底，须坠崖
         self.assertIsNone(w.graph.road("琅嬛福地", "琅嬛福地·玉像石室"))   # 不依 parent 自动连路
-        self.assertEqual(sum(len(e.get("gates", {})) for e in w.graph.edges), 179)
+        self.assertEqual(sum(len(e.get("gates", {})) for e in w.graph.edges), 186)  # 14 的 179 道，加世界底座 19 的七道(v11)
 
 
 class ClockTest(unittest.TestCase):
@@ -485,7 +487,7 @@ class PersistenceTest(unittest.TestCase):
         old["aliases"] = {}
         v = World.from_dump(old)
         self.assertIsNone(v.graph.road("无量后山", "无量山·谷底"))                         # 伪捷径随新图消失
-        self.assertEqual(sum(len(e.get("gates", {})) for e in v.graph.edges), 179)        # 关口挂上
+        self.assertEqual(sum(len(e.get("gates", {})) for e in v.graph.edges), 186)        # 关口挂上
         self.assertTrue(v.knowledge.knows("澜沧江边高崖"))                                # 新地点入图、入常识
         self.assertEqual((v.graph.get(START, "state"), v.aliases["萧峰"]), ("比剑被搅散", "乔峰"))  # 现状保留，别名补上
         self.assertTrue(any(e["rel"] == "结义" for e in v.graph.edges))                    # 剧情所致的结构性关系保留

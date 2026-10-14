@@ -103,6 +103,8 @@ class SituationTest(unittest.TestCase):
         nid, why = situation.spawn(w, {"kind": "thing", "name": "火折"})
         self.assertEqual((nid, why), (None, situation.FORGE))                        # v8：器物在创世时布齐，剧情不新造物件
         self.assertFalse(w.graph.has("火折"))
+        for s in list(w.graph.where(type="group", faction="神农帮")):  # 世界底座(v11 23)在无量山一带本有神农帮的人群：先撤走
+            del w.graph.nodes[s]
         _, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮"}, embargo={"神农帮"})
         self.assertIn("尚未到此", why)                                                # 原著近事里尚未到场的势力
         _, why = situation.spawn(w, {"kind": "group", "name": "少林僧众", "faction": "少林派"})

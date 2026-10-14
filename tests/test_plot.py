@@ -114,6 +114,7 @@ class DriveTest(_World):
 
     def test_who_gets_a_next_step(self):
         w = self.w
+        w.graph.set("秦红棉", "drive", 3)                                            # 数据(22)写她不甘现状(四)：这里验进取者近处才写
         self.assertIn("秦红棉", plot.idle(w, 10))                                    # 原著已尽、推力三，就在近处：主角随时撞得上
         w.player.set("location", "少林寺")
         self.assertNotIn("秦红棉", plot.idle(w, 10))                                 # 远在别处：不必写

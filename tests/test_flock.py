@@ -86,10 +86,11 @@ class RegroupTest(unittest.TestCase):
         self.assertEqual((r.spawned, w.aliases.get("西宗众人")), ([WEST], WEST))       # 就是那一群，叫法照旧
 
     def test_a_supplied_band_is_a_pure_npc_squad(self):
-        w = World.create("测")
+        w = scatter(World.create("测"), "神农帮")
         nid, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮", "count": 12})
         self.assertEqual((nid, why), ("神农帮帮众", None))
-        self.assertEqual(w.graph.get(nid, "pool"), {"银两": 1.2, "兵刃": 12, "衣衫": 12})  # 人头、零钱、兵刃、衣衫
+        tpl = crowd.template(w.graph, "神农帮")                                          # 门下模板(23)
+        self.assertEqual(w.graph.get(nid, "pool"), {"银两": round(12 * tpl["money"], 3), **{t["name"]: 12 for t in tpl["items"]}})  # 人头、零钱、兵刃、衣衫
         self.assertIn(nid, crowd.squads(w))
         self.assertIn("至多五十人", situation.spawn(w, {"kind": "group", "name": "大队", "faction": "神农帮", "count": 80})[1])
         self.assertEqual(situation.spawn(w, {"kind": "group", "name": "采药的帮众", "faction": "神农帮", "count": 4})[0], "采药的帮众")
@@ -103,11 +104,18 @@ class RegroupTest(unittest.TestCase):
         self.assertIn("四散逃去", " ".join(w.turn.get("notes", [])))
 
     def test_a_faction_template_dresses_the_band(self):
-        w = World.create("测")
+        w = scatter(World.create("测"), "神农帮")
         w.graph.nodes["神农帮"]["squad_kit"] = {"handle": "神农帮帮众", "power": 20, "money": 0.2,
                                                 "items": [{"name": "药锄", "kind": "兵刃", "steal": True}]}
         nid, _ = situation.spawn(w, {"kind": "group", "name": "采药的帮众", "faction": "神农帮", "count": 6})
         self.assertEqual((w.graph.get(nid, "power"), w.graph.get(nid, "pool")), (20, {"银两": 1.2, "药锄": 6}))
+
+
+def scatter(w, faction):
+    """世界底座(v11 23)在无量山一带本就布了神农帮的人群：要验「附近没有同门人群才补一队」，先把这一门的人群撤走。"""
+    for s in list(w.graph.where(type=crowd.GROUP, faction=faction)):
+        del w.graph.nodes[s]
+    return w
 
 
 class TravelTest(unittest.TestCase):
@@ -202,8 +210,9 @@ class MoneyTest(unittest.TestCase):
 
     def test_duan_yu_pays_ma_wude(self):
         w = self.w
+        his = stock.funds(w, "马五德")
         self.assertEqual(do(w, {"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"})[1], [])
-        self.assertEqual((stock.funds(w, "段誉"), stock.funds(w, "马五德")), (2.0, 23.0))
+        self.assertEqual((stock.funds(w, "段誉"), stock.funds(w, "马五德")), (2.0, his + 3))
         self.assertIn("给不出", do(w, {"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"})[1][0])
 
     def test_money_written_but_not_moved_is_caught(self):

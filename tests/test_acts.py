@@ -97,8 +97,9 @@ class MoneyTest(unittest.TestCase):
 
     def test_giving_money_takes_it_from_your_pocket(self):
         w, before = self.w, total_money(self.w)
+        hers = stock.funds(w, "钟灵")
         self.assertEqual(do(w, {"做": "交给", "物": "银两", "量": "三钱", "与": "钟灵"})[1], [])
-        self.assertEqual((w.player["money"], stock.funds(w, "钟灵")), (0.2, 0.3))
+        self.assertEqual((w.player["money"], stock.funds(w, "钟灵")), (0.2, round(hers + 0.3, 3)))
         self.assertIn("给不出", do(w, {"做": "交给", "物": "银两", "量": "一两", "与": "钟灵"})[1][0])  # 身上只有二钱
         self.assertEqual(total_money(w), before)
 
@@ -384,11 +385,12 @@ class LedgerTest(unittest.TestCase):
 
     def test_the_bookkeeper_speaks_acts(self):
         w = self.w
+        hers = stock.funds(w, "钟灵")
         judge(w, plan(("player", "你看了看钟灵", [])), {"钟灵"})
         text = "你摸出三钱银子塞给那少女，她笑着收下了。"
         applied, rifts = settle.commit(w, {"changes": [{"据": "你摸出三钱银子塞给那少女", "谁": "player",
                                                          "ops": [{"做": "交给", "物": "银两", "量": "三钱", "与": "钟灵"}]}]}, text, {"钟灵"})
-        self.assertEqual((rifts, applied[0]["op"], stock.funds(w, "钟灵")), ([], "money", 0.3))
+        self.assertEqual((rifts, applied[0]["op"], stock.funds(w, "钟灵")), ([], "money", round(hers + 0.3, 3)))
         self.assertIn("银两：二钱", settle.books(w, text)["player"])
 
     def test_the_ledger_notes_what_the_page_left_out(self):
@@ -413,8 +415,9 @@ class ViewTest(unittest.TestCase):
             self.assertIn(word, prompts.PLOT_GUIDE)
         self.assertIn('"做":"识名"', prompts.NAMES)
         self.assertIn('"做":"交给"', prompts.SETTLE_OPS)
-        gm = rag.backstage(World.create("测"))
-        self.assertIn("马五德：二十两（马五德钱袋里二十两）", gm["money"])
+        w = World.create("测")
+        gm = rag.backstage(w)
+        self.assertIn(f"马五德：{stock.say(stock.funds(w, '马五德'))}（马五德钱袋里二十两）", gm["money"])  # 零钱(22)连同钱袋
         self.assertTrue(any("偷取" in line for line in gm["ruling"]))
 
 

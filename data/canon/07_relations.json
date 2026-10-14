@@ -1368,19 +1368,5 @@
     "suspected": true,
     "inferred": true,
     "inference_basis": "群人怀疑姑苏慕容氏，具体归到慕容复为人物判断。"
-  },
-  {
-    "src": "阿胜",
-    "dst": "司空玄",
-    "rel": "效忠",
-    "secret": false,
-    "src_ref": "第1回"
-  },
-  {
-    "src": "阿洪",
-    "dst": "司空玄",
-    "rel": "效忠",
-    "secret": false,
-    "src_ref": "第1回"
   }
 ]
