@@ -5236,21 +5236,21 @@
     "where": "卫辉",
     "weight": 1,
     "actors": [
-      "萧远山",
+      "白世镜",
       "徐冲霄"
     ],
     "requires": [
       [
-        "萧远山",
+        "白世镜",
         "status",
         "alive"
       ]
     ],
-    "summary": "萧远山以石杵击死徐冲霄，江湖再疑乔峰。",
+    "summary": "徐冲霄在卫辉遇害，江湖上再疑乔峰。",
     "effects": [
       {
         "op": "set",
-        "id": "萧远山",
+        "id": "白世镜",
         "key": "location",
         "value": "卫辉"
       },
@@ -5268,11 +5268,11 @@
       },
       {
         "op": "link",
-        "src": "萧远山",
+        "src": "白世镜",
         "dst": "徐冲霄",
         "rel": "杀害",
         "secret": true,
-        "revealed_by": "萧远山现身承认多案"
+        "revealed_by": "康敏杀夫阴谋败露"
       }
     ],
     "src": "第21回",
@@ -6231,68 +6231,8 @@
     "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
   },
   {
-    "id": "萧远山杀白世镜",
-    "order": 93,
-    "when": "元祐六年十二月",
-    "where": "康敏家",
-    "weight": 1,
-    "actors": [
-      "萧远山",
-      "白世镜",
-      "康敏"
-    ],
-    "requires": [
-      [
-        "萧远山",
-        "status",
-        "alive"
-      ]
-    ],
-    "summary": "萧远山杀死白世镜，阻断乔峰追问的线索。",
-    "effects": [
-      {
-        "op": "set",
-        "id": "萧远山",
-        "key": "location",
-        "value": "康敏家"
-      },
-      {
-        "op": "set",
-        "id": "白世镜",
-        "key": "location",
-        "value": "康敏家"
-      },
-      {
-        "op": "set",
-        "id": "康敏",
-        "key": "location",
-        "value": "康敏家"
-      },
-      {
-        "op": "set",
-        "id": "白世镜",
-        "key": "status",
-        "value": "dead"
-      },
-      {
-        "op": "link",
-        "src": "萧远山",
-        "dst": "白世镜",
-        "rel": "杀害",
-        "secret": true,
-        "revealed_by": "萧远山现身承认多案"
-      }
-    ],
-    "src": "第24回",
-    "inferred": true,
-    "inferred_fields": [
-      "when"
-    ],
-    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
-  },
-  {
     "id": "康敏杀夫阴谋败露",
-    "order": 94,
+    "order": 93,
     "when": "元祐六年十二月",
     "where": "康敏家",
     "weight": 1,
@@ -6345,6 +6285,50 @@
         "src": "康敏",
         "dst": "马大元",
         "rel": "谋杀"
+      },
+      {
+        "op": "reveal",
+        "src": "白世镜",
+        "dst": "徐冲霄",
+        "rel": "杀害"
+      }
+    ],
+    "src": "第24回",
+    "inferred": true,
+    "inferred_fields": [
+      "when"
+    ],
+    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
+  },
+  {
+    "id": "萧远山杀白世镜",
+    "order": 94,
+    "when": "元祐六年十二月",
+    "where": "康敏家",
+    "weight": 1,
+    "actors": [
+      "白世镜"
+    ],
+    "requires": [
+      [
+        "白世镜",
+        "status",
+        "alive"
+      ]
+    ],
+    "summary": "白世镜杀马大元、害徐冲霄之事败露，丐帮依帮规将他处死。",
+    "effects": [
+      {
+        "op": "set",
+        "id": "白世镜",
+        "key": "location",
+        "value": "康敏家"
+      },
+      {
+        "op": "set",
+        "id": "白世镜",
+        "key": "status",
+        "value": "dead"
       }
     ],
     "src": "第24回",
@@ -11763,12 +11747,6 @@
       {
         "op": "reveal",
         "src": "萧远山",
-        "dst": "徐冲霄",
-        "rel": "杀害"
-      },
-      {
-        "op": "reveal",
-        "src": "萧远山",
         "dst": "谭公",
         "rel": "杀害"
       },
@@ -14544,128 +14522,8 @@
     ]
   },
   {
-    "id": "段正淳刀白凤相继自尽",
-    "order": 205,
-    "when": "元祐八年九月",
-    "where": "王夫人山庄·大厅",
-    "weight": 1,
-    "actors": [
-      "段正淳",
-      "刀白凤",
-      "段誉"
-    ],
-    "requires": [
-      [
-        "段正淳",
-        "status",
-        "alive"
-      ]
-    ],
-    "summary": "段正淳为诸女自尽，刀白凤随之刺腹，临死向段誉说身世。",
-    "effects": [
-      {
-        "op": "set",
-        "id": "段正淳",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "set",
-        "id": "刀白凤",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "set",
-        "id": "段誉",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "set",
-        "id": "段正淳",
-        "key": "status",
-        "value": "dead"
-      },
-      {
-        "op": "set",
-        "id": "刀白凤",
-        "key": "status",
-        "value": "wounded"
-      }
-    ],
-    "src": "第48回",
-    "inferred": true,
-    "inferred_fields": [
-      "when"
-    ],
-    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
-  },
-  {
-    "id": "刀白凤揭示段誉生父",
-    "order": 206,
-    "when": "元祐八年九月",
-    "where": "王夫人山庄·大厅",
-    "weight": 1,
-    "actors": [
-      "刀白凤",
-      "段誉",
-      "段延庆"
-    ],
-    "requires": [
-      [
-        "刀白凤",
-        "status",
-        "wounded"
-      ]
-    ],
-    "summary": "刀白凤向段誉说明生父为段延庆，段延庆已由生日确认。",
-    "effects": [
-      {
-        "op": "set",
-        "id": "刀白凤",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "set",
-        "id": "段誉",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "set",
-        "id": "段延庆",
-        "key": "location",
-        "value": "王夫人山庄·大厅"
-      },
-      {
-        "op": "reveal",
-        "src": "段延庆",
-        "dst": "段誉",
-        "rel": "生父"
-      },
-      {
-        "op": "set",
-        "id": "刀白凤",
-        "key": "status",
-        "value": "dead"
-      }
-    ],
-    "src": "第48回",
-    "inferred": true,
-    "inferred_fields": [
-      "when"
-    ],
-    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。",
-    "reveal_scope": [
-      "段誉",
-      "段延庆"
-    ]
-  },
-  {
     "id": "段誉退慕容复解众人毒",
-    "order": 207,
+    "order": 205,
     "when": "元祐八年九月",
     "where": "王夫人山庄·大厅",
     "weight": 1,
@@ -14743,12 +14601,6 @@
         "value": "中原"
       },
       {
-        "op": "set",
-        "id": "段延庆",
-        "key": "location",
-        "value": "中原"
-      },
-      {
         "op": "unlink",
         "src": "段延庆",
         "dst": "华赫艮",
@@ -14791,6 +14643,132 @@
       "when"
     ],
     "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
+  },
+  {
+    "id": "段正淳刀白凤相继自尽",
+    "order": 206,
+    "when": "元祐八年九月",
+    "where": "王夫人山庄·大厅",
+    "weight": 1,
+    "actors": [
+      "段正淳",
+      "刀白凤",
+      "段誉"
+    ],
+    "requires": [
+      [
+        "段正淳",
+        "status",
+        "alive"
+      ]
+    ],
+    "summary": "段正淳为诸女自尽，刀白凤随之刺腹，临死向段誉说身世。",
+    "effects": [
+      {
+        "op": "set",
+        "id": "段正淳",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "set",
+        "id": "刀白凤",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "set",
+        "id": "段誉",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "set",
+        "id": "段正淳",
+        "key": "status",
+        "value": "dead"
+      },
+      {
+        "op": "set",
+        "id": "刀白凤",
+        "key": "status",
+        "value": "wounded"
+      }
+    ],
+    "src": "第48回",
+    "inferred": true,
+    "inferred_fields": [
+      "when"
+    ],
+    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。"
+  },
+  {
+    "id": "刀白凤揭示段誉生父",
+    "order": 207,
+    "when": "元祐八年九月",
+    "where": "王夫人山庄·大厅",
+    "weight": 1,
+    "actors": [
+      "刀白凤",
+      "段誉",
+      "段延庆"
+    ],
+    "requires": [
+      [
+        "刀白凤",
+        "status",
+        "wounded"
+      ]
+    ],
+    "summary": "刀白凤向段誉说明生父为段延庆，段延庆已由生日确认。",
+    "effects": [
+      {
+        "op": "set",
+        "id": "刀白凤",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "set",
+        "id": "段誉",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "set",
+        "id": "段延庆",
+        "key": "location",
+        "value": "王夫人山庄·大厅"
+      },
+      {
+        "op": "reveal",
+        "src": "段延庆",
+        "dst": "段誉",
+        "rel": "生父"
+      },
+      {
+        "op": "set",
+        "id": "刀白凤",
+        "key": "status",
+        "value": "dead"
+      },
+      {
+        "op": "set",
+        "id": "段延庆",
+        "key": "location",
+        "value": "中原"
+      }
+    ],
+    "src": "第48回",
+    "inferred": true,
+    "inferred_fields": [
+      "when"
+    ],
+    "date_basis": "依全书季节与相对历时排列；非原著精确纪年。",
+    "reveal_scope": [
+      "段誉",
+      "段延庆"
+    ]
   },
   {
     "id": "华赫艮杀云中鹤",
@@ -15644,6 +15622,15 @@
     ],
     "summary": "丐帮、灵鹫宫与大理等群雄劫牢，救出乔峰。",
     "effects": [
+      {
+        "op": "set",
+        "id": "南院大王府·地道",
+        "key": "state",
+        "value": {
+          "exists": true,
+          "accessible": true
+        }
+      },
       {
         "op": "set",
         "id": "乔峰",
@@ -16623,7 +16610,7 @@
         "alive"
       ]
     ],
-    "summary": "段誉私告身世，立木、钟、晓蕾为妃，四剑返回灵鹫宫。",
+    "summary": "段誉私告身世，立木婉清、钟灵、晓蕾为妃；四剑自愿许配大理臣僚之子。",
     "effects": [
       {
         "op": "set",
@@ -16720,30 +16707,6 @@
         "id": "晓蕾",
         "key": "title",
         "value": "大理淑妃"
-      },
-      {
-        "op": "set",
-        "id": "梅剑",
-        "key": "location",
-        "value": "灵鹫宫"
-      },
-      {
-        "op": "set",
-        "id": "兰剑",
-        "key": "location",
-        "value": "灵鹫宫"
-      },
-      {
-        "op": "set",
-        "id": "竹剑",
-        "key": "location",
-        "value": "灵鹫宫"
-      },
-      {
-        "op": "set",
-        "id": "菊剑",
-        "key": "location",
-        "value": "灵鹫宫"
       }
     ],
     "src": "第50回",

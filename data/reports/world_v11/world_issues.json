@@ -1,0 +1,5872 @@
+{
+  "notes": [
+    "本报告列出已处理取舍和仍影响运行的基准/引擎问题；静态引用通过不等于文学事实逐字段均获证明。",
+    "当前未改动远程仓库或原有01至17数据；兼容ID保留不代表认同旧事件名的事实断言。"
+  ],
+  "status": {
+    "extraction_complete": true,
+    "production_ready": false,
+    "runtime_verified": false
+  },
+  "critical_issues": [
+    {
+      "id": "runtime-v11",
+      "severity": "integration_blocker",
+      "files": [
+        "tianlong/world/genesis.py"
+      ],
+      "issue": "固定提交的genesis未读取19至27；仅放入数据不会自动获得v11玩法。",
+      "handling": "交付数据与静态检查器；未修改引擎，未声称运行验收通过。"
+    },
+    {
+      "id": "baseline-murder-xu",
+      "severity": "baseline_correction_required",
+      "files": [
+        "08_canon.json"
+      ],
+      "entities": [
+        "萧远山杀徐冲霄"
+      ],
+      "source_chapters": [
+        "第24回",
+        "第42回"
+      ],
+      "issue": "世纪新修版中徐冲霄之死出自康敏与白世镜合谋，旧事件错误归因萧远山。",
+      "handling": "27保留兼容ID并纠正叙述；旧08 actors/effects需另改，不能靠注释自动修复。"
+    },
+    {
+      "id": "baseline-murder-bai",
+      "severity": "baseline_correction_required",
+      "files": [
+        "08_canon.json"
+      ],
+      "entities": [
+        "萧远山杀白世镜"
+      ],
+      "source_chapters": [
+        "第24回",
+        "第42回"
+      ],
+      "issue": "世纪新修版中白世镜受制后由丐帮长老处死，非萧远山直接杀害。",
+      "handling": "27保留兼容ID并纠正叙述；旧08执行主体需修正。"
+    },
+    {
+      "id": "baseline-shennong-servants",
+      "severity": "baseline_correction_required",
+      "files": [
+        "04_persons.json"
+      ],
+      "entities": [
+        "阿胜",
+        "阿洪"
+      ],
+      "source_chapters": [
+        "第1回"
+      ],
+      "issue": "原著二人是司空玄麾下神农帮众，04却写作参合庄慕容仆人。",
+      "handling": "不重造同名人物；22/23如实说明，人物faction/location等旧属性需修。"
+    },
+    {
+      "id": "baseline-fu",
+      "severity": "baseline_correction_required",
+      "files": [
+        "04_persons.json"
+      ],
+      "entities": [
+        "符敏仪"
+      ],
+      "source_chapters": [
+        "第37回"
+      ],
+      "issue": "符敏仪是阳天部首领，04误作钧天部；程青霜才是钧天部副首领。",
+      "handling": "新补注按原著，旧faction/title字段需同步。"
+    },
+    {
+      "id": "baseline-yuangen",
+      "severity": "baseline_correction_required",
+      "files": [
+        "04_persons.json"
+      ],
+      "entities": [
+        "缘根"
+      ],
+      "source_chapters": [
+        "第39回"
+      ],
+      "issue": "缘根为菜园管事僧，非知客僧。",
+      "handling": "新人物服务按菜园职责，旧title需同步。"
+    },
+    {
+      "id": "baseline-final-grave",
+      "severity": "baseline_correction_required",
+      "files": [
+        "01_locations.json",
+        "08_canon.json"
+      ],
+      "entities": [
+        "慕容复土坟"
+      ],
+      "source_chapters": [
+        "第50回"
+      ],
+      "issue": "世纪新修版结尾慕容复由王语嫣接到大理，土坟场景不应隶属于宋境乡村。",
+      "handling": "不擅移基准节点与道路；18沿提示词根分组，问题保留供基准整体修正。"
+    },
+    {
+      "id": "baseline-nanjing",
+      "severity": "baseline_correction_required",
+      "files": [
+        "01_locations.json"
+      ],
+      "entities": [
+        "南京"
+      ],
+      "source_chapters": [
+        "第20回",
+        "第27回"
+      ],
+      "issue": "第20回南京指宋南京，后续南院大王府所在为辽南京；同名指称不可混合。",
+      "handling": "新布置采用现有辽南京节点；不把第20回活动塞入该城。"
+    },
+    {
+      "id": "baseline-new-edition-marriage",
+      "severity": "baseline_correction_required",
+      "files": [
+        "08_canon.json"
+      ],
+      "entities": [
+        "段誉封三妃并遣返四剑"
+      ],
+      "source_chapters": [
+        "第50回"
+      ],
+      "issue": "世纪新修版四剑本人首肯且虚竹夫妇认可，婚配给大理臣僚之子；旧遣返名称与结算不符。",
+      "handling": "27明确新修版自愿婚配；不虚构四人逐一配偶映射，旧08需同步。"
+    },
+    {
+      "id": "baseline-ch48-order",
+      "severity": "baseline_correction_required",
+      "files": [
+        "08_canon.json"
+      ],
+      "entities": [
+        "段正淳刀白凤相继自尽",
+        "刀白凤揭示段誉生父",
+        "段誉退慕容复解众人毒"
+      ],
+      "source_chapters": [
+        "第48回"
+      ],
+      "issue": "旧order205至207把交叠事件排成错误因果：退慕容及先救父母在段正淳自尽前，刀白凤在告生父后才自尽。",
+      "handling": "按提示词保留235事件次序和ID；27标真实因果，旧事件应拆分和重排后才适合运行。"
+    },
+    {
+      "id": "baseline-time-and-spoilers",
+      "severity": "baseline_correction_required",
+      "files": [
+        "01_locations.json",
+        "14_access.json",
+        "18_scenes.json"
+      ],
+      "entities": [
+        "万劫谷·地道",
+        "盐井",
+        "王夫人山庄·木柱陷阱",
+        "卫辉·船舱"
+      ],
+      "issue": "部分旧节点含未来开挖、发现或遇害结果；known仅管认知，不能替代state.exists与事件门控。",
+      "handling": "新内容不额外前置；现有节点的存在性与旧公开描述需统一修正。"
+    },
+    {
+      "id": "old-sword-palace",
+      "severity": "required_preservation_exception",
+      "files": [
+        "18_scenes.json"
+      ],
+      "issue": "剑湖宫整个旧scene严格保留，包含旧推定、缺省tier和旧squads结构；不能算作完全符合新规则。",
+      "handling": "验证深比较相等；不为达到零警告而改动用户要求保留的对象。"
+    }
+  ],
+  "schema_decisions": [
+    {
+      "subject": "25顶层键",
+      "decision": "提示词未明示容器键，采用notes+lore。"
+    },
+    {
+      "subject": "21原器物元数据",
+      "decision": "8.4白名单不含src/inferred/basis；98件出处置于本报告component_reviews.goods_issues.json.canon_item_provenance。"
+    },
+    {
+      "subject": "模板子实体推定",
+      "decision": "纯模板子项可继承模板src/inferred/basis；自定义原著项另写，缺省tier依提示词处理。"
+    },
+    {
+      "subject": "26作息字典",
+      "decision": "保留routine字符串字典；共同情理推定写notes，不改变接口为对象。"
+    },
+    {
+      "subject": "模板门钥匙",
+      "decision": "按7.2例子使用局部名字字符串；编译器须规范化为6.4数组并展开为实例ID。"
+    },
+    {
+      "subject": "18景物known",
+      "decision": "14节景物例子未列known；按总则三轴规则对私密景物补此扩展字段，编译器须接收并验证。"
+    },
+    {
+      "subject": "22未来人物since",
+      "decision": "9.1未列since，按总则时间切片要求为丐帮少年帮主加事件门控；须同时处理旧04存在性，不可在开端生成少年帮主身份。"
+    },
+    {
+      "subject": "20规模展开",
+      "decision": "小/中/大的伙计与库存缩放仅有约数；取整及add.staff替换顺序待编译器明定，静态展开只检查声明人数。"
+    },
+    {
+      "subject": "known OR语义",
+      "decision": "in:null代表公知；区域/私有消息不混入全局行当标签。who:[]只表示无初始知者，不表示物件不存在。"
+    },
+    {
+      "subject": "跨线事件",
+      "decision": "同事件可属于多条线；235条注只指定一条主线，role相对主线。"
+    },
+    {
+      "subject": "人物愿望判定",
+      "decision": "done_when使用现有属性或~关系/!关系三元组；存在性和身份变更仍须引擎事件实际落账。"
+    },
+    {
+      "subject": "范围估计",
+      "decision": "19显式133处加20新增447处共580处，未计模板房间；不为了使19单文件达到300而重复立场所。"
+    },
+    {
+      "subject": "场景数量",
+      "decision": "40个要求的根全部追加，另保留剑湖宫旧样例，总计41条scene。"
+    },
+    {
+      "subject": "商业与普通人口",
+      "decision": "数量是有限游戏场景配置，不声称还原整个城市总人口；23战斗人群与20功能职工须防双重计数。"
+    },
+    {
+      "subject": "历史事实",
+      "decision": "未开展外部史料考据；法制、生态概率、钱价、商号、集期和兵力配置均显式情理推定。"
+    }
+  ],
+  "component_reviews": {
+    "places_venues_issues.json": {
+      "notes": [
+        "问题记录，不改基准。"
+      ],
+      "issues": [
+        {
+          "severity": "baseline",
+          "id": "盐井",
+          "issue": "50回新探两处盐井不是市镇，开端发现状态须由基准事件门控；本次零商铺。"
+        },
+        {
+          "severity": "baseline",
+          "id": "宋境乡村",
+          "issue": "归属与末回大理慕容复情节冲突；只补抽象村落卡，零新商铺，不移动旧实体。"
+        },
+        {
+          "severity": "baseline",
+          "id": "镇南王府·云锦楼",
+          "issue": "原著云锦楼与曼陀山庄语境相关，01 parent需另行核校；20不引用该楼作王府公共场所。"
+        },
+        {
+          "severity": "baseline",
+          "id": "南院大王府·地道",
+          "issue": "后期临掘，不能开端即通；19未增任何通往地道的道路。"
+        },
+        {
+          "severity": "baseline",
+          "id": "慕容博墓·临掘地道",
+          "issue": "后期临掘，不能开端即通；19未新增此路。"
+        },
+        {
+          "severity": "schema",
+          "id": "雪地客店",
+          "issue": "原著两坛酒未给坛斤比；以一坛10斤游戏假设将货·黄酒存量设20斤。"
+        },
+        {
+          "severity": "inference",
+          "id": "云州",
+          "issue": "沿区域批次列边地商业榷场但历史归属未实证；该实例是玩法推定，polity=null。"
+        },
+        {
+          "severity": "schema",
+          "id": "碾坊",
+          "issue": "48基础模板无碾坊，复用农舍生活区并add工坊；新增服务名加工碾米需编译事码支持。"
+        },
+        {
+          "severity": "inference",
+          "id": "辽国军营",
+          "issue": "原著临时营地按基准保留；开端准确地点与在场人数非本文件可确证，未造额外营地。"
+        },
+        {
+          "severity": "inference",
+          "id": "剑阁",
+          "issue": "卡为关隘，4处行旅服务作为关道聚落功能推定，不称独立市镇。"
+        },
+        {
+          "severity": "inference",
+          "id": "双凤驿",
+          "issue": "卡为驿站，5处设施作为驿旁聚落功能，非原著逐店描写。"
+        },
+        {
+          "severity": "integration",
+          "id": "20_venues",
+          "issue": "官库/军营/私宅的goods为空是非零售实体，不是遗漏；财物与用具在items/till。"
+        },
+        {
+          "severity": "integration",
+          "id": "20_venues",
+          "issue": "模板屋名与既有01同名须复用；生成器必须在add/drop后检查人员服务引用。"
+        }
+      ]
+    },
+    "goods_issues.json": {
+      "notes": [
+        "21最终货品448种，器物补注按05原顺序98件。",
+        "药毒数值只为虚构文学游戏，不是现实疗效或配方。"
+      ],
+      "canon_item_provenance": [
+        {
+          "id": "北冥神功卷轴",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "六脉神剑经",
+          "src": "第10回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第10回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "易筋经经书",
+          "src": "第28回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功甲册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功乙册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功丙册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功丁册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功戊册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功己册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功庚册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "小无相功辛册",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "无崖子画像",
+          "src": "第37回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第31回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "神仙姊姊玉像",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "七宝指环",
+          "src": "第35回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第35回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "打狗棒",
+          "src": "第16回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第12回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "神木王鼎",
+          "src": "第25回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第25回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "闪电貂",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "黑玫瑰",
+          "src": "第3回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第3回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "莽牯朱蛤",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "冰蚕",
+          "src": "第29回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第29回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "钟灵黄金钿盒",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "钟灵生辰字条",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "段誉长命金牌",
+          "src": "第48回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第48回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "阿朱金锁片",
+          "src": "第23回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第23回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "阿紫金锁片",
+          "src": "第23回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第23回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "通天草",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "闪电貂毒解药",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "断肠散",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "阴阳和合散",
+          "src": "第7回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第7回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "悲酥清风",
+          "src": "第17回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第17回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "悲酥清风解药",
+          "src": "第17回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第17回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "三笑逍遥散",
+          "src": "第32回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第32回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "七香迷魂散",
+          "src": "第24回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第24回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "生死符冰片",
+          "src": "第35回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第35回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "生死符镇痛药",
+          "src": "第35回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第35回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "金创药",
+          "src": "第4回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第4回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "醉人蜂",
+          "src": "第47回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第47回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "麻药",
+          "src": "第47回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第47回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "鸠摩智匕首",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "段延庆铁杖",
+          "src": "第7回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第7回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "鳄嘴剪",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "鳄尾鞭",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "云中鹤钢爪",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "龚光杰长剑",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "褚师弟青钢剑",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "左子穆长剑",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第1回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "木婉清袖箭",
+          "src": "第3回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第3回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "吴长风鬼头刀",
+          "src": "第15回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第15回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "宋长老钢杖",
+          "src": "第14回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第14回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "陈孤雁麻袋",
+          "src": "第14回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第14回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "古笃诚板斧",
+          "src": "第6回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第6回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "朱丹臣判官笔",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "高昇泰铁笛",
+          "src": "第6回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第6回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "康广陵瑶琴",
+          "src": "第30回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第30回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "范百龄棋盘",
+          "src": "第30回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第30回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "吴领军画笔",
+          "src": "第30回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第30回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "石清风花粉",
+          "src": "第30回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第30回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "司马林雷公轰",
+          "src": "第13回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第13回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "诸保昆雷公轰",
+          "src": "第13回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第13回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "碧磷针",
+          "src": "第22回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第22回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "游骥钢盾",
+          "src": "第19回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第19回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "汪剑通信",
+          "src": "第16回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第16回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "乔峰折扇",
+          "src": "第16回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第16回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "阿朱易容物",
+          "src": "第13回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第13回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "西夏招亲榜",
+          "src": "第40回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第40回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "段正淳求亲信",
+          "src": "第44回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第44回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "段正淳朱印国书",
+          "src": "第44回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第44回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "油布小包",
+          "src": "第27回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第27回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "铁头罩",
+          "src": "第28回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第28回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "冰蚕葫芦",
+          "src": "第28回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第28回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "辽国铁锁铁铐",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "乔三槐旧茶壶",
+          "src": "第18回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第18回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "神仙姊姊蒲团",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "琅嬛洞烛台",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "神仙姊姊玉钏",
+          "src": "第2回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第2回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "珍珑棋局",
+          "src": "第31回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第31回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "无崖子悬绳",
+          "src": "第31回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第31回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "逍遥子神书",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "长春泉",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "慕容复纸冠",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "慕容复糖饼",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "寒玉冰蟾膏",
+          "src": "第18回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第18回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "六阳正气丹",
+          "src": "第29回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第29回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "辽国猎弓",
+          "src": "第27回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第27回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "石杵",
+          "src": "第39回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第39回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "雁门崖文拓片",
+          "src": "第21回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第21回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "绿波香露刀",
+          "src": "第33回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第33回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "断筋腐骨丸",
+          "src": "第35回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty"
+          ],
+          "source_registration": "第35回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "柔丝网",
+          "src": "第22回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第22回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "人皮面具",
+          "src": "第41回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty"
+          ],
+          "source_registration": "第41回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "鸠摩智火焰刀经",
+          "src": null,
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known"
+          ],
+          "source_registration": "第10回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "丁春秋柔丝索",
+          "src": "第41回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第41回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "辽帝御箭",
+          "src": "第50回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第50回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "游驹钢盾",
+          "src": "第19回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第19回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "天王补心针",
+          "src": "第13回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "known",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第13回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "傅思归齐眉棍",
+          "src": "第5回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第5回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "褚万里钓杆",
+          "src": "第22回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第22回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        },
+        {
+          "id": "金算盘",
+          "src": "第9回",
+          "inferred": true,
+          "basis": "依原著定位及05登记补注；估值、知者范围和非明载数量为游戏推定。",
+          "inferred_fields": [
+            "price",
+            "qty",
+            "effect"
+          ],
+          "source_registration": "第9回",
+          "evidence_scope": "回目支持物件或相关情节，不声称支持所有数值及初始归属。"
+        }
+      ],
+      "issues": [
+        {
+          "id": "G01",
+          "subject": "易筋经经书",
+          "finding": "05的第2回仅出现书名，不能证明实物及隐图；第28回明确神足经水显图。",
+          "handling": "补注分开表层梵文与隐藏神足经，不修改05。"
+        },
+        {
+          "id": "G02",
+          "subject": "鸠摩智火焰刀经",
+          "finding": "原著检索支持火焰刀技法与宁玛上师传授，未证实其随身纸本经书。",
+          "handling": "保留注册ID补注但不造经文；known仅鸠摩智；不声称已证实。"
+        },
+        {
+          "id": "G03",
+          "subject": "断筋腐骨丸",
+          "finding": "第35回为乌老大惊惧时的猜测，不能把恐吓药名升级为已验证药理。",
+          "handling": "不填可执行毒效；不修改05归属。"
+        },
+        {
+          "id": "G04",
+          "subject": "神仙姊姊蒲团",
+          "finding": "第2回有大小两个蒲团，藏卷在小蒲团内。",
+          "handling": "05单ID解释为小蒲团；大蒲团交18补景，不重复登记。"
+        },
+        {
+          "id": "G05",
+          "subject": "药物和有数器物初始库存",
+          "finding": "原著通常只写某时用量，不给开局全部库存。",
+          "handling": "数量为可玩性初值推定，审计明确标记；后续实际用量归事件。"
+        },
+        {
+          "id": "G06",
+          "subject": "小无相功册序",
+          "finding": "每册ID独立而全套八册，需统一分册语义。",
+          "handling": "每条full:8、pages:[册序]、qty:1；不得把单册当完整八册传授。"
+        },
+        {
+          "id": "G07",
+          "subject": "棉布、线装、普洱茶等通用货名",
+          "finding": "沿模板功能名，未核宋代具体物态；不是原著逐项明写。",
+          "handling": "均src:null/inferred:true；普洱茶明确不指现代熟茶，需历史严格版时另作名物考据。"
+        },
+        {
+          "id": "G08",
+          "subject": "21字段白名单与通则元数据",
+          "finding": "8.4白名单未容纳src/inferred/basis但通则要求出处。",
+          "handling": "canon_items只含白名单与id；逐件元数据外置本报告，合并到world_issues。"
+        },
+        {
+          "id": "G09",
+          "subject": "知者轴",
+          "finding": "谁知道物件存在不等于知道secret/text内容；in:null会让所有人皆知。",
+          "handling": "受限known使用in:[]与明确who/faction，未据未来相遇把角色加为开局知者。"
+        },
+        {
+          "id": "G10",
+          "subject": "通天草与闪电貂",
+          "finding": "第1回明确钟灵说通天草可治貂咬，另说可暂缓生死符。",
+          "handling": "药效解列表引用已登记动物ID闪电貂，生死符仅治痛痒不解符；编译器需支持毒源ID为动物。"
+        }
+      ]
+    },
+    "people_issues.json": {
+      "notes": [
+        "以用户上传世纪新修版全文为依据；char_offset为work/novel_utf8.txt中的Unicode字符偏移。",
+        "本文件列出外部基准问题与本次保守处理，不修改基准文件。"
+      ],
+      "issues": [
+        {
+          "id": "people-baseline-01",
+          "severity": "high",
+          "entities": [
+            "徐冲霄",
+            "白世镜",
+            "康敏"
+          ],
+          "problem": "08将徐冲霄之死归萧远山，和本次新修版不符。",
+          "evidence": [
+            {
+              "chapter": 24,
+              "needle": "吴长老大怒，在白世镜身上踢了一脚",
+              "quote": "吴长老大怒，在白世镜身上踢了一脚，喝道：“徐长老是你杀的，是不是？”白世镜道：“他提刀子要……要杀我，我……我总不能伸长了脖子，让他把我脑袋砍下来啊！”吕章叹道：“大家说徐长老是乔峰杀的，岂不是冤枉了他？”吴长老道：“还有别的冤枉呢。马副帮主，也是你下手杀的！”说着足尖对准白世镜脑袋轻轻一踢。　　白世镜厉声道：“吴长",
+              "char_offset": 618967
+            },
+            {
+              "chapter": 42,
+              "needle": "徐长老也是他二人合谋害死",
+              "quote": "徐长老也是他二人合谋害死，白世镜是丐帮自己人清理门户所杀，马夫人也在丐帮清理门户时去世。其间过节，大理段王爷与",
+              "char_offset": 1060436
+            }
+          ],
+          "handling": "22以新修版的康敏白世镜合谋及白世镜杀徐写arc；08事件名与因果须另审，未改基准。"
+        },
+        {
+          "id": "people-baseline-02",
+          "severity": "high",
+          "entities": [
+            "白世镜",
+            "吕章",
+            "萧远山"
+          ],
+          "problem": "08写萧远山杀白世镜；本次新修版中黑衣人制伏白后，丐帮长老审问并处死他。",
+          "evidence": [
+            {
+              "chapter": 24,
+              "needle": "心知是吕章等人将他处决了",
+              "quote": "心知是吕章等人将他处决了，那是意料中事，也不以为意。又扰攘了半个多时辰，听得有人将白世镜的尸身拖出来在地下埋了。只听得吕章说道：“咱们迟早要杀了马寡妇给马大元兄弟报仇，这时找她不到",
+              "char_offset": 621323
+            },
+            {
+              "chapter": 42,
+              "needle": "白世镜是丐帮自己人清理门户所杀",
+              "quote": "白世镜是丐帮自己人清理门户所杀，马夫人也在丐帮清理门户时去世。其间过节，大理段王爷与丐帮诸长老亲眼目",
+              "char_offset": 1060449
+            }
+          ],
+          "handling": "22不将白世镜死亡归萧远山；黑衣人制服与帮众处死不可合并成同一动作。"
+        },
+        {
+          "id": "people-baseline-03",
+          "severity": "high",
+          "entities": [
+            "阿胜",
+            "阿洪",
+            "司空玄"
+          ],
+          "problem": "04及部分旧关系将阿胜阿洪归为慕容家仆，原著第1回是神农帮成员。",
+          "evidence": [
+            {
+              "chapter": 1,
+              "needle": "阿胜，将这两个小男女拿下了",
+              "quote": "阿胜，将这两个小男女拿下了。”旁边一条大汉应声而出，伸手抓住了段誉右臂。　　钟灵叫道：“且慢！司空帮主，这位相公好言相劝，你不允那也罢了，",
+              "char_offset": 25570
+            },
+            {
+              "chapter": 1,
+              "needle": "阿洪，把这女娃娃也绑了起来",
+              "quote": "阿洪，把这女娃娃也绑了起来。”另一名大汉应了，伸手来抓钟灵。　　钟灵斜退三步，说道：“司空帮主，我可不是怕你。只不过我爹妈不许我在外多惹是非。你快叫这人放了我",
+              "char_offset": 25767
+            }
+          ],
+          "handling": "22以神农帮差事写人物补注且home为null；需先纠正04/07才能运行一致的开端归属。"
+        },
+        {
+          "id": "people-baseline-04",
+          "severity": "high",
+          "entities": [
+            "符敏仪"
+          ],
+          "problem": "04所属钧天部不符原著第37回的阳天部首领。",
+          "evidence": [
+            {
+              "chapter": 37,
+              "needle": "阳天部的首领是个二十来岁的姑娘，名叫符敏仪",
+              "quote": "阳天部的首领是个二十来岁的姑娘，名叫符敏仪，听罢禀报，立即纵下骆驼，快步走到虚竹身前，说道：“启禀主人：属下哨骑探得，本宫旧属三十六洞、七十二岛一众奴才，乘老尊主有难，居然大胆作反，正在攻打本峰。钧天部严守上峰道路，一众",
+              "char_offset": 930573
+            }
+          ],
+          "handling": "22据原著写能力与行动，04未改。"
+        },
+        {
+          "id": "people-baseline-05",
+          "severity": "medium",
+          "entities": [
+            "缘根"
+          ],
+          "problem": "04称知客僧，原著实际是管少林菜园的僧人。",
+          "evidence": [
+            {
+              "chapter": 39,
+              "needle": "那僧人名叫缘根",
+              "quote": "那僧人名叫缘根，并非从少林寺出家，因此不依“玄慧虚空”字辈排行。他资质平庸，既不能领会禅义，练武也没什么长进，平素最喜多管琐碎事务。这菜园子有两百来亩地，三四十名长工，他统率人众，倒也威风凛凛，遇到有僧人从戒律院里罚到菜园来做工，更是他大逞威风的时候。他一听虚竹之言，心下甚喜，问道：“你犯了什么戒？”虚竹道：“犯戒甚多，一言难尽。”缘根怒道：“什么一言难尽，两言难尽？我叫你老老实实，给我说个明白。莫说你是个没职司的小",
+              "char_offset": 962783
+            }
+          ],
+          "handling": "22按菜园管事的性情、日常与动机写，未改04title。"
+        },
+        {
+          "id": "people-ending-01",
+          "severity": "medium",
+          "entities": [
+            "梅剑",
+            "兰剑",
+            "竹剑",
+            "菊剑"
+          ],
+          "problem": "08末章事件名仅称遣返四剑，不能据此当作世纪新修版最终结局。",
+          "evidence": [
+            {
+              "chapter": 50,
+              "needle": "段誉征得梅兰竹菊四姝首肯",
+              "quote": "段誉征得梅兰竹菊四姝首肯，并获得虚竹夫妇认可，将她们分别许配于高泰明、华赫艮、巴天石等人之子。　　据大理国史籍记载：大理（史称“后理”）宪宗宣仁帝段誉，登基时年号“日新”，后改文治、永嘉、保天、广运",
+              "char_offset": 1279268
+            }
+          ],
+          "handling": "22四姝arc明确经本人及虚竹夫妇认可，与大理重臣之子婚配；不擅自分配谁嫁给哪位公子。"
+        },
+        {
+          "id": "people-motive-01",
+          "severity": "medium",
+          "entities": [
+            "崔绿华"
+          ],
+          "problem": "崔绿华目的与卓不凡不同；不能一并写成索秘学或号令洞岛。",
+          "evidence": [
+            {
+              "chapter": 38,
+              "needle": "崔绿华的用意却全然不同",
+              "quote": "崔绿华的用意却全然不同。她兄长为三十六洞的三个洞主联手所杀，她想只要杀了虚竹，没人知道童姥的遗言，那三个洞主身上的生死符就永难破解，势必比她兄长死得惨过百倍，远胜于自己亲手杀人报仇，是以突然猛施杀手。她这下出手好快，卓不凡长剑本已入鞘，忙去拔剑，已慢了一步。　　虚竹一惊，不及多想，自然而然地双手外推，将卓不凡和崔绿华同时震开数步。　　",
+              "char_offset": 947760
+            }
+          ],
+          "handling": "22写为兄报仇、欲断三洞主解符之望；三名洞主未具名，不新造target。"
+        },
+        {
+          "id": "people-time-01",
+          "severity": "high",
+          "entities": [
+            "丐帮少年帮主",
+            "金刀杨老令公",
+            "李秋水之妹",
+            "逍遥子",
+            "黎老汉",
+            "心观"
+          ],
+          "problem": "基准把未来身份、前代人物或仅由传述出现者一并列入开端人物；242覆盖不等于242人可同时活动。",
+          "evidence": [
+            {
+              "chapter": 50,
+              "needle": "过得多年，丐帮中出了一位少年英雄",
+              "quote": "过得多年，丐帮中出了一位少年英雄，为人稳重能干，人缘甚佳，群丐公议，推之为主。各人尊重萧峰原意，送此人去灵鹫宫，先由虚竹考核认可，再传他“打狗棒法”及“降龙十八掌”。这少年帮主不负所托，学得神功，又将丐帮整顿得蒸蒸日上，竟尔中兴，丐帮自此便",
+              "char_offset": 1257605
+            },
+            {
+              "chapter": 17,
+              "needle": "本朝金刀杨老令公上阵擒敌的招数",
+              "quote": "本朝金刀杨老令公上阵擒敌的招数，是‘后山三绝招’之一，本是长柄大砍刀的招数，他改而用于单刀。最后飞脚踢你个筋斗，那是西夏回人",
+              "char_offset": 430024
+            },
+            {
+              "chapter": 37,
+              "needle": "她是我的小妹子",
+              "quote": "她是我的小妹子！”虚竹更是奇怪，道：“是你的小妹子？”李秋水道：“我小妹容貌和我十分相似，只是她有酒窝，我没有，她鼻子下有颗小小黑痣，我也没有。”虚竹“嗯”了一声。李秋水又道：“师姊本来说道，师哥为她",
+              "char_offset": 927577
+            }
+          ],
+          "handling": "22不配置未知行止者的现时资产与居所；少年帮主加since末章事件。旧04生死及身份时段仍需审阅。"
+        },
+        {
+          "id": "people-language-01",
+          "severity": "medium",
+          "entities": [
+            "乔峰",
+            "阿紫",
+            "阿骨打"
+          ],
+          "problem": "民族不自动等于懂该族语言，语言也不自动等于识该文字。",
+          "evidence": [
+            {
+              "chapter": 26,
+              "needle": "天黑之后，便跟着许卓诚学说女真话",
+              "quote": "天黑之后，便跟着许卓诚学说女真话。学得四五成后，心想自己是契丹人，却不会说契丹话，未免说不过去，接着又跟他学契丹话。许卓诚多在各地行走，不论契丹话、西夏话、女真话都说得流利。萧峰学话的本事并不聪明，但女真话和契丹话都远较汉话简易，时日既久，终于也能辞可达意，不必再需通译了。　　匆匆数月，冬尽春来，阿紫每日以人参为粮，伤势颇有起色。女真人",
+              "char_offset": 665272
+            },
+            {
+              "chapter": 26,
+              "needle": "我不识字，不用看了",
+              "quote": "我不识字，不用看了。”室里道：“这份薄礼是黄金五千两、白银五万两、锦缎一千匹、上等麦子一千石、肥牛一千头、肥羊五千头、骏马三千匹，",
+              "char_offset": 671641
+            }
+          ],
+          "handling": "乔峰阿紫开端仅汉话；乔峰不识契丹礼单不作汉字文盲；阿骨打仅女真话。"
+        },
+        {
+          "id": "people-source-01",
+          "severity": "low",
+          "entities": [
+            "扫地老僧"
+          ],
+          "problem": "04的src为第1回，但扫地僧真正登场和武学救治在第43回。",
+          "evidence": [
+            {
+              "chapter": 43,
+              "needle": "本寺玄澄大师一身超凡绝俗的武学修为",
+              "quote": "本寺玄澄大师一身超凡绝俗的武学修为，先辈高僧均许为本寺二百年来武功第一。但他在一夜之间，突然筋脉俱断，成为废人，那便是为此了。”　　玄因、玄生、二人同时跪倒，说道：“大师，可有法子救得玄澄师兄一救？",
+              "char_offset": 1081820
+            }
+          ],
+          "handling": "22改自身src为第43回；04不改。"
+        },
+        {
+          "id": "people-precision-01",
+          "severity": "medium",
+          "entities": [
+            "杜老者",
+            "迟老者",
+            "金老者",
+            "褚老者",
+            "孙老者"
+          ],
+          "problem": "五老涉及乔峰识别武功的推测，不能凭人数强行与玄字辈人物一一合并。",
+          "evidence": [
+            {
+              "chapter": 21,
+              "needle": "这个姓迟，这个姓金，这个姓褚，这个姓孙",
+              "quote": "这个姓迟，这个姓金，这个姓褚，这个姓孙。”四人听他说到自己，便站起身抱拳为礼。乔峰抱拳为礼。阿朱见他们年纪大，敬之为长辈，还礼时曲膝躬身，颇为恭敬。那",
+              "char_offset": 528954
+            }
+          ],
+          "handling": "仍按04五个ID补注，身份未明处写未知，不新造确定同一人关系。"
+        },
+        {
+          "id": "people-inference-01",
+          "severity": "medium",
+          "entities": [],
+          "problem": "钱数、推力分值、成人未明读写能力及开端常住地多非逐项明文。",
+          "evidence": [],
+          "handling": "全部人物inferred=true并有basis；零钱按提示词区间估配，money不含旧钱袋；原著未交代的动机、绝对底线、结局留空或明说未知。"
+        },
+        {
+          "id": "people-carry-01",
+          "severity": "low",
+          "entities": [],
+          "problem": "常用兵器可由后文证实，但不能证实每件在第一回开端已随身；数量及价格也为游戏估计。",
+          "evidence": [
+            {
+              "chapter": 11,
+              "needle": "过彦之一抖手间，也已取下缠在腰间的软鞭",
+              "quote": "过彦之一抖手间，也已取下缠在腰间的软鞭。两人同时向鸠摩智马前抢去。　　段誉大叫：“两位快走，你们打他不过的。”　　鸠摩智淡淡一",
+              "char_offset": 265628
+            }
+          ],
+          "handling": "补充carry全部inferred=true；逐件写出处、qty/unit/tier/price；不重造05及剑湖宫旧18物品，也不提前配置后获秘籍、信物或坐骑。"
+        }
+      ]
+    },
+    "factions_issues.json": {
+      "notes": [
+        "23门派数据的可核查取舍，不修改原03。"
+      ],
+      "issues": [
+        {
+          "id": "23-混合宾客归属",
+          "severity": "schema_gap",
+          "detail": "聚贤庄约三百宾客来自不同门派，squads只容一个faction；未虚记为游氏部属。常住庄丁12名已布，英雄会需事件层组合真实各派。",
+          "src": "第19回"
+        },
+        {
+          "id": "23-少林人数切片",
+          "severity": "inferred",
+          "detail": "原著第39回是千余僧的后期场面。开端仅布476名无名人员的互斥岗位配置，另有04人物；此数不是原著开端总人数。",
+          "src": "第39回"
+        },
+        {
+          "id": "23-星宿后期扩张",
+          "severity": "temporal",
+          "detail": "少室山千余星宿新门人拆4群各250，均由事件since激活并在丁春秋败后until消散；初始另有星宿海40门人。",
+          "src": "第41回"
+        },
+        {
+          "id": "23-一字慧剑门",
+          "severity": "baseline_preserved",
+          "detail": "原著已被灭门，未布活动门人。03保留卓不凡leader字段，但不代表已重建活跃门派。",
+          "src": "第38回"
+        },
+        {
+          "id": "23-符敏仪归属",
+          "severity": "baseline_correction_needed",
+          "detail": "第37回明确符敏仪为阳天部首领，23使用阳天部；原04若仍标钧天部应由补丁处理。",
+          "src": "第37回"
+        },
+        {
+          "id": "23-神农双仆",
+          "severity": "baseline_correction_needed",
+          "detail": "第1回阿胜阿洪受司空玄号令，属于神农帮，不能置作慕容家仆；23无名人群已排除二人。",
+          "src": "第1回"
+        },
+        {
+          "id": "23-无据点小派",
+          "severity": "evidence_limit",
+          "detail": "无量北宗、昆仑及仅载招式的小派不捏造具体总舵；四恶与函谷八友成员全具名，未额外布无名队伍。",
+          "src": null
+        },
+        {
+          "id": "23-王朝兵额",
+          "severity": "inferred",
+          "detail": "守关、宿卫与巡捕是局部模拟配置，不是军队总员额或地方人口；原著未详处使用情理来源。",
+          "src": null
+        },
+        {
+          "id": "23-人群调度依赖",
+          "severity": "runtime_dependency",
+          "detail": "九部初态在灵鹫宫，后续分路寻主需事件移动；领导者为null的固定驻守队不随掌门跨地迁移。",
+          "src": "第37回"
+        },
+        {
+          "id": "23-战斗校验边界",
+          "severity": "model_limit",
+          "detail": "没有混合群schema时，不以游氏12庄丁计算聚贤庄大战。270人各30约相当功力102.7，突围约93.7；围杀需有名高手助阵。",
+          "src": "第19回"
+        }
+      ],
+      "validation": {
+        "original_factions": 55,
+        "new_factions": 7,
+        "kits": 74,
+        "squads": 79,
+        "new_id_alias_collisions": [],
+        "legacy_sword_hall_squads_duplicated": false,
+        "shaolin_initial_unnamed": 476
+      }
+    },
+    "laws_issues.json": {
+      "notes": [
+        "六方政体、30条江湖规矩、25条审稿准则已完成。"
+      ],
+      "issues": [
+        {
+          "subject": "吐蕃都城与君主",
+          "handling": "未知字段写null，不杜撰未登记的国王或都城。"
+        },
+        {
+          "subject": "女真政治形态",
+          "handling": "保留03女真族，不把后来的金国制度前置。"
+        },
+        {
+          "subject": "牢狱实例",
+          "handling": "已与20确认五个牢狱ID；均是游戏推定实例，不声称原著实名。"
+        },
+        {
+          "subject": "原著回目含后时事件",
+          "handling": "用于论证一般准则，不将这些事件加入开端已知状态。"
+        },
+        {
+          "subject": "法制依据",
+          "handling": "全部规则为游戏抽象，src不等于史料法条来源。"
+        }
+      ]
+    },
+    "lore_nature_issues.json": [
+      {
+        "kind": "scope",
+        "severity": "note",
+        "note": "25共316条；材料少的城镇以可执行门道和行情补足，不捏造地方掌故。"
+      },
+      {
+        "kind": "runtime",
+        "severity": "note",
+        "note": "known为OR条件；所有区域与私有消息都没有全局行当标签，以免消息越域泄露。"
+      },
+      {
+        "kind": "inference",
+        "severity": "note",
+        "note": "26全部生态概率、产量、普通野兽战力与集期是游戏设定；不能作为北宋地理史实引用。"
+      },
+      {
+        "kind": "time_slice",
+        "severity": "note",
+        "note": "26不登记开端盐井采集；盐税与新盐井仅以since段誉免盐税拓盐路门控风声呈现。"
+      },
+      {
+        "kind": "runtime",
+        "severity": "note",
+        "note": "同次狩猎产肉与皮须共享猎物消耗，不能独立刷两次产量；天气相邻区相关性尚待运行机制。"
+      },
+      {
+        "kind": "schema",
+        "severity": "note",
+        "note": "26 routine保留提示词字典形状；作息统一情理推定说明写notes，不给字符串子项强塞src。"
+      }
+    ],
+    "scenes_issues.json": {
+      "file": "data/canon/18_scenes.json",
+      "source_repo_head": "772a250d9c8d9c31f28927372acb6f594ac4892c",
+      "preserved_scene": "剑湖宫",
+      "preserved_deep_equality": true,
+      "scenes": 41,
+      "appended_scene_roots": 40,
+      "added_features": 175,
+      "added_items": 16,
+      "new_places": 0,
+      "new_roads": 0,
+      "validation_errors": [],
+      "issues": [
+        {
+          "scene": null,
+          "severity": "preservation_exception",
+          "detail": "剑湖宫原scene要求原样保留，其v9的squads/known缺省/tier缺省及原有推定不在此次修订；不能宣称新增规则已覆盖该样例全部字段。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "大轮寺只有五年开坛讲经的叙述，未见建筑和私藏器物实景；仅推定相应法坛，其余交寺观模板。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "万劫谷地道属第8回救援后开挖，本片段不布地道或开挖工具；万劫谷石屋封门岩不预置封门状态。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "雁门石壁在第20回已遭削字，但削去的确切时间不明；本片段不新增刻文、斧痕、血手印，待总表处理原01初态。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "卫辉船舱的01描述含遇害与沉船结果，本片段仅布原先船体，不带尸体、破底或下沉状态。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "泰山单家书札原文未载内容与封数；用一组概括，仅在secret说明执笔人，不虚构正文。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "信阳酒馆按既有ID保留；第22回实为信阳城客店大堂，器具由场所模板展开，本片段不移入桐柏酒楼内容。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "听香水榭三种花露在第13回已经原有；数量和是否开端已制成属推定，不设已被打翻。"
+        },
+        {
+          "scene": null,
+          "severity": "review",
+          "detail": "琅嬛福地卧室无独立01子地点，石床、摇篮、琴、棋几暂挂琅嬛福地根，以spot说明室内位置。"
+        },
+        {
+          "scene": "晋阳",
+          "severity": "coverage_limit",
+          "detail": "原著只见目的地及萧峰戏言，未详写城内近景。仅保留显式推定的入城通路，不把第25回星宿派冲突或客店移植到晋阳。"
+        },
+        {
+          "scene": "雪地客店",
+          "severity": "template_override",
+          "detail": "权威01绑定阿紫重伤后店主独营的小店。独营及仅两坛存酒交20实例覆盖；不复制普通客房桌椅或库存，不混入本回前段牛肉擦靴的酒店。"
+        },
+        {
+          "scene": "辽国军营",
+          "severity": "temporal",
+          "detail": "行营会随围猎、平叛移动；此处只保存可迁移营帐形制。传信站、叛乱诏书、阵中人质和宴会酒肉均非开端固定陈设。"
+        },
+        {
+          "scene": "上京",
+          "severity": "coverage_limit",
+          "detail": "只提取原文粗朴市肆特征及必要通路；上京宫城形制、具体市街与其他陈设未详，交模板与明确推定，不把庆功赏赐放开端。"
+        },
+        {
+          "scene": "南京",
+          "severity": "temporal",
+          "detail": "阿紫练毒用瓦瓮、公鸡、蜈蚣与冰蚕晚于开端，不加入；王府狮笼已有01地点，铁锁铁铐已有05，救援地道后建，均不重复新增。辽南京与第20回宋南京分开。"
+        },
+        {
+          "scene": "薛慕华居所",
+          "severity": "temporal",
+          "detail": "白纸丧灯、招魂幡、棺材诈死阵及新燃火炬为29—30回临时布置，不作开端常物。桂树和地道是既有防避机关，家人是否知其全貌未逐个猜定。"
+        },
+        {
+          "scene": "擂鼓山",
+          "severity": "dedup",
+          "detail": "珍珑棋局和无崖子悬绳已有05；不另生一套棋盘棋子或悬绳。虚竹破壁、无崖子传功及死亡需剧情结算。"
+        },
+        {
+          "scene": "万仙大会山谷",
+          "severity": "temporal",
+          "detail": "绿灯、青铜鼎、火箭、装童姥的布袋和聚会人群是第33—34回携来或架设，不初始化；树梢与谷壁保留作可用地形。"
+        },
+        {
+          "scene": "洞庭湖",
+          "severity": "coverage_limit",
+          "detail": "原文只回叙君山大会及夺帮主经过，未列厅堂器具。仅最小地形推定；不制造丐帮大会初始会场。"
+        },
+        {
+          "scene": "天山",
+          "severity": "temporal",
+          "detail": "铁索取斩断前，石厅不预先关门；尸体、断兵刃、战斗损坏和虚竹学习所得不初始化。石室固定图解只存在于feature，不自动赋予技能。"
+        },
+        {
+          "scene": "西夏",
+          "severity": "temporal",
+          "detail": "冰库留长期结构，不固定童姥搬出的藏身空隙与夜间寝具；招亲榜已有05，宴席、灯火和三问仪式须事件触发。湖畔舞剑图开端已悬于石室为保守持续存在推定。"
+        },
+        {
+          "scene": "宋境乡村",
+          "severity": "base_location_conflict",
+          "detail": "遵照提示词14，本条以44回少室山附近农屋为证据；权威01的desc却把宋境乡村写成末回慕容复称帝处。未改01，须审核父子关系。50回土坟明确在大理，不能把末回人物搬到本场景。"
+        },
+        {
+          "scene": "王夫人山庄·木柱陷阱",
+          "severity": "temporal_gate_required",
+          "detail": "本地点ID沿用基准，但第47回刻字缺笔、柱内药粉、掺药灯油和引蜂机制是专为擒段正淳而设，未按开端已布置。应在27事件注或机制中布置后启用。已05醉人蜂与麻药不能复制。"
+        },
+        {
+          "scene": "王夫人山庄",
+          "severity": "base_location_uncertain",
+          "detail": "保留王夫人山庄及大厅ID；原文说明此处不同于太湖曼陀山庄，但不能据此精确指定在大理某县。囚室隔板只作形制推定；不新造地图房间。"
+        },
+        {
+          "scene": "双凤驿",
+          "severity": "source_reference",
+          "detail": "提示词首见48回，实际47回慕容复已转述。场面未正面展开，故地面颜色/开阔性均标推定，未补敌阵、尸体或武器。"
+        },
+        {
+          "scene": "汴梁",
+          "severity": "template_boundary",
+          "detail": "原著近景聚焦后阁窗前与病榻；榻、桌椅与宫中常物交王府/官宅类模板，不另重复。太皇太后病危、遗诏与官员任免不作开端陈设。"
+        },
+        {
+          "scene": "善巨郡",
+          "severity": "epistemic",
+          "detail": "只写谷外可见地形与有见证的题字大树。长春谷神书、泉水神效为传闻，已有05也不得复制；树文摹本和赏银是后续动作产物。"
+        },
+        {
+          "scene": "盐井",
+          "severity": "base_location_conflict",
+          "detail": "7.5把盐井列城镇，原著50回仅明确大理西北新探两处产盐设施，不是城镇专名；此文件不新增盐井场景或店铺。"
+        },
+        {
+          "scene": "王夫人山庄",
+          "severity": "disambiguation",
+          "detail": "47—48回山庄与苏州曼陀山庄分开，不能将草海陷阱归苏州；未取得精确县域证据。"
+        },
+        {
+          "scene": "宋境乡村",
+          "severity": "base_location_conflict",
+          "detail": "原著50回慕容复土坟在大理，01仍把其挂宋境乡村；本表保留所有基准ID、不把该末回土坟写入44回农舍近景。"
+        },
+        {
+          "scene": "南京",
+          "severity": "disambiguation",
+          "detail": "第20回宋南京指宋州；27回后本场景为辽南京即燕京，不能合并。"
+        },
+        {
+          "scene": "信阳",
+          "severity": "label_type",
+          "detail": "基准08信阳酒馆绑定22回交梵文经：原文为信阳城客店大堂，不是桐柏城酒楼。保留ID，20按客栈处理。"
+        },
+        {
+          "scene": null,
+          "severity": "canon_correction_evidence",
+          "detail": "第1回阿胜阿洪受司空玄指派，属神农帮；第37回符敏仪明确为阳天部首领。不得继承错误门派附属。"
+        },
+        {
+          "scene": null,
+          "severity": "canon_correction_evidence",
+          "detail": "第24与42回明确白世镜康敏害徐长老，白世镜被丐帮清理门户；第29回归罪乔峰的说法为传言。不得把提示词常在场人物表误当凶手表。"
+        }
+      ]
+    },
+    "lines_review.json": {
+      "scope": "独立复核27的50线/235事件覆盖、关键因果、动机及新修版差异；全读27字段并回原著查重点，非对50回逐句穷尽编审。",
+      "source": "uploaded 世纪新修版全文，work/novel_utf8.txt 与chapter_index.json；08仅用来核兼容ID和order。",
+      "edited_file": "output/tianlong_world_v11/data/canon/27_lines.json",
+      "sha256_before": "62028c82b0e1ba930bf410b6de30f20ff34a30b7456c3a5a65597cbd45b77884",
+      "sha256_after": "53ded5208cb703e0e1a26c452f136a6e249f3c4c2c2b53a430cc2b9065e5122d",
+      "checks": {
+        "line_count": 50,
+        "event_count": 235,
+        "unique_event_count": 235,
+        "all_235_covered": true,
+        "event_annotation_order_matches_08": true,
+        "all_line_event_ids_valid": true,
+        "line_order_matches_08": true,
+        "owners_registered": true,
+        "primary_line_contains_event": true,
+        "roles_valid": true,
+        "field_length_errors": []
+      },
+      "issues": [
+        {
+          "id": "L01",
+          "severity": "high",
+          "title": "雁门石壁没有可读文字",
+          "src": [
+            "第20回",
+            "第21回"
+          ],
+          "evidence": "乔峰到关外时留字早被人凿去，一字不辨；后来向智光求得拓片与译释。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·雁门寻亲",
+              "field": "spine",
+              "before": "乔峰读崖刻追旧案，多名知情者相继死亡，智光交文而不说首领，阿朱与乔峰互许。",
+              "after": "乔峰见崖字被凿而追查旧案，多名知情者死去；智光交文不说首领，阿朱与乔峰互许。"
+            }
+          ]
+        },
+        {
+          "id": "L02",
+          "severity": "high",
+          "title": "雁门重逢不是事先约定",
+          "src": [
+            "第20回"
+          ],
+          "evidence": "阿朱解释她猜乔峰会来查崖字，伤愈后自行到雁门等候。两人此前没有重会约定。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "events",
+              "id": "乔峰赴雁门关与阿朱重逢",
+              "field": "needs",
+              "before": "二人约定雁门重会，乔峰能出山赴关。",
+              "after": "乔峰赴雁门查崖字，阿朱伤愈后猜其行程而先来等候。"
+            },
+            {
+              "section": "events",
+              "id": "乔峰赴雁门关与阿朱重逢",
+              "field": "if_broken",
+              "before": "路线或约定改变，相见需凭可到达的地点与消息。",
+              "after": "乔峰改道或阿朱猜错行程，重逢须另靠实际去向与消息。"
+            },
+            {
+              "section": "events",
+              "id": "乔峰赴雁门关与阿朱重逢",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第20回阿朱自述猜到乔峰将来查看崖字，故先来等候；反事实为推断。"
+            }
+          ]
+        },
+        {
+          "id": "L03",
+          "severity": "high",
+          "title": "解药来自王夫人尸手且不是认父的奖励",
+          "src": [
+            "第48回"
+          ],
+          "evidence": "段誉护母激发剑气、逼退慕容复后，从王夫人尸体手中取瓶解毒；段正淳自尽后刀白凤才向段誉揭示生父，段誉又替段延庆解毒。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·大理身世",
+              "field": "outcome",
+              "before": "段延庆留下解药离去，段誉回国继位。",
+              "after": "段延庆认子后放下夺位执念离去，段誉解围回国继位。"
+            },
+            {
+              "section": "events",
+              "id": "段誉退慕容复解众人毒",
+              "field": "needs",
+              "before": "段誉剑气可退慕容，段延庆因认子改变态度并留下解药。",
+              "after": "段誉护母奋起出剑，退敌后能取王夫人手中解药。"
+            },
+            {
+              "section": "events",
+              "id": "段誉退慕容复解众人毒",
+              "field": "if_broken",
+              "before": "身世未揭或解药不在，战斗胜利不等于众人立即解毒。",
+              "after": "若无抗毒体质、剑气或可取解药，须另求脱困医救，不能靠认父自动解毒。"
+            },
+            {
+              "section": "events",
+              "id": "段誉退慕容复解众人毒",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第48回明确从王夫人尸手取瓶；击退慕容及先救父母发生于双亲自尽前，08顺序仍保留但不得据此反推因果。"
+            }
+          ]
+        },
+        {
+          "id": "L04",
+          "severity": "high",
+          "title": "青桥赴死的核心是救萧峰免遭段家报复",
+          "src": [
+            "第23回"
+          ],
+          "evidence": "阿朱临终明确承认真正意图是救萧峰：担忧他杀镇南王后，大理段家的六脉神剑报复；兼有护父与化解仇恨。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·青桥错杀",
+              "field": "spine",
+              "before": "阿朱误信父亲就是旧案首领，乔装代父赴约，乔峰未识破而以重掌索仇。",
+              "after": "阿朱误信父亲是旧案首领，又怕段家复仇害死萧峰，乔装代父赴约，被未识破的萧峰误杀。"
+            },
+            {
+              "section": "lines",
+              "id": "线·青桥错杀",
+              "field": "motive",
+              "before": "阿朱救父，乔峰报仇，两种动机错位。",
+              "after": "阿朱以己命救萧峰兼护父，萧峰误向仇人索命。"
+            },
+            {
+              "section": "events",
+              "id": "阿朱代父赴青石桥",
+              "field": "needs",
+              "before": "阿朱信父亲会遭乔峰杀害，并能乔装赴约。",
+              "after": "阿朱怕杀父后段家以六脉神剑报复萧峰，欲以己命化仇。"
+            },
+            {
+              "section": "events",
+              "id": "阿朱代父赴青石桥",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第23回阿朱临终亲口解释，萧峰亦悟其真正用意在救自己；反事实为推断。"
+            }
+          ]
+        },
+        {
+          "id": "L05",
+          "severity": "high",
+          "title": "阿紫毒针意在使萧峰无法离去",
+          "src": [
+            "第25回",
+            "第26回",
+            "第27回"
+          ],
+          "evidence": "25回她装昏后近距离射毒针；26回说不是要杀他，27回明确说想使他动弹不得，由自己服侍、永不离开。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·阿紫北行",
+              "field": "spine",
+              "before": "阿紫借乔峰抵御师门追索，又冒险试探而重伤；乔峰为救她寻参北行。",
+              "after": "阿紫借乔峰抵御师门，继而欲用毒针制住他使其不能离去，反遭掌伤；乔峰为救她寻参北行。"
+            },
+            {
+              "section": "lines",
+              "id": "线·阿紫北行",
+              "field": "motive",
+              "before": "阿紫求庇护与亲近，乔峰履行阿朱遗托。",
+              "after": "阿紫求庇护并想独占陪伴，乔峰履行阿朱遗托。"
+            },
+            {
+              "section": "lines",
+              "id": "线·阿紫北行",
+              "field": "basis",
+              "before": "依相关回目情节归纳因果；线名与分线为分析性整理。",
+              "after": "第25至26回北行治伤；第27回阿紫自述射针意图在使萧峰不能离去。"
+            },
+            {
+              "section": "events",
+              "id": "阿紫暗算乔峰反受重伤",
+              "field": "needs",
+              "before": "阿紫以危险暗算试探亲近，乔峰仓促反击。",
+              "after": "阿紫欲以毒针使乔峰不能离去，近身偷袭引出其本能反击。"
+            },
+            {
+              "section": "events",
+              "id": "阿紫暗算乔峰反受重伤",
+              "field": "if_broken",
+              "before": "试探取消或力量受控，可避免重伤北行求参。",
+              "after": "阿紫不再求强留、毒针被先行制止或获安全化解，便无此重伤求参之因。"
+            },
+            {
+              "section": "events",
+              "id": "阿紫暗算乔峰反受重伤",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第25回实际暗算；第27回阿紫明言要他动弹不得、不能离开，不能仅写亲近试探。"
+            }
+          ]
+        },
+        {
+          "id": "L06",
+          "severity": "high",
+          "title": "毁像为寻秘笈，段誉先已看破心魔",
+          "src": [
+            "第50回"
+          ],
+          "evidence": "重见玉像时段誉已悟将王语嫣投射为神仙姊姊的心魔；王语嫣受容貌比较刺激后，又认定长春秘诀藏像内才推像搜寻。毁像后段誉进一步感叹无常。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "events",
+              "id": "王语嫣推倒神仙玉像",
+              "field": "needs",
+              "before": "王语嫣看到玉像并因美貌投射而愤恨，段誉在旁感悟。",
+              "after": "王语嫣受容貌比较刺激，疑长春秘笈藏在玉像中，推像寻书。"
+            },
+            {
+              "section": "events",
+              "id": "王语嫣推倒神仙玉像",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第50回王语嫣推像前自忖长春秘诀藏像内，倒像后探摸；段誉见像时已自悟心魔。"
+            },
+            {
+              "section": "lines",
+              "id": "线·玉像痴恋",
+              "field": "spine",
+              "before": "段誉将王语嫣投射为玉像，追随屡救，枯井暂获相许，终经驻颜求索与毁像解执。",
+              "after": "段誉把王语嫣当作玉像而追随屡救，枯井暂获相许；重见玉像时看破心魔，继而目睹毁像。"
+            },
+            {
+              "section": "lines",
+              "id": "线·段誉解执",
+              "field": "spine",
+              "before": "驻颜求索与玉像破灭松动痴恋，王语嫣自择归处；段誉转向治国与新的家庭关系。",
+              "after": "求驻颜引众人重访玉洞，段誉重见玉像自悟心魔；王语嫣毁像寻书后离去，段誉转向民生与婚姻。"
+            }
+          ]
+        },
+        {
+          "id": "L07",
+          "severity": "medium",
+          "title": "玄悲与柯百岁是并行疑案，不是同一报仇缘由",
+          "src": [
+            "第9回",
+            "第11回",
+            "第13回",
+            "第42回"
+          ],
+          "evidence": "过彦之为师柯百岁之死来找师叔崔百泉，两人赴江南寻仇；玄悲死讯另由少林使者告知段氏，诸案共享以彼之道的疑点。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·玄悲疑案",
+              "field": "name",
+              "before": "玄悲疑案",
+              "after": "慕容疑案"
+            },
+            {
+              "section": "lines",
+              "id": "线·玄悲疑案",
+              "field": "spine",
+              "before": "玄悲之死引来查访，崔过赴江南寻仇，武学师承辨认把疑点引向慕容一门。",
+              "after": "玄悲与柯百岁等分别死于自身成名武学，疑点同指慕容家；崔过为柯百岁赴江南寻仇。"
+            },
+            {
+              "section": "lines",
+              "id": "线·玄悲疑案",
+              "field": "motive",
+              "before": "查明仇凶与本门绝技为何反伤自身。",
+              "after": "查明诸案，替师门亲友复仇。"
+            },
+            {
+              "section": "lines",
+              "id": "线·玄悲疑案",
+              "field": "basis",
+              "before": "依相关回目情节归纳因果；线名与分线为分析性整理。",
+              "after": "第9回分别交代玄悲与柯百岁之死；崔过的寻仇对象来自柯案。旧线ID保留，仅改展示名避免混同。"
+            }
+          ]
+        },
+        {
+          "id": "L08",
+          "severity": "medium",
+          "title": "朱碧主动到曼陀山庄解手，并非误入避难",
+          "src": [
+            "第11回",
+            "第12回"
+          ],
+          "evidence": "水路脱险后朱碧因欲解手，主动商议就近到王家庄悄悄上岸即走；到庄后与幽草相遇并探望王语嫣，后来遇王夫人回庄。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·江南脱拘",
+              "field": "spine",
+              "before": "朱碧以易容和机关助段誉逃走，三人误入王家庄，段誉以茶花知识保命。",
+              "after": "朱碧用易容机关助段誉逃走，途中主动靠曼陀山庄解手；逗留遇王夫人，段誉以茶花知识保命。"
+            },
+            {
+              "section": "events",
+              "id": "朱碧携段誉登曼陀山庄",
+              "field": "needs",
+              "before": "朱碧寻避处来到王家庄，王夫人有控制来客的能力。",
+              "after": "朱碧想就近上岸解手，明知王家禁令仍打算悄来速去。"
+            },
+            {
+              "section": "events",
+              "id": "朱碧携段誉登曼陀山庄",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第11回末朱碧商议上岸解手；第12回实际入庄。不是随机误入或原拟长期避难。"
+            }
+          ]
+        },
+        {
+          "id": "L09",
+          "severity": "medium",
+          "title": "康敏致死节点含照镜刺激及线索中断",
+          "src": [
+            "第24回"
+          ],
+          "evidence": "康敏经阿紫折磨后，萧峰尚在追问带头大哥；阿紫拿镜刺激其自负容貌，康敏气绝，问话线索随之断绝。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "events",
+              "id": "阿紫折磨康敏致死",
+              "field": "needs",
+              "before": "康敏落入阿紫之手，阿紫以酷虐报复。",
+              "after": "康敏伤重且自负美貌，阿紫以镜照辱，打断乔峰追问。"
+            },
+            {
+              "section": "events",
+              "id": "阿紫折磨康敏致死",
+              "field": "if_broken",
+              "before": "有人保护或及时医救，康敏不必在此死亡。",
+              "after": "折磨或照镜刺激被阻、及时救治，可保康敏性命，继续追问旧案线索。"
+            },
+            {
+              "section": "events",
+              "id": "阿紫折磨康敏致死",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第24回康敏在照镜后断气，萧峰明确惋惜带头大哥之名未及问出。"
+            },
+            {
+              "section": "lines",
+              "id": "线·康敏情仇",
+              "field": "outcome",
+              "before": "杀夫与害徐的真相揭开，白世镜由丐帮清理门户，康敏死去。",
+              "after": "杀马害徐之谋败露，白世镜被丐帮处决；康敏死于折磨与照镜刺激，首领线索仍断。"
+            }
+          ]
+        },
+        {
+          "id": "L10",
+          "severity": "medium",
+          "title": "童姥破戒诱局有争胜心，传武则另有御敌需求",
+          "src": [
+            "第36回"
+          ],
+          "evidence": "童姥恼虚竹宁饿不食荤，要证明其也会自行犯戒而掳来梦姑；后来以梦姑要挟练掌未成，再下生死符逼学。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "lines",
+              "id": "线·冰库梦缘",
+              "field": "spine",
+              "before": "童姥以幽会与符毒迫虚竹破戒传功；梦中情缘因西夏公主三问重获可识的线索。",
+              "after": "童姥为胜过虚竹守戒之志而掳女诱他破戒，再借符毒逼其学掌；梦缘后来因公主三问续合。"
+            },
+            {
+              "section": "lines",
+              "id": "线·冰库梦缘",
+              "field": "motive",
+              "before": "童姥教徒制敌，虚竹与梦姑寻彼此。",
+              "after": "童姥争胜破戒并迫徒御敌，虚竹与梦姑寻彼此。"
+            },
+            {
+              "section": "events",
+              "id": "童姥掳梦姑与虚竹幽会",
+              "field": "needs",
+              "before": "童姥能掳来公主，故意引虚竹破戒。",
+              "after": "童姥恼虚竹坚守戒律，欲以情欲使他自愿犯戒而掳来少女。"
+            },
+            {
+              "section": "events",
+              "id": "童姥掳梦姑与虚竹幽会",
+              "field": "basis",
+              "before": "原著情境归纳；反事实走向为性情与因果推断。",
+              "after": "第36回童姥因虚竹宁饿不食荤而设局，事后追问谁赢；此为她的争胜动机，不能只归教徒。"
+            }
+          ]
+        },
+        {
+          "id": "L11",
+          "severity": "low",
+          "title": "三妃与四剑新修版结局再明确",
+          "src": [
+            "第50回"
+          ],
+          "evidence": "原著明确立木婉清贵妃、钟灵贤妃、晓蕾淑妃；四剑本人首肯且虚竹夫妇认可，分别许给高泰明、华赫艮、巴天石等人之子。未给四人逐一配偶映射。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "events",
+              "id": "段誉封三妃并遣返四剑",
+              "field": "needs",
+              "before": "段誉继位且澄清亲缘，能安排婚配；四剑也有各自意愿。",
+              "after": "段誉亲缘已明并继位；四剑首肯且获虚竹夫妇允准婚配。"
+            },
+            {
+              "section": "events",
+              "id": "段誉封三妃并遣返四剑",
+              "field": "basis",
+              "before": "旧08名含遣返四剑；第50回新修版有许配婚姻交代，不能按字面强制遣返。",
+              "after": "第50回新修版明确三妃封号与四剑嫁予大理臣僚之子；旧ID遣返仅兼容，不据其字面执行。"
+            },
+            {
+              "section": "lines",
+              "id": "线·段誉解执",
+              "field": "outcome",
+              "before": "段誉免盐税、立三妃，四剑婚配依新修版交代处理。",
+              "after": "段誉免盐税，立木婉清、钟灵、晓蕾为妃；四剑自愿嫁予大理臣僚之子。"
+            }
+          ]
+        },
+        {
+          "id": "L12",
+          "severity": "high",
+          "title": "旧08杀徐键不得反向生成萧远山行凶",
+          "src": [
+            "第24回",
+            "第42回"
+          ],
+          "evidence": "24回白世镜供述及42回萧峰总结，均将杀徐指向白世镜与康敏；杀白由丐帮清理门户。旧08键名及effects必须单独修复后才能直接执行。",
+          "status": "corrected_27",
+          "changes": [
+            {
+              "section": "events",
+              "id": "萧远山杀徐冲霄",
+              "field": "needs",
+              "before": "徐冲霄与白世镜、康敏的纠葛激化，死讯又被错归乔峰。",
+              "after": "白世镜与康敏合谋杀徐以遮掩纠葛，徐死又被误归乔峰。"
+            },
+            {
+              "section": "events",
+              "id": "萧远山杀徐冲霄",
+              "field": "basis",
+              "before": "旧08的事件名误归凶于萧远山；第24、42回明确为康敏白世镜合谋。",
+              "after": "第24回供述与第42回总结明确白世镜、康敏合谋；旧08事件ID仅兼容，不代表萧远山行凶。"
+            }
+          ]
+        }
+      ],
+      "known_remaining_base_conflicts": [
+        {
+          "id": "BASE08-L01",
+          "severity": "high",
+          "events": [
+            "萧远山杀徐冲霄",
+            "萧远山杀白世镜"
+          ],
+          "problem": "旧08的杀人者与新修版冲突。27已纠正情理说明且notes显式警告，但08本体不在本审授权范围，旧actors/effects不能据键名直接执行。"
+        },
+        {
+          "id": "BASE08-L02",
+          "severity": "high",
+          "events": [
+            "段誉封三妃并遣返四剑"
+          ],
+          "problem": "旧08的遣返不是新修版四剑婚配。27已明确自愿婚配与许可；08本体仍须另行版本修订。"
+        },
+        {
+          "id": "BASE08-L03",
+          "severity": "high",
+          "events": [
+            "段正淳刀白凤相继自尽",
+            "刀白凤揭示段誉生父",
+            "段誉退慕容复解众人毒"
+          ],
+          "problem": "旧08 order205/206/207与48回真实因果交叠倒置：退慕容/先给父母解毒在段正淳自尽前；刀白凤最终自尽在告生父后。27按提示词保留08排序，needs/basis已标实序，编排器不能把旧顺序当作现实前置。"
+        }
+      ],
+      "confirmed_revision_checks": [
+        {
+          "src": "第24回、第42回",
+          "result": "徐冲霄由白世镜康敏合谋杀；白世镜被丐帮清理门户，27未肯定旧键名字面。"
+        },
+        {
+          "src": "第50回",
+          "result": "游坦之确也向谷中摔落，保留献眼线随坠结局；不能用其他版本撞壁记忆覆盖本输入。"
+        },
+        {
+          "src": "第50回",
+          "result": "丐帮原为降龙二十八掌，萧峰与虚竹合研精简为十八掌；多年后才传少年帮主。"
+        },
+        {
+          "src": "第50回",
+          "result": "王语嫣回慕容身边、三妃名单、四剑自愿婚配均与新修版一致；未捏造逐剑配偶对应。"
+        },
+        {
+          "src": "第21回",
+          "result": "智光所交确为拼缝旧布拓片；27称拓片正确。"
+        }
+      ]
+    },
+    "lore_nature_review.json": {
+      "scope": "独立定向复核25/26；不声称逐句全文重考或已通过实际编译器。",
+      "files": {
+        "25_sha256": "c10dc749892ba6484573d7e65ca85fa82fd644dc8dd0c8e40aa5eb07372da853",
+        "26_sha256": "9207ecd03e749f9c3e070e5454476be018bd58d5f2a85fffe7dac83fdae80d5e"
+      },
+      "mechanical": {
+        "lore_count": 316,
+        "news_count": 73,
+        "news_without_since": [],
+        "known_in_null": [],
+        "event_ref_errors": [],
+        "since_until_order_errors": [],
+        "weather_distributions": 60,
+        "weather_errors": [],
+        "seasonal_road_count": 28,
+        "roads_missing_from_02_then_15_then_16": [],
+        "inferred_false_after_revision": 0,
+        "missing_basis_after_revision": []
+      },
+      "findings": [
+        {
+          "id": "LN01",
+          "severity": "must_fix",
+          "subject": "原著消息条目的inferred/basis",
+          "evidence": "初读95条inferred:false且包含推定known/get/赏钱；作者修订后316条均inferred:true且附basis。",
+          "recommendation": "混合事实与推定条目标inferred:true，basis说明text据原著而传播、渠道、价钱为游戏推定。",
+          "status": "resolved_verified"
+        },
+        {
+          "id": "LN02",
+          "severity": "must_fix",
+          "subject": "现任与存活话术过期",
+          "evidence": "作者补入8项有效期；已回读确认白世镜、玄难、阿朱、双雄、四护卫、高太后等对应until。",
+          "recommendation": "以相应死亡/变更事件设until；或改为明确往昔的说法。高太皇太后居尊位同理。",
+          "status": "resolved_verified"
+        },
+        {
+          "id": "LN03",
+          "severity": "runtime_caution",
+          "subject": "known的传播与事件跳过",
+          "evidence": "风声since只绑定事件ID，known.in可能包含中原等大区；定义本身没有传播延迟或事件已成功结算标记。",
+          "recommendation": "消费者必须按实际结算启用、按传播过滤；不能只按原定日期即时让大区人人知晓。",
+          "status": "数据约定限制，未要求改新schema"
+        },
+        {
+          "id": "LN04",
+          "severity": "runtime_caution",
+          "subject": "公开消息的内部ID/about",
+          "evidence": "如蒙面救人风声的text不揭身份，但id/about含萧远山；事件ID也可能含秘密原因。",
+          "recommendation": "玩家/编剧可见视图只输出获准text和可识别实体，不能裸露完整内部记录。",
+          "status": "符合ID引用需要，但消费层必须脱敏"
+        }
+      ],
+      "conclusion": "定向复核通过：受限known无in:null；73风声均有合法since；60组天气概率和28条有效基准道路通过。发现的混合推定元数据与8项过期话术已由作者修正并回读验证；消费层仍须按真实事件结算、传播和脱敏规则取用。"
+    },
+    "people_review.json": {
+      "scope": "按root要求定向审20名主要角的arc/初始wishes，顺带扫描同类likes/dislikes/soft隐情；结构由settlement另验。未重做242人，不声称全文穷尽。",
+      "reviewed_main": [
+        "段誉",
+        "乔峰",
+        "虚竹",
+        "阿朱",
+        "阿紫",
+        "王语嫣",
+        "慕容复",
+        "慕容博",
+        "萧远山",
+        "玄慈",
+        "康敏",
+        "白世镜",
+        "徐冲霄",
+        "段正淳",
+        "段延庆",
+        "刀白凤",
+        "天山童姥",
+        "李秋水",
+        "丁春秋",
+        "游坦之"
+      ],
+      "input_file": "output/tianlong_world_v11/data/canon/22_people.json",
+      "input_sha256_at_review": "96e24d8f324b912ff97ccddffa9ad3047369f102547303f24647a689f0a8cd27",
+      "source_priority": "世纪新修版上传全文优先；27本次已修因果作交叉核查，04只核既有初始状态。",
+      "editing_policy": "未修改22，明确冲突发送people_data与root，由作者统一修改。",
+      "issues": [
+        {
+          "id": "P01",
+          "severity": "high",
+          "people": [
+            "慕容复"
+          ],
+          "fields": [
+            "likes",
+            "soft"
+          ],
+          "problem": "复国助力、复国希望把复燕密谋写入禁止隐情的好恶/软肋。",
+          "source": "WORLD_PROMPT.md 9.1：likes/dislikes/soft隐情不写；第42、48回显露复国谋算。",
+          "status": "corrected_by_author",
+          "resolution": "仅留名望、家族体面；复国所求保留在后台goal/wishes。"
+        },
+        {
+          "id": "P02",
+          "severity": "medium",
+          "people": [
+            "虚竹"
+          ],
+          "fields": [
+            "arc"
+          ],
+          "problem": "原文字序先写与公主成婚再写少林失双亲及被逐，倒置主线转折。",
+          "source": "第42回失亲逐寺，第46回梦姑相认成婚。",
+          "status": "corrected_by_author",
+          "resolution": "误破珍珑继逍遥与灵鹫，少林失双亲被逐；再与公主成婚，救义兄并承传丐帮绝技。"
+        },
+        {
+          "id": "P03",
+          "severity": "medium",
+          "people": [
+            "玄慈"
+          ],
+          "fields": [
+            "arc"
+          ],
+          "problem": "原文先自绝后传位，弱化其自承责任及职位交接次序。",
+          "source": "第42回受杖完毕后明确传方丈于玄寂，随后自绝经脉。",
+          "status": "corrected_by_author",
+          "resolution": "少林大会揭雁门旧案及私生子，受杖传位玄寂后自绝。"
+        },
+        {
+          "id": "P04",
+          "severity": "high",
+          "people": [
+            "阿朱"
+          ],
+          "fields": [
+            "arc"
+          ],
+          "problem": "仅写代父赴死遗漏23回明示的真正救萧峰动机。此项root已先指出。",
+          "source": "第23回临终承认怕段家六脉神剑报复杀乔峰，以己命化仇。",
+          "status": "corrected_by_author",
+          "resolution": "盗经受伤与乔峰相爱；为救乔峰免遭段家报复，易容代父赴约，死于乔峰掌下。"
+        },
+        {
+          "id": "P05",
+          "severity": "high",
+          "people": [
+            "丁春秋"
+          ],
+          "fields": [
+            "drive_basis",
+            "basis"
+          ],
+          "problem": "弑师措辞会误示他已经杀死无崖子；开端无崖子尚生。此项root已先指出。",
+          "source": "第31回无崖子活着为虚竹传功；其后才因耗尽功力去世。",
+          "status": "corrected_by_author",
+          "resolution": "谋害师父后仍强求逍遥派秘学"
+        },
+        {
+          "id": "P06",
+          "severity": "medium",
+          "people": [
+            "段延庆",
+            "天山童姥"
+          ],
+          "fields": [
+            "likes",
+            "soft"
+          ],
+          "problem": "同类秘密皇统与同门旧怨不应放好恶/软肋。",
+          "source": "WORLD_PROMPT.md 9.1；第9、36至37回有关私密旧史。",
+          "status": "corrected_by_author",
+          "resolution": "作者同步清空段延庆皇统相关likes/soft及童姥同门旧怨soft。"
+        },
+        {
+          "id": "P07",
+          "severity": "medium",
+          "people": [
+            "无崖子"
+          ],
+          "fields": [
+            "soft"
+          ],
+          "problem": "逆徒之患仍指向隐居者的私密师门旧事，建议与同类清理一并移出soft。",
+          "source": "WORLD_PROMPT.md 9.1；第31回师门真相。",
+          "status": "corrected_by_author",
+          "resolution": "保留goal/wishes/arc中的清理门户，soft清空。"
+        }
+      ],
+      "checks": [
+        {
+          "item": "主角初始心愿",
+          "result": "20名重点人物未提前以未发生的亲缘揭示、救亡或恋情作为已知前提；游坦之wishes空、drive1合适。"
+        },
+        {
+          "item": "李清露抽查",
+          "result": "尚未发生梦郎追寻，goal与wishes为空、drive1；没有开端预知虚竹。"
+        },
+        {
+          "item": "新修版杀徐杀白",
+          "result": "康敏、白世镜、徐冲霄arc一致指白康合谋杀徐，白被丐帮处死；萧远山arc未列杀徐杀白。",
+          "src": [
+            "第24回",
+            "第42回"
+          ]
+        },
+        {
+          "item": "新修版结尾",
+          "result": "段誉三妃、王语嫣归慕容、游坦之随阿紫坠谷符合当前输入；四剑arc明确本人同意后嫁大理臣僚之子，未写遣返。",
+          "src": [
+            "第50回"
+          ]
+        },
+        {
+          "item": "菊剑射酒",
+          "result": "第42回确由菊剑射来酒水，虚竹取酒制符；22此说可保留。",
+          "src": [
+            "第42回"
+          ]
+        },
+        {
+          "item": "公开名声",
+          "result": "所抽查人物的fame未把乔峰契丹身世、慕容博尚生、虚竹亲生父母等作为开端公论。"
+        },
+        {
+          "item": "刀白凤arc次序",
+          "result": "先拔剑自刺而未立即死，告生父后再推剑最终身亡；现有“自尽，临终告知”虽简略可成立，不据旧08排序强作改动。",
+          "src": [
+            "第48回"
+          ]
+        },
+        {
+          "item": "玄慈初始查案愿望",
+          "result": "基准04已明确玄悲开端dead并注明短期历时推断；本审未越权重定开端存亡，因此保留查玄悲案心愿，沿用基准不确定性。"
+        }
+      ],
+      "pending": []
+    }
+  },
+  "battle_checks": {
+    "notes": [
+      "只作报告，不写入世界实体、不改23功力与人数。",
+      "所有power按04初值，依08 order严格应用战前set与add；同一事件的提升不提前使用。",
+      "强度=sum(1.08^具名功力)+sum(群人数*1.08^每人功力)；等效功力=log_1.08(强度)，突围阈值=敌方强度/2。",
+      "算法只表示无状态修正的能力总量；不自动模拟中毒、穴道、伤势、疲劳、阵形、地形、士气、接触面与抓捕。",
+      "report_only场景包括未注册队伍与人数假设；不能被计为已实装人群。超过300的聚合数仅供分析，运行须多队与时间线，不许缩成300。",
+      "原著battle outcome为事件结果，baseline配置及报告算术都不构成已执行游戏回归。"
+    ],
+    "source_head": "772a250d9c8d9c31f28927372acb6f594ac4892c",
+    "input_sha256": {
+      "TianL/data/canon/04_persons.json": "dd72dabad0bdb61f24cc55beb15f507f62d057f78cc6e52488f80d026cc959f0",
+      "TianL/data/canon/08_canon.json": "3da624e3dd9f547590e73284fab3caa312f61a44a196177860f8ad3720db5a9f",
+      "TianL/data/canon/18_scenes.json": "47b32ae6a53d6df3264a28e88c532130f547bfd2cd5d7caaa871647a183e82a1",
+      "output/tianlong_world_v11/data/canon/23_factions.json": "75b9528148b1e6278ca68deae1d8cfffbc78f40ce0d364afd2abe158fa906380"
+    },
+    "formula": {
+      "base": 1.08,
+      "strength": "sum(1.08 ** person.power) + sum(squad.count * 1.08 ** squad.power)",
+      "equivalent_power": "ln(strength)/ln(1.08)",
+      "breakout": "attacker_strength > defender_strength/2",
+      "breakout_equivalent_power_discount": 9.006468
+    },
+    "checks": [
+      {
+        "event": "神农帮留钟灵下毒逼援",
+        "order": 5,
+        "src": "第1回",
+        "label": "神农围山与无量东宗",
+        "sides": [
+          {
+            "label": "神农攻山方",
+            "named": [
+              {
+                "id": "司空玄",
+                "power": 38,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "阿胜",
+                "power": 15,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "阿洪",
+                "power": 15,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": "神农攻山帮众",
+                "count": 28,
+                "power": 18,
+                "source": "23.squads",
+                "report_only": false,
+                "basis": "第1回神农帮围山；扣除司空玄、阿胜、阿洪，余数与功力推定。",
+                "runtime_location": "无量山",
+                "since": null,
+                "until": "司空玄自尽无量剑改隶"
+              }
+            ],
+            "strength": 136.85816,
+            "equivalent_power": 63.915,
+            "breakout_threshold_strength": 68.42908,
+            "breakout_threshold_equivalent_power": 54.908
+          },
+          {
+            "label": "无量东宗",
+            "named": [
+              {
+                "id": "左子穆",
+                "power": 40,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "龚光杰",
+                "power": 25,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "干光豪",
+                "power": 25,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "郁光标",
+                "power": 25,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "钱光胜",
+                "power": 25,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": "东宗弟子众",
+                "count": 15,
+                "power": 15,
+                "source": "old18.squads",
+                "report_only": false,
+                "basis": "「两人的座位相距一丈有余，身后各站着二十余名男女弟子」；有名有姓的东宗弟子另列为人物，余者按十五人一群计；零钱推定",
+                "runtime_location": "剑湖宫·练武厅",
+                "since": null,
+                "until": null
+              }
+            ],
+            "strength": 96.700959,
+            "equivalent_power": 59.402,
+            "breakout_threshold_strength": 48.350479,
+            "breakout_threshold_equivalent_power": 50.395
+          }
+        ],
+        "comparison": {
+          "mode": "正面实力对照，原著实际为毒攻与人质胁迫",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 1.415272
+        },
+        "canon_outcome": "神农帮以毒字威胁无量剑，扣钟灵、迫段誉求解药；本事件没有正面灭尽东宗的结果。",
+        "assessment": "不能以强弱总和替代毒攻与人质条件。",
+        "explanation": [
+          "双方当前无名群参数可读；原著没有给所有人员逐一功力，本表不是历史数值。",
+          "阿胜阿洪据第一回确为神农帮人；04误标慕容仆人须修，本报告只沿用其功力15，不接受错误归属。",
+          "毒药、貂毒、囚禁与谈判不在1.08幂战力模型内。"
+        ],
+        "evidence": [
+          {
+            "src": "第1回",
+            "chapter_char_offset": 17646,
+            "locator": "阿胜，将这两个小男女拿下了",
+            "excerpt": "：“有谁叫我来么？我自己来跟你说的。”\n　　司空玄哼了一声，道：“老夫行走江湖四十年，从没见过你这等胆大妄为的胡闹小子。阿胜，将这两个小男女拿下了。”旁边一条大汉应声而出，伸手抓住了段誉右臂。\n　　钟灵叫道：“且慢！司空帮主，这位相公好言相劝，你不允那也罢了，何必动蛮？”转头向段誉道：“大哥，神农帮不听你的话，咱们不用管人家的闲事了，走吧！”\n　　那阿胜伸出大手，早将段誉的双手反在背后，紧紧握住，瞧着司空玄，只待他示下。司空玄冷冷地道：“神农帮最不喜人家多管闲事。两个小娃娃来向我啰里啰唆，这中间多半另有蹊跷。阿洪，把这女娃娃也绑了起来。”另一名大汉应了，伸手来抓钟灵。\n　　"
+          },
+          {
+            "src": "第1回",
+            "chapter_char_offset": 6470,
+            "locator": "神农帮诛灭无量剑",
+            "excerpt": "撞，他竟没能避开，而一撞之下便即毙命，定是进来之前已然身受重伤，忙解他上衣查伤。衣衫解开，只见他胸口赫然写着八个黑字：“神农帮诛灭无量剑”。众人不约而同地大声惊呼。\n　　这八个黑字深入肌理，既非墨笔书写，也不是用尖利之物刻划而致，竟是以剧毒的药物写就，腐蚀之下，深陷肌肤。\n　　左子穆略一凝视，不禁大怒，手中长剑一振，嗡嗡作响，喝道：“且瞧是神农帮诛灭无量剑，还是无量剑诛灭神农帮。此仇不报，何以为人？”再看容子矩身子各处，并无其他伤痕，喝道：“光豪、光杰，外面瞧瞧去！”\n　　干光豪、龚光杰两名大弟子各挺长剑，应声而出。\n　　这一来厅上登时大乱，各人再也不去理会段誉和那梁上少女"
+          }
+        ],
+        "limitations": [
+          "角色归属存在基准阻塞；不能宣称现有04/23可无修正复现。"
+        ],
+        "variants": []
+      },
+      {
+        "event": "段誉脱囚吸无量门人内力",
+        "order": 22,
+        "src": "第5回",
+        "label": "段誉脱囚吸取七人内力",
+        "sides": [
+          {
+            "label": "段誉",
+            "named": [
+              {
+                "id": "段誉",
+                "power": 25,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "set",
+                    "value": 25,
+                    "from": 5,
+                    "to": 25
+                  }
+                ]
+              }
+            ],
+            "squads": [],
+            "strength": 6.848475,
+            "equivalent_power": 25.0,
+            "breakout_threshold_strength": 3.424238,
+            "breakout_threshold_equivalent_power": 15.994
+          },
+          {
+            "label": "实际参与压制者",
+            "named": [
+              {
+                "id": "郁光标",
+                "power": 17,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "add",
+                    "value": -8,
+                    "from": 25,
+                    "to": 17
+                  }
+                ]
+              },
+              {
+                "id": "钱光胜",
+                "power": 17,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "add",
+                    "value": -8,
+                    "from": 25,
+                    "to": 17
+                  }
+                ]
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "另五名无名无量弟子",
+                "count": 5,
+                "power": 15,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "第5回明确另来五人；功力沿旧18无量门人15，属现场分队假设。"
+              }
+            ],
+            "strength": 23.260882,
+            "equivalent_power": 40.888,
+            "breakout_threshold_strength": 11.630441,
+            "breakout_threshold_equivalent_power": 31.881
+          }
+        ],
+        "comparison": {
+          "mode": "脱身比较；吸功必须另结算",
+          "A_full_defeat_B_by_raw_strength": false,
+          "A_breakout_B_by_half_strength": false,
+          "B_full_defeat_A_by_raw_strength": true,
+          "ratio_A_over_B": 0.29442
+        },
+        "canon_outcome": "段誉被七人压住，北冥沿接触链吸取内力；左子穆失儿命令引乱后脱身。",
+        "assessment": "单一初态战力不足以表现吸功接触链；不能提前使用本事件后的段誉35。",
+        "explanation": [
+          "段誉事件前25，郁钱各17，来自前一修炼事件的-8；事件22结尾段誉35不用于证明起初可胜。",
+          "五名无名参与者应从现有东宗弟子众分出，不能再另增五人。",
+          "郁钱初始优势与接触吸功形成滚雪球，凌波熟练度及门槛失足同样重要。"
+        ],
+        "evidence": [
+          {
+            "src": "第5回",
+            "chapter_char_offset": 21219,
+            "locator": "无量剑七名弟子",
+            "excerpt": "手臂也似黏住了一般，叫道：“啊哟，黏住啦！”其余两名弟子同时去拉。三人一齐使力，刚拉得松动了些，随即臂腕俱感乏力。\n　　无量剑七名弟子重重叠叠地挤在一道窄门内外，只压得段誉气也透不过来，眼见难以逃脱，只有认输再说，叫道：“放开我，我不走啦！”对方的内力又源源涌来，只塞得他膻中穴内郁闷难当，胸口如欲胀裂。他已不再去扳郁光标的拇指，可是自己拇指给他的拇指压住了，难以抽动，忍不住大叫：“压死我啦，压死我啦！”\n　　郁光标和钱光胜此时固已气息奄奄，先后赶来的五名弟子也都仓皇失措，惊骇之下拚命使劲，但越使劲，内力涌出越快。\n　　八个人叠成一团，六个人大声叫嚷，谁也听不见旁人叫些什么。"
+          },
+          {
+            "src": "第5回",
+            "chapter_char_offset": 21381,
+            "locator": "先后赶来的五名弟子",
+            "excerpt": "拇指，可是自己拇指给他的拇指压住了，难以抽动，忍不住大叫：“压死我啦，压死我啦！”\n　　郁光标和钱光胜此时固已气息奄奄，先后赶来的五名弟子也都仓皇失措，惊骇之下拚命使劲，但越使劲，内力涌出越快。\n　　八个人叠成一团，六个人大声叫嚷，谁也听不见旁人叫些什么。过得一会，变成四个人呼叫，接着只剩下三人。到后来只段誉一人大叫：“压死我啦，快放开我，我不逃了！”他每呼叫一声，胸口郁闷便似稍减，当下不住口地呼叫，声虽嘶而力不竭，越叫越响亮。\n　　忽听得有人大声叫道：“那婆娘偷了我孩儿去啦，大家快追！你们四人截住大门，你们三人上屋守着，你们四人堵住东边门，你们五个堵住西边门。别……别让这"
+          },
+          {
+            "src": "第5回",
+            "chapter_char_offset": 21551,
+            "locator": "那婆娘偷了我孩儿",
+            "excerpt": "，我不逃了！”他每呼叫一声，胸口郁闷便似稍减，当下不住口地呼叫，声虽嘶而力不竭，越叫越响亮。\n　　忽听得有人大声叫道：“那婆娘偷了我孩儿去啦，大家快追！你们四人截住大门，你们三人上屋守着，你们四人堵住东边门，你们五个堵住西边门。别……别让这婆娘抱我孩子走了！”虽是发号施令，语音中却充满了惊惶。\n　　段誉依稀听得似是左子穆的声音，脑海中立时转过一个念头：“什么女人偷了他的孩儿去啦？啊，是木姑娘救我来啦，偷了他儿子，要换她的丈夫。来个走马换将，这主意倒也不错。”当即住口不叫。一定神间，便觉郁光标抓住他手腕的五指已然松了，用力抖了几下，压在他身上的七人纷纷跌开。\n　　他登时大喜："
+          }
+        ],
+        "limitations": [
+          "04/08把郁钱先各减8只是粗粒度状态，无法精确还原吸功过程中每次增减。"
+        ],
+        "variants": []
+      },
+      {
+        "event": "丐帮传功执法长老获释",
+        "order": 53,
+        "src": "第14回",
+        "label": "杏子林控乱",
+        "sides": [
+          {
+            "label": "乔峰",
+            "named": [
+              {
+                "id": "乔峰",
+                "power": 95,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [],
+            "strength": 1497.120549,
+            "equivalent_power": 95.0,
+            "breakout_threshold_strength": 748.560274,
+            "breakout_threshold_equivalent_power": 85.994
+          },
+          {
+            "label": "叛众",
+            "named": [
+              {
+                "id": "全冠清",
+                "power": 48,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "吴长风",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "宋长老",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "陈孤雁",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "奚山河",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "杏子林无名叛众",
+                "count": 195,
+                "power": 15,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "原著二百来叛众；暂按200总数扣5名首脑，功力取常见丐帮队伍15。"
+              }
+            ],
+            "strength": 1063.811805,
+            "equivalent_power": 90.56,
+            "breakout_threshold_strength": 531.905903,
+            "breakout_threshold_equivalent_power": 81.554
+          }
+        ],
+        "comparison": {
+          "mode": "群体正面对抗；实际没有群起决战",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 1.407317
+        },
+        "canon_outcome": "乔峰先制全冠清并稳定众人，传功执法长老获释返回，叛众未一拥而上。",
+        "assessment": "算得出的正面胜负不能解释控乱全过程。",
+        "explanation": [
+          "不把无锡25名活动众扩充成200名实装群；195人只为报告假设，23尚无该会场人群。",
+          "原著明写全冠清被制是防止自相残杀；威望、疑惧和长老回归阻止群起。"
+        ],
+        "evidence": [
+          {
+            "src": "第14回",
+            "chapter_char_offset": 21586,
+            "locator": "其余二百来人都是参与阴谋的同党",
+            "excerpt": "　乔峰口中说得轻描淡写，心下却着实担忧，眼见大义分舵的二十余名帮众一走，杏子林中除段誉、王语嫣、阿朱、阿碧四个外人之外，其余二百来人都是参与阴谋的同党，只须其中有人一声传呼，群情汹涌之下发作起来，可就难以应付。他四顾众人，见各人神色均甚尴尬，有的强作镇定，有的惶惑无主，有的却跃跃欲试，颇有铤而走险之意。四周二百余人，尽皆默不作声，但只要有谁说出一句话来，显然变乱立生。\n　　此刻天色已渐渐黑了下来，暮色笼罩，杏林边薄雾飘绕。乔峰心想：“此刻唯有静以待变，最好是转移各人心思，等得传功长老等回来，大事便定。”一瞥眼间见到段誉，便道：“众位兄弟，我今日好生欢喜，新交了一位好朋友，这"
+          },
+          {
+            "src": "第14回",
+            "chapter_char_offset": 20664,
+            "locator": "全冠清必是主谋",
+            "excerpt": "台”两穴。他膝间酸软，不由自主地跪倒在地。诸帮众无不失色，人人骇惶，不知如何是好。\n　　原来乔峰察言辨色，料知此次叛乱，全冠清必是主谋，若不将他一举制住，祸乱非小，纵然平服叛徒，但一场自相残杀势所难免。眼见四周帮众除大义分舵诸人之外，其余似乎都已受了全冠清的煽惑，争斗一起，那便难以收拾。因此故意转身向四长老问话，乘着全冠清绝不防备之时，倒退扣他经脉。这几下兔起鹘落，一气呵成，似乎行若无事，其实已出尽他生平所学。要是这反手一扣，部位稍有半寸之差，虽能制住全冠清，却不能以内力冲激他膝关节中穴道，和他同谋之人说不定便会出手相救，争斗仍不可免。这么迫得他下跪，旁人都道全冠清自行投降"
+          }
+        ],
+        "limitations": [
+          "缺杏子林会场叛众及获释各舵群的生成和移动，不能把驻无锡25人当全部叛众。"
+        ],
+        "variants": [
+          {
+            "label": "获释长老归来后的局部支持",
+            "sides": [
+              {
+                "label": "乔峰及两位获释长老",
+                "named": [
+                  {
+                    "id": "乔峰",
+                    "power": 95,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "白世镜",
+                    "power": 62,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "吕章",
+                    "power": 62,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [],
+                "strength": 1733.333027,
+                "equivalent_power": 96.904,
+                "breakout_threshold_strength": 866.666513,
+                "breakout_threshold_equivalent_power": 87.897
+              },
+              {
+                "label": "同一批叛众",
+                "named": [
+                  {
+                    "id": "全冠清",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "吴长风",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "宋长老",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "陈孤雁",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "奚山河",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "无名叛众",
+                    "count": 195,
+                    "power": 15,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "沿主案报告假设。"
+                  }
+                ],
+                "strength": 1063.811805,
+                "equivalent_power": 90.56,
+                "breakout_threshold_strength": 531.905903,
+                "breakout_threshold_equivalent_power": 81.554
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "只加两名已知长老；其余回归帮众人数不明，未虚填。"
+          }
+        ]
+      },
+      {
+        "event": "西夏以悲酥清风擒丐帮",
+        "order": 58,
+        "src": "第16回",
+        "label": "悲酥清风擒丐帮",
+        "sides": [
+          {
+            "label": "西夏先入林队伍",
+            "named": [
+              {
+                "id": "赫连铁树",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "努儿海",
+                "power": 35,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "先行一品堂武士",
+                "count": 8,
+                "power": 32,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "第16回明写8名；power沿23一品堂本部32，现场分派尚未实装。"
+              },
+              {
+                "id": null,
+                "label": "执旗与鼓号兵",
+                "count": 16,
+                "power": 10,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "原著先后两批8骑；功力10为报告假设。"
+              }
+            ],
+            "strength": 175.145258,
+            "equivalent_power": 67.12,
+            "breakout_threshold_strength": 87.572629,
+            "breakout_threshold_equivalent_power": 58.113
+          },
+          {
+            "label": "丐帮未中毒时",
+            "named": [
+              {
+                "id": "徐冲霄",
+                "power": 55,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "白世镜",
+                "power": 62,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "吕章",
+                "power": 62,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "吴长风",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "宋长老",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "陈孤雁",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "奚山河",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "现场无名丐帮弟子",
+                "count": 200,
+                "power": 15,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "在二百叛众之外又有回归帮众；200只是保守敏感性规模，不是全文精确总数。"
+              }
+            ],
+            "strength": 1344.588412,
+            "equivalent_power": 93.604,
+            "breakout_threshold_strength": 672.294206,
+            "breakout_threshold_equivalent_power": 84.597
+          }
+        ],
+        "comparison": {
+          "mode": "先比较无毒状态，再解释中毒后的行动失能",
+          "A_full_defeat_B_by_raw_strength": false,
+          "A_breakout_B_by_half_strength": false,
+          "B_full_defeat_A_by_raw_strength": true,
+          "ratio_A_over_B": 0.130259
+        },
+        "canon_outcome": "丐帮众人受悲酥清风影响筋骨酥软，被西夏武士擒去。",
+        "assessment": "纯战力预计西夏不能正面吃下此群；毒药状态可改变行动能力。",
+        "explanation": [
+          "不以提高西夏功力来伪装用毒效果。",
+          "四恶中叶二娘、云中鹤亦在场；是否属于先写的八名武士未能完全排重，主表不重复计，变体单列其上界。",
+          "昏软状态需药效、暴露与解药规则；不能偷偷把所有受害者永久power设0。"
+        ],
+        "evidence": [
+          {
+            "src": "第16回",
+            "chapter_char_offset": 20794,
+            "locator": "进来八名西夏武士",
+            "excerpt": "四人吹号，四人击鼓。\n　　群丐都暗皱眉头：“这阵仗全然是行军交兵，却哪里是江湖上英雄好汉的相会？”\n　　在号手鼓手之后，进来八名西夏武士。徐长老见这八人神情，显然均有上乘武功，心想：“看来这便是一品堂中的人物了。”那八名武士分向左右一站，一乘马缓缓走进杏林。马上乘客身穿大红锦袍，三十四五岁年纪，鹰钩鼻、八字须。他身后紧跟着一个身形极高、鼻子极大的汉子，一进林便喝道：“西夏国征东大将军驾到，丐帮帮主上前拜见。”声音阴阳怪气，正是先前说话的那人。\n　　徐长老道：“本帮帮主不在此间，由老朽代理帮务。丐帮兄弟是江湖草莽，西夏将军如以客礼相见，咱们高攀不上，请将军去拜会我大宋王公官长"
+          },
+          {
+            "src": "第16回",
+            "chapter_char_offset": 24925,
+            "locator": "悲酥清风",
+            "excerpt": "眼了。”各人眼睛刺痛，泪水长流。王语嫣、阿朱、阿碧三人同样的睁不开眼。\n　　原来西夏人在这顷刻之间，已在杏子林中撒布了“悲酥清风”，那是一种无色无臭的毒气，系搜集西夏大雪山欢喜谷中的毒物制炼成水，平时盛在瓶中，使用之时，自己人鼻中早就塞了解药，拔开瓶塞，毒水化汽冒出，便如微风拂体，任你何等机灵之人也都无法察觉，待得眼目刺痛，毒气已冲入头脑。中毒后泪下如雨，称之为“悲”；全身不能动弹，称之为“酥”；毒气无色无臭，称之为“清风”。\n　　但听得“咕咚”、“啊哟”之声不绝，群丐纷纷倒地。\n　　段誉服食过莽牯朱蛤，万毒不侵，这“悲酥清风”吸入鼻中，他却既不“悲”，亦不“酥”，但见群丐"
+          }
+        ],
+        "limitations": [
+          "23只有本部40人，未有杏子林8人派出队；传播与毒效须系统支持。"
+        ],
+        "variants": [
+          {
+            "label": "四恶两人另外在列的上界",
+            "sides": [
+              {
+                "label": "西夏与叶云",
+                "named": [
+                  {
+                    "id": "赫连铁树",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "努儿海",
+                    "power": 35,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "叶二娘",
+                    "power": 64,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "add",
+                        "value": -8,
+                        "from": 72,
+                        "to": 64
+                      }
+                    ]
+                  },
+                  {
+                    "id": "云中鹤",
+                    "power": 58,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "add",
+                        "value": -8,
+                        "from": 66,
+                        "to": 58
+                      }
+                    ]
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "8武士加16旗鼓",
+                    "count": 8,
+                    "power": 32,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "只有明确未与叶云重复时方可采用。"
+                  },
+                  {
+                    "id": null,
+                    "label": "旗鼓兵",
+                    "count": 16,
+                    "power": 10,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "沿主案。"
+                  }
+                ],
+                "strength": 399.715986,
+                "equivalent_power": 77.841,
+                "breakout_threshold_strength": 199.857993,
+                "breakout_threshold_equivalent_power": 68.835
+              },
+              {
+                "label": "丐帮未中毒时",
+                "named": [
+                  {
+                    "id": "徐冲霄",
+                    "power": 55,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "白世镜",
+                    "power": 62,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "吕章",
+                    "power": 62,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "吴长风",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "宋长老",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "陈孤雁",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "奚山河",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "无名帮众",
+                    "count": 200,
+                    "power": 15,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "沿主案。"
+                  }
+                ],
+                "strength": 1344.588412,
+                "equivalent_power": 93.604,
+                "breakout_threshold_strength": 672.294206,
+                "breakout_threshold_equivalent_power": 84.597
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": false,
+            "explanation": "该变体不声称实际队伍计数，应避免与8武士重复。"
+          }
+        ]
+      },
+      {
+        "event": "聚贤庄群雄大战",
+        "order": 70,
+        "src": "第19回",
+        "label": "聚贤庄英雄会",
+        "sides": [
+          {
+            "label": "乔峰",
+            "named": [
+              {
+                "id": "乔峰",
+                "power": 95,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [],
+            "strength": 1497.120549,
+            "equivalent_power": 95.0,
+            "breakout_threshold_strength": 748.560274,
+            "breakout_threshold_equivalent_power": 85.994
+          },
+          {
+            "label": "聚贤庄混合群雄",
+            "named": [
+              {
+                "id": "游骥",
+                "power": 50,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "游驹",
+                "power": 50,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "玄难",
+                "power": 78,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "玄寂",
+                "power": 80,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "赵钱孙",
+                "power": 65,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "单正",
+                "power": 62,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "单叔山",
+                "power": 42,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "薛慕华",
+                "power": 50,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "混合无名群雄",
+                "count": 292,
+                "power": 30,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "原著厅上三百余；取300总数扣8具名，以提示词30为敏感性功力，非23实装。"
+              }
+            ],
+            "strength": 4247.806252,
+            "equivalent_power": 108.55,
+            "breakout_threshold_strength": 2123.903126,
+            "breakout_threshold_equivalent_power": 99.544
+          }
+        ],
+        "comparison": {
+          "mode": "败敌需全强度，突围需半强度",
+          "A_full_defeat_B_by_raw_strength": false,
+          "A_breakout_B_by_half_strength": false,
+          "B_full_defeat_A_by_raw_strength": true,
+          "ratio_A_over_B": 0.352446
+        },
+        "canon_outcome": "乔峰连战群雄，杀伤多人但终于重伤受困，由蒙面萧远山救出。",
+        "assessment": "该假设下可对照难以独力脱围；空间接敌与消耗仍不由总和表达。",
+        "explanation": [
+          "23只布聚贤庄常住庄丁12人，不代表300余英雄；混合会众尚缺事件化运行群。",
+          "原著明确拥挤时真能挨近乔峰的不过五六人，不能让300人同时有效出手。",
+          "同伴重伤、救人优先、疲劳、众高手轮战和外援共同决定结局。"
+        ],
+        "evidence": [
+          {
+            "src": "第19回",
+            "chapter_char_offset": 16556,
+            "locator": "大厅上聚集着三百余人",
+            "excerpt": "两人中了劈空掌倒地。他随势冲入大厅，肘撞拳击，掌劈脚踢，霎时间又打倒数人。\n　　游骥叫道：“大伙儿靠着墙壁，莫要乱斗！”大厅上聚集着三百余人，倘若一拥而上，乔峰武功再高，也决难抗御，但大家挤在一团，真能挨到乔峰身边的，不过五六人而已，刀枪剑戟四下舞动，一大半人倒要防备为自己人所伤。游骥这么一叫，大厅中心登时让了一片空位出来。\n　　乔峰叫道：“我来领教领教聚贤庄游氏双雄的手段。”左掌推出，一只大酒坛迎面向游驹飞了过去。游驹双掌一封，待要运掌力拍开酒坛，不料乔峰跟着劈空掌击出，嘭的一声响，一只大酒坛登时化为千百块碎片。碎瓦片极为峰利，在乔峰凌厉之极的掌力推送下，便如千百把钢镖、"
+          },
+          {
+            "src": "第19回",
+            "chapter_char_offset": 16605,
+            "locator": "不过五六人而已",
+            "excerpt": "靠着墙壁，莫要乱斗！”大厅上聚集着三百余人，倘若一拥而上，乔峰武功再高，也决难抗御，但大家挤在一团，真能挨到乔峰身边的，不过五六人而已，刀枪剑戟四下舞动，一大半人倒要防备为自己人所伤。游骥这么一叫，大厅中心登时让了一片空位出来。\n　　乔峰叫道：“我来领教领教聚贤庄游氏双雄的手段。”左掌推出，一只大酒坛迎面向游驹飞了过去。游驹双掌一封，待要运掌力拍开酒坛，不料乔峰跟着劈空掌击出，嘭的一声响，一只大酒坛登时化为千百块碎片。碎瓦片极为峰利，在乔峰凌厉之极的掌力推送下，便如千百把钢镖、飞刀一般，游驹脸上中了三片，满脸都是鲜血，旁人也有十余人受伤。只听得喝骂声、惊叫声、警告声闹成一团"
+          },
+          {
+            "src": "第20回",
+            "chapter_char_offset": 1207,
+            "locator": "山洞中有足用半月的干粮",
+            "excerpt": "，说道：“大恩不敢言谢，只求恩兄让乔峰一见庐山真面。”\n　　那大汉一对晶光灿然的眼光在他脸上转来转去，过得半晌，说道：“山洞中有足用半月的干粮，你在此养伤，敌人没法到来。”\n　　乔峰应道：“是！”心道：“听这人声音，似乎年纪不轻了。”\n　　那大汉又向他打量了一会，忽然右手挥出，啪的一声，打了他一记耳光。这一下出手奇快，乔峰一来绝没想到他竟会击打自己，二来这一掌也当真打得高明之极，竟然没能避开。\n　　那大汉第二记跟着打来，两掌之间，相距只电光般的一闪，乔峰有了这余裕，岂能再次让他打中？但他是救命恩人，不愿跟他对敌，而又无力闪身相避，于是左手食指伸出，放在自己颊边，指着他掌心。"
+          }
+        ],
+        "limitations": [
+          "30功力为提示词建议敏感性数，不以匹配小说为由写入23。"
+        ],
+        "variants": [
+          {
+            "label": "无名群雄每人25的较弱假设",
+            "sides": [
+              {
+                "label": "乔峰",
+                "named": [
+                  {
+                    "id": "乔峰",
+                    "power": 95,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [],
+                "strength": 1497.120549,
+                "equivalent_power": 95.0,
+                "breakout_threshold_strength": 748.560274,
+                "breakout_threshold_equivalent_power": 85.994
+              },
+              {
+                "label": "群雄",
+                "named": [
+                  {
+                    "id": "游骥",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "游驹",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "玄难",
+                    "power": 78,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "玄寂",
+                    "power": 80,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "赵钱孙",
+                    "power": 65,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "单正",
+                    "power": 62,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "单叔山",
+                    "power": 42,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "薛慕华",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "混合无名群雄",
+                    "count": 292,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数同主案，功力改为提示词25样例，比较参数敏感性。"
+                  }
+                ],
+                "strength": 3309.265198,
+                "equivalent_power": 105.306,
+                "breakout_threshold_strength": 1654.632599,
+                "breakout_threshold_equivalent_power": 96.3
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": false,
+            "explanation": "用于显示不能只取某个参数让原著过关；具名高手仍须计入。"
+          },
+          {
+            "label": "只错用常住庄丁会产生的错误结论",
+            "sides": [
+              {
+                "label": "乔峰",
+                "named": [
+                  {
+                    "id": "乔峰",
+                    "power": 95,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [],
+                "strength": 1497.120549,
+                "equivalent_power": 95.0,
+                "breakout_threshold_strength": 748.560274,
+                "breakout_threshold_equivalent_power": 85.994
+              },
+              {
+                "label": "庄主与常住人员",
+                "named": [
+                  {
+                    "id": "游骥",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "游驹",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": "聚贤庄常住庄丁众",
+                    "count": 12,
+                    "power": 18,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "原著确有此类人群；开端驻处、分组人数与功力为运行推定。",
+                    "runtime_location": "聚贤庄",
+                    "since": null,
+                    "until": null
+                  }
+                ],
+                "strength": 141.755459,
+                "equivalent_power": 64.372,
+                "breakout_threshold_strength": 70.87773,
+                "breakout_threshold_equivalent_power": 55.365
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "这不是英雄会阵容，只用此队会严重低估聚会敌力。"
+          }
+        ]
+      },
+      {
+        "event": "慕容一行闯万仙大会",
+        "order": 130,
+        "src": "第33回",
+        "label": "慕容一行误闯万仙大会",
+        "sides": [
+          {
+            "label": "慕容与四家臣",
+            "named": [
+              {
+                "id": "慕容复",
+                "power": 80,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "邓百川",
+                "power": 70,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "公冶乾",
+                "power": 68,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "包不同",
+                "power": 58,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "风波恶",
+                "power": 58,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [],
+            "strength": 1051.604221,
+            "equivalent_power": 90.41,
+            "breakout_threshold_strength": 525.802111,
+            "breakout_threshold_equivalent_power": 81.404
+          },
+          {
+            "label": "23当前可用洞岛群",
+            "named": [
+              {
+                "id": "乌老大",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "端木元",
+                "power": 48,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "桑土公",
+                "power": 48,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": "万仙大会无名洞岛众",
+                "count": 100,
+                "power": 22,
+                "source": "23.squads",
+                "report_only": false,
+                "basis": "第33至38回洞岛大会与攻山；扣具名洞主岛主，余众数量推定。",
+                "runtime_location": "万仙大会山谷",
+                "since": "慕容一行闯万仙大会",
+                "until": "虚竹为洞岛众解生死符"
+              }
+            ],
+            "strength": 655.995637,
+            "equivalent_power": 84.278,
+            "breakout_threshold_strength": 327.997818,
+            "breakout_threshold_equivalent_power": 75.272
+          }
+        ],
+        "comparison": {
+          "mode": "突围或停战，不是消灭群豪",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 1.603066
+        },
+        "canon_outcome": "慕容一行陷入数百人的包围，伤人结仇；不平道人出面缓和，继而结交。",
+        "assessment": "现有100人群不能代表原著数百围众；总和低估敌方规模和暗器围攻。",
+        "explanation": [
+          "23该群since就是本事件，须在事件进入时生成而非事后才出现。",
+          "慕容复requires为wounded，04 power80未附带伤势折损；裸强度表会忽略伤势。",
+          "王语嫣无正面战力却需保护；她指点武学与众人不愿继续结仇影响决策。"
+        ],
+        "evidence": [
+          {
+            "src": "第33回",
+            "chapter_char_offset": 14973,
+            "locator": "咱们六人怎对付得了这数百人",
+            "excerpt": "，误打误撞的，闯进这些旁门左道之士的大聚会中来啦。我迄今没吐露姓名，还是一走了之的为是，免得闹到不可收拾。何况寡不敌众，咱们六人怎对付得了这数百人？”\n　　众人哄笑声中，高坡上那人道：“你这人说话轻描淡写，把事情看得忒也易了。你们六人已出手伤了咱们好几位兄弟，万仙大会群仙假如就此放你们走路，三十六洞和七十二岛的脸皮，却往哪里搁去？”\n　　慕容复定下神来，凝目四顾，只见前后左右的山坡、山峰、山坳、山脊各处，影影绰绰的都是人影，黑暗中自瞧不清各人的身形面貌。这些人本来不知藏在哪里，突然之间，都有如从地底下涌了出来。这时邓百川、公冶乾、包不同、风波恶四人都已聚在慕容复与王语嫣身周"
+          },
+          {
+            "src": "第33回",
+            "chapter_char_offset": 15222,
+            "locator": "大海中的一叶小舟",
+            "excerpt": "从地底下涌了出来。这时邓百川、公冶乾、包不同、风波恶四人都已聚在慕容复与王语嫣身周卫护，但在这数百人的包围之下，只不过如大海中的一叶小舟而已。\n　　★Ｄ★Ｏ★Ｓ★Ｐ★Ｙ★\n　　慕容复和邓百川等生平经历过无数大阵大仗，见了这等情势，却也不禁心中发毛，寻思：“这些人古里古怪，十个八个自不足为患，几百人聚在一起，可着实不易对付。”\n　　慕容复气凝丹田，朗声说道：“常言道不知者不罪。三十六洞洞主、七十二岛岛主的大名，在下也素有所闻，决不敢故意得罪。川西碧磷洞桑土公、甘肃虬龙洞玄黄子、东海玄冥岛岛主章达人先生，想来都在这里了。在下慕容复有心结交，无意冒犯。”\n　　只听得四周许多人都“"
+          },
+          {
+            "src": "第34回",
+            "chapter_char_offset": 5685,
+            "locator": "不平道长出头排难解纷",
+            "excerpt": "跟大家过不去。”\n　　慕容复道：“在下路过此间，实不知众位高人在此聚会，多有得罪，这里谢过了。”说着作个四方揖，又道：“不平道长出头排难解纷，使得在下不致将祸事越闯越大，在下十分感激。后会有期，就此别过。”他知三十六洞、七十二岛一干旁门左道人物在此相聚，定有重大隐情，不平道人提起“天山那个人”，乌老大立即岔开话头，显然忌讳极大，自己再不抽身而退，未免太不识相，倒似有意窥探旁人隐私一般，当下抱拳拱手，转身便走。\n　　乌老大拱手还礼，道：“慕容公子，乌老大今日结识了你这号英雄人物，至感荣幸。青山不改，绿水长流，再见了。”言下之意，果是不愿他在此多所逗留。\n　　不平道人却道：“乌"
+          }
+        ],
+        "limitations": [
+          "实际参与人数与已实名首领难以全量排重；数百采用不同人数敏感性范围。"
+        ],
+        "variants": [
+          {
+            "label": "数百人敏感性：总计300人",
+            "sides": [
+              {
+                "label": "慕容与四家臣",
+                "named": [
+                  {
+                    "id": "慕容复",
+                    "power": 80,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "邓百川",
+                    "power": 70,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "公冶乾",
+                    "power": 68,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "包不同",
+                    "power": 58,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "风波恶",
+                    "power": 58,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [],
+                "strength": 1051.604221,
+                "equivalent_power": 90.41,
+                "breakout_threshold_strength": 525.802111,
+                "breakout_threshold_equivalent_power": 81.404
+              },
+              {
+                "label": "洞岛会众",
+                "named": [
+                  {
+                    "id": "乌老大",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "端木元",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "桑土公",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "无名洞岛参会者",
+                    "count": 297,
+                    "power": 22,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著数百，取该总数扣本表3位具名首领；功力沿23洞岛22。"
+                  }
+                ],
+                "strength": 1726.994098,
+                "equivalent_power": 96.856,
+                "breakout_threshold_strength": 863.497049,
+                "breakout_threshold_equivalent_power": 87.85
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "report_only，非确认精确人数；不注册新增部众。"
+          },
+          {
+            "label": "数百人敏感性：总计500人",
+            "sides": [
+              {
+                "label": "慕容与四家臣",
+                "named": [
+                  {
+                    "id": "慕容复",
+                    "power": 80,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "邓百川",
+                    "power": 70,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "公冶乾",
+                    "power": 68,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "包不同",
+                    "power": 58,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "风波恶",
+                    "power": 58,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [],
+                "strength": 1051.604221,
+                "equivalent_power": 90.41,
+                "breakout_threshold_strength": 525.802111,
+                "breakout_threshold_equivalent_power": 81.404
+              },
+              {
+                "label": "洞岛会众",
+                "named": [
+                  {
+                    "id": "乌老大",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "端木元",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "桑土公",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "无名洞岛参会者",
+                    "count": 497,
+                    "power": 22,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著数百，取该总数扣本表3位具名首领；功力沿23洞岛22。"
+                  }
+                ],
+                "strength": 2814.302181,
+                "equivalent_power": 103.201,
+                "breakout_threshold_strength": 1407.15109,
+                "breakout_threshold_equivalent_power": 94.195
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": false,
+            "explanation": "report_only，非确认精确人数；不注册新增部众。"
+          }
+        ]
+      },
+      {
+        "event": "洞岛叛众攻入灵鹫宫",
+        "order": 150,
+        "src": "第38回",
+        "label": "洞岛趁八部离山进攻",
+        "sides": [
+          {
+            "label": "洞岛叛军",
+            "named": [
+              {
+                "id": "乌老大",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "安洞主",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "钦岛主",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "端木元",
+                "power": 48,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "桑土公",
+                "power": 48,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "哈大霸",
+                "power": 45,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "云岛主",
+                "power": 30,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": "万仙大会无名洞岛众",
+                "count": 100,
+                "power": 22,
+                "source": "23.squads",
+                "report_only": false,
+                "basis": "第33至38回洞岛大会与攻山；扣具名洞主岛主，余众数量推定。",
+                "runtime_location": "万仙大会山谷",
+                "since": "慕容一行闯万仙大会",
+                "until": "虚竹为洞岛众解生死符"
+              }
+            ],
+            "strength": 761.819642,
+            "equivalent_power": 86.222,
+            "breakout_threshold_strength": 380.909821,
+            "breakout_threshold_equivalent_power": 77.215
+          },
+          {
+            "label": "钧天部独守",
+            "named": [],
+            "squads": [
+              {
+                "id": "钧天部女弟子众",
+                "count": 30,
+                "power": 30,
+                "source": "23.squads",
+                "report_only": false,
+                "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                "runtime_location": "灵鹫宫",
+                "since": null,
+                "until": null
+              }
+            ],
+            "strength": 301.879707,
+            "equivalent_power": 74.194,
+            "breakout_threshold_strength": 150.939853,
+            "breakout_threshold_equivalent_power": 65.187
+          }
+        ],
+        "comparison": {
+          "mode": "攻山与守险，不是九部全军正面决战",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 2.523587
+        },
+        "canon_outcome": "八部下山寻童姥，仅钧天部守峰；十八天险接连失守，守军死伤过半，叛众攻入宫中。",
+        "assessment": "必须先把八部调出山；若沿初始270人全驻宫，阵容本身就错了。",
+        "explanation": [
+          "原著钧天部凭天险坚持，程青霜离峰求救；余婆婆、符敏仪等在山外，不能加进初始守军。",
+          "主表钧天30是23推定初始数；进入宫中时已死伤过半，现有数据没有对应数量减少。",
+          "洞岛23群location仍万仙大会山谷，必须有移动过程，不能在宫中再复制一个100人群。"
+        ],
+        "evidence": [
+          {
+            "src": "第37回",
+            "chapter_char_offset": 20167,
+            "locator": "八天部下峰，只余一部留守",
+            "excerpt": "到这一片宁静之中，蕴藏着无穷杀机。众女忧形于色，挂念钧天部诸姊妹的安危。\n　　石嫂拔刀在手，大声道：“‘缥缈九天’之中，八天部下峰，只余一部留守，贼子乘虚而来，无耻之极。主人，请你下令，大伙儿冲上峰去，和群贼一决死战！”神情甚为激昂。余婆却道：“石家妹子且莫性急，敌人势大，钧天部全仗峰上十八处天险，这才支持了这许多时日。咱们现今是在峰下，敌人反客为主，反占了居高临下之势……”石嫂道：“依你说却又如何？”余婆道：“咱们还是不动声色，静悄悄地上峰，让敌人越迟知觉越好。”\n　　虚竹点头道：“余婆之言不错。”他既这样说，谁也更无异言。\n　　八部分列队伍，悄无声息地上山。这一上峰，各"
+          },
+          {
+            "src": "第37回",
+            "chapter_char_offset": 20049,
+            "locator": "钧天部群女死伤过半",
+            "excerpt": "。\n　　这时众人已来到上峰的路口。程青霜在途中已向众女说知，她下峰之时，敌人已攻上了断魂崖，缥缈峰上的十八天险已失十一，钧天部群女死伤过半，情势万分凶险。虚竹见峰下静悄悄地没半个人影，一片皑皑积雪之间，萌出青青小草，若非事先得知，哪想得到这一片宁静之中，蕴藏着无穷杀机。众女忧形于色，挂念钧天部诸姊妹的安危。\n　　石嫂拔刀在手，大声道：“‘缥缈九天’之中，八天部下峰，只余一部留守，贼子乘虚而来，无耻之极。主人，请你下令，大伙儿冲上峰去，和群贼一决死战！”神情甚为激昂。余婆却道：“石家妹子且莫性急，敌人势大，钧天部全仗峰上十八处天险，这才支持了这许多时日。咱们现今是在峰下，敌人"
+          },
+          {
+            "src": "第38回",
+            "chapter_char_offset": 1285,
+            "locator": "厅内不下数百人之多",
+            "excerpt": "兄弟开开眼界。”许多人轰然叫好，更有人道：“大伙儿尽可比划比划，且看哪一洞、哪一岛的刑罚最先奏效。”\n　　从声音中听来，厅内不下数百人之多，加上大厅中的回声，嘈杂噪耳。虚竹想找个门缝向内窥望，但这座大厅全是以巨石砌成，竟没半点缝隙。他一转念间，双手在地下泥尘中抹了几下，满手污泥都抹在脸上，便即迈步进厅。\n　　只见大厅中桌上、椅上都坐满了人，一大半人没座位，便席地而坐，另有一些人走来走去，随口谈笑。厅中地下坐着二十来个黄衫女子，显是给人点了穴道，动弹不得，其中一大半都是身上血渍淋漓，受伤不轻，自是钧天部诸女了。厅上本来便乱糟糟的，虚竹跨进厅门，也有几人向他瞧了一眼，见他不是女"
+          }
+        ],
+        "limitations": [
+          "23缺八部离山、钧天损耗与洞岛百人上山的时段移动；数百反叛者也可能低估。"
+        ],
+        "variants": [
+          {
+            "label": "错误阵容：把开端九部270人全部当守军",
+            "sides": [
+              {
+                "label": "洞岛叛军",
+                "named": [
+                  {
+                    "id": "乌老大",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "安洞主",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "钦岛主",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "端木元",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "桑土公",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "哈大霸",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "云岛主",
+                    "power": 30,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": "万仙大会无名洞岛众",
+                    "count": 100,
+                    "power": 22,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第33至38回洞岛大会与攻山；扣具名洞主岛主，余众数量推定。",
+                    "runtime_location": "万仙大会山谷",
+                    "since": "慕容一行闯万仙大会",
+                    "until": "虚竹为洞岛众解生死符"
+                  }
+                ],
+                "strength": 761.819642,
+                "equivalent_power": 86.222,
+                "breakout_threshold_strength": 380.909821,
+                "breakout_threshold_equivalent_power": 77.215
+              },
+              {
+                "label": "错误的九部总和",
+                "named": [],
+                "squads": [
+                  {
+                    "id": "昊天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "阳天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "赤天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "朱天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "成天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "幽天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "玄天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "鸾天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  },
+                  {
+                    "id": "钧天部女弟子众",
+                    "count": 30,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第37回九部俱存；各30名为开端驻宫推定，排除有名首领与四剑。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  }
+                ],
+                "strength": 2716.91736,
+                "equivalent_power": 102.744,
+                "breakout_threshold_strength": 1358.45868,
+                "breakout_threshold_equivalent_power": 93.737
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": false,
+            "explanation": "仅展示错误初态为何不可直接代替事件现场，不能作为该战正式结果。"
+          },
+          {
+            "label": "残余守军敏感性",
+            "sides": [
+              {
+                "label": "洞岛叛军",
+                "named": [
+                  {
+                    "id": "乌老大",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "安洞主",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "钦岛主",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "端木元",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "桑土公",
+                    "power": 48,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "哈大霸",
+                    "power": 45,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "云岛主",
+                    "power": 30,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": "万仙大会无名洞岛众",
+                    "count": 100,
+                    "power": 22,
+                    "source": "23.squads",
+                    "report_only": false,
+                    "basis": "第33至38回洞岛大会与攻山；扣具名洞主岛主，余众数量推定。",
+                    "runtime_location": "万仙大会山谷",
+                    "since": "慕容一行闯万仙大会",
+                    "until": "虚竹为洞岛众解生死符"
+                  }
+                ],
+                "strength": 761.819642,
+                "equivalent_power": 86.222,
+                "breakout_threshold_strength": 380.909821,
+                "breakout_threshold_equivalent_power": 77.215
+              },
+              {
+                "label": "钧天残余",
+                "named": [],
+                "squads": [
+                  {
+                    "id": "钧天部女弟子众",
+                    "count": 14,
+                    "power": 30,
+                    "source": "23.squads",
+                    "report_only": true,
+                    "basis": "原著死伤过半；30人基准减至14仅为上界附近假设。",
+                    "runtime_location": "灵鹫宫",
+                    "since": null,
+                    "until": null
+                  }
+                ],
+                "strength": 140.877196,
+                "equivalent_power": 64.291,
+                "breakout_threshold_strength": 70.438598,
+                "breakout_threshold_equivalent_power": 55.284
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "只比较人群损耗，非对死伤精确复原。"
+          }
+        ]
+      },
+      {
+        "event": "吐蕃勇士拦路内力被吸",
+        "order": 185,
+        "src": "第44回",
+        "label": "吐蕃两勇士拦路",
+        "sides": [
+          {
+            "label": "段誉",
+            "named": [
+              {
+                "id": "段誉",
+                "power": 78,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "set",
+                    "value": 25,
+                    "from": 5,
+                    "to": 25
+                  },
+                  {
+                    "event": "段誉脱囚吸无量门人内力",
+                    "order": 22,
+                    "op": "set",
+                    "value": 35,
+                    "from": 25,
+                    "to": 35
+                  },
+                  {
+                    "event": "万劫谷地道群人失内力",
+                    "order": 32,
+                    "op": "set",
+                    "value": 72,
+                    "from": 35,
+                    "to": 72
+                  },
+                  {
+                    "event": "枯荣焚六脉图段誉记剑",
+                    "order": 37,
+                    "op": "set",
+                    "value": 78,
+                    "from": 72,
+                    "to": 78
+                  }
+                ]
+              }
+            ],
+            "squads": [],
+            "strength": 404.625201,
+            "equivalent_power": 78.0,
+            "breakout_threshold_strength": 202.3126,
+            "breakout_threshold_equivalent_power": 68.994
+          },
+          {
+            "label": "抓住段誉的两名勇士",
+            "named": [],
+            "squads": [
+              {
+                "id": null,
+                "label": "持铁杵者与持双锤者",
+                "count": 2,
+                "power": 23,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "原著明确两名；功力先沿23吐蕃王廷勇士23作敏感性下界。"
+              }
+            ],
+            "strength": 11.742927,
+            "equivalent_power": 32.006,
+            "breakout_threshold_strength": 5.871464,
+            "breakout_threshold_equivalent_power": 23.0
+          }
+        ],
+        "comparison": {
+          "mode": "实际为抓腕接触后吸功",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 34.456929
+        },
+        "canon_outcome": "两名壮汉抓住段誉，内力被北冥吸走倒地，旁人得以通过。",
+        "assessment": "段誉事件前power78，不得倒用此事件提升后的96；大体强弱与结果同向，机制仍须吸功。",
+        "explanation": [
+          "不能把23吐蕃40人本部全部搬到山口；宗赞王子不在此处亲自交手，虚竹欲出手却被段誉阻止。",
+          "两名无名强人不满足23群最少3人的格式，应由功能人物或允许小分队的机制承接；本报告不强造第三人。"
+        ],
+        "evidence": [
+          {
+            "src": "第44回",
+            "chapter_char_offset": 21826,
+            "locator": "山道中间并肩站着两名大汉",
+            "excerpt": "行人奔出七八里，只见山道陡峭，一条仅容一骑的山径蜿蜒向上，只转得几个弯，便见黑压压的一堆人聚在一团。萧峰等驰将近去，但见山道中间并肩站着两名大汉，都是身高六尺有余，异常魁伟，一个手持大铁杵，一个双手各提一柄铜锤，恶狠狠地望着眼前众人。\n　　聚在两条大汉之前的少说也有十七八人，言辞纷纷，各说各的。有的说：“借光，我们要上兴州去，请两位让一让。”这是敬之以礼。有的说：“两位是收买路钱吗？不知是一两银子一个，还是二两一个？只须两位开下价来，并非不可商量。”这是动之以利。有的说：“你们再不让开，惹恼了老子，把你两条大汉斩成肉酱，再要拼凑还原，可不成了，还是趁早乖乖地让开，免得大祸临"
+          },
+          {
+            "src": "第44回",
+            "chapter_char_offset": 23954,
+            "locator": "二哥不须惊惶",
+            "excerpt": "救。\n　　这时萧峰、虚竹等人也已近前，虚竹飞身离鞍，跃到持杵大权身侧，伸指正要往他胁下点去，却听得段誉哈哈大笑，说道：“二哥不须惊惶，他们伤我不得。”\n　　只见两条铁塔也似的大汉渐渐矮了下来，两颗大头摇摇摆摆，站立不定，过不多时，砰砰两声，倒在地下。段誉的“北冥神功”专吸敌人功力，两条大汉内力既竭，天生膂力也即无用。两人委顿在地，形如虚脱。段誉说道：“你们已打死打伤了这许多人，也该受此惩罚，下次万万不可。”\n　　钟灵恰于此时赶到，向木婉清道：“木姊姊，我真想不到是你！”木婉清冷冷地道：“你是我亲妹子，只叫‘姊姊’便了，何必加上个‘木’字？”钟灵奇道：“木姊姊，你说笑了，我怎"
+          },
+          {
+            "src": "第44回",
+            "chapter_char_offset": 24035,
+            "locator": "两条大汉内力既竭",
+            "excerpt": "条铁塔也似的大汉渐渐矮了下来，两颗大头摇摇摆摆，站立不定，过不多时，砰砰两声，倒在地下。段誉的“北冥神功”专吸敌人功力，两条大汉内力既竭，天生膂力也即无用。两人委顿在地，形如虚脱。段誉说道：“你们已打死打伤了这许多人，也该受此惩罚，下次万万不可。”\n　　钟灵恰于此时赶到，向木婉清道：“木姊姊，我真想不到是你！”木婉清冷冷地道：“你是我亲妹子，只叫‘姊姊’便了，何必加上个‘木’字？”钟灵奇道：“木姊姊，你说笑了，我怎么会是你的亲妹子？”木婉清向段誉一指道：“你去问他！”钟灵转向段誉，待他解释。\n　　段誉胀红了脸，说道：“是，是……这个……这时候却也不便细说……”\n　　本来为两"
+          }
+        ],
+        "limitations": [
+          "需要抓握接触、软甲挡箭、北冥转移与伤势恢复机制。"
+        ],
+        "variants": [
+          {
+            "label": "两人功力35敏感性",
+            "sides": [
+              {
+                "label": "段誉",
+                "named": [
+                  {
+                    "id": "段誉",
+                    "power": 78,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "段誉修得北冥与凌波",
+                        "order": 20,
+                        "op": "set",
+                        "value": 25,
+                        "from": 5,
+                        "to": 25
+                      },
+                      {
+                        "event": "段誉脱囚吸无量门人内力",
+                        "order": 22,
+                        "op": "set",
+                        "value": 35,
+                        "from": 25,
+                        "to": 35
+                      },
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "set",
+                        "value": 72,
+                        "from": 35,
+                        "to": 72
+                      },
+                      {
+                        "event": "枯荣焚六脉图段誉记剑",
+                        "order": 37,
+                        "op": "set",
+                        "value": 78,
+                        "from": 72,
+                        "to": 78
+                      }
+                    ]
+                  }
+                ],
+                "squads": [],
+                "strength": 404.625201,
+                "equivalent_power": 78.0,
+                "breakout_threshold_strength": 202.3126,
+                "breakout_threshold_equivalent_power": 68.994
+              },
+              {
+                "label": "两名强壮勇士",
+                "named": [],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "两名勇士",
+                    "count": 2,
+                    "power": 35,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著强调强壮且破刃；提高至35只为报告敏感性，不改23。"
+                  }
+                ],
+                "strength": 29.570689,
+                "equivalent_power": 44.006,
+                "breakout_threshold_strength": 14.785344,
+                "breakout_threshold_equivalent_power": 35.0
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "强壮叙述不提供可验证数值，故保留区间而不伪称已抽得35。"
+          }
+        ]
+      },
+      {
+        "event": "群雄合力劫牢救乔峰",
+        "order": 221,
+        "src": "第50回",
+        "label": "王府救囚与南京撤离",
+        "sides": [
+          {
+            "label": "地道与出口接应骨干",
+            "named": [
+              {
+                "id": "段誉",
+                "power": 99,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "set",
+                    "value": 25,
+                    "from": 5,
+                    "to": 25
+                  },
+                  {
+                    "event": "段誉脱囚吸无量门人内力",
+                    "order": 22,
+                    "op": "set",
+                    "value": 35,
+                    "from": 25,
+                    "to": 35
+                  },
+                  {
+                    "event": "万劫谷地道群人失内力",
+                    "order": 32,
+                    "op": "set",
+                    "value": 72,
+                    "from": 35,
+                    "to": 72
+                  },
+                  {
+                    "event": "枯荣焚六脉图段誉记剑",
+                    "order": 37,
+                    "op": "set",
+                    "value": 78,
+                    "from": 72,
+                    "to": 78
+                  },
+                  {
+                    "event": "吐蕃勇士拦路内力被吸",
+                    "order": 185,
+                    "op": "set",
+                    "value": 96,
+                    "from": 78,
+                    "to": 96
+                  },
+                  {
+                    "event": "段誉吸鸠摩智功力救其命",
+                    "order": 189,
+                    "op": "set",
+                    "value": 99,
+                    "from": 96,
+                    "to": 99
+                  }
+                ]
+              },
+              {
+                "id": "巴天石",
+                "power": 60,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "华赫艮",
+                "power": 52,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "范骅",
+                "power": 50,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              },
+              {
+                "id": "阿紫",
+                "power": 18,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [],
+            "strength": 2243.676715,
+            "equivalent_power": 100.257,
+            "breakout_threshold_strength": 1121.838357,
+            "breakout_threshold_equivalent_power": 91.25
+          },
+          {
+            "label": "铁笼近卫",
+            "named": [
+              {
+                "id": "辽御营都指挥使",
+                "power": 30,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "铁笼外御营亲兵",
+                "count": 100,
+                "power": 25,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "第50回明确100；power25借23大辽宫卫作报告估值，非已有王府群。"
+              }
+            ],
+            "strength": 694.910177,
+            "equivalent_power": 85.027,
+            "breakout_threshold_strength": 347.455088,
+            "breakout_threshold_equivalent_power": 76.021
+          }
+        ],
+        "comparison": {
+          "mode": "近场营救，不等于消灭南京辽军",
+          "A_full_defeat_B_by_raw_strength": true,
+          "A_breakout_B_by_half_strength": true,
+          "B_full_defeat_A_by_raw_strength": false,
+          "ratio_A_over_B": 3.228729
+        },
+        "canon_outcome": "阿紫接应、华赫艮地道救出乔峰；外面多路人马扰乱辽军，随后群雄血战撤出南京。",
+        "assessment": "强度足不证明能正攻铁笼；实际钥匙是地道、牵制与时机。",
+        "explanation": [
+          "营救时乔峰被镣铐铁笼拘束且受伤，不作为自由战力加进救援方；待脱困后才可参加撤离战。",
+          "原著明确原南京驻军被调走，不能用23南京守城军150人冒充新来的御营亲兵。",
+          "23没有本次全部援军与帝亲兵的时段队伍，主表及大规模变体均是报告情境。"
+        ],
+        "evidence": [
+          {
+            "src": "第50回",
+            "chapter_char_offset": 161,
+            "locator": "又派一百名御营亲兵",
+            "excerpt": "中不住道歉，将他囚在一只大铁笼中。这只大铁笼，便是当年阿紫玩狮时囚禁猛狮之用，笼子的每根钢条都粗大结实。\n　　铁笼之外，又派一百名御营亲兵，各执长矛，一层层地围了四圈，萧峰在铁笼中如有异动，众亲兵便能将长矛刺入笼中，任他力气再大，也没法在刹那之间崩脱铁锁铁铐，破笼而出。王府之外，更有一队亲兵严密守卫。耶律洪基将原来驻守南京的将士都调出了南京城，以防他们忠于萧峰，作乱图救。\n　　萧峰靠在铁笼的栏杆上，咬牙忍受腹中之痛，也无余暇多想。直过了十二个时辰，到第二日晚间，数次小便之后，毒药的药性慢慢消失，剧痛才减。萧峰力气渐复，但处此情境，却又如何能脱困？他想烦恼也是无益，这一生再凶"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 257,
+            "locator": "原来驻守南京的将士都调出了南京城",
+            "excerpt": "亲兵便能将长矛刺入笼中，任他力气再大，也没法在刹那之间崩脱铁锁铁铐，破笼而出。王府之外，更有一队亲兵严密守卫。耶律洪基将原来驻守南京的将士都调出了南京城，以防他们忠于萧峰，作乱图救。\n　　萧峰靠在铁笼的栏杆上，咬牙忍受腹中之痛，也无余暇多想。直过了十二个时辰，到第二日晚间，数次小便之后，毒药的药性慢慢消失，剧痛才减。萧峰力气渐复，但处此情境，却又如何能脱困？他想烦恼也是无益，这一生再凶险的危难也经历过不少，难道我萧峰一世豪杰，就真会困死于铁笼？好在众亲兵敬他英雄，看守虽绝不松懈，但好酒好饭管待，礼数不缺。萧峰放杯痛饮，数日后铁笼旁酒坛堆积。\n　　耶律洪基始终不传他相见，却派"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 2633,
+            "locator": "他以十余日的工夫",
+            "excerpt": "声道：“从地道逃走！”跟着萧峰双足为地底下伸上来的一双手握住，向下一拉，身子已给扯下，却原来大理国的钻地能手华赫艮到了。他以十余日的工夫，打了一条地道，通到萧峰的铁笼之下。\n　　华赫艮拉着萧峰，从地道内倒爬出去，爬行之速，便如在地面行走，顷刻间爬出百余丈，扶着萧峰站起，从洞中钻出。只见洞口三个人满脸喜色地爬上来，竟是段誉、范骅和巴天石。段誉叫道：“大哥！”扑上抱住萧峰。\n　　萧峰哈哈一笑，道：“久闻华司徒神技，今日亲试，佩服，佩服。”\n　　华赫艮喜道：“得蒙萧大王金口一赞，实是小人生平第一荣华！”\n　　此处离南院大王府未远，四下里都是辽兵喧哗叫喊之声。但听得有人吹着号角，骑"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 6137,
+            "locator": "千百名江湖汉子，如何能是数万辽国精锐之师的敌手",
+            "excerpt": "一结成了阵势，可抵挡不住。”\n　　萧峰也知丐帮和中原群雄所以一时占得上风，只不过攻了个对方个措手不及，倘若真和辽兵硬斗，千百名江湖汉子，如何能是数万辽国精锐之师的敌手？何况这一仗打起来，双方死伤均重，大违自己本愿，便道：“吴长老，帮主之事，慢慢再说不迟。你快传令，命众兄弟向西退走。”\n　　吴长老道：“是！”传下号令，丐帮帮众后队作前队，向西疾驰。不久虚竹子率领着灵鹫宫属下诸女，以及三十六洞、七十二岛的异士，杀将过来与众人会合。奔出数里后，大理国的众武士在傅思归、朱丹臣等人率领下也赶到了。但少林群僧和中原群豪却始终未到。隐隐听得南京城中杀声大起。\n　　萧峰道：“少林派和中原豪"
+          }
+        ],
+        "limitations": [
+          "不能以300人为群上限把数万辽军缩写成一群；报告以聚合人数显示真实数量级。"
+        ],
+        "variants": [
+          {
+            "label": "西门局部破围",
+            "sides": [
+              {
+                "label": "三兄弟及主要骨干",
+                "named": [
+                  {
+                    "id": "乔峰",
+                    "power": 95,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "虚竹",
+                    "power": 100,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "无崖子传功授掌门信物",
+                        "order": 120,
+                        "op": "set",
+                        "value": 92,
+                        "from": 12,
+                        "to": 92
+                      },
+                      {
+                        "event": "李秋水寻至冰库血战",
+                        "order": 146,
+                        "op": "set",
+                        "value": 99,
+                        "from": 92,
+                        "to": 99
+                      },
+                      {
+                        "event": "虚竹参悟灵鹫石壁武学",
+                        "order": 153,
+                        "op": "set",
+                        "value": 100,
+                        "from": 99,
+                        "to": 100
+                      }
+                    ]
+                  },
+                  {
+                    "id": "吴长风",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "朱丹臣",
+                    "power": 42,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "段誉",
+                    "power": 99,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "段誉修得北冥与凌波",
+                        "order": 20,
+                        "op": "set",
+                        "value": 25,
+                        "from": 5,
+                        "to": 25
+                      },
+                      {
+                        "event": "段誉脱囚吸无量门人内力",
+                        "order": 22,
+                        "op": "set",
+                        "value": 35,
+                        "from": 25,
+                        "to": 35
+                      },
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "set",
+                        "value": 72,
+                        "from": 35,
+                        "to": 72
+                      },
+                      {
+                        "event": "枯荣焚六脉图段誉记剑",
+                        "order": 37,
+                        "op": "set",
+                        "value": 78,
+                        "from": 72,
+                        "to": 78
+                      },
+                      {
+                        "event": "吐蕃勇士拦路内力被吸",
+                        "order": 185,
+                        "op": "set",
+                        "value": 96,
+                        "from": 78,
+                        "to": 96
+                      },
+                      {
+                        "event": "段誉吸鸠摩智功力救其命",
+                        "order": 189,
+                        "op": "set",
+                        "value": 99,
+                        "from": 96,
+                        "to": 99
+                      }
+                    ]
+                  },
+                  {
+                    "id": "巴天石",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "华赫艮",
+                    "power": 52,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "范骅",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "阿紫",
+                    "power": 18,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "灵鹫九部与洞岛援军合计",
+                    "count": 2100,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著虚竹领两千余好汉与九部诸女；取2100并以平均25作报告场景，不与九部再重复。"
+                  },
+                  {
+                    "id": null,
+                    "label": "大理来援兵",
+                    "count": 300,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数无精确值，300为报告假设；不直接复制王府30人。"
+                  },
+                  {
+                    "id": null,
+                    "label": "丐帮来援者",
+                    "count": 200,
+                    "power": 15,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数假设，功力沿23丐帮15。"
+                  },
+                  {
+                    "id": null,
+                    "label": "其余中原群豪",
+                    "count": 200,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数假设，不包含前列大理、丐帮与灵鹫。"
+                  }
+                ],
+                "strength": 24507.624398,
+                "equivalent_power": 131.323,
+                "breakout_threshold_strength": 12253.812199,
+                "breakout_threshold_equivalent_power": 122.316
+              },
+              {
+                "label": "堵西门的铁甲辽军",
+                "named": [],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "西门铁甲军",
+                    "count": 3000,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著数千，3000为报告代表规模，不是23实装。"
+                  }
+                ],
+                "strength": 20545.425589,
+                "equivalent_power": 129.031,
+                "breakout_threshold_strength": 10272.712794,
+                "breakout_threshold_equivalent_power": 120.025
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "原著先局部冲入再聚合上千援手撤退；报告未模拟伤亡、各队在场时机和守门瓶颈。"
+          },
+          {
+            "label": "若误把任务解释为击溃南京全军",
+            "sides": [
+              {
+                "label": "已集合援军",
+                "named": [
+                  {
+                    "id": "乔峰",
+                    "power": 95,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "虚竹",
+                    "power": 100,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "无崖子传功授掌门信物",
+                        "order": 120,
+                        "op": "set",
+                        "value": 92,
+                        "from": 12,
+                        "to": 92
+                      },
+                      {
+                        "event": "李秋水寻至冰库血战",
+                        "order": 146,
+                        "op": "set",
+                        "value": 99,
+                        "from": 92,
+                        "to": 99
+                      },
+                      {
+                        "event": "虚竹参悟灵鹫石壁武学",
+                        "order": 153,
+                        "op": "set",
+                        "value": 100,
+                        "from": 99,
+                        "to": 100
+                      }
+                    ]
+                  },
+                  {
+                    "id": "吴长风",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "朱丹臣",
+                    "power": 42,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "段誉",
+                    "power": 99,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "段誉修得北冥与凌波",
+                        "order": 20,
+                        "op": "set",
+                        "value": 25,
+                        "from": 5,
+                        "to": 25
+                      },
+                      {
+                        "event": "段誉脱囚吸无量门人内力",
+                        "order": 22,
+                        "op": "set",
+                        "value": 35,
+                        "from": 25,
+                        "to": 35
+                      },
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "set",
+                        "value": 72,
+                        "from": 35,
+                        "to": 72
+                      },
+                      {
+                        "event": "枯荣焚六脉图段誉记剑",
+                        "order": 37,
+                        "op": "set",
+                        "value": 78,
+                        "from": 72,
+                        "to": 78
+                      },
+                      {
+                        "event": "吐蕃勇士拦路内力被吸",
+                        "order": 185,
+                        "op": "set",
+                        "value": 96,
+                        "from": 78,
+                        "to": 96
+                      },
+                      {
+                        "event": "段誉吸鸠摩智功力救其命",
+                        "order": 189,
+                        "op": "set",
+                        "value": 99,
+                        "from": 96,
+                        "to": 99
+                      }
+                    ]
+                  },
+                  {
+                    "id": "巴天石",
+                    "power": 60,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "华赫艮",
+                    "power": 52,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "范骅",
+                    "power": 50,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  },
+                  {
+                    "id": "阿紫",
+                    "power": 18,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "灵鹫九部与洞岛援军合计",
+                    "count": 2100,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著虚竹领两千余好汉与九部诸女；取2100并以平均25作报告场景，不与九部再重复。"
+                  },
+                  {
+                    "id": null,
+                    "label": "大理来援兵",
+                    "count": 300,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数无精确值，300为报告假设；不直接复制王府30人。"
+                  },
+                  {
+                    "id": null,
+                    "label": "丐帮来援者",
+                    "count": 200,
+                    "power": 15,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数假设，功力沿23丐帮15。"
+                  },
+                  {
+                    "id": null,
+                    "label": "其余中原群豪",
+                    "count": 200,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "人数假设，不包含前列大理、丐帮与灵鹫。"
+                  }
+                ],
+                "strength": 24507.624398,
+                "equivalent_power": 131.323,
+                "breakout_threshold_strength": 12253.812199,
+                "breakout_threshold_equivalent_power": 122.316
+              },
+              {
+                "label": "辽军大部队",
+                "named": [],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "数万辽军代表规模",
+                    "count": 30000,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著数万，取30000作报告，不能压缩成一个300人群。"
+                  }
+                ],
+                "strength": 205454.255887,
+                "equivalent_power": 158.95,
+                "breakout_threshold_strength": 102727.127943,
+                "breakout_threshold_equivalent_power": 149.944
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": false,
+            "A_breakout_B_by_half_strength": false,
+            "explanation": "原著本就说不能硬斗全军；成功营救不等于击溃全部驻军，女真援军亦在其后加入。"
+          }
+        ]
+      },
+      {
+        "event": "段誉虚竹擒辽帝迫停战",
+        "order": 226,
+        "src": "第50回",
+        "label": "雁门关擒帝",
+        "sides": [
+          {
+            "label": "段誉与虚竹",
+            "named": [
+              {
+                "id": "段誉",
+                "power": 99,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "段誉修得北冥与凌波",
+                    "order": 20,
+                    "op": "set",
+                    "value": 25,
+                    "from": 5,
+                    "to": 25
+                  },
+                  {
+                    "event": "段誉脱囚吸无量门人内力",
+                    "order": 22,
+                    "op": "set",
+                    "value": 35,
+                    "from": 25,
+                    "to": 35
+                  },
+                  {
+                    "event": "万劫谷地道群人失内力",
+                    "order": 32,
+                    "op": "set",
+                    "value": 72,
+                    "from": 35,
+                    "to": 72
+                  },
+                  {
+                    "event": "枯荣焚六脉图段誉记剑",
+                    "order": 37,
+                    "op": "set",
+                    "value": 78,
+                    "from": 72,
+                    "to": 78
+                  },
+                  {
+                    "event": "吐蕃勇士拦路内力被吸",
+                    "order": 185,
+                    "op": "set",
+                    "value": 96,
+                    "from": 78,
+                    "to": 96
+                  },
+                  {
+                    "event": "段誉吸鸠摩智功力救其命",
+                    "order": 189,
+                    "op": "set",
+                    "value": 99,
+                    "from": 96,
+                    "to": 99
+                  }
+                ]
+              },
+              {
+                "id": "虚竹",
+                "power": 100,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": [
+                  {
+                    "event": "无崖子传功授掌门信物",
+                    "order": 120,
+                    "op": "set",
+                    "value": 92,
+                    "from": 12,
+                    "to": 92
+                  },
+                  {
+                    "event": "李秋水寻至冰库血战",
+                    "order": 146,
+                    "op": "set",
+                    "value": 99,
+                    "from": 92,
+                    "to": 99
+                  },
+                  {
+                    "event": "虚竹参悟灵鹫石壁武学",
+                    "order": 153,
+                    "op": "set",
+                    "value": 100,
+                    "from": 99,
+                    "to": 100
+                  }
+                ]
+              }
+            ],
+            "squads": [],
+            "strength": 4236.577234,
+            "equivalent_power": 108.516,
+            "breakout_threshold_strength": 2118.288617,
+            "breakout_threshold_equivalent_power": 99.51
+          },
+          {
+            "label": "辽军整体数量级",
+            "named": [
+              {
+                "id": "耶律洪基",
+                "power": 38,
+                "source": "04.initial + 08.effects with order < battle.order",
+                "prior_power_changes": []
+              }
+            ],
+            "squads": [
+              {
+                "id": null,
+                "label": "辽军大部队代表规模",
+                "count": 30000,
+                "power": 25,
+                "source": "report_only scenario",
+                "report_only": true,
+                "basis": "原著数万军势；30000只作敏感性规模，不采用宋将虚报十余万。"
+              }
+            ],
+            "strength": 205472.881162,
+            "equivalent_power": 158.951,
+            "breakout_threshold_strength": 102736.440581,
+            "breakout_threshold_equivalent_power": 149.945
+          }
+        ],
+        "comparison": {
+          "mode": "穿阵擒首，先展示整军半强度模型",
+          "A_full_defeat_B_by_raw_strength": false,
+          "A_breakout_B_by_half_strength": false,
+          "B_full_defeat_A_by_raw_strength": true,
+          "ratio_A_over_B": 0.020619
+        },
+        "canon_outcome": "段誉与虚竹从阵隙与空中突破皇帝近卫，擒住辽帝，迫其承诺停战。",
+        "assessment": "若把整支数万辽军的一半都当作必战力量，标量模型不能复现原著。",
+        "explanation": [
+          "段誉99来自鸠摩智功力；虚竹100来自参悟石壁，均已在该事件前生效。",
+          "皇帝出阵让目标暴露；段誉从不足一尺的缝隙过阵，虚竹借两名大将枪杆跃起，绝非击败一半士兵。",
+          "长兵器挤在一起误伤自己，战斗接触面与领袖被擒后的停手须另有规则。",
+          "宋守将后来上表自夸力敌十余万是虚报语境，不当作精确军额。"
+        ],
+        "evidence": [
+          {
+            "src": "第50回",
+            "chapter_char_offset": 20514,
+            "locator": "三百名盾牌手立时聚拢",
+            "excerpt": "势，便分从左右抢去。\n　　耶律洪基出阵之时，原已防到萧峰重施当年在阵上擒杀楚王父子的故伎，早有戒备。亲军指挥使一声吆喝，三百名盾牌手立时聚拢，三百面盾牌犹如一堵城墙，挡在辽帝面前。长矛手、刀斧手又密密层层地排在盾牌之前。\n　　这时虚竹既得天山童姥的真传，又练了灵鹫宫石壁上武学的秘奥，武功之高，实已到了随心所欲、无往而不利的地步，而段誉在得到鸠摩智的毕生修为后，内力之强，亦是震古铄今，他那“凌波微步”施展开来，辽军将士如何阻拦得住？\n　　段誉东一晃、西一斜，便如游鱼一般，从长矛手、刀斧手间相距不逾一尺的缝隙之中硬生生地挤了过去。众辽兵挺长矛攒刺，因相互挤得太近，非但伤不到段誉"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 20700,
+            "locator": "相距不逾一尺的缝隙",
+            "excerpt": "亦是震古铄今，他那“凌波微步”施展开来，辽军将士如何阻拦得住？\n　　段誉东一晃、西一斜，便如游鱼一般，从长矛手、刀斧手间相距不逾一尺的缝隙之中硬生生地挤了过去。众辽兵挺长矛攒刺，因相互挤得太近，非但伤不到段誉，兵刃多半招呼在自己人身上。\n　　虚竹双手连伸，抓住辽兵的胸口背心，不住掷出阵来，一面向耶律洪基靠近。两员大将纵马冲上，双枪齐至，向虚竹胸腹刺到。虚竹忽然跃起，双足分落二将枪头。两员辽将齐声大喝，抖动枪杆，要将虚竹身子震落。虚竹乘着双枪抖动之势，飞身跃起，半空中便向耶律洪基头顶扑落。\n　　一如游鱼之滑，一如飞鸟之捷，两人双双攻到。耶律洪基大惊，提起宝刀，疾向身在半空的虚"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 20833,
+            "locator": "两员辽将齐声大喝",
+            "excerpt": "胸口背心，不住掷出阵来，一面向耶律洪基靠近。两员大将纵马冲上，双枪齐至，向虚竹胸腹刺到。虚竹忽然跃起，双足分落二将枪头。两员辽将齐声大喝，抖动枪杆，要将虚竹身子震落。虚竹乘着双枪抖动之势，飞身跃起，半空中便向耶律洪基头顶扑落。\n　　一如游鱼之滑，一如飞鸟之捷，两人双双攻到。耶律洪基大惊，提起宝刀，疾向身在半空的虚竹砍去。\n　　虚竹左手手掌探，已搭住耶律洪基宝刀刀背，乘势滑落，手掌翻处，抓住了他右腕。便在此时，段誉也从人丛中钻将出来，抓住了耶律洪基左肩。两人齐声喝道：“走吧！”将耶律洪基魁伟的身子从马背上提落，转身急奔。\n　　四下里辽将辽兵见皇帝落入敌手，大惊狂呼。几十名亲兵"
+          },
+          {
+            "src": "第50回",
+            "chapter_char_offset": 26517,
+            "locator": "说道亲率部下将士",
+            "excerpt": "，抱了阿紫从谷中上来。各人待到深夜，不见有何动静，当夜便在谷口露宿。\n　　镇守雁门关指挥使张将军修下捷表，快马送到汴梁，说道亲率部下将士，血战数日，力敌辽军十余万，幸陛下洪福齐天，朝中大臣指示机宜，众将士用命，格毙辽国统军元帅南院大王萧峰，杀伤辽军数千，辽主耶律洪基不逞而退。\n　　宋帝赵煦得表大喜，传旨关边，犒赏三军，自宰相以至枢密使、指挥使以下，均各加官晋爵。赵煦自觉英明神武，远迈太祖、太宗，连日赐宴朝臣，宫中与后妃欢庆。歌功颂德之声，洋洋盈耳，庆祝大捷之表，源源而来。\n　　★Ｄ★Ｏ★Ｓ★Ｐ★Ｙ★\n　　段誉与虚竹、玄渡、吴长风等群豪分手，自与木婉清、钟灵、华赫艮、范骅、巴"
+          }
+        ],
+        "limitations": [
+          "缺整军、近卫、领袖暴露与擒拿目标分离；现有南京150守军与上京100宿卫不能替代全军。"
+        ],
+        "variants": [
+          {
+            "label": "皇帝出阵后的近卫接触区",
+            "sides": [
+              {
+                "label": "段誉与虚竹",
+                "named": [
+                  {
+                    "id": "段誉",
+                    "power": 99,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "段誉修得北冥与凌波",
+                        "order": 20,
+                        "op": "set",
+                        "value": 25,
+                        "from": 5,
+                        "to": 25
+                      },
+                      {
+                        "event": "段誉脱囚吸无量门人内力",
+                        "order": 22,
+                        "op": "set",
+                        "value": 35,
+                        "from": 25,
+                        "to": 35
+                      },
+                      {
+                        "event": "万劫谷地道群人失内力",
+                        "order": 32,
+                        "op": "set",
+                        "value": 72,
+                        "from": 35,
+                        "to": 72
+                      },
+                      {
+                        "event": "枯荣焚六脉图段誉记剑",
+                        "order": 37,
+                        "op": "set",
+                        "value": 78,
+                        "from": 72,
+                        "to": 78
+                      },
+                      {
+                        "event": "吐蕃勇士拦路内力被吸",
+                        "order": 185,
+                        "op": "set",
+                        "value": 96,
+                        "from": 78,
+                        "to": 96
+                      },
+                      {
+                        "event": "段誉吸鸠摩智功力救其命",
+                        "order": 189,
+                        "op": "set",
+                        "value": 99,
+                        "from": 96,
+                        "to": 99
+                      }
+                    ]
+                  },
+                  {
+                    "id": "虚竹",
+                    "power": 100,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": [
+                      {
+                        "event": "无崖子传功授掌门信物",
+                        "order": 120,
+                        "op": "set",
+                        "value": 92,
+                        "from": 12,
+                        "to": 92
+                      },
+                      {
+                        "event": "李秋水寻至冰库血战",
+                        "order": 146,
+                        "op": "set",
+                        "value": 99,
+                        "from": 92,
+                        "to": 99
+                      },
+                      {
+                        "event": "虚竹参悟灵鹫石壁武学",
+                        "order": 153,
+                        "op": "set",
+                        "value": 100,
+                        "from": 99,
+                        "to": 100
+                      }
+                    ]
+                  }
+                ],
+                "squads": [],
+                "strength": 4236.577234,
+                "equivalent_power": 108.516,
+                "breakout_threshold_strength": 2118.288617,
+                "breakout_threshold_equivalent_power": 99.51
+              },
+              {
+                "label": "近卫屏障及帝王",
+                "named": [
+                  {
+                    "id": "耶律洪基",
+                    "power": 38,
+                    "source": "04.initial + 08.effects with order < battle.order",
+                    "prior_power_changes": []
+                  }
+                ],
+                "squads": [
+                  {
+                    "id": null,
+                    "label": "盾牌手",
+                    "count": 300,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "300为原著明数，power25为报告估值。"
+                  },
+                  {
+                    "id": null,
+                    "label": "长矛刀斧近卫",
+                    "count": 200,
+                    "power": 25,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著未明人数；200是局部接触区假设，不等于全辽军。"
+                  },
+                  {
+                    "id": null,
+                    "label": "锦袍铁甲大将",
+                    "count": 10,
+                    "power": 40,
+                    "source": "report_only scenario",
+                    "report_only": true,
+                    "basis": "原著出阵十名；power40为报告估值，其中两人实际挥枪。"
+                  }
+                ],
+                "strength": 3660.108089,
+                "equivalent_power": 106.616,
+                "breakout_threshold_strength": 1830.054044,
+                "breakout_threshold_equivalent_power": 97.609
+              }
+            ],
+            "A_full_defeat_B_by_raw_strength": true,
+            "A_breakout_B_by_half_strength": true,
+            "explanation": "只验证局部力量阈值可能允许突破；不能据此声称全部近卫参数已抽取或系统已支持目标擒拿。"
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "count": 10,
+      "executed_runtime_tests": false,
+      "status": "report_only arithmetic and source review; deployment blockers remain",
+      "blockers": [
+        "阿胜阿洪基准身份错误。",
+        "杏子林、聚贤庄英雄会、王府御营与后期辽军没有对应完整时段人群。",
+        "灵鹫八部离山、钧天损耗与洞岛上山需事件移动/消耗。",
+        "百人洞岛群不足代表原著数百围众。",
+        "吐蕃拦路实际只有两人，与群体最少3人的格式不匹配。",
+        "整军求和的突围规则无法直接复现擒帝；必须区分局部接触和领袖目标。"
+      ]
+    }
+  },
+  "uncovered_or_deferred": [
+    "混合阵营英雄宴群雄不错误挂入游氏；大战仅作对照参数，群体归属模型待补。",
+    "七区均有地理、风物或行旅配置；未有硬证据的城市细节以模板和显式推定填充。",
+    "未将原著全文或论坛文本打入交付包；原文定位以回目和审计摘录为据。"
+  ]
+}

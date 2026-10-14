@@ -5,91 +5,3304 @@
     "景物的 desc 只写它自己，不写上面摆着什么——摆着什么由器物的 spot 记，东西被拿走，景物的描述不会说谎。",
     "道路沿用 15/16 的 remove/add 口径、在其后读入：剑湖宫的出入改经宫门，路程不变(同处 0 日)。",
     "v9 物量：可分之物写 qty/unit(碎银 cash 以两计；一叠纸 split)，钱袋写 purse(里头有几两)，一部书写 full(全本几份)——拿一部分，原处只剩其余；用途 uses(书写、纸)是书写文书的前提。",
-    "v9 人群：同门的无名之众按群计(squads)，十五人一体，kit 是每人身上一样的零钱与器物，genesis 按人头算出总数。"
+    "v9 人群：同门的无名之众按群计(squads)，十五人一体，kit 是每人身上一样的零钱与器物，genesis 按人头算出总数。",
+    "v11追加：剑湖宫原scene对象完整原样保留；其他40个提示词场景根各有一份，全部引用01已有地点，不新增处所或道路。",
+    "只补原著明写、暗示的特殊近景；对只见行程/转述的根采用明确inferred的最低限度地形，不以模板常物充数。",
+    "本表以开端可存在的静态环境为主，不提前布置未来地道、宴席、人群、尸身、毁坏、迷药或事件书信。",
+    "后期初见的长期建筑是否开端已存在通常缺直接日期证据，采用持续存在推定；原文形制与推定细节在basis中分开。",
+    "原著物件05不复制；有名人物携带物归22；常规场所房间、伙计与陈设由20展开。",
+    "所有新增描述控制在40字内；秘密机关与壁刻受hidden及known约束。对藏经刻图的看见不自动转化为掌握武学。",
+    "基准自身存在的盐井、宋境乡村土坟、善巨郡行程等疑点不静默修改，详见scenes_issues.json；信阳酒馆沿用ID但实为22回信阳客店大堂。"
   ],
   "scenes": [
     {
       "scene": "剑湖宫",
       "src": "第1回",
       "places": [
-        {"id": "剑湖宫·宫门", "parent": "剑湖宫", "desc": "剑湖宫的门户，门外石阶通往无量山的山道，出入宫中都须经过这里。",
-         "lore": [], "state": null, "src": "第1回", "inferred": true,
-         "basis": "容子矩负伤自宫外闯入练武厅；左子穆命干光豪、龚光杰「外面瞧瞧去」；钟灵携段誉出宫而去——原著未写门户形制"},
-        {"id": "剑湖宫·内堂", "parent": "剑湖宫", "desc": "宫院深处的掌门居处，桌椅简朴，案上笔墨俱全。",
-         "lore": ["比剑胜出的一宗掌门居宫五年，在此起居。"], "state": "东宗掌门居住", "src": "第1回", "inferred": true,
-         "basis": "「掌门人居住无量山剑湖宫」；东宗胜出则「又要让东宗再住五年」——原著未写居处名目"}
+        {
+          "id": "剑湖宫·宫门",
+          "parent": "剑湖宫",
+          "desc": "剑湖宫的门户，门外石阶通往无量山的山道，出入宫中都须经过这里。",
+          "lore": [],
+          "state": null,
+          "src": "第1回",
+          "inferred": true,
+          "basis": "容子矩负伤自宫外闯入练武厅；左子穆命干光豪、龚光杰「外面瞧瞧去」；钟灵携段誉出宫而去——原著未写门户形制"
+        },
+        {
+          "id": "剑湖宫·内堂",
+          "parent": "剑湖宫",
+          "desc": "宫院深处的掌门居处，桌椅简朴，案上笔墨俱全。",
+          "lore": [
+            "比剑胜出的一宗掌门居宫五年，在此起居。"
+          ],
+          "state": "东宗掌门居住",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "「掌门人居住无量山剑湖宫」；东宗胜出则「又要让东宗再住五年」——原著未写居处名目"
+        }
       ],
       "roads": {
-        "remove": [["剑湖宫", "无量山"]],
-        "add": [["剑湖宫", "剑湖宫·宫门", 0], ["剑湖宫·宫门", "无量山", 0], ["剑湖宫", "剑湖宫·内堂", 0]]
+        "remove": [
+          [
+            "剑湖宫",
+            "无量山"
+          ]
+        ],
+        "add": [
+          [
+            "剑湖宫",
+            "剑湖宫·宫门",
+            0
+          ],
+          [
+            "剑湖宫·宫门",
+            "无量山",
+            0
+          ],
+          [
+            "剑湖宫",
+            "剑湖宫·内堂",
+            0
+          ]
+        ]
       },
       "features": [
-        {"id": "练武厅屋梁", "location": "剑湖宫·练武厅", "desc": "厅顶粗大的横梁，离地甚高，梁上坐得下人。",
-         "src": "第1回", "inferred": false, "basis": "梁上少女(钟灵)坐在厅梁上说话、吃瓜子"},
-        {"id": "掌门座", "location": "剑湖宫·练武厅", "desc": "厅东并排的两张座椅，相距一丈有余，东西二宗掌门分坐上下首。",
-         "src": "第1回", "inferred": false, "basis": "「练武厅东边坐着二人……两人的座位相距一丈有余，身后各站着二十余名男女弟子」"},
-        {"id": "宾客椅", "location": "剑湖宫·练武厅", "desc": "厅西一排椅子，供观剑的宾客就座。",
-         "src": "第1回", "inferred": false, "basis": "「西边一排椅子上坐着十余位宾客」"},
-        {"id": "练武厅剑架", "location": "剑湖宫·练武厅", "desc": "靠壁立着的木制剑架。",
-         "src": "第1回", "inferred": true, "basis": "练武厅是无量剑门人练剑之所，备有兵器架乃情理之常"},
-        {"id": "内堂书案", "location": "剑湖宫·内堂", "desc": "靠窗的一张书案，案下有一只上了锁的抽屉。",
-         "src": "第1回", "inferred": true, "basis": "掌门居处的寻常陈设"}
+        {
+          "id": "练武厅屋梁",
+          "location": "剑湖宫·练武厅",
+          "desc": "厅顶粗大的横梁，离地甚高，梁上坐得下人。",
+          "src": "第1回",
+          "inferred": false,
+          "basis": "梁上少女(钟灵)坐在厅梁上说话、吃瓜子"
+        },
+        {
+          "id": "掌门座",
+          "location": "剑湖宫·练武厅",
+          "desc": "厅东并排的两张座椅，相距一丈有余，东西二宗掌门分坐上下首。",
+          "src": "第1回",
+          "inferred": false,
+          "basis": "「练武厅东边坐着二人……两人的座位相距一丈有余，身后各站着二十余名男女弟子」"
+        },
+        {
+          "id": "宾客椅",
+          "location": "剑湖宫·练武厅",
+          "desc": "厅西一排椅子，供观剑的宾客就座。",
+          "src": "第1回",
+          "inferred": false,
+          "basis": "「西边一排椅子上坐着十余位宾客」"
+        },
+        {
+          "id": "练武厅剑架",
+          "location": "剑湖宫·练武厅",
+          "desc": "靠壁立着的木制剑架。",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "练武厅是无量剑门人练剑之所，备有兵器架乃情理之常"
+        },
+        {
+          "id": "内堂书案",
+          "location": "剑湖宫·内堂",
+          "desc": "靠窗的一张书案，案下有一只上了锁的抽屉。",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "掌门居处的寻常陈设"
+        }
       ],
       "items": [
-        {"id": "剑架青钢剑", "grade": "器物", "kind": "兵刃", "location": "剑湖宫·练武厅", "spot": "剑架上",
-         "desc": "一柄备用的青钢长剑，剑身泛着青光，与东宗弟子所佩的一般无二。",
-         "props": {"材质": "青钢", "长短": "三尺有余", "锋刃": "开过锋"},
-         "src": "第1回", "inferred": true, "basis": "开篇比剑所用即「一柄青钢剑」；练武厅备剑乃情理之常"},
-        {"id": "宾客茶碗", "grade": "寻常", "location": "剑湖宫·练武厅", "spot": "宾客椅旁的茶几上",
-         "src": "第1回", "inferred": true, "basis": "宾客观剑，奉茶乃待客常礼"},
-        {"id": "碎银", "grade": "器物", "kind": "杂物", "location": "剑湖宫·练武厅", "spot": "宾客椅下的地上",
-         "desc": "几块碎银子，不知是哪位宾客落下的。", "cash": true, "qty": 2, "unit": "两",
-         "src": "第1回", "inferred": true, "basis": "十余位宾客与随从在座；原著未写"},
-        {"id": "剑会胜负簿", "grade": "要物", "kind": "文书", "location": "剑湖宫·练武厅", "spot": "掌门座旁的茶几上",
-         "desc": "一本蓝布面的簿子，记着这一届东西宗比剑的场次与胜负。",
-         "props": {"执笔": "东宗执事弟子", "墨迹": "前三场已记，第四场尚空着"},
-         "text": "无量剑东西二宗比剑，五年一会，五场三胜者居剑湖宫五年。本届前三场：东宗胜二阵，西宗胜一阵。第四场：东宗龚光杰对西宗褚师弟——胜负未记。",
-         "src": "第1回", "inferred": true, "basis": "第四场后左子穆说「东宗已胜了三阵」；五场三胜居宫五年之规见剑湖宫设定；簿子本身为情理推定"},
-        {"id": "段誉折扇", "grade": "器物", "kind": "杂物", "holder": "段誉",
-         "desc": "一柄素面折扇，扇骨轻巧。", "props": {"扇面": "素白，无题字"},
-         "src": "第1回", "inferred": false, "basis": "「段誉轻摇手中折扇」；扇面形制原著未详"},
-        {"id": "钟灵皮囊", "grade": "器物", "kind": "杂物", "holder": "钟灵",
-         "desc": "系在腰间的一只小皮囊，囊口时有动静。", "props": {"佩处": "左腰"},
-         "src": "第1回", "inferred": false, "basis": "「从左腰皮囊……」「（貂儿）钻入了那少女腰间的皮囊」"},
-        {"id": "钟灵瓜子", "grade": "寻常", "holder": "钟灵", "qty": 20, "unit": "粒", "split": true,
-         "src": "第1回", "inferred": false, "basis": "「那少女吃了两粒瓜子」；粒数推定"},
-        {"id": "马五德钱袋", "grade": "器物", "kind": "杂物", "holder": "马五德",
-         "desc": "鼓鼓囊囊的钱袋，挂在腰带上。", "purse": 20, "props": {"所装": "碎银与几锭银子"},
-         "src": "第1回", "inferred": true, "basis": "马五德「是大茶商，豪富好客」；钱袋与数目为情理推定"},
-        {"id": "内堂笔墨", "grade": "寻常", "location": "剑湖宫·内堂", "spot": "书案上", "uses": ["书写"],
-         "src": "第1回", "inferred": true, "basis": "掌门居处的寻常陈设"},
-        {"id": "内堂信笺", "grade": "器物", "kind": "杂物", "location": "剑湖宫·内堂", "spot": "书案上",
-         "desc": "一叠素白的信笺。", "qty": 20, "unit": "张", "split": true, "uses": ["纸"],
-         "src": "第1回", "inferred": true, "basis": "掌门居处的寻常陈设"},
-        {"id": "玉壁剑影图", "grade": "要物", "kind": "文书", "location": "剑湖宫·内堂", "spot": "书案上锁的抽屉里", "hidden": true,
-         "qty": 12, "unit": "张", "full": 12, "split": true,
-         "hint": "锁在内堂书案的抽屉里，须撬开抽屉方能取出",
-         "desc": "一叠发黄的纸，墨笔描摹着一个个舞剑的人影，旁边密密注着小字。",
-         "props": {"笔迹": "出自东宗掌门之手"},
-         "text": "各页所绘都是月明之夜玉壁上现出的舞剑人影，姿势飘逸，与本门剑法大不相同；旁注某年某夜于崖上所见。末页批：「剑影忽隐忽现，五年来苦参不得要领。」",
-         "secret": "无量剑东西二宗掌门暗中参研玉壁剑影，本派规矩不许向外人提起",
-         "src": "第1回", "inferred": true,
-         "basis": "辛双清问左子穆「对无量玉壁的钻研，这五年来可已大有心得么」，左子穆斥「师妹怎地忘了本派的规矩」；玉壁设定「月光反射洞内练剑人影，被门人误认仙剑」；张数推定"}
+        {
+          "id": "剑架青钢剑",
+          "grade": "器物",
+          "kind": "兵刃",
+          "location": "剑湖宫·练武厅",
+          "spot": "剑架上",
+          "desc": "一柄备用的青钢长剑，剑身泛着青光，与东宗弟子所佩的一般无二。",
+          "props": {
+            "材质": "青钢",
+            "长短": "三尺有余",
+            "锋刃": "开过锋"
+          },
+          "src": "第1回",
+          "inferred": true,
+          "basis": "开篇比剑所用即「一柄青钢剑」；练武厅备剑乃情理之常"
+        },
+        {
+          "id": "宾客茶碗",
+          "grade": "寻常",
+          "location": "剑湖宫·练武厅",
+          "spot": "宾客椅旁的茶几上",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "宾客观剑，奉茶乃待客常礼"
+        },
+        {
+          "id": "碎银",
+          "grade": "器物",
+          "kind": "杂物",
+          "location": "剑湖宫·练武厅",
+          "spot": "宾客椅下的地上",
+          "desc": "几块碎银子，不知是哪位宾客落下的。",
+          "cash": true,
+          "qty": 2,
+          "unit": "两",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "十余位宾客与随从在座；原著未写"
+        },
+        {
+          "id": "剑会胜负簿",
+          "grade": "要物",
+          "kind": "文书",
+          "location": "剑湖宫·练武厅",
+          "spot": "掌门座旁的茶几上",
+          "desc": "一本蓝布面的簿子，记着这一届东西宗比剑的场次与胜负。",
+          "props": {
+            "执笔": "东宗执事弟子",
+            "墨迹": "前三场已记，第四场尚空着"
+          },
+          "text": "无量剑东西二宗比剑，五年一会，五场三胜者居剑湖宫五年。本届前三场：东宗胜二阵，西宗胜一阵。第四场：东宗龚光杰对西宗褚师弟——胜负未记。",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "第四场后左子穆说「东宗已胜了三阵」；五场三胜居宫五年之规见剑湖宫设定；簿子本身为情理推定"
+        },
+        {
+          "id": "段誉折扇",
+          "grade": "器物",
+          "kind": "杂物",
+          "holder": "段誉",
+          "desc": "一柄素面折扇，扇骨轻巧。",
+          "props": {
+            "扇面": "素白，无题字"
+          },
+          "src": "第1回",
+          "inferred": false,
+          "basis": "「段誉轻摇手中折扇」；扇面形制原著未详"
+        },
+        {
+          "id": "钟灵皮囊",
+          "grade": "器物",
+          "kind": "杂物",
+          "holder": "钟灵",
+          "desc": "系在腰间的一只小皮囊，囊口时有动静。",
+          "props": {
+            "佩处": "左腰"
+          },
+          "src": "第1回",
+          "inferred": false,
+          "basis": "「从左腰皮囊……」「（貂儿）钻入了那少女腰间的皮囊」"
+        },
+        {
+          "id": "钟灵瓜子",
+          "grade": "寻常",
+          "holder": "钟灵",
+          "qty": 20,
+          "unit": "粒",
+          "split": true,
+          "src": "第1回",
+          "inferred": false,
+          "basis": "「那少女吃了两粒瓜子」；粒数推定"
+        },
+        {
+          "id": "马五德钱袋",
+          "grade": "器物",
+          "kind": "杂物",
+          "holder": "马五德",
+          "desc": "鼓鼓囊囊的钱袋，挂在腰带上。",
+          "purse": 20,
+          "props": {
+            "所装": "碎银与几锭银子"
+          },
+          "src": "第1回",
+          "inferred": true,
+          "basis": "马五德「是大茶商，豪富好客」；钱袋与数目为情理推定"
+        },
+        {
+          "id": "内堂笔墨",
+          "grade": "寻常",
+          "location": "剑湖宫·内堂",
+          "spot": "书案上",
+          "uses": [
+            "书写"
+          ],
+          "src": "第1回",
+          "inferred": true,
+          "basis": "掌门居处的寻常陈设"
+        },
+        {
+          "id": "内堂信笺",
+          "grade": "器物",
+          "kind": "杂物",
+          "location": "剑湖宫·内堂",
+          "spot": "书案上",
+          "desc": "一叠素白的信笺。",
+          "qty": 20,
+          "unit": "张",
+          "split": true,
+          "uses": [
+            "纸"
+          ],
+          "src": "第1回",
+          "inferred": true,
+          "basis": "掌门居处的寻常陈设"
+        },
+        {
+          "id": "玉壁剑影图",
+          "grade": "要物",
+          "kind": "文书",
+          "location": "剑湖宫·内堂",
+          "spot": "书案上锁的抽屉里",
+          "hidden": true,
+          "qty": 12,
+          "unit": "张",
+          "full": 12,
+          "split": true,
+          "hint": "锁在内堂书案的抽屉里，须撬开抽屉方能取出",
+          "desc": "一叠发黄的纸，墨笔描摹着一个个舞剑的人影，旁边密密注着小字。",
+          "props": {
+            "笔迹": "出自东宗掌门之手"
+          },
+          "text": "各页所绘都是月明之夜玉壁上现出的舞剑人影，姿势飘逸，与本门剑法大不相同；旁注某年某夜于崖上所见。末页批：「剑影忽隐忽现，五年来苦参不得要领。」",
+          "secret": "无量剑东西二宗掌门暗中参研玉壁剑影，本派规矩不许向外人提起",
+          "src": "第1回",
+          "inferred": true,
+          "basis": "辛双清问左子穆「对无量玉壁的钻研，这五年来可已大有心得么」，左子穆斥「师妹怎地忘了本派的规矩」；玉壁设定「月光反射洞内练剑人影，被门人误认仙剑」；张数推定"
+        }
       ],
       "squads": [
-        {"id": "东宗弟子众", "faction": "无量剑东宗", "location": "剑湖宫·练武厅", "count": 15, "power": 15, "handle": "东宗弟子",
-         "desc": "立在东首掌门座后的东宗弟子，青衣佩剑。",
-         "kit": {"money": 0.3, "items": [{"name": "长剑", "kind": "兵刃", "desc": "无量剑弟子佩的青钢长剑", "steal": true},
-                                          {"name": "衣衫", "kind": "杂物", "desc": "无量剑弟子穿的青布长衫", "steal": false}]},
-         "src": "第1回", "inferred": true,
-         "basis": "「两人的座位相距一丈有余，身后各站着二十余名男女弟子」；有名有姓的东宗弟子另列为人物，余者按十五人一群计；零钱推定"},
-        {"id": "西宗弟子众", "faction": "无量剑西宗", "location": "剑湖宫·练武厅", "count": 15, "power": 15, "handle": "西宗弟子",
-         "desc": "立在辛双清身后的西宗男女弟子，个个佩剑。",
-         "kit": {"money": 0.3, "items": [{"name": "长剑", "kind": "兵刃", "desc": "无量剑弟子佩的青钢长剑", "steal": true},
-                                          {"name": "衣衫", "kind": "杂物", "desc": "无量剑弟子穿的青布长衫", "steal": false}]},
-         "src": "第1回", "inferred": true,
-         "basis": "「身后各站着二十余名男女弟子」；有名有姓的西宗弟子另列为人物，余者按十五人一群计；零钱推定"}
+        {
+          "id": "东宗弟子众",
+          "faction": "无量剑东宗",
+          "location": "剑湖宫·练武厅",
+          "count": 15,
+          "power": 15,
+          "handle": "东宗弟子",
+          "desc": "立在东首掌门座后的东宗弟子，青衣佩剑。",
+          "kit": {
+            "money": 0.3,
+            "items": [
+              {
+                "name": "长剑",
+                "kind": "兵刃",
+                "desc": "无量剑弟子佩的青钢长剑",
+                "steal": true
+              },
+              {
+                "name": "衣衫",
+                "kind": "杂物",
+                "desc": "无量剑弟子穿的青布长衫",
+                "steal": false
+              }
+            ]
+          },
+          "src": "第1回",
+          "inferred": true,
+          "basis": "「两人的座位相距一丈有余，身后各站着二十余名男女弟子」；有名有姓的东宗弟子另列为人物，余者按十五人一群计；零钱推定"
+        },
+        {
+          "id": "西宗弟子众",
+          "faction": "无量剑西宗",
+          "location": "剑湖宫·练武厅",
+          "count": 15,
+          "power": 15,
+          "handle": "西宗弟子",
+          "desc": "立在辛双清身后的西宗男女弟子，个个佩剑。",
+          "kit": {
+            "money": 0.3,
+            "items": [
+              {
+                "name": "长剑",
+                "kind": "兵刃",
+                "desc": "无量剑弟子佩的青钢长剑",
+                "steal": true
+              },
+              {
+                "name": "衣衫",
+                "kind": "杂物",
+                "desc": "无量剑弟子穿的青布长衫",
+                "steal": false
+              }
+            ]
+          },
+          "src": "第1回",
+          "inferred": true,
+          "basis": "「身后各站着二十余名男女弟子」；有名有姓的西宗弟子另列为人物，余者按十五人一群计；零钱推定"
+        }
       ]
+    },
+    {
+      "scene": "无量山",
+      "src": "第1回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "无量山·谷底·悬崖瀑布",
+          "location": "无量山·谷底",
+          "desc": "自高崖直泻入湖的瀑布，水声轰鸣。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写瀑布自左边山崖注入大湖。"
+        },
+        {
+          "id": "无量山·谷底·剑湖水面",
+          "location": "无量山·谷底",
+          "desc": "湖水清澈，离瀑布稍远处水面平静。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写距瀑布十余丈湖面如镜。"
+        },
+        {
+          "id": "无量山·谷底·湖畔茶花丛",
+          "location": "无量山·谷底",
+          "desc": "湖畔茶花成丛，有羽衣霓裳与步步生莲。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写湖畔茶花及两类花名。"
+        },
+        {
+          "id": "无量山·谷底·酸果藤蔓丛",
+          "location": "无量山·谷底",
+          "desc": "酸果树与藤蔓相杂，贴近一片平整石壁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写酸果树丛后石壁覆满藤蔓。"
+        },
+        {
+          "id": "琅嬛福地·铜镜后室·水晶采光窗",
+          "location": "琅嬛福地·铜镜后室",
+          "desc": "石壁嵌着铜盆大小的水晶，可见窗外湖水。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写首间圆形石室的水晶窗。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·铜镜后室·嵌壁铜镜群",
+          "location": "琅嬛福地·铜镜后室",
+          "desc": "三十余面铜镜分嵌四壁，互相映照。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写壁上东一块西一块嵌三十余镜。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·铜镜后室·镜光暗门",
+          "location": "琅嬛福地·铜镜后室",
+          "desc": "西南角石壁间有可推动的门缝。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写斜置铜镜反光照出西南角石门缝。",
+          "hint": "察看东首斜镜所照的西南石壁，循缝推动。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·玉像石室·六晶采光壁",
+          "location": "琅嬛福地·玉像石室",
+          "desc": "西壁嵌六块大水晶，透入碧绿水光。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写玉像室西壁六块水晶。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·玉像石室·庄子刻文",
+          "location": "琅嬛福地·玉像石室",
+          "desc": "东壁刻有庄子篇章句子，笔画深而飘逸。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写东壁刻庄子句与题款；内容须近读。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·书房·木书架列",
+          "location": "琅嬛福地·书房",
+          "desc": "木制书架在石洞内成排排列。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写藏书石洞一排排木架及分类签条。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·卧室石床",
+          "location": "琅嬛福地",
+          "desc": "月洞门后的石室中设一张石床。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写玉像室左侧月洞门后石床。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "琅嬛福地·十九道棋盘石几",
+          "location": "琅嬛福地",
+          "desc": "石床左侧的石几刻成十九道围棋盘。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写石床左石几刻十九道棋盘。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          }
+        },
+        {
+          "id": "无量洞·园后屋舍",
+          "location": "无量洞",
+          "desc": "大花园之后有三间小屋，前接多进院舍。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第5回",
+          "inferred": false,
+          "basis": "原著明写经过五进屋子及大花园，到三间小屋。"
+        },
+        {
+          "id": "无量洞·囚室·外锁木门",
+          "location": "无量洞·囚室",
+          "desc": "木门能从屋外加锁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第5回",
+          "inferred": false,
+          "basis": "原著明写钱光胜开门后，郁光标从外锁门。"
+        }
+      ],
+      "items": [
+        {
+          "id": "琅嬛福地·铜镜后室·石桌铜镜",
+          "location": "琅嬛福地·铜镜后室",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "一面生有铜绿的旧铜镜。",
+          "qty": 1,
+          "unit": "面",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": true,
+          "basis": "原著明写石桌上铜镜；开端沿用；估值推定。",
+          "price": 0.3,
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          },
+          "spot": "石桌上"
+        },
+        {
+          "id": "琅嬛福地·小木摇篮",
+          "location": "琅嬛福地",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "木制小摇篮，形制小巧。",
+          "qty": 1,
+          "unit": "张",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": true,
+          "basis": "原著明写石床前一张小木摇篮；估值推定。",
+          "price": 0.5,
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          },
+          "spot": "卧室石床前"
+        },
+        {
+          "id": "琅嬛福地·断弦七弦琴",
+          "location": "琅嬛福地",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "悬壁七弦琴，琴弦已断。",
+          "qty": 1,
+          "unit": "张",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": true,
+          "basis": "原著明写壁悬断弦七弦琴；估值推定。",
+          "price": 2,
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          },
+          "spot": "卧室壁上"
+        },
+        {
+          "id": "琅嬛福地·书房·武谱分类签条",
+          "location": "琅嬛福地·书房",
+          "grade": "要物",
+          "kind": "文书",
+          "desc": "书架上分类各派武谱的纸签。",
+          "qty": 1,
+          "unit": "组",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第2回",
+          "inferred": true,
+          "basis": "原著明写多种签条；按一组记数；不推定精确张数。",
+          "known": {
+            "who": [
+              "李秋水",
+              "无崖子",
+              "王夫人"
+            ]
+          },
+          "spot": "书架上",
+          "text": "按昆仑、少林、青城、蓬莱、大理段氏等门派分类；少林缺易筋经，丐帮缺降龙二十八掌，段氏缺一阳指、六脉神剑。",
+          "doc": {
+            "state": "写成"
+          }
+        }
+      ]
+    },
+    {
+      "scene": "万劫谷",
+      "src": "第2回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "万劫谷·谷口·九松入口林",
+          "location": "万劫谷·谷口",
+          "desc": "九株大松树参天并列，树后长草深密。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写谷口左首九株大松树并列。"
+        },
+        {
+          "id": "万劫谷·谷口·树腹暗口",
+          "location": "万劫谷·谷口",
+          "desc": "自右数第四株松树后有隐蔽树洞。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写第四松树后拨开长草显出洞口。",
+          "hint": "由右数第四株松树，绕后拨开长草。",
+          "known": {
+            "who": [
+              "钟万仇",
+              "甘宝宝",
+              "钟灵",
+              "来福儿"
+            ]
+          }
+        },
+        {
+          "id": "万劫谷·谷口·铁环活板",
+          "location": "万劫谷·谷口",
+          "desc": "树洞内枯草下有带铁环的活动木板。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写拨草提铁环，木板掀开露出石级。",
+          "hint": "进入树洞拨开枯草，提起铁环。",
+          "known": {
+            "who": [
+              "钟万仇",
+              "甘宝宝",
+              "钟灵",
+              "来福儿"
+            ]
+          }
+        },
+        {
+          "id": "万劫谷·谷口·禁段题树",
+          "location": "万劫谷·谷口",
+          "desc": "松干白漆上题禁段九字，杀字殷红。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第2回",
+          "inferred": false,
+          "basis": "原著明写白漆树干题“姓段者入此谷杀无赦”。"
+        },
+        {
+          "id": "万劫谷·密枝树墙",
+          "location": "万劫谷",
+          "desc": "大树枝叶密接成墙，隔开石屋前的空地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第7回",
+          "inferred": false,
+          "basis": "原著明写越树墙后是一大片空地及石屋。"
+        },
+        {
+          "id": "万劫谷·石屋·叠石粗壁",
+          "location": "万劫谷·石屋",
+          "desc": "无数大石垒成凹凸粗壁，外貌如小山。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第7回",
+          "inferred": false,
+          "basis": "原著明写石屋以无数大石砌成。"
+        },
+        {
+          "id": "万劫谷·石屋·花岗封门岩",
+          "location": "万劫谷·石屋",
+          "desc": "粗糙花岗巨岩可挡住洞状屋门。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第7回",
+          "inferred": false,
+          "basis": "原著明写堵门巨岩；不预置后来封门动作。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "木婉清居所",
+      "src": "第3回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "木婉清居所·叩门铁环",
+          "location": "木婉清居所",
+          "desc": "宅门上有可叩击传讯的门环。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第3回",
+          "inferred": false,
+          "basis": "原著明写来福儿按二、四、三次叩门环。"
+        },
+        {
+          "id": "木婉清居所·玫瑰石道",
+          "location": "木婉清居所",
+          "desc": "曲折石道两旁遍植玫瑰。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第3回",
+          "inferred": false,
+          "basis": "原著明写院中石道两侧种满玫瑰。"
+        },
+        {
+          "id": "木婉清居所·院内月洞门",
+          "location": "木婉清居所",
+          "desc": "石道穿过圆拱月洞门，通向大厅。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第3回",
+          "inferred": false,
+          "basis": "原著明写石道曲折穿过月洞门。"
+        },
+        {
+          "id": "木婉清居所·大厅落地长窗",
+          "location": "木婉清居所",
+          "desc": "大厅设成排落地长窗，窗下有门槛。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第3回",
+          "inferred": false,
+          "basis": "原著明写成排落地长窗，段誉推窗跨槛入厅。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "大理城",
+      "src": "第6回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "玉虚观·临湖柳丛",
+          "location": "玉虚观",
+          "desc": "道观旁小湖依偎柳丛，枝条垂拂。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第6回",
+          "inferred": false,
+          "basis": "原著明写绿柳丛中、小湖旁露出观墙。"
+        },
+        {
+          "id": "玉虚观·黄墙匾额",
+          "location": "玉虚观",
+          "desc": "黄色观墙上方悬着玉虚观匾额。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第6回",
+          "inferred": false,
+          "basis": "原著明写黄墙及“玉虚观”匾。"
+        },
+        {
+          "id": "圣慈宫·圣道广慈牌坊",
+          "location": "圣慈宫",
+          "desc": "宫外牌坊题圣道广慈四个金字。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第6回",
+          "inferred": false,
+          "basis": "原著明写入圣慈宫前经过题金字牌坊。"
+        },
+        {
+          "id": "镇南王府·府门石阶",
+          "location": "镇南王府",
+          "desc": "府门外铺设石阶，直通王府大门。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第6回",
+          "inferred": false,
+          "basis": "原著明写刀白凤踏上第一级石阶后入府。"
+        },
+        {
+          "id": "天龙寺·三座佛塔",
+          "location": "天龙寺",
+          "desc": "三塔高耸，大塔十六级，塔顶有铁铸铭记。",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第10回",
+          "inferred": false,
+          "basis": "原著明写寺有三塔，大塔十六级及铁铸记。"
+        },
+        {
+          "id": "天龙寺·牟尼堂·原皮松木柱",
+          "location": "天龙寺·牟尼堂",
+          "desc": "堂屋用带皮松木为柱，天然质朴。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第10回",
+          "inferred": false,
+          "basis": "原著明写大屋全以松木搭成，木料不去皮。"
+        },
+        {
+          "id": "天龙寺·牟尼堂·素板堂门",
+          "location": "天龙寺·牟尼堂",
+          "desc": "朴素木板门与松木堂屋连成一体。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第10回",
+          "inferred": false,
+          "basis": "原著明写牟尼堂板门木柱。"
+        },
+        {
+          "id": "天龙寺·牟尼堂·堂外树林",
+          "location": "天龙寺·牟尼堂",
+          "desc": "堂外林木成片，间有通向寺外的空隙。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第10回",
+          "inferred": false,
+          "basis": "原著明写随从穿入堂外树林；林间通行由行动证实。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "苏州",
+      "src": "第11回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "苏州·城外杏径",
+          "location": "苏州",
+          "desc": "城外小径两旁生着杏树。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写苏州城外杏花夹径；不固定花期状态。"
+        },
+        {
+          "id": "苏州·临水柳岸",
+          "location": "苏州",
+          "desc": "城外水边垂柳成行，岸道临水。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写苏州城外绿柳垂湖。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "江南",
+      "src": "第11回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "琴韵小筑·琴韵匾额",
+          "location": "琴韵小筑",
+          "desc": "小舍门上匾额题琴韵二字，笔致潇洒。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写小舍匾额及笔致。"
+        },
+        {
+          "id": "琴韵小筑·鹅卵石曲径",
+          "location": "琴韵小筑",
+          "desc": "鹅卵石小径曲折绕过山石花木。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写通往锦瑟居泊船处的曲径。"
+        },
+        {
+          "id": "琴韵小筑·锦瑟居·松木登梯",
+          "location": "琴韵小筑·锦瑟居",
+          "desc": "松木梯阶自泊船处通向水中木屋。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写段誉由松木梯阶走上锦瑟居。"
+        },
+        {
+          "id": "琴韵小筑·锦瑟居·四面开窗",
+          "location": "琴韵小筑·锦瑟居",
+          "desc": "水中央的小木屋四面都有窗。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第11回",
+          "inferred": false,
+          "basis": "原著明写锦瑟居为水中央四面是窗的小木屋。"
+        },
+        {
+          "id": "听香水榭·茉莉花坛",
+          "location": "听香水榭",
+          "desc": "厨房侧门外有一片茉莉花坛。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第13回",
+          "inferred": false,
+          "basis": "原著明写厨房侧门外经过茉莉花坛。"
+        },
+        {
+          "id": "听香水榭·双重月洞门",
+          "location": "听香水榭",
+          "desc": "两扇月洞门串接花坛与花厅外。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第13回",
+          "inferred": false,
+          "basis": "原著明写穿过两扇月洞门到花厅。"
+        },
+        {
+          "id": "曼陀山庄·岸边柳林",
+          "location": "曼陀山庄",
+          "desc": "岸边柳树繁密，将庄内屋宇掩在深处。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第12回",
+          "inferred": false,
+          "basis": "原著明写岸上几千株柳树与柳间茶花。"
+        },
+        {
+          "id": "曼陀山庄·茶花园·滇茶花木",
+          "location": "曼陀山庄·茶花园",
+          "desc": "园中栽有多种云南山茶。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第12回",
+          "inferred": false,
+          "basis": "原著明写山庄遍种滇茶；不固定开花状态。"
+        },
+        {
+          "id": "琅嬛玉洞·青牛紫气书柜",
+          "location": "琅嬛玉洞",
+          "desc": "柜门横题琅嬛玉洞，竖题青牛西去紫气东来。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第40回",
+          "inferred": false,
+          "basis": "原著回叙鸠摩智所见柜门刻字填绿色。",
+          "known": {
+            "who": [
+              "王夫人",
+              "王语嫣",
+              "李秋水",
+              "丁春秋"
+            ]
+          }
+        }
+      ],
+      "items": [
+        {
+          "id": "听香水榭·茉莉花露",
+          "location": "听香水榭",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "以茉莉花制成的花露。",
+          "qty": 1,
+          "unit": "瓶",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第13回",
+          "inferred": true,
+          "basis": "原著明写阿朱藏有茉莉花露；按一瓶、估值推定。",
+          "price": 0.3,
+          "known": {
+            "who": [
+              "阿朱",
+              "阿碧"
+            ]
+          },
+          "spot": "宅内收藏花露处"
+        },
+        {
+          "id": "听香水榭·玫瑰花露",
+          "location": "听香水榭",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "以玫瑰花制成的花露。",
+          "qty": 1,
+          "unit": "瓶",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第13回",
+          "inferred": true,
+          "basis": "原著明写阿朱藏有玫瑰花露；按一瓶、估值推定。",
+          "price": 0.3,
+          "known": {
+            "who": [
+              "阿朱",
+              "阿碧"
+            ]
+          },
+          "spot": "宅内收藏花露处"
+        },
+        {
+          "id": "听香水榭·寒梅花露",
+          "location": "听香水榭",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "以寒梅制成的花露。",
+          "qty": 1,
+          "unit": "瓶",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第13回",
+          "inferred": true,
+          "basis": "原著明写阿朱藏有寒梅花露；按一瓶、估值推定。",
+          "price": 0.5,
+          "known": {
+            "who": [
+              "阿朱",
+              "阿碧"
+            ]
+          },
+          "spot": "宅内收藏花露处"
+        }
+      ]
+    },
+    {
+      "scene": "吐蕃",
+      "src": "第10回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "大轮寺·讲经法坛",
+          "location": "大轮寺",
+          "desc": "供主讲者登坛说法、众僧执经问难的坛席。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第10回",
+          "inferred": true,
+          "basis": "原著暗示：每五年开坛讲经；坛席形制未详。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "无锡",
+      "src": "第14回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "松鹤楼·烟熏金字招牌",
+          "location": "松鹤楼",
+          "desc": "年深月久的招牌已被烟熏黑，金色楼名仍清晰。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第14回",
+          "inferred": false,
+          "basis": "原著明写牌被厨烟熏黑，三个金字闪光。"
+        },
+        {
+          "id": "松鹤楼·临窗楼栏",
+          "location": "松鹤楼",
+          "desc": "楼边临窗栏杆向外邻着楼下墙脚。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第14回",
+          "inferred": false,
+          "basis": "原著明写临窗栏杆，指尖酒水沿栏流到墙脚。"
+        },
+        {
+          "id": "杏子林·杏树密林",
+          "location": "杏子林",
+          "desc": "杏树成林，林间可供人通行聚集。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第14回",
+          "inferred": false,
+          "basis": "原著明写杏林内众人相对而立；不固定花期。"
+        },
+        {
+          "id": "无锡·城外田港",
+          "location": "无锡",
+          "desc": "城外良田之间河港交叉，田径曲折。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第14回",
+          "inferred": false,
+          "basis": "原著明写去杏林途中肥沃良田及交叉河港。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "碾坊",
+      "src": "第17回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "碾坊·溪流木轮",
+          "location": "碾坊",
+          "desc": "小溪推动木轮，水力传入碾米机件。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": false,
+          "basis": "原著明写溪水推动木轮碾米。"
+        },
+        {
+          "id": "碾坊·门前水沟",
+          "location": "碾坊",
+          "desc": "坊门前横着一道可使人失足的沟。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": false,
+          "basis": "原著明写段誉迈步踏入门前沟中。"
+        },
+        {
+          "id": "碾坊·阁楼·仓储木楼板",
+          "location": "碾坊·阁楼",
+          "desc": "上层木楼板供堆放粮食与农具。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": false,
+          "basis": "原著明写阁楼堆稻谷，木梯虚架楼板。"
+        }
+      ],
+      "items": [
+        {
+          "id": "碾坊·活动木梯",
+          "location": "碾坊",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "可移开的木梯，用来上下阁楼。",
+          "qty": 1,
+          "unit": "架",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": true,
+          "basis": "原著明写木梯虚架楼板，可被推开；估值推定。",
+          "price": 0.5,
+          "spot": "通阁楼处"
+        },
+        {
+          "id": "碾坊·阁楼·米筛",
+          "location": "碾坊·阁楼",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "筛分稻米的农用筛具。",
+          "qty": 1,
+          "unit": "只",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": true,
+          "basis": "原著明写米筛；以一只作最低数量，估值推定。",
+          "price": 0.03,
+          "spot": "阁楼农具堆"
+        },
+        {
+          "id": "碾坊·阁楼·竹箕",
+          "location": "碾坊·阁楼",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "竹编农用簸箕。",
+          "qty": 1,
+          "unit": "只",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": true,
+          "basis": "原著明写竹箕；以一只作最低数量，估值推定。",
+          "price": 0.04,
+          "spot": "阁楼农具堆"
+        },
+        {
+          "id": "碾坊·阁楼·麻袋",
+          "location": "碾坊·阁楼",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "盛粮用的麻布口袋。",
+          "qty": 1,
+          "unit": "只",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第17回",
+          "inferred": true,
+          "basis": "原著明写麻袋；以一只作最低数量，估值推定。",
+          "price": 0.03,
+          "spot": "阁楼农具堆"
+        }
+      ]
+    },
+    {
+      "scene": "天宁寺",
+      "src": "第18回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "天宁寺·寺旁桑林",
+          "location": "天宁寺",
+          "desc": "寺旁桑树成林，林外可望见寺中炊烟。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": false,
+          "basis": "原著明写小沙弥指桑林后炊烟示寺所在。"
+        },
+        {
+          "id": "天宁寺·殿内圆柱",
+          "location": "天宁寺",
+          "desc": "大殿内立着粗实圆柱。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": false,
+          "basis": "原著明写南海鳄神手指插入大殿圆柱；不预置指痕。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "少室山",
+      "src": "第18回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "乔三槐家·菜园大枣树",
+          "location": "乔三槐家",
+          "desc": "菜园旁有一株大枣树。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": false,
+          "basis": "原著明写菜园旁大枣树与乔峰幼时采枣。"
+        },
+        {
+          "id": "乔三槐家·三间土屋",
+          "location": "乔三槐家",
+          "desc": "山坡旁三间土屋，前后有农家空地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": false,
+          "basis": "原著明写少室山南坡边三间土屋。"
+        },
+        {
+          "id": "少林寺·菩提院·铜镜屏风",
+          "location": "少林寺·菩提院",
+          "desc": "后殿屏风嵌明亮大铜镜，镜镌金刚经四句偈。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": false,
+          "basis": "原著明写佛像前屏风装极大铜镜。"
+        },
+        {
+          "id": "少林寺·藏经阁·临阁山溪",
+          "location": "少林寺·藏经阁",
+          "desc": "山溪流经阁旁，楼阁与其他房舍相隔。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第43回",
+          "inferred": false,
+          "basis": "第43回明写藏经阁临山溪，远离其他房舍。"
+        },
+        {
+          "id": "少林寺·藏经阁·穿林青石径",
+          "location": "少林寺·藏经阁",
+          "desc": "青石小径曲折穿林，通向山溪旁楼阁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第43回",
+          "inferred": false,
+          "basis": "第43回明写青石小径穿林向西北至藏经阁。"
+        },
+        {
+          "id": "少林寺·藏经阁·楼头匾额",
+          "location": "少林寺·藏经阁",
+          "desc": "楼头匾额题藏经阁三字。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第43回",
+          "inferred": false,
+          "basis": "第43回明写楼头匾额。"
+        },
+        {
+          "id": "少林寺·山门·寺内回廊",
+          "location": "少林寺·山门",
+          "desc": "入山门后廊道与殿堂交错相连。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第43回",
+          "inferred": false,
+          "basis": "第43回明写入寺后到处回廊殿堂，可凭以避掌。"
+        }
+      ],
+      "items": [
+        {
+          "id": "乔三槐家·耕犁",
+          "location": "乔三槐家",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "农家耕地所用的犁。",
+          "qty": 1,
+          "unit": "具",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": true,
+          "basis": "原著明写堂上有犁耙锄头；按一具、估值推定。",
+          "price": 0.8,
+          "spot": "堂内"
+        },
+        {
+          "id": "乔三槐家·钉耙",
+          "location": "乔三槐家",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "农家整地用耙。",
+          "qty": 1,
+          "unit": "具",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": true,
+          "basis": "原著明写堂上有犁耙锄头；按一具、估值推定。",
+          "price": 0.4,
+          "spot": "堂内"
+        },
+        {
+          "id": "乔三槐家·锄头",
+          "location": "乔三槐家",
+          "grade": "器物",
+          "kind": "杂物",
+          "desc": "农家锄地用具。",
+          "qty": 1,
+          "unit": "把",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第18回",
+          "inferred": true,
+          "basis": "原著明写堂上有犁耙锄头；按一把、估值推定。",
+          "price": 0.3,
+          "spot": "堂内"
+        }
+      ]
+    },
+    {
+      "scene": "英雄大会客店",
+      "src": "第18回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "英雄大会客店·后院临窗外墙",
+          "location": "英雄大会客店",
+          "desc": "后院外墙紧临客房窗户，近处可听见室内话声。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": false,
+          "basis": "原著明写乔峰绕至后院窗外贴墙倾听。"
+        },
+        {
+          "id": "英雄大会客店·相接屋脊",
+          "location": "英雄大会客店",
+          "desc": "客店屋顶相接，可通往东西两角。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": true,
+          "basis": "原著暗示：两人分从西北、东南屋顶跃下入房。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "聚贤庄",
+      "src": "第19回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "聚贤庄·大厅·东首主位",
+          "location": "聚贤庄·大厅",
+          "desc": "大厅东首设主人接客的正位。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": false,
+          "basis": "原著明写游驹引客至东首主位。"
+        },
+        {
+          "id": "聚贤庄·大厅·承顶厅柱",
+          "location": "聚贤庄·大厅",
+          "desc": "大厅立柱支承屋顶。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": false,
+          "basis": "原著明写圆盾斩断一柱，屋顶瓦沙下落；保留原状。"
+        },
+        {
+          "id": "聚贤庄·环庄围墙",
+          "location": "聚贤庄",
+          "desc": "庄院围墙将内外分开，墙顶邻接屋面。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": false,
+          "basis": "原著明写云中鹤攀墙逃走、屋顶有人拦阻。"
+        },
+        {
+          "id": "聚贤庄·厅前空庭",
+          "location": "聚贤庄",
+          "desc": "大厅前留有可供众人活动的庭院空地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第19回",
+          "inferred": false,
+          "basis": "原著明写吴长风纵入大厅前庭院。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "雁门关",
+      "src": "第20回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "雁门关·夹道双峰",
+          "location": "雁门关",
+          "desc": "东西山岩峭拔，中间山道盘旋崎岖。",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第20回",
+          "inferred": false,
+          "basis": "原著明写东西山岩与中路险道。"
+        },
+        {
+          "id": "雁门关·关西高岭",
+          "location": "雁门关",
+          "desc": "关西高岭陡峻，可绕过正关。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第20回",
+          "inferred": false,
+          "basis": "原著明写乔峰避关兵盘查，绕行关西高岭。"
+        },
+        {
+          "id": "雁门关·西北大岩",
+          "location": "雁门关",
+          "desc": "西北山侧有大岩，岩后可容人隐蔽。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第20回",
+          "inferred": false,
+          "basis": "原著明写山侧大岩，与智光所述伏击岩相合。"
+        },
+        {
+          "id": "雁门关·谷底·深谷绝壁",
+          "location": "雁门关·谷底",
+          "desc": "山道旁陡壁深落，谷底难以从上方看清。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第20回",
+          "inferred": false,
+          "basis": "原著明写山道数步之外下临深谷，下不见底。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "卫辉",
+      "src": "第21回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "卫辉·浚河沿岸",
+          "location": "卫辉",
+          "desc": "城东浚河岸边可泊大木船。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写出东门到浚河旁大木船。"
+        },
+        {
+          "id": "卫辉·船舱·低矮船篷",
+          "location": "卫辉·船舱",
+          "desc": "木船船篷覆盖狭小内舱。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写须弯身钻入、乔峰跃上船篷倾听。"
+        },
+        {
+          "id": "卫辉·船舱·木质舱板",
+          "location": "卫辉·船舱",
+          "desc": "木制舱板围成不到一丈见方的船舱。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写不到一丈见方的舱；不置踩穿后的洞。"
+        },
+        {
+          "id": "卫辉·船舱·开合舱门",
+          "location": "卫辉·船舱",
+          "desc": "船头与内舱之间设可推开的舱门。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写乔峰推开舱门入内。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "泰山",
+      "src": "第21回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "泰山单家·环庄深壕",
+          "location": "泰山单家",
+          "desc": "庄院四周掘有深壕，与附近住处相隔。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写四周深壕、附近无人居住。"
+        },
+        {
+          "id": "泰山单家·连片宅屋",
+          "location": "泰山单家",
+          "desc": "庄院内宅屋相连，供单氏一家起居。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": true,
+          "basis": "原著暗示：一家三十余口同居庄中，宅屋被全焚。"
+        }
+      ],
+      "items": [
+        {
+          "id": "泰山单家·旧交书札",
+          "location": "泰山单家",
+          "grade": "要物",
+          "kind": "文书",
+          "desc": "收藏的旧交来信，字迹可供辨认。",
+          "qty": 1,
+          "unit": "组",
+          "state": null,
+          "hidden": true,
+          "tier": 1,
+          "src": "第21回",
+          "inferred": true,
+          "basis": "原著明写家藏带头大哥数封信；按一组记，收藏处推定。",
+          "known": {
+            "who": [
+              "单正",
+              "玄慈"
+            ]
+          },
+          "hint": "须获主人准许查验其私藏往来书札。",
+          "spot": "宅内私藏文书处",
+          "text": "与旧交往来的书札，具体措辞原著未载。",
+          "secret": "书札出自玄慈，原著称可据此核对写给汪剑通的信。",
+          "doc": {
+            "state": "写成"
+          }
+        }
+      ]
+    },
+    {
+      "scene": "天台山",
+      "src": "第21回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "天台山·山道凉亭",
+          "location": "天台山",
+          "desc": "上山途中有供行人休息的凉亭。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写乔峰、阿朱在凉亭遇五位老者。"
+        },
+        {
+          "id": "止观寺·剥漆灰墙",
+          "location": "止观寺",
+          "desc": "小庙外墙的灰泥油漆多有剥落。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写庙外灰泥油漆已大半剥落。"
+        },
+        {
+          "id": "止观寺·竹荫小径",
+          "location": "止观寺",
+          "desc": "竹阴森森的小径通向僻静禅房。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写客堂至智光禅房穿过竹荫小径。"
+        },
+        {
+          "id": "智光禅房·厚尘地面",
+          "location": "智光禅房",
+          "desc": "禅房地面久未清扫，积着厚灰。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写地上积尘甚厚；不预置临终题字。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "信阳",
+      "src": "第21回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "康敏家·绕屋小河",
+          "location": "康敏家",
+          "desc": "一条小河绕着三间小瓦屋流过。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写绕三间小瓦屋的小河。"
+        },
+        {
+          "id": "康敏家·门旁双杨",
+          "location": "康敏家",
+          "desc": "屋旁生着两株垂杨。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写屋旁两株垂杨。"
+        },
+        {
+          "id": "康敏家·四坑练功地",
+          "location": "康敏家",
+          "desc": "门前平地四角各掘一深坑。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第21回",
+          "inferred": false,
+          "basis": "原著明写平地似晒谷场，四深坑是马大元练功之用。"
+        },
+        {
+          "id": "康敏家·内室暖炕",
+          "location": "康敏家",
+          "desc": "内室设炕，炕边有可开合的抽屉。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第24回",
+          "inferred": false,
+          "basis": "原著明写段正淳坐炕边，康敏拉开炕旁抽屉。"
+        },
+        {
+          "id": "康敏家·有缝窗棂",
+          "location": "康敏家",
+          "desc": "内室窗棂有细缝，可由外窥见房内。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第24回",
+          "inferred": false,
+          "basis": "原著明写萧峰隔窗缝窥见内室。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "星宿海",
+      "src": "第26、32、41回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "星宿海·小湖群",
+          "location": "星宿海",
+          "desc": "大片小湖散布在湿地之间。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26回",
+          "inferred": false,
+          "basis": "阿紫明确说星宿海是一大片沼泽和小湖，不把第25回中原追捕写作当地现场。"
+        },
+        {
+          "id": "星宿海·沼泽地",
+          "location": "星宿海",
+          "desc": "湖间地面湿软，沼泽连绵。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26回",
+          "inferred": true,
+          "basis": "阿紫对故地地貌的直接陈述；湿软为沼泽形制推定。"
+        },
+        {
+          "id": "星宿海·雪桑",
+          "location": "星宿海",
+          "desc": "海旁生长着雪桑。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第41回",
+          "inferred": false,
+          "basis": "旁白交代柔丝索所用雪蚕野生于星宿海旁雪桑；不同时生成可立即捕获的雪蚕。"
+        },
+        {
+          "id": "星宿海·湖畔石地",
+          "location": "星宿海",
+          "desc": "湖畔散着大小石块。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第32回",
+          "inferred": true,
+          "basis": "苏星河说丁春秋搜寻秘笈几乎翻遍每块石子；石地形制据此最低限度推定。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "小镜湖",
+      "src": "第22—23回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "小镜湖·镜样湖面",
+          "location": "小镜湖",
+          "desc": "湖面平展，仿佛一面明镜。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第22回",
+          "inferred": false,
+          "basis": "第22回酒保描述小镜湖为镜子也似的湖泊；不扩写周围山峰。"
+        },
+        {
+          "id": "小镜湖·方形竹丛",
+          "location": "小镜湖·方竹林",
+          "desc": "竹干呈方形，成丛生在湖西。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第22回",
+          "inferred": false,
+          "basis": "傅思归指明湖西方竹林，萧峰抵达后确认竹杆为方形。"
+        },
+        {
+          "id": "小镜湖·三间竹屋外壁",
+          "location": "小镜湖·竹屋",
+          "desc": "三间小屋以竹构成，形制精致。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第22回",
+          "inferred": false,
+          "basis": "萧峰托着褚万里到竹林，实见三间构筑精致的竹屋。"
+        },
+        {
+          "id": "小镜湖·屋前平地",
+          "location": "小镜湖·竹屋",
+          "desc": "竹屋门前有一片平坦空地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第22回",
+          "inferred": false,
+          "basis": "阿紫被放在竹屋前平地施救，空地本身不依赖该事件。"
+        },
+        {
+          "id": "小镜湖·青石桥栏",
+          "location": "小镜湖·青石桥",
+          "desc": "桥两侧设有石栏。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第23回",
+          "inferred": false,
+          "basis": "阿朱负伤后倚靠桥栏杆；仅布原有桥栏，不布血迹或遗体。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "晋阳",
+      "src": "第24—25回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "晋阳·入城行路",
+          "location": "晋阳",
+          "desc": "道路由城外延向城中。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第24回",
+          "inferred": true,
+          "basis": "阿紫以晋阳为长途行程目的地，最低限度推定有入城通路；原文未写城内独特近景。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "雪地客店",
+      "src": "第25回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "雪地客店·简陋店面",
+          "location": "雪地客店",
+          "desc": "临路的客店，外观简陋。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第25回",
+          "inferred": true,
+          "basis": "萧峰携重伤阿紫北行二十余里寻到简陋客店；临路由行程推定。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "塞外",
+      "src": "第25—26回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "塞外·北地密林",
+          "location": "塞外",
+          "desc": "林木成片，林内可避风歇足。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第25—26回",
+          "inferred": false,
+          "basis": "萧峰带阿紫进入东北苦寒之地，在林中生火过夜；不把一夜营火写作永久物。"
+        },
+        {
+          "id": "塞外·部落西面草原",
+          "location": "塞外",
+          "desc": "草地向西铺展，远处看不见尽头。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26回",
+          "inferred": false,
+          "basis": "萧峰说女真居地西面是一片草原，二人西行时见草原无际。"
+        },
+        {
+          "id": "塞外·族长帐篷外廓",
+          "location": "女真部落",
+          "desc": "较大的帐篷立在聚居地中。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26回",
+          "inferred": true,
+          "basis": "和哩布在族长帐幕接待萧峰，帐篷的较大外廓依聚众饮酒推定；帐内常物由20模板。"
+        },
+        {
+          "id": "塞外·山林挖参土坡",
+          "location": "塞外",
+          "desc": "林地起伏，土层间长着草木。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26回",
+          "inferred": true,
+          "basis": "萧峰向东、向北入山挖参；不把珍贵人参无条件生在固定眼前。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "辽国军营",
+      "src": "第26—27回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "辽国军营·皮室大帐帐壁",
+          "location": "辽国军营",
+          "desc": "数层牛皮叠制，外饰彩绘金纹。",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第27回",
+          "inferred": false,
+          "basis": "旁白直接描写皇帝皮室大帐；只记可随行营搬运的帐壁，不固定御营坐标。"
+        },
+        {
+          "id": "辽国军营·营地帐列",
+          "location": "辽国军营",
+          "desc": "帐幕在旷地上分列。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第26—27回",
+          "inferred": true,
+          "basis": "萧峰远见无数营帐，号角声传至营中时又有数百帐幕；布排列形态，不布未来宴席和叛军。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "上京",
+      "src": "第27回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "上京·简朴街市外观",
+          "location": "上京",
+          "desc": "街边民居与市肆形制粗朴简陋。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27回",
+          "inferred": false,
+          "basis": "旁白明确比较上京民居、店铺、市肆与中原的形制差异；各店内陈设由20模板。"
+        },
+        {
+          "id": "上京·都城出入路",
+          "location": "上京",
+          "desc": "城外道路连接城中街市。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27回",
+          "inferred": true,
+          "basis": "百官与百姓出迎入城大军说明城外到城中的通路，具体门名与宽度原文未详。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "南京",
+      "src": "第27—29、49—50回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "南京·宽街",
+          "location": "南京",
+          "desc": "街道宽阔，连着密集的坊市。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27回",
+          "inferred": false,
+          "basis": "萧峰初到南京时直接看到街道宽阔、市肆繁华。"
+        },
+        {
+          "id": "南京·八门城垣",
+          "location": "南京",
+          "desc": "城垣四面各设两门。",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第27回",
+          "inferred": false,
+          "basis": "旁白列东安东迎春、南开阳丹凤、西显西清晋、北通天拱辰八门。"
+        },
+        {
+          "id": "南京·北门门洞",
+          "location": "南京·北门",
+          "desc": "北侧门洞通向城外道路。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27、49回",
+          "inferred": true,
+          "basis": "八门形制与49回出北门事件；不把毒发与封锁写入永久场景。"
+        },
+        {
+          "id": "南京·西门门洞",
+          "location": "南京·西门",
+          "desc": "西侧城门内外可通骑队。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27、50回",
+          "inferred": true,
+          "basis": "27回萧峰从清晋门出猎，50回救援人马经西门；位置沿01。"
+        },
+        {
+          "id": "南京·王府院墙",
+          "location": "南院大王府",
+          "desc": "城西南的府院以墙围护。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第27回",
+          "inferred": true,
+          "basis": "南院大王府在城西南，围护形制按府第推定；不另造一个同名王府。"
+        },
+        {
+          "id": "南京·白马桥桥面",
+          "location": "白马桥",
+          "desc": "桥面越过城中河道。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第49回",
+          "inferred": true,
+          "basis": "阿紫在白马桥处投水，桥面与河道据此可定；材质和长度不详。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "中原",
+      "src": "第29回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "中原·路边破庙神龛",
+          "location": "中原",
+          "desc": "破庙殿内的神龛后可以藏身。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第29回",
+          "inferred": false,
+          "basis": "游坦之在河南路旁小破庙躲在神龛后；用区域级location因01未单列此庙，不断言在某城。"
+        },
+        {
+          "id": "中原·道旁凉亭柱",
+          "location": "中原",
+          "desc": "凉亭木柱撑起瓦顶。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第29回",
+          "inferred": true,
+          "basis": "玄难在凉亭中毒后劈断亭柱、屋瓦泥沙倾下；初始保存未毁的柱顶。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "薛慕华居所",
+      "src": "第29—30回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "薛慕华居所·白墙黑瓦屋面",
+          "location": "薛慕华居所",
+          "desc": "数间大屋白墙黑瓦，坐落河旁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第29回",
+          "inferred": false,
+          "basis": "玄难到薛家门前所见。"
+        },
+        {
+          "id": "薛慕华居所·门前药圃",
+          "location": "薛慕华居所",
+          "desc": "屋门前一大片地畦，种着药草。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第29回",
+          "inferred": false,
+          "basis": "原文明确门前有大片药圃；不猜品种、药效或可采数量。"
+        },
+        {
+          "id": "薛慕华居所·屋边小河",
+          "location": "薛慕华居所",
+          "desc": "小河从宅屋旁流过。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第29回",
+          "inferred": false,
+          "basis": "薛宅被直接描写为小河边的数间大屋。"
+        },
+        {
+          "id": "薛慕华居所·可移桂树",
+          "location": "薛慕华居所",
+          "desc": "庭中桂树连根座可循机括挪移。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第30回",
+          "inferred": false,
+          "basis": "薛慕华开关藏身地道时移动桂树；仅内行知其机关。",
+          "known": {
+            "who": [
+              "薛慕华"
+            ]
+          },
+          "hint": "须查桂树根座与隐蔽机括，不能仅凭树形看出。"
+        },
+        {
+          "id": "薛慕华居所·地窖入口石板",
+          "location": "薛慕华居所·地窖",
+          "desc": "一块大石板遮住地下入口。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第30回",
+          "inferred": false,
+          "basis": "薛慕华扳动机括，石板自行掩合。",
+          "known": {
+            "who": [
+              "薛慕华"
+            ]
+          },
+          "hint": "入口藏在可移桂树之下。"
+        },
+        {
+          "id": "薛慕华居所·石砌低廊",
+          "location": "薛慕华居所·地窖",
+          "desc": "石砌通路狭低，行人须弯腰。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第30回",
+          "inferred": false,
+          "basis": "进入地窖先经低矮石砌通道，再接天然隧道。",
+          "known": {
+            "who": [
+              "薛慕华"
+            ]
+          },
+          "hint": "开启地下入口后可见。"
+        },
+        {
+          "id": "薛慕华居所·天然石洞",
+          "location": "薛慕华居所·地窖",
+          "desc": "隧道尽头石洞宽广，另有透气孔道。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第30回",
+          "inferred": false,
+          "basis": "众人走十余丈到宽广石洞，火炬烟气可外透。",
+          "known": {
+            "who": [
+              "薛慕华"
+            ]
+          },
+          "hint": "须进入地窖通道后方可到达。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "擂鼓山",
+      "src": "第31—32回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "擂鼓山·谷中松林",
+          "location": "擂鼓山",
+          "desc": "谷中松树密集，风过如涛。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第31回",
+          "inferred": false,
+          "basis": "一行入谷时明确松树成林、松声若涛。"
+        },
+        {
+          "id": "擂鼓山·棋局旁大树",
+          "location": "擂鼓山·棋局场",
+          "desc": "木屋前有一株大树，树下地面平缓。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第31回",
+          "inferred": true,
+          "basis": "三间木屋前大树下二人对坐弈棋；平缓为活动空间推定。"
+        },
+        {
+          "id": "擂鼓山·无门板壁",
+          "location": "擂鼓山·木屋",
+          "desc": "木屋板壁封合，看不见门户。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第31回",
+          "inferred": false,
+          "basis": "虚竹受邀进屋却见无门，随后才劈壁；这里保存未破时形制。",
+          "known": {
+            "who": [
+              "无崖子",
+              "苏星河"
+            ]
+          }
+        },
+        {
+          "id": "擂鼓山·内室隔板",
+          "location": "擂鼓山·木屋",
+          "desc": "木板隔开内室，房中无窗。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第31回",
+          "inferred": false,
+          "basis": "虚竹接连撞破板壁进入无门无窗房间，仍与说话者隔壁；不预置破洞。",
+          "known": {
+            "who": [
+              "无崖子",
+              "苏星河"
+            ]
+          },
+          "hint": "越过封合的外壁后才看见。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "万仙大会山谷",
+      "src": "第33—36回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "万仙大会山谷·崎岖山径",
+          "location": "万仙大会山谷",
+          "desc": "山径陡峭，路旁乱石嶙峋。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第33回",
+          "inferred": false,
+          "basis": "慕容复一行找夜宿处时对山路的直接描写。"
+        },
+        {
+          "id": "万仙大会山谷·道旁长草",
+          "location": "万仙大会山谷",
+          "desc": "乱草沿山路丛生。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第33回",
+          "inferred": false,
+          "basis": "原文说越走道旁乱草越长。"
+        },
+        {
+          "id": "万仙大会山谷·谷侧山壁",
+          "location": "万仙大会山谷",
+          "desc": "山壁围着谷地，声音易于回荡。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第33回",
+          "inferred": false,
+          "basis": "人物被击飞撞山壁；喊声在山谷震响。"
+        },
+        {
+          "id": "万仙大会山谷·山谷树梢",
+          "location": "万仙大会山谷",
+          "desc": "树冠枝叶遮蔽上方视线。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第33回",
+          "inferred": true,
+          "basis": "夜会交手时有人隐身树上，遮蔽性由此推定。"
+        },
+        {
+          "id": "万仙大会山谷·雪峰林地",
+          "location": "万仙大会山谷·雪峰",
+          "desc": "山峰林木绵延，枝干纵横。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第35回",
+          "inferred": false,
+          "basis": "虚竹负童姥穿行林地并踏树逃避追踪，积雪由季节系统决定。"
+        },
+        {
+          "id": "万仙大会山谷·断涧裂口",
+          "location": "万仙大会山谷·雪覆断涧",
+          "desc": "山地断为深涧，涧边陡落。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "积雪掩盖断涧，虚竹与童姥坠下；开端不固定当天雪桥状态。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "洞庭湖",
+      "src": "第41回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "洞庭湖·君山会集空地",
+          "location": "君山",
+          "desc": "岛上有可容众人会集的开阔地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第41回",
+          "inferred": true,
+          "basis": "旁白仅回叙洞庭湖君山丐帮大会；空地为举办大会所必需的最小形制推定，不新造会台旗杆。"
+        },
+        {
+          "id": "洞庭湖·君山临水岸线",
+          "location": "君山",
+          "desc": "山地边缘与湖水相接。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第41回",
+          "inferred": true,
+          "basis": "由洞庭湖君山这一原著地点指称作最低限度地理推定，未据现实旅游资料填景。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "天山",
+      "src": "第35—39回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "天山·接天铁索",
+          "location": "灵鹫宫·铁索桥",
+          "desc": "一根铁链横跨两侧峭壁。",
+          "state": null,
+          "hidden": false,
+          "tier": 2,
+          "src": "第37回",
+          "inferred": false,
+          "basis": "接天桥原为单根铁链，未被毁时可踏索过涧；并非铺木板桥。"
+        },
+        {
+          "id": "天山·索中铁锁",
+          "location": "灵鹫宫·铁索桥",
+          "desc": "铁链中段以铁锁接合。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第37回",
+          "inferred": false,
+          "basis": "钧天部防御预案是开启中锁使索分断；不预设宝刀斩断。"
+        },
+        {
+          "id": "天山·桥下深谷",
+          "location": "灵鹫宫·铁索桥",
+          "desc": "深谷下乱石密布，两崖相距近五丈。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第37回",
+          "inferred": false,
+          "basis": "旁白明写桥下地形与崖距。"
+        },
+        {
+          "id": "天山·独尊厅岩壁",
+          "location": "灵鹫宫·独尊厅",
+          "desc": "大厅四壁以厚实花岗岩砌成。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第38回",
+          "inferred": false,
+          "basis": "群豪遭封门后观察四壁，明言厚实异常花岗岩。"
+        },
+        {
+          "id": "天山·厅门封岩",
+          "location": "灵鹫宫·独尊厅",
+          "desc": "巨岩可以封住厅门通路。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第38回",
+          "inferred": false,
+          "basis": "独尊厅封门后由机关巨石阻隔，开端不施行关门围困。",
+          "known": {
+            "who": [
+              "天山童姥",
+              "梅剑",
+              "兰剑",
+              "竹剑",
+              "菊剑"
+            ]
+          },
+          "hint": "需熟悉厅门机关，才能识别巨岩移动处。"
+        },
+        {
+          "id": "天山·石室入口活动岩",
+          "location": "灵鹫宫·石室",
+          "desc": "通道旁一块岩石可以推移。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第39回",
+          "inferred": false,
+          "basis": "梅剑推开通道左侧岩石，露出石室入口。",
+          "known": {
+            "who": [
+              "天山童姥",
+              "梅剑",
+              "兰剑",
+              "竹剑",
+              "菊剑"
+            ]
+          },
+          "hint": "须由知路人引至地道内寻找岩门。"
+        },
+        {
+          "id": "天山·圆圈壁刻",
+          "location": "灵鹫宫·石室",
+          "desc": "光滑石壁满刻圆圈、图形与编号。",
+          "state": null,
+          "hidden": true,
+          "tier": 1,
+          "src": "第39回",
+          "inferred": false,
+          "basis": "圈内人像、兽形、文字、记号和天干编号；是固定武学图解，不另生成可拾取秘籍。",
+          "known": {
+            "who": [
+              "天山童姥"
+            ]
+          },
+          "hint": "进入禁地石室方见；辨识与习练仍须相应修为。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "西夏",
+      "src": "第36、45—46回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "西夏·宫墙与高楼",
+          "location": "西夏皇宫",
+          "desc": "高墙内高楼耸起，重屋覆琉璃瓦。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "虚竹随童姥潜入皇宫前看到宏伟大屋、高楼及琉璃瓦。"
+        },
+        {
+          "id": "西夏·冰库石墙",
+          "location": "西夏皇宫·冰库",
+          "desc": "厚墙由四五尺见方的大石块砌成。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "冰库外石屋形制明写。"
+        },
+        {
+          "id": "西夏·冰库双重门",
+          "location": "西夏皇宫·冰库",
+          "desc": "外门用八根半剖松木钉合，内有重门。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "冰库外门材质与两重门明写。"
+        },
+        {
+          "id": "西夏·入库铁环",
+          "location": "西夏皇宫·冰库",
+          "desc": "沉重木门上装着大铁环。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "虚竹握大铁环拉开库门。"
+        },
+        {
+          "id": "西夏·层间石阶",
+          "location": "西夏皇宫·冰库",
+          "desc": "屋角洞口接石阶，通向地下库层。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "冰库共有三层，屋角洞口的石阶连接下一层。"
+        },
+        {
+          "id": "西夏·切方冰垛",
+          "location": "西夏皇宫·冰库底层",
+          "desc": "割切方整的大冰块层层堆放。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第36回",
+          "inferred": false,
+          "basis": "库内及底层均藏大冰块；库务维护可改变数量，不虚设可携带总吨数。"
+        },
+        {
+          "id": "西夏·青凤阁连廊",
+          "location": "青凤阁",
+          "desc": "回廊绕过花园与一排假山。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "前往青凤阁途中经过大花园、回廊和假山。"
+        },
+        {
+          "id": "西夏·三重石门",
+          "location": "青凤阁",
+          "desc": "甬道间接连设置三道厚石门。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "求亲者经过三道大石门，门厚逾一尺。",
+          "known": {
+            "who": [
+              "李秋水",
+              "李清露"
+            ]
+          },
+          "hint": "须进入阁内甬道方能看见。"
+        },
+        {
+          "id": "西夏·幽兰涧",
+          "location": "青凤阁",
+          "desc": "阁内通路隔着一道深涧。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "宫女直称幽兰涧，涧宽不易飞越。",
+          "known": {
+            "who": [
+              "李秋水",
+              "李清露"
+            ]
+          },
+          "hint": "沿内书房通路深入后方见。"
+        },
+        {
+          "id": "西夏·缩收钢索",
+          "location": "青凤阁",
+          "desc": "黑漆钢索横跨深涧，可收进草丛。",
+          "state": null,
+          "hidden": true,
+          "tier": 3,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "宫女踏钢索过涧，再按岩旁机括使之缩收。",
+          "known": {
+            "who": [
+              "李秋水",
+              "李清露"
+            ]
+          },
+          "hint": "须细察暗处索影与岩边机关。"
+        },
+        {
+          "id": "西夏·暗室线刻",
+          "location": "西夏石室",
+          "desc": "墙面刻着圈中人形、阴阳线条及数目。",
+          "state": null,
+          "hidden": true,
+          "tier": 1,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "虚竹认出与逍遥派武学相通的石刻；描写只留所见外形。",
+          "known": {
+            "who": [
+              "李秋水",
+              "李清露",
+              "晓蕾"
+            ]
+          },
+          "hint": "入暗室后移开遮挡的书画，才能细看石刻。"
+        },
+        {
+          "id": "西夏·隔室帷幕",
+          "location": "西夏石室",
+          "desc": "厚帷幕隔开石室与内堂。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第46回",
+          "inferred": false,
+          "basis": "虚竹与公主穿过帷幕走向内堂。"
+        }
+      ],
+      "items": [
+        {
+          "id": "西夏·湖畔舞剑图",
+          "location": "西夏石室",
+          "grade": "要物",
+          "kind": "文书",
+          "desc": "绢画绘一名女子临湖舞剑。",
+          "hidden": false,
+          "tier": 2,
+          "src": "第46回",
+          "inferred": true,
+          "basis": "段誉在青凤阁内反复看湖畔舞剑图；画与无崖子随身旧画像不是同一物。估值为游戏推定。",
+          "price": 15,
+          "spot": "石室壁上",
+          "props": {
+            "载体": "书画卷轴"
+          },
+          "text": "女子在湖畔持剑起舞，面容与王语嫣相似而有细微差异。",
+          "secret": "画轴遮着石壁武学图形，揭起画幅可见；画中人具体身份此段未确证，不凭面容直接定为王语嫣或李秋水之妹。",
+          "known": {
+            "who": [
+              "李秋水",
+              "李清露"
+            ]
+          },
+          "doc": {
+            "state": "写成"
+          }
+        }
+      ]
+    },
+    {
+      "scene": "宋境乡村",
+      "src": "第44回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "宋境乡村·农舍狭窄内间",
+          "location": "宋境乡村",
+          "desc": "内间狭小，进门即可望见屋内。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第44回",
+          "inferred": true,
+          "basis": "段誉钟灵为躲阿紫而进屋，原文明确山农陋屋内房狭隘。"
+        },
+        {
+          "id": "宋境乡村·炕底空隙",
+          "location": "宋境乡村",
+          "desc": "土炕下留有可供添火的空隙。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第44回",
+          "inferred": false,
+          "basis": "段誉钟灵藏入炕底，原文解释少室山农冬季炕下烧火；不预置二人或积灰数量。"
+        },
+        {
+          "id": "宋境乡村·舍旁菜园",
+          "location": "宋境乡村",
+          "desc": "农舍旁有一小片菜园。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第44回",
+          "inferred": false,
+          "basis": "钟灵叙述先去菜园拔菜再回厨房；菜地存在有据，作物品种不详。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "西夏枯井",
+      "src": "第45回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "西夏枯井·枯井井口",
+          "location": "西夏枯井",
+          "desc": "井口开在林地一旁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第45回",
+          "inferred": false,
+          "basis": "慕容复在宾馆附近林中找坑穴，看到枯井；未预放后来堵井的石块。"
+        },
+        {
+          "id": "西夏枯井·井底淤泥",
+          "location": "西夏枯井",
+          "desc": "井底积着湿泥，落脚陷软。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第45回",
+          "inferred": false,
+          "basis": "段誉坠入后为井底污泥所缓冲，王语嫣与鸠摩智后来也落入。"
+        },
+        {
+          "id": "西夏枯井·井筒深壁",
+          "location": "西夏枯井",
+          "desc": "井壁向下延伸，底部光线昏暗。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第45回",
+          "inferred": true,
+          "basis": "人物在井底仰望井口、难以自行出井；不虚构深度或攀爬梯。"
+        },
+        {
+          "id": "西夏枯井·井旁林木",
+          "location": "西夏枯井",
+          "desc": "井边一带林木遮蔽。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第45回",
+          "inferred": false,
+          "basis": "鸠摩智赶到林中见慕容复正与王语嫣说话。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "王夫人山庄·木柱陷阱",
+      "src": "第47回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "王夫人山庄·木柱陷阱·草海长草",
+          "location": "王夫人山庄·木柱陷阱",
+          "desc": "大片野草接着林边，望去无边。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": false,
+          "basis": "一行将近草海时见无穷野草与左侧大森林；位置沿基准操作性场景，不与大厅合一。"
+        },
+        {
+          "id": "王夫人山庄·木柱陷阱·木屋群外廓",
+          "location": "王夫人山庄·木柱陷阱",
+          "desc": "林中七八间木屋相连。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": true,
+          "basis": "段誉等初见木场形制；假定木屋先于设局存在，未预装诱蜂药料。"
+        },
+        {
+          "id": "王夫人山庄·木柱陷阱·屋顶烟囱",
+          "location": "王夫人山庄·木柱陷阱",
+          "desc": "木屋屋顶伸出排烟口。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": false,
+          "basis": "原文借烟囱炊烟判断屋内有人；不固定持续冒烟。"
+        },
+        {
+          "id": "王夫人山庄·木柱陷阱·木柱表面",
+          "location": "王夫人山庄·木柱陷阱",
+          "desc": "木柱支撑屋内梁架。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": true,
+          "basis": "木柱形制明写；原文刻字与藏药属于针对段正淳部署的机关，开端只保留未设机关的木柱。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "王夫人山庄",
+      "src": "第47—48回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "王夫人山庄·囚室与厅间板壁",
+          "location": "王夫人山庄",
+          "desc": "房间与大厅之间隔着木板壁。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": true,
+          "basis": "段誉遭拘禁时隔壁听王夫人和慕容复说话，板壁形制由近距离透声及后文入厅推定。"
+        },
+        {
+          "id": "王夫人山庄·大厅承梁",
+          "location": "王夫人山庄·大厅",
+          "desc": "厅上横梁高悬，贯穿屋顶。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第48回",
+          "inferred": false,
+          "basis": "慕容复长剑脱手插入屋梁，段正淳后来取下；不预置剑或血迹。"
+        },
+        {
+          "id": "王夫人山庄·大厅侧窗",
+          "location": "王夫人山庄·大厅",
+          "desc": "厅侧开窗，窗外通向庄外。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第48回",
+          "inferred": true,
+          "basis": "慕容复从窗逃去说明有通向外部的窗；具体朝向不详。"
+        },
+        {
+          "id": "王夫人山庄·厅前行车地",
+          "location": "王夫人山庄",
+          "desc": "屋门外有可停大车的地方。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第48回",
+          "inferred": true,
+          "basis": "段延庆携被俘诸人乘大车抵达，随后人物由车上下来；空地具体大小未详。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "双凤驿",
+      "src": "第47回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "双凤驿·红沙滩地面",
+          "location": "红沙滩",
+          "desc": "滩地沙土泛红，地势较为开阔。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": true,
+          "basis": "慕容复转述双凤驿边红沙滩截击；色泽依地名、开阔依车队交战作最低限度推定。"
+        },
+        {
+          "id": "双凤驿·驿旁通路",
+          "location": "双凤驿",
+          "desc": "通路从驿边经过，接向红沙滩一带。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第47回",
+          "inferred": true,
+          "basis": "段正淳车队在驿边被截；仅推定可供车行的进出路，不猜桥河名称。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "汴梁",
+      "src": "第49回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "汴梁·后阁临窗处",
+          "location": "崇庆殿",
+          "desc": "后阁窗面朝向开阔夜空。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第49回",
+          "inferred": true,
+          "basis": "赵煦走到窗前看北斗后回到太皇太后病榻；只记录窗面，星象与时刻不固定。"
+        },
+        {
+          "id": "汴梁·后阁内外分隔",
+          "location": "崇庆殿",
+          "desc": "殿后另有内阁，出入与殿前相通。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第49回",
+          "inferred": true,
+          "basis": "高氏居崇庆殿后阁、臣属内外传命；最低限度内部形制，不虚设装饰物。"
+        }
+      ],
+      "items": []
+    },
+    {
+      "scene": "善巨郡",
+      "src": "第50回",
+      "places": [],
+      "roads": {
+        "remove": [],
+        "add": [],
+        "change": []
+      },
+      "features": [
+        {
+          "id": "善巨郡·高山台地",
+          "location": "长春谷外山岭",
+          "desc": "陡峭山道上方有一片高台地。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第50回",
+          "inferred": false,
+          "basis": "段誉一行在喘息攀登后到达高台地。"
+        },
+        {
+          "id": "善巨郡·横断深涧",
+          "location": "长春谷外山岭",
+          "desc": "深涧截断前路，两岸陡险。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第50回",
+          "inferred": false,
+          "basis": "众人行至天晚，地形横空断绝，无路继续。"
+        },
+        {
+          "id": "善巨郡·山道藤蔓",
+          "location": "长春谷外山岭",
+          "desc": "山径险陡，藤蔓沿岩壁垂生。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第50回",
+          "inferred": false,
+          "basis": "上山需攀藤拉索；不把临时绳索当成已经存在的固定装置。"
+        },
+        {
+          "id": "善巨郡·远处题字大树",
+          "location": "长春谷外山岭",
+          "desc": "前方大树树身留着异样文字。",
+          "state": null,
+          "hidden": true,
+          "tier": 2,
+          "src": "第50回",
+          "inferred": false,
+          "basis": "采燕客取回树文摹本，巴天石辨读；原文由他人取样，具体树种与刻写方式不详。",
+          "known": {
+            "tags": [
+              "当地山民"
+            ]
+          },
+          "hint": "须沿险径找树，或请熟悉地形的采燕客引路。"
+        },
+        {
+          "id": "善巨郡·峭壁采燕处",
+          "location": "长春谷外山岭",
+          "desc": "高山峭壁间有燕鸟栖巢的隙穴。",
+          "state": null,
+          "hidden": false,
+          "tier": 3,
+          "src": "第50回",
+          "inferred": true,
+          "basis": "怒族采燕客在当地高山峭壁采金丝燕窝，隙穴形制为最低限度推定。"
+        }
+      ],
+      "items": []
     }
   ]
 }

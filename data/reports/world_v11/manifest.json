@@ -1,0 +1,176 @@
+{
+  "format": "TianL WORLD_PROMPT v11 extraction",
+  "repository": "https://github.com/nekoduck/TianL.git",
+  "baseline_commit": "772a250d9c8d9c31f28927372acb6f594ac4892c",
+  "baseline_branch": "claude/tianlong-sandbox",
+  "prompt_sha256": "86ab583a1e3f90544a1868a751466bad189ad462ee7baaac6bb8c6c0de647e4b",
+  "novel_sha256": "87f840d000b9cc7a41109529908dbad013db8e18299d557400ef2bdfb2c1dcea",
+  "baseline_files": [
+    {
+      "path": "data/canon/00_index.json",
+      "bytes": 101948,
+      "sha256": "152e7c0916cc51c7346d112c2938e6186e995ef7d1a58d34cf96db2fa0f753be"
+    },
+    {
+      "path": "data/canon/01_locations.json",
+      "bytes": 44714,
+      "sha256": "0336c7d5a69918d3d5e2081f74dfa497d159694d26b46bc1dd9717ea5d06925c"
+    },
+    {
+      "path": "data/canon/02_roads.json",
+      "bytes": 9856,
+      "sha256": "85b684b7a4c32d2b06e2cd171ec79e9678f39d32b3edb48994a714928f58ef2e"
+    },
+    {
+      "path": "data/canon/03_factions.json",
+      "bytes": 13136,
+      "sha256": "01f9e7ae6879697e9eed197dba6c4f897c667e375f5e7a5dfb46098927932d37"
+    },
+    {
+      "path": "data/canon/04_persons.json",
+      "bytes": 127952,
+      "sha256": "dd72dabad0bdb61f24cc55beb15f507f62d057f78cc6e52488f80d026cc959f0"
+    },
+    {
+      "path": "data/canon/05_items.json",
+      "bytes": 45745,
+      "sha256": "9d44e8c4c4bd91dd137882abaafa874dce5ebc97c77c98da4543bc1c0c98816b"
+    },
+    {
+      "path": "data/canon/06_skills.json",
+      "bytes": 34894,
+      "sha256": "1ae09a4e1a93dc64a7a3db3b3f39a6d2c730cfdf38d0d798e5026afae508d56d"
+    },
+    {
+      "path": "data/canon/07_relations.json",
+      "bytes": 26461,
+      "sha256": "0cf011494a3f254eeb23229778b19b92f1f1410044581f106a34b7b1ca8b5c4d"
+    },
+    {
+      "path": "data/canon/08_canon.json",
+      "bytes": 350885,
+      "sha256": "3da624e3dd9f547590e73284fab3caa312f61a44a196177860f8ad3720db5a9f"
+    },
+    {
+      "path": "data/canon/14_access.json",
+      "bytes": 55388,
+      "sha256": "b7ae4e8a616223a4cc4f3d316043dfba5dde19dfa65d2d90c695568404369995"
+    },
+    {
+      "path": "data/canon/15_roads_patch.json",
+      "bytes": 15810,
+      "sha256": "7a262caf400f8e505ec19ac3e0621906345e71b1e86183eb4783649c072fccb4"
+    },
+    {
+      "path": "data/canon/16_roads_fill.json",
+      "bytes": 1287,
+      "sha256": "e218b22d08d36a40413fe4623c52d0710bb37be84f09585c1a576c29442f4bd1"
+    },
+    {
+      "path": "data/canon/18_scenes.json",
+      "bytes": 9852,
+      "sha256": "47b32ae6a53d6df3264a28e88c532130f547bfd2cd5d7caaa871647a183e82a1"
+    }
+  ],
+  "deliverables": [
+    {
+      "path": "data/canon/18_scenes.json",
+      "bytes": 105719,
+      "sha256": "e31155442687bc60535654b00ef543342f2cabcdd65c71144d56e831d0968e7d"
+    },
+    {
+      "path": "data/canon/19_places.json",
+      "bytes": 191786,
+      "sha256": "342b38f6053b6947d16cba17e31af3a1b30674771d99f24e0d08cadf8d1aba97"
+    },
+    {
+      "path": "data/canon/20_venues.json",
+      "bytes": 803437,
+      "sha256": "2d8a384bb0665e40a6d70d6d0091b8188af411586626e41610f4139b2eed57f7"
+    },
+    {
+      "path": "data/canon/21_goods.json",
+      "bytes": 264719,
+      "sha256": "58dba8e7e18b2f02d9b65eac2ba534291e80fac6f41a52dd94a826ce16801e1c"
+    },
+    {
+      "path": "data/canon/22_people.json",
+      "bytes": 240899,
+      "sha256": "96e24d8f324b912ff97ccddffa9ad3047369f102547303f24647a689f0a8cd27"
+    },
+    {
+      "path": "data/canon/23_factions.json",
+      "bytes": 160587,
+      "sha256": "75b9528148b1e6278ca68deae1d8cfffbc78f40ce0d364afd2abe158fa906380"
+    },
+    {
+      "path": "data/canon/24_laws.json",
+      "bytes": 40715,
+      "sha256": "7a0949c220f32400faa6678ace0f36876108ff7c35019640582f45b23ce0301d"
+    },
+    {
+      "path": "data/canon/25_lore.json",
+      "bytes": 259265,
+      "sha256": "7fa836d8e9f23b1b8eff25e0164b3c20cc03bea20ad99bcce8ae45c6c57e1eb8"
+    },
+    {
+      "path": "data/canon/26_nature.json",
+      "bytes": 81856,
+      "sha256": "9207ecd03e749f9c3e070e5454476be018bd58d5f2a85fffe7dac83fdae80d5e"
+    },
+    {
+      "path": "data/canon/27_lines.json",
+      "bytes": 137604,
+      "sha256": "53ded5208cb703e0e1a26c452f136a6e249f3c4c2c2b53a430cc2b9065e5122d"
+    },
+    {
+      "path": "reports/validation.json",
+      "bytes": 9526,
+      "sha256": "de7717a0be57bbbbc8f11c991bcf1b4e43261db1d9b63a6d84b07aa86533acc8"
+    },
+    {
+      "path": "reports/world_issues.json",
+      "bytes": 261131,
+      "sha256": "95aa09da060b0144558dfb2a49f94dca1ce23fab021cc2729ac8feef12544197"
+    },
+    {
+      "path": "reports/world_plan.json",
+      "bytes": 96431,
+      "sha256": "8ac25cddd9918041ebbd48647d108a79558dd1ac4580dbae58da623894515215"
+    },
+    {
+      "path": "scripts/validate_world.py",
+      "bytes": 45617,
+      "sha256": "a7ce2780f685fe53cbad0d463bf2c2777bf3c163352c55362ad8c5a8370a6747"
+    },
+    {
+      "path": "README.json",
+      "bytes": 1400,
+      "sha256": "1aeba90edb90d6d3072794290754494a343343232383861fe93cf2c1ba8d4551"
+    }
+  ],
+  "counts": {
+    "cards": 202,
+    "new_places_explicit": 133,
+    "venue_templates": 48,
+    "venue_instances": 496,
+    "new_venues": 447,
+    "new_places_before_room_expansion": 580,
+    "goods": 448,
+    "canon_items": 98,
+    "named_people": 242,
+    "existing_factions": 55,
+    "new_factions": 7,
+    "kits": 74,
+    "squads": 79,
+    "polities": 6,
+    "jianghu_rules": 30,
+    "precepts": 25,
+    "lore": 316,
+    "scenes": 41,
+    "scene_roots_appended": 40,
+    "plot_lines": 50,
+    "event_annotations": 235
+  },
+  "runtime_status": "v11未接入当前genesis，仅完成数据与静态检查"
+}
