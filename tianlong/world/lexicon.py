@@ -18,6 +18,8 @@
        主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
        场景清单(v8)：寻常之物(trifle：茶碗、瓜子)的取用与交出只记软违例；谁都一样，拿出、取来、递上的东西若不是名表里的任何一件，即 conjure(世上有没有由调用方对账)；
        DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
+       物量(v9)：MONEYISH 说到了钱(查前先挖去实体名：钱光胜不是钱)、COIN 名词就是钱、WRITING 起意提笔、FELL 一群人里有人倒下；
+       View 另有 traded(主角经手的东西：拿了一部分原物仍在原处的不算没拿、交出一部分仍在身上的不算没交)、银两起止(写你得了钱、交了钱而银两分文未动即漏记)、felled(人数少了的人群)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -44,6 +46,8 @@ BIND = re.compile(r"擒住|擒下|擒获|生擒|绑了|绑住|捆住|押走|押�
 MOVE = re.compile(r"前往|赶往|赶赴|奔赴|奔往|奔向|投奔|去往|转往|转赴|往.{1,6}(?:而去|疾驰|奔去|赶去|行去)|跌往|跌落|跌下|跌入|跌进|"
                   r"坠入|坠落|坠下|坠崖|堕入|落入|掉入|滚落|逃往|逃入|逃进|逃到|逃回|来到|抵达|赶到|回到|返回|折返|退回|"
                   r"离开|离了|下山|上山|入谷|出谷|进谷|进入|潜入|闯入|闯进|动身|启程|北上|南下|东去|西去|远走|出走|投向|迁往|移往")
+FELL = re.compile(r"杀死|杀了|刺死|打死|劈死|砍死|击杀|击毙|斩杀|打倒|击倒|刺倒|劈倒|砍倒|放倒|撂倒|打翻|点倒|打晕|击晕|"
+                  r"倒地|倒下|昏死|昏了过去|毙命|身亡|气绝")  # 一群人里有人倒下(v9)：死与晕都算
 HURT = re.compile(r"负伤|受伤|重伤|伤重|轻伤|受了伤|带伤|挂彩|中毒|中了毒|毒发|吐血|呕血|咯血|刺伤|打伤|击伤|砍伤|咬伤|射伤|震伤|所伤|伤势")
 FROM = re.compile(r"(?:离开|离了|出了|从|自|由)$")  # 「离开无量山」：说的是来处，不是去处
 HEARSAY = re.compile(r"据说|听说|传闻|传言")
@@ -68,6 +72,9 @@ WARE = (r"(?:书信|令牌|令箭|包袱|火折|火把|匕首|银子|银两|金�
         r"碗|杯|盏|灯|烛|剑|刀|枪|棍|鞭|杖|钩|爪|斧|锤|戟|弓|箭|镖|针|珠|钏|镯|佩|簪|镜|玉|银|钱|药|丹|丸|散|膏|草|锁|绳|索|纸)")
 WARE_NOUN = re.compile(r"^(?:你|他|她|我|众人)?(?:[一两几数半那这此][封张叠卷本册柄把只块包瓶枚锭串颗粒面根条盏副对件个份壶碗杯袋]?)?"
                        r"([^，。；！？、的了着在与和你他她我]{0,3}" + WARE + ")")  # 贪婪：「青瓷药瓶」不截成「青瓷药」
+MONEYISH = re.compile(r"银子|银两|碎银|铜钱|铜板|金子|银票|银锭|金叶子|钱财|盘缠|零钱|赏钱|钱")  # 说到了钱(v9)：查前先挖去实体名(钱光胜)
+COIN = re.compile(r"(?:银子|银两|碎银|铜钱|铜板|金子|银票|银锭|金叶子|钱)$")                    # 这个名词就是钱(拿出「两银子」不是凭空造器物)
+WRITING = re.compile(r"写信|写下|写了|写一|写张|写封|写个|写几|写道|写给|提笔|修书|留书|手书|留字|写字|书写|执笔")  # 起意提笔(v9)
 ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|丸|散|膏|秘籍|秘笈|卷轴|帛卷|经书|剑谱|刀谱|图谱|珠|钏|镯|盒|匣|瓶|信|令牌|钥匙|锦囊|宝剑|宝刀|草)")
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
@@ -90,6 +97,10 @@ class View:
     here: str | None = None                               # 回合结束时主角所在(v5)
     route: set[str] = field(default_factory=set)          # 主角本回合到过的地方(含起止)
     aimed: set[str] = field(default_factory=set)          # 导演写了主角要去的地方(落没落得了另有回告，不再算漏写)
+    traded: set[str] = field(default_factory=set)         # 主角本回合经手的东西(v9：拿了一部分、交出一部分，原物还在原处或仍在身上)
+    felled: set[str] = field(default_factory=set)         # 本回合有人倒下(人数少了、散了)的人群(v9)
+    money_start: float = 0.0                              # 主角回合开始与结束时身上的银两(v9)
+    money_end: float = 0.0
 
 
 @dataclass
@@ -222,12 +233,26 @@ def _moves(i, text, who, view, tab, kinds) -> list[Finding]:
     return out
 
 
+def bare(text: str, ents) -> str:
+    """挖去文中的实体名(换成同样长的空白)：「钱光胜」不是钱。"""
+    for _, a, b in ents:
+        text = text[:a] + "　" * (b - a) + text[b:]
+    return text
+
+
 def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
-    """分句内：你取得了什么、交出了什么，谁开口动手。"""
+    """分句内：你取得了什么、交出了什么，谁开口动手。v9：拿了一部分(原物仍在原处)、交出一部分(仍在身上)的不算漏记；
+    说你得了钱、交了钱，你的银两却分文未动，即为漏记。"""
     out, ents = [], find(clause, tab)
     mine = who == "player" or "你" in clause
-    things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle")]
+    things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle") and n not in view.traded]
     m = ACQUIRE.search(clause)
+    still = abs(view.money_end - view.money_start) <= 1e-6 and "银两" not in view.traded  # 这一回合主角的银两分文未动
+    cash = still and MONEYISH.search(bare(clause, ents))
+    if mine and m and cash:
+        out.append(Finding("acquire", i, "银两", f"第{i}拍写你得了银钱，账上你的银两却分文未动：写拿取或交给，量写明多少"))
+    if mine and GIVE.search(clause) and cash:
+        out.append(Finding("give", i, "银两", f"第{i}拍写你交出银钱，账上你的银两却分文未动：写交给，量写明多少"))
     if mine and m:  # 寻常之物(v8 trifle：茶碗、瓜子)端起放下不必记账，只记软违例
         out += [Finding("acquire", i, t, f"第{i}拍写你取得{t}，账上却没有这件东西到你手里", hard=kinds.get(t) != "trifle")
                 for t in things if t not in view.inventory_end and t not in view.inventory_start]
@@ -277,6 +302,12 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
     for p, a, b in ents:  # 死者须紧挨着致死之词：「龚光杰刺死褚师弟」死的是褚师弟，「左子穆惊呼，容子矩早已气绝」死的是容子矩
         if ((kill and 0 <= a - kill.end() <= 4) or p in dying) and p not in view.dead:
             out.append(Finding("kill", i, p, f"第{i}拍写{p}身亡，账上{p}却仍活着"))
+    for s, a, b in (e for e in find(sent, tab) if kinds.get(e[0]) == "group" and e[0] not in view.felled):
+        hit = next((m for m in FELL.finditer(sent) if 0 <= m.start() - b <= 6 or 0 <= a - m.end() <= 6), None)
+        between = hit and sent[min(b, hit.end()):max(a, hit.start())]
+        if hit and not any(kinds.get(n) == "person" for n, _, _ in find(sent[hit.end():hit.end() + 6], tab)) \
+                and not find(between or "", tab):  # 「东宗弟子扶起倒地的褚师弟」倒的是褚师弟
+            out.append(Finding("fell", i, s, f"第{i}拍写{s}里有人倒下，账上人数却没少：写打晕或杀死，数写几人"))
     bind = BIND.search(sent)
     for p, a, b in ents:
         if FREE.search(sent) and p in view.captive:
@@ -284,7 +315,7 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
         # 被擒者紧跟在擒拿之词后（「擒住钟灵」），或以「被」字句在前（「钟灵被神农帮众掳走」）
         if bind and (0 <= a - bind.end() <= 4 or ("被" in sent[b:bind.start()] and 0 <= bind.start() - b <= 12)) \
                 and p not in view.captive and p not in view.dead:
-            out.append(Finding("bind", i, p, f"第{i}拍写{p}被擒，账上却没有这层拘押：写 link 扣为人质或囚禁"))
+            out.append(Finding("bind", i, p, f"第{i}拍写{p}被擒，账上却没有这层拘押：写 结下 扣为人质或囚禁"))
     follow = bool(mine and FOLLOW.search(sent) and view.moved)
     if follow:
         company = people + ([p for p in prev if p not in people] if GROUP.search(sent) else [])  # 「二人」只指上一句里的人，不扩到全场

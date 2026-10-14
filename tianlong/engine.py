@@ -24,6 +24,7 @@
        v7 账文同构的四条轴：叫法即主键(_distinguish：回合开始、编剧落笔之前、结算之后三处，撞了叫法的人各分一个稳定外号)；
        两相对账(_settle_page：回合开始记下主角看得见的账 settle.glance，结算之后求差——账房开单入账是文→账，账上变了而正文没写到的由账本补记一段随流送出是账→文)；
        双录复核(词表仍看出、账上仍没有的句子交账房复核，记账或驳回，之后仍对不上的才是分歧)；正文有时间轴(编剧得知主角从哪里到了哪里：动身另起一段、到了点明此地)
+       v9 事码：导演与账房说同一种类代码(world/acts)，引擎照旧只转交；江湖事件的门槛认事码的记录——一群人里有人倒下即众目之下的伤亡(有人死即分量二)，银两流转、写一封信、封拆撕合不成江湖事
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -52,6 +53,10 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset()
     寻常之物(v8 场景清单：一只茶碗)易手不是江湖事。"""
     def grave(op) -> bool:
         kind, key = op["op"], op.get("key")
+        if kind == "squad":  # 一群无名弟子倒下了几人(v9)：众目之下的伤亡
+            return True
+        if kind in ("money", "forge", "doc"):  # 银两流转、写一封信、封拆撕合：不是江湖上传得开的事
+            return False
         if kind in ("link", "unlink"):  # 结义、擒放、随行、结仇结交才是江湖上传得开的事；一句试探里的提防不是(v5)
             return bond.structural(op.get("rel") or "") or abs(bond.weigh(op.get("rel") or "")) >= 3
         if kind == "drain":
@@ -61,7 +66,8 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset()
         return (kind, key) in {("set", "status"), ("set", "holder")} and op.get("id") not in trifles
     if witnesses < WITNESSES or (hp_loss < GRAVE_LOSS and not any(grave(op) for op in applied)):
         return 0
-    return 2 if any(op["op"] == "set" and op.get("key") == "status" and op.get("value") == "dead" for op in applied) else 1
+    return 2 if any((op["op"] == "set" and op.get("key") == "status" and op.get("value") == "dead")
+                    or (op["op"] == "squad" and op.get("key") == "dead") for op in applied) else 1
 
 
 def _staged(plan: dict, deed: str) -> dict:

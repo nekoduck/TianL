@@ -26,6 +26,7 @@
        (手里有兵刃的叫持剑的，否则按 id 的稳定散列取一个外貌字眼，同组不重样)，立下不改，人散了也不改回；「容师叔」「钟姑娘」也是叫法，calls 让它落得回原人；
        名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
        称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
+       v9：thing 让分出来的那一份(玉壁剑影图·1)叫回那件东西、剧中人写下的文书叫作「你写给某人的书信」(主角经手、读过或是收信人才知道谁写给谁，收信人照旧只叫外貌)；veil 另过人群的描述
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import contextlib
@@ -541,6 +542,13 @@ def thing(world, name: str) -> str:
     编剧看见「钢爪」，看不见「云中鹤」；选项写「钢爪」，器物近似名照样落回原物。"""
     if not name:
         return name
+    doc = world.graph.get(name, "doc") if world.graph.has(name) else None
+    if doc and doc.get("form"):  # 剧中人写下的文书(v9)：主角经手、读过或是收信人才知道是谁写给谁的
+        mine = "player" in (doc.get("author"), doc.get("to")) or "player" in (doc.get("read_by") or [])
+        who = lambda p: "你" if p == "player" else p if knows(world, "player", p) else handle(world, p)
+        return (f"{who(doc['author'])}写给{who(doc['to'])}的{doc['form']}" if doc.get("to") else f"{who(doc['author'])}写的{doc['form']}") \
+            if mine and doc.get("author") else f"一{'封' if doc['form'] == '书信' else '张'}{doc['form']}"
+    name = re.sub(r"·\d+$", "", name)  # 分出来的那一份(v9 玉壁剑影图·1)：叫的还是那件东西，几张另写在数量里
     tab = lexicon.table({s: p for s, p in _surfaces(world).items() if not knows(world, "player", p)})
     out = name
     for _, a, b in reversed(lexicon.find(out, tab)):
@@ -568,6 +576,7 @@ def veil(world, pack: dict) -> dict:
         if p.get("intent"):
             p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
+    out["squads"] = [{**q, "desc": mask(world, q.get("desc") or "")} for q in out.get("squads", [])]  # 人群(v9)：叫法本就是外貌门派
     out["relations"] = [r for r in out["relations"] if mask(world, r) == r]
     out["party"] = [handle(world, p) for p in out.get("party", [])]
     g, shown = world.graph, {p["name"] for p in pack["people"]}

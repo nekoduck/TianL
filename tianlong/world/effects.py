@@ -1,11 +1,12 @@
 """
 [INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track（情境层与连带）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
-         world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+         world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
+         world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
-          place()（任一节点此刻所在之地）、usable()、OPS、STATUSES、MOVERS
+          place()（任一节点此刻所在之地）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
 [POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)与方位 spot(v8 场景清单：
@@ -32,7 +33,10 @@
        导演宣告与闸门从文字里听出来的是同一条指令、同一条写入通道。宽松规整导演的几种写法(set epithet 为本名、reveal 关系形 rel=姓名、push acquaintances/knows)；
        名字是谁的要看得见、谁听见要在耳边(v7)：被叫出名字的人须在 perspective.sight(耳边的活人或眼前的遗体——对着遗体叫出「容师叔」，满厅皆知死者是谁)，
        听的人须在 perspective.audience，场外无从得知；人人早已知道即原样不动；识名不是物理(落不了不废整拍)、不算因果污染；
-       v7 立外号(set epithet)亦不算因果污染——叫法是主角眼中的主键(perspective.distinguish)，不是对原著的扰动
+       v7 立外号(set epithet)亦不算因果污染——叫法是主角眼中的主键(perspective.distinguish)，不是对原著的扰动；
+       事码(v9)：一批后果先经 acts.expand——平常之事化为这十条指令照旧裁决，规则之事(拿取放下交给偷夺、撕合书写封拆读、脱身、对人群的杀伤)交 acts.perform 执行，
+       记录写成下游认得的形状(易手仍是 set holder / push inventory，另有 money / squad / forge / doc 四种记录，describe 都说成人话)；
+       银两(money)、器物的数量与钱袋(qty / purse / pages)、人群的人数伤亡与身上之物只经事码流转，直接写即驳回；人群只在近旁走动；被一群人围住(围攻)，主角的去留只有脱身
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -47,12 +51,13 @@
 import re
 
 from . import access, actor, body, bond, growth, perspective, situation
+from . import acts, crowd, stock  # 事码(v9)：LLM 说的类代码在这里化为指令或交 acts 执行；人群与银两的数由规则管
 from .clock import PER_DAY
 from .graph import PLIGHT, ROAD
 
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
-FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route",
+FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route", "money",
                       "drift", "scene", "clocks", "arc", "spines", "setups"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
@@ -157,10 +162,28 @@ def unearth(world, name: str) -> str | None:
 
 
 def describe(op) -> str:
-    """一条指令的人话——回告编剧"什么没成立"时用，不让它去读 key=value。"""
+    """一条指令的人话——回告编剧"什么没成立"时用，不让它去读 key=value。事码与它的记录(银两、人群、造物、文书)也在这里说成人话。"""
     if not isinstance(op, dict):
         return str(op)
+    if acts.is_act(op):
+        return acts.describe(op)
     kind, nid, key, v = op.get("op"), op.get("id"), op.get("key"), op.get("value")
+    if kind == "money":
+        who, src = ("主角" if x == "player" else str(x) for x in (nid, op.get("from")))
+        return f"{who}{'得了' if v > 0 else '付出'}{stock.say(abs(v))}银子" + (f"（{src}给的）" if op.get("from") == "player"
+                                                                        else f"（从{src}）" if op.get("from") and v > 0 else "")
+    if kind == "squad":
+        return f"{nid}被{'杀' if key == 'dead' else '打倒'}{stock.cn(v)}人"
+    if kind == "forge":
+        return f"{'主角' if op.get('by') == 'player' else op.get('by')}写成了{nid}"
+    if kind == "doc":  # 逐键说成人话(不预先格式化：撕成几份只对 torn 有数可说)
+        if key == "state":
+            return f"{nid}{v}"
+        if key == "read_by":
+            return f"{'主角' if v == 'player' else v}读了{nid}"
+        if key == "torn":
+            return f"{nid}被撕成{stock.cn(v)}份"
+        return f"{nid}拼合了" if key == "joined" else f"{nid}{key}"
     who = "主角" if nid == "player" else str(nid)
     name = lambda x: "主角" if x == "player" else str(x)
     if kind in ("link", "unlink"):
@@ -331,7 +354,13 @@ def _physics(world, op, heading=frozenset()) -> str | None:
     if nid == "player" and (key not in world.player.data or key in FROZEN_PLAYER_KEYS):
         return f"玩家属性「{key}」不可写"
     if g.kind(nid) == "item" and key not in ITEM_FLOW:
-        return f"器物由系统掌管，{nid}的定义不可改"
+        return f"器物由系统掌管，{nid}的定义不可改" + ("：数量与银两只经事码拿取、交给、偷取、夺取流转" if key in ("qty", "purse", "pages") else "")
+    if key == "money":
+        return "银两由规则结算：只经拿取、交给、偷取、夺取流转，不得直接增减"
+    if crowd.is_squad(g, nid) and key in ("count", "down", "dead", "power", "pool", "kit", "disbanded", "hp", "status", "conditions"):
+        return "人群的人数、伤亡与身上之物由规则结算：伤了倒了写打晕或杀死(数写几人)，拿东西写偷取、夺取"
+    if crowd.is_squad(g, nid) and key == "location" and value not in situation.near(world, g.get(nid, "location")):
+        return f"{crowd.handle(g, nid)}只在{g.get(nid, 'location')}近旁走动：一群人远行不归剧情调遣"
     if key == "spot" and g.kind(nid) != "item":
         return "方位只记器物摆在哪里"
     if g.kind(nid) in TERRAIN and key != "state":
@@ -451,7 +480,7 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if g.get(nid, "dormant"):
             return f"{nid}不在当下的江湖中"
         if op.get("key") == "power":
-            return "功力由系统结算：研习写 study，吸功写 drain，不得直接增减"
+            return "功力由系统结算：研习写 研习，吸功写 吸功，不得直接增减"
         close = situation.near(world)
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
             if nid not in situation.seen(world):
@@ -479,9 +508,9 @@ def _self(world, op) -> str | None:
     if op.get("id") != "player":
         return None
     if key == "power" and op["op"] in ("add", "set"):
-        return "功力由系统结算：研习写 study，吸功写 drain，不得直接增减"
+        return "功力由系统结算：研习写 研习，吸功写 吸功，不得直接增减"
     if key == "skills" and op["op"] == "push" and v not in world.player["skills"]:
-        return f"无从凭空习得{v}：手边有秘籍就写 study 研习，身边有人会就写 study 求教"
+        return f"无从凭空习得{v}：手边有秘籍就写 研习，身边有人会就写 研习(物写那门武学)向他求教"
     return None
 
 
@@ -687,8 +716,15 @@ def _hearers(world, op) -> list[str]:
 
 
 def _moves_player(world, op) -> bool:
+    if acts.is_act(op):
+        return acts.moves_player(world, op)
     return isinstance(op, dict) and op.get("op") == "set" and op.get("id") in ("player", "主角", world.player["name"]) \
         and PLAYER_ALIASES.get(op.get("key"), op.get("key")) == "location"
+
+
+def destination(op):
+    """主角这一步要去的地方(指令的 value、事码的「到」)。"""
+    return acts.destination(op) if acts.is_act(op) else (op.get("value") if isinstance(op, dict) else None)
 
 
 def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list, list]:
@@ -697,9 +733,22 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     一回合里一个人只听一处来源调遣；主角走了，同伴随行跟上。"""
     applied, rejected = [], []
     ops = ops if isinstance(ops, list) else []  # 场外推演偶把一条指令写成单值：整批作废，不让世界崩
+    ops = acts.expand(world, ops)  # 事码(v9)：平常之事化为指令，规则之事留作一件事交 acts 执行；旧写法的指令原样照收
     ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
-    heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, op.get("value")), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西
+    heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, destination(op)), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西
     for op in ops:
+        if acts.is_act(op):  # 规则之事：前提、规则、执行都在 acts；不成即整条不成，什么也不动
+            try:
+                done, reason = acts.perform(world, op, origin, scope, heading)
+            except (TypeError, AttributeError, KeyError, ValueError):
+                done, reason = [], "格式不可解"
+            if reason:
+                rejected.append((op, reason))
+                continue
+            applied += done
+            if origin == "director":
+                world.taint.update(i for r in done for i in _ids(r) if isinstance(i, str) and i != "player")
+            continue
         if not isinstance(op, dict) or op.get("op") not in OPS:
             rejected.append((op, "未知指令"))
             continue
@@ -717,6 +766,9 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             reason = "格式不可解"
         if reason:
             rejected.append((op, reason))
+            continue
+        if _moves_player(world, op) and crowd.besiegers(world) and op["value"] != world.here:  # 被一群人围住(v9)：走不脱，只有脱身
+            rejected.append((op, f"被{'、'.join(crowd.handle(world.graph, x) for x in crowd.besiegers(world))}团团围住，走不脱：写脱身，成败看群战预裁"))
             continue
         if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，光阴走满即途中歇脚；前半程照走，后半程回告编剧
             dest, turn = op["value"], getattr(world, "turn", None)

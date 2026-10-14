@@ -3,7 +3,8 @@
          world/effects 的 apply / describe / resolve / place（唯一写入通道）、world/adjudicate 的 view / names / unbidden（回合起止切面、实体名表、授意）、
          world/situation 的 seen / around / near / party / captors / captive / bodies（在场、近处、随行、受制）、world/body 的 INNER（内伤分级词）、
          world/growth 的 unearned / mastery、world/lexicon 的 scan / mastery / SENTENCE / DEPART / NEGATE / REMOTE / YET（词表：结算的第二双眼睛，也判主角是否真动了身）、
-         world/scenery 的 nicknames（v8 器物的简称）、world/adjudicate 的 forged（v8 世上没有的器物）
+         world/scenery 的 nicknames（v8 器物的简称）、world/adjudicate 的 forged（v8 世上没有的器物）、world/acts 的 expand / normalize / is_act / verb（v9 账房也说事码）、
+         world/crowd 的 squads / standing / handle / besiegers / is_squad、world/stock 的 funds / say / measure / cn（银两、人群、数量的账）
 [OUTPUT]: 对外提供 Gate（正文出闸：逐段逐句对齐到时刻 → 听 → 掩 → 放行，放行即存档；note 把补记接在正文之后(同过掩码与存档，但戏里没有人听见)；at 给一句话所在那一刻的听众与遗体）、partners()、
           books()（账房看的账本：定本正文、叫法对照、此刻账上、本回合已落账、本回合账上的变化、近处地点）、
           commit()（账房的结算单落账：据须是正文原句、规则之事正文改不了、主角之举须经授意，按据所在时刻的听众经 effects 裁决 → (成立的指令, 分歧)）、
@@ -21,13 +22,15 @@
        物理照旧只由世界裁定：账房只把正文里已发生的事交世界复核；伤病数值、生死、功力进境、远行归规则，只记分歧(player.drift)交下回合导演圆回。
        场景清单(v8)：寻常之物的取用不交复核、不记分歧；补记的「写到没有」认器物的简称(写「那柄青钢剑」就是写到了剑架青钢剑)；
        正文凭空写出世上没有的器物(有人拿出、去取、递上它)记作分歧(ruled)，下回合交导演圆回。
+       事码(v9)：账房的结算单与导演说同一种话——平常之事先化为指令照旧过 admit，规则之事(易手、撕合、书写、脱身)交世界照规则复核，人群倒下几人归规则(只记分歧)；
+       事码写明主角做的，不论单子署谁都过授意；账本给账房看主角的银两、地上器物的数量与在场人群，回合首末两份账另记银两、人群人数与围攻——银两多了少了、人群倒下几人、被围与脱围，正文没写到即补记。
        纯规则、不调 LLM(账房在 narrative)、不新造实体
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
 import re
 
-from . import adjudicate, effects, growth, lexicon, perspective, scenery, situation
+from . import acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock
 from .body import INNER
 from .profile import profile
 
@@ -259,12 +262,16 @@ def books(world, text: str, applied=(), changes=()) -> dict:
         return "｜".join(cells)
     here = world.here
     items = [i for i in g.where(type="item") if effects.place(world, i) in situation.near(world) and not g.get(i, "hidden")
-             and g.get(i, "holder") is None]
+             and g.get(i, "holder") is None and effects.usable(world, i)]
+    ware = lambda i: i + (f"（{stock.measure(g, i)}）" if stock.measure(g, i) else "")  # 一叠几张、一堆几两(v9)：拿了多少由正文定
+    flock = [f"{s}（叫作{crowd.handle(g, s)}，站着{stock.cn(crowd.standing(g, s))}人）" for s in crowd.squads(world)]
     return {"text": text, "legend": legend,
-            "player": "｜".join([f"主角（{me['name']}）", f"在{here}", f"随身：{'、'.join(me['inventory']) or '无'}",
+            "player": "｜".join([f"主角（{me['name']}）", f"在{here}", f"随身：{'、'.join(ware(i) for i in me['inventory']) or '无'}",
+                                f"银两：{stock.say(stock.funds(world, 'player'))}",
                                 f"境况：{'、'.join(me['conditions']) or '无'}", f"未了之事：{'；'.join(me['threads']) or '无'}"]),
             "people": [line(p) for p in people],
-            "scene": f"{here}｜现状：{g.get(here, 'state') or '如常'}｜地上器物：{'、'.join(items) or '无'}",
+            "scene": f"{here}｜现状：{g.get(here, 'state') or '如常'}｜地上器物：{'、'.join(ware(i) for i in items) or '无'}"
+                     + (f"｜人群：{'、'.join(flock)}" if flock else ""),
             "applied": [effects.describe(op) for op in applied if op.get("key") not in ("threads",)],
             "changes": [c["text"] for c in changes],
             "places": sorted(situation.near(world))}
@@ -274,7 +281,17 @@ def books(world, text: str, applied=(), changes=()) -> dict:
 #  入账：账房的结算单——据须是正文原句；叙述成立得了的事交世界复核，成立即落账，落不了与规则之事记作分歧
 # ============================================================
 def _known(world, op) -> bool:
-    """指令里提到的人、地、物都是账上有的(主角亦然)：账房把「左子穆」写成 zuo_zimu，那一条丢掉，不当作正文与账本的分歧。"""
+    """指令里提到的人、地、物都是账上有的(主角亦然)：账房把「左子穆」写成 zuo_zimu，那一条丢掉，不当作正文与账本的分歧。
+    事码(v9)看它的人地物(物是银两、或书写的那种文书不算)。"""
+    if acts.is_act(op):
+        a = acts.normalize(world, op)
+        ends = [a.get(k) for k in acts.ENTITY if a.get(k) is not None]
+        ends += [a["物"]] if isinstance(a.get("物"), str) and a["物"] != acts.MONEY and a["做"] != "书写" \
+            and not crowd.is_squad(world.graph, a.get("自")) else []
+        ok = all(isinstance(x, str) and (x == "player" or world.graph.has(x)) for x in ends)
+        if not ok:
+            log.info("账房写错了 id，不收：%s", op)
+        return ok
     ends = [op.get(k) for k in ("id", "src", "dst", "to") if op.get(k) is not None]
     ok = all(isinstance(x, str) and (effects.resolve(world, x) == "player" or world.graph.has(effects.resolve(world, x))) for x in ends)
     if not ok:
@@ -287,6 +304,13 @@ def admit(world, op) -> str | None:
     这几样正文写了也只是分歧，交下一回合的导演圆回。"""
     if not isinstance(op, dict):
         return "格式不可解"
+    if acts.is_act(op):  # 平常之事已化为指令(见 commit)；留下的规则之事里，人群的死伤归规则，其余(易手、撕合、书写、脱身)交世界照规则复核
+        v = acts.verb(op)
+        if v in ("杀死", "打晕"):
+            return "人群倒下几人由规则结算，正文改不了账"
+        if v == "脱身" and op.get("到") and effects.resolve(world, op["到"]) not in situation.near(world):
+            return "远行的路程与光阴由道路结算，正文改不了账"
+        return None
     kind, key = op.get("op"), op.get("key")
     if kind in ("add", "study", "drain"):
         return "伤病多少、功力与研习由规则结算，正文改不了账"
@@ -309,7 +333,8 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
         basis = str(ch.get("据") or "").strip()
         if len(_plain(basis)) < BASIS or _plain(basis) not in plain:
             continue
-        ops = [op for op in (ch.get("ops") or []) if isinstance(op, dict) and _known(world, op)]  # 写错了 id 是账房的错，不是账文分歧
+        ops = [op for op in acts.expand(world, [op for op in ch.get("ops") or [] if isinstance(op, dict) and _known(world, op)])
+               if isinstance(op, dict)]  # 写错了 id 是账房的错，不是账文分歧；事码(v9)先化为指令，规则之事留作一件事
         keep = []
         for op in ops:
             why = admit(world, op)
@@ -317,10 +342,10 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
                 rifts.append(f"正文「{basis}」：{effects.describe(op)}——{why}")
             else:
                 keep.append(op)
-        if ch.get("谁") in ("player", "主角", me):
-            for op, act, _ in adjudicate.unbidden(world, keep, set(aim)):
-                rifts.append(f"正文「{basis}」：主角{act}——玩家并未起意，不入账")
-                keep = [o for o in keep if o is not op]
+        mine = ch.get("谁") in ("player", "主角", me)
+        for op, act, _ in adjudicate.unbidden(world, keep if mine else [o for o in keep if acts.is_act(o)], set(aim)):  # 事码写明了谁做：谁的单子都查
+            rifts.append(f"正文「{basis}」：主角{act}——玩家并未起意，不入账")
+            keep = [o for o in keep if o is not op]
         with perspective.moment(world, *((gate.at(basis) if gate else None) or ())):  # 这句话是在哪一刻说的：那一刻在场的人听见
             ok, bad = effects.apply(world, keep, "director")
         applied += ok
@@ -355,7 +380,7 @@ def ruled(world, text: str) -> list[str]:
     out = []
     if v and text:
         out += [f.message.replace("第1拍", "正文") for f in lexicon.scan([{"who": None, "text": text}], v, *adjudicate.names(world))
-                if f.kind in ("kill", "drain")]
+                if f.kind in ("kill", "drain", "fell")]  # 人群里倒下几人(v9)同是规则之事
     out += [f"正文写到「{f.entity}」，世上并无此物" for f in lexicon.scan([{"who": None, "text": text}], v, *adjudicate.names(world))
             if f.kind == "conjure" and adjudicate.forged(world, f.entity)] if v and text else []  # 器物不得新造(v8)：正文凭空写出的东西交下回合导演圆回
     words = growth.unearned(world, lexicon.mastery(text, "player"))
@@ -389,6 +414,9 @@ def glance(world) -> dict:
             "dead": sorted(p for p in seen if g.get(p, "status") == "dead"),
             "wounded": sorted(p for p in situation.around(world) if g.get(p, "status") == "wounded"),
             "inventory": sorted(me["inventory"]),
+            "money": round(stock.funds(world, "player"), 3),
+            "squads": {s: crowd.standing(g, s) for s in crowd.squads(world)},
+            "besieged": sorted(crowd.besiegers(world)),
             "known": sorted(me["acquaintances"]),
             "secrets": sorted("|".join(s) for s in world.knowledge.secrets),
             "arts": {a["art"]: a["stage"] for a in growth.mastery(world)},
@@ -444,6 +472,20 @@ def delta(world, before: dict) -> list[dict]:
         add(f"got:{i}", f"{perspective.thing(world, i)}到了你手上", i, perspective.thing(world, i), *nick.get(i, ()))
     for i in sorted(set(before["inventory"]) - set(now["inventory"])):
         add(f"lost:{i}", f"{perspective.thing(world, i)}已不在你身上", i, perspective.thing(world, i), *nick.get(i, ()))
+    gained = now["money"] - before.get("money", now["money"])  # 银两(v9)：多了、少了几钱，正文写到「银」「钱」字即算写到
+    if abs(gained) > stock.EPS:
+        add(f"money:{round(gained, 3)}", f"你身上{'多' if gained > 0 else '少'}了{stock.say(abs(gained))}银子", "银", "钱")
+    for s in sorted(set(before.get("squads") or {}) | set(now["squads"])):  # 人群(v9)：倒下几人、散了
+        was_n, now_n = (before.get("squads") or {}).get(s), now["squads"].get(s)
+        if was_n and not now_n and not crowd.is_squad(g, s):
+            add(f"flock:{s}", f"{crowd.handle(g, s)}四散而去", crowd.handle(g, s), crowd.handle(g, s)[-2:])
+        elif was_n and now_n and now_n < was_n:
+            add(f"flock:{s}", f"{crowd.handle(g, s)}倒下了{stock.cn(was_n - now_n)}人", crowd.handle(g, s), crowd.handle(g, s)[-2:])
+    for s in sorted(set(now["besieged"]) - set(before.get("besieged") or [])):
+        add(f"siege:{s}", f"{crowd.handle(g, s)}将你团团围住", crowd.handle(g, s), "围")
+    for s in sorted(set(before.get("besieged") or []) - set(now["besieged"])):
+        if crowd.is_squad(g, s):
+            add(f"siege:{s}", f"你脱出了{crowd.handle(g, s)}的围困", crowd.handle(g, s), "围")
     for p in sorted(set(now["known"]) - set(before["known"])):
         if g.kind(p) == "person":
             add(f"name:{p}", f"{before['guise'].get(p) or now['guise'].get(p) or perspective.guise(world, p)}原来名叫{p}", p)

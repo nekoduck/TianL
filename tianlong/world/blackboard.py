@@ -1,10 +1,10 @@
 """
 [INPUT]: 依赖 copy 做深拷贝
 [OUTPUT]: 对外提供 Blackboard（玩家 JSON 状态：坐标/气血/功力/姿态/出身与所求/物品/武学/境况/未了之事及其元数据 quests/所识之人 acquaintances/眼前的名册 cast(v5)/节奏账 pacing/研习进度 study/伏笔 hooks/回合数 turn/两层叙事记忆；
-          v4 另有账文分歧 drift(v6：正文与账本对不上的几句，结算记下、下回合交导演圆回) 与故事账 scene/clocks/arc/spines/setups）、ORIGINS、JOURNAL_CAP
+          v4 另有账文分歧 drift(v6：正文与账本对不上的几句，结算记下、下回合交导演圆回) 与故事账 scene/clocks/arc/spines/setups；v9 另有身上的零钱 money(两)，三种出身各带一点）、ORIGINS、JOURNAL_CAP
 [POS]: world 层的玩家状态黑板；所有写入经 effects 的 id="player" 通道，唯一例外是 remember()——叙事记忆不属于世界真相；
        quests/study/hooks/turn/acquaintances/cast/pacing/came_from/en_route/drift 由系统(situation、growth、engine、perspective、pacing)维护，scene/clocks/arc/spines/setups 由 story/ 维护；内伤是境况里的分级词，由 body 升降，导演写不动。
-       气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。
+       气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。银两(v9)只经事码(拿取、交给、偷取、夺取)由 world/stock 记账，导演写不动。
        记忆分两层：journal 是近事(工作记忆)，满 JOURNAL_CAP 行即挤出最早 FOLD 行交上层折叠进 synopsis(情节梗概)，上下文有界而记忆无界
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -20,6 +20,7 @@ DEFAULTS = {
     "origin": "",        # 出身：主角为何站在此地
     "goal": "",          # 所求：主角为何而动——剧情的张力轴
     "inventory": [],
+    "money": 0.0,        # 身上的零钱(两)：只经事码拿取、交给、偷取、夺取流转(v9 world/stock)，导演写不动
     "skills": [],
     "conditions": [],    # 境况（中毒、被扣押、被追杀……）：导演以 push/pull 维护，不再只活在一句梗概里
     "threads": [],       # 未了之事：导演埋下的线头，须续写或收束
@@ -45,9 +46,9 @@ JOURNAL_CAP, FOLD = 10, 5  # 近事满十行，最早五行折叠进梗概
 
 # 开局出身：给主角一个站在剑湖宫的理由与一条所求。原著里马五德正是带客人来观剑会之人
 ORIGINS = {
-    "随从": {"origin": "普洱茶商马五德的随从，随他来无量山观五年一度的剑会", "goal": "在江湖上挣得一个名字", "power": 10},
-    "武师": {"origin": "落魄的外家武师，受马五德接济，随行充作护院", "goal": "求一门真正的武学", "power": 22},
-    "小吏": {"origin": "镇南王府的小吏，奉命暗中照看出游的世子段誉", "goal": "护世子周全，回府复命", "power": 10},
+    "随从": {"origin": "普洱茶商马五德的随从，随他来无量山观五年一度的剑会", "goal": "在江湖上挣得一个名字", "power": 10, "money": 0.5},
+    "武师": {"origin": "落魄的外家武师，受马五德接济，随行充作护院", "goal": "求一门真正的武学", "power": 22, "money": 0.3},
+    "小吏": {"origin": "镇南王府的小吏，奉命暗中照看出游的世子段誉", "goal": "护世子周全，回府复命", "power": 10, "money": 2.0},
 }
 
 

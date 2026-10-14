@@ -1,11 +1,13 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/SCENE_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/SCENE_PROMPT.md），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT、world/crowd 的 GROUP / DISBAND（v9 人群）
 [OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA、SCENES、GRADES
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
        处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、标出片区(area：下辖子地点或以自身为区域的大地名，同在片区不等于同处一室)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
        按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世；
        v8 场景清单(18)：一处场景的建筑(地点，parent 落在场景之内；道路以补丁口径接在 15/16 之后)、景物(type=feature，不可携带)、
        分三等的器物(寻常只有名字、器物带属性 props、要物另有内容 text 与底细 secret，方位 spot)在创世时布齐，新 id 不得与书中之名及别名相撞——剧情只调度、不新造
+       v9 物量与人群：器物另可写 qty/unit(碎银 cash 以两计；可分的写 split)、purse(钱袋里几两)、full/pages(全本几份、所存几份)、uses(书写、纸)、doc(文书的状态)，形状错即拒绝开局(_stock_errors)；
+       squads 编入无名之众(type=group)：须属已登记的门派、在场景之内、人数三到二百、每人的功力与零钱是数、身上之物各有不同的名字，pool 按人头算好总数(_squad)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -16,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .clock import DAYS_PER_MONTH, PER_DAY, PER_SHICHEN, day_of
+from .crowd import DISBAND, GROUP
 from .graph import PLIGHT
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "canon"
@@ -45,7 +48,8 @@ ROAD_PATCHES = ("15_roads_patch.json", "16_roads_fill.json")
 SITUATION = "17_situation.json"  # 原著事件的情境前提补充（某人仍受制于人），合并进 requires  # 依次各打一次：15 修 0 日中枢的伪捷径，16 据既有数据补缺失的走廊
 SCENES = "18_scenes.json"  # 场景清单(v8 布景)：建筑、景物、分级器物——世界生成时一次布齐，剧情只调度、不新造
 GRADES = ("寻常", "器物", "要物")  # 器物的详略：寻常只有名字；器物带几样简单属性；要物详写(文书另有内容 text 与底细 secret)
-DRESSED = ("grade", "kind", "desc", "location", "holder", "hidden", "hint", "spot", "props", "text", "secret", "effect")  # 布景器物入世的字段
+DRESSED = ("grade", "kind", "desc", "location", "holder", "hidden", "hint", "spot", "props", "text", "secret", "effect",
+           "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc")  # 布景器物入世的字段；v9 数量、银两、钱袋、可分、全本几份、用途、文书状态
 
 
 class GenesisError(Exception):
@@ -196,12 +200,60 @@ def _inside(nodes: dict, top: str) -> set[str]:
 
 
 def _dress(row: dict) -> dict:
-    """一件布景器物入世：只取游戏字段；寻常之物没有描述也无妨，器物与要物须有。"""
+    """一件布景器物入世：只取游戏字段；寻常之物没有描述也无妨，器物与要物须有。一部书写了全本几份(full)而没写存哪几份，即全本都在。"""
     node = {"type": "item", "kind": "杂物", "desc": None, "location": None, "holder": None, "hidden": False, "hint": None,
             "grants": None, "effect": None, "state": {"exists": True, "available": True}}
     node.update({k: row[k] for k in DRESSED if k in row})
     node["hidden"] = bool(node["hidden"])
+    if node.get("full") and "pages" not in node and isinstance(node.get("qty", node["full"]), (int, float)):
+        node["pages"] = list(range(int(node.get("qty", node["full"]))))
+    if "pages" in node:
+        node["qty"] = len(node["pages"])
+    if node.get("cash"):
+        node.setdefault("unit", "两")
     return node
+
+
+def _stock_errors(ctx: str, nid: str, node: dict) -> list[str]:
+    """数量与银两的形状(v9)：数是正数、钱是钱、全本的几份落在全本之内、用途是一列字。"""
+    out, num = [], lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if "qty" in node and not (num(node["qty"]) and node["qty"] > 0):
+        out.append(f"{ctx}：器物「{nid}」的数量须是正数")
+    if "purse" in node and not (num(node["purse"]) and node["purse"] >= 0):
+        out.append(f"{ctx}：器物「{nid}」钱袋里的银两须是数")
+    if node.get("cash") and node.get("unit") != "两":
+        out.append(f"{ctx}：碎银「{nid}」以两计")
+    if "full" in node:
+        pages = node.get("pages") or []
+        if not (isinstance(node["full"], int) and node["full"] >= 1 and all(isinstance(i, int) and 0 <= i < node["full"] for i in pages)
+                and len(set(pages)) == len(pages)):
+            out.append(f"{ctx}：文书「{nid}」的全本份数与所存的几份对不上")
+    if "uses" in node and not (isinstance(node["uses"], list) and all(isinstance(u, str) for u in node["uses"])):
+        out.append(f"{ctx}：器物「{nid}」的用途须是一列字")
+    return out
+
+
+def _squad(ctx: str, row: dict, nodes: dict, inside: set) -> tuple[dict, list[str]]:
+    """一群无名之众(v9)：同属一门、十五人上下一体，每人身上一样的零钱与器物——总数(pool)按人头算好。"""
+    out, kit = [], row.get("kit") or {}
+    count, power, money = row.get("count"), row.get("power", 15), kit.get("money", 0)
+    items = kit.get("items") or []
+    if nodes.get(row.get("faction"), {}).get("type") != "faction":
+        out.append(f"{ctx}：人群「{row['id']}」须属于一个已登记的门派")
+    if row.get("location") not in inside:
+        out.append(f"{ctx}：人群「{row['id']}」不在场景之内")
+    if not (isinstance(count, int) and DISBAND <= count <= 200):
+        out.append(f"{ctx}：人群「{row['id']}」的人数须在{DISBAND}到二百之间")
+    if not (isinstance(power, int) and 0 <= power <= 100) or not (isinstance(money, (int, float)) and money >= 0):
+        out.append(f"{ctx}：人群「{row['id']}」每人的功力与零钱须是数")
+    names = [t.get("name") for t in items if isinstance(t, dict)]
+    if len(names) != len(items) or not all(isinstance(n, str) and n for n in names) or len(set(names)) != len(names):
+        out.append(f"{ctx}：人群「{row['id']}」身上的东西须各有不同的名字")
+    pool = {"银两": round((count or 0) * money, 3), **{n: count or 0 for n in names if isinstance(n, str)}}
+    node = {"type": GROUP, "faction": row.get("faction"), "location": row.get("location"), "count": count, "down": 0, "dead": 0,
+            "power": power, "handle": row.get("handle") or row["id"], "desc": row.get("desc"), "hidden": False, "status": "alive",
+            "kit": {"money": money, "items": [dict(t) for t in items if isinstance(t, dict)]}, "pool": pool}
+    return node, out
 
 
 def _stage(root: Path, nodes: dict) -> list[str]:
@@ -251,6 +303,7 @@ def _stage(root: Path, nodes: dict) -> list[str]:
                 errors.append(f"{ctx}：只有要物才写内容(text)：「{nid}」")
             if not isinstance(node.get("props") or {}, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in (node.get("props") or {}).items()):
                 errors.append(f"{ctx}：器物「{nid}」的属性须是 {{名目: 一句话}}")
+            errors += _stock_errors(ctx, nid, node)
             if (node["location"] is None) == (holder is None):
                 errors.append(f"{ctx}：器物「{nid}」须有且只有一处着落：location 或 holder")
             elif node["location"] is not None and node["location"] not in inside:
@@ -258,6 +311,10 @@ def _stage(root: Path, nodes: dict) -> list[str]:
             elif holder is not None and (nodes.get(holder, {}).get("type") != "person" or nodes[holder].get("location") not in inside):
                 errors.append(f"{ctx}：器物「{nid}」的持有者「{holder}」不是此刻身在场景里的人")
             nodes[nid] = node
+        for row in sc.get("squads") or []:
+            if fresh(row.get("id"), "人群"):
+                nodes[row["id"]], bad = _squad(ctx, row, nodes, inside)
+                errors += bad
     return errors
 
 

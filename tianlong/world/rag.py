@@ -2,7 +2,7 @@
 [INPUT]: 依赖 world/profile 的 profile / power_tier / TIERS（单一投影：人与主角此刻的状态切面）、world/actor 的 mood（场外档案的心境），
          world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress / mastery / studiable（研习进度、进境投影、研习对象）
-         与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
+         与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单）、world/crowd 的 squads / card / lines / agility / besiegers / handle / STEAL_ROLL（v9 人群）、world/stock 的 funds / say / measure / purses / purse（v9 银两），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
 [OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
@@ -13,10 +13,13 @@
        主角眼前上演的原著(v5：在此地、在近旁的哪一间(next_door)、或要把身边哪几人带往别处(away))、近日将至的原著、较量预裁、隐匿之人、暗藏之物、
        到时候的隐情(暗藏之物写明发现时用的名字)、各方图谋、功力对比、在场武学、研习进度与研习预裁(玩家所指的秘籍或武学)、此地出发的关口、近处未被发现的暗路、主角走得到的去处、未兑现的伏笔、久悬之事、命运骰、
        原著近事前提已破者标明只作背景、不得进台词，节奏(看本幕之问的结局：一问已解宜开新问、局面平静则提示幕间省略，连番被打断则必须了结；另有 pacing 的阻尼：同一主题、同一诉求连番出现，或在一处僵持而局面不动)，让它编织的剧情有据可依；裁决与日程由系统算定，导演只负责演出
+       v9：scene 另有眼前的人群(squads)，build 给出人群卡片(叫法、站着几人、人人带着什么、是否正围攻你)与主角的银两；
+       backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
+       condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, actor, body, growth, lod, pacing, perspective, scenery, situation
+from . import access, actor, body, crowd, growth, lod, pacing, perspective, scenery, situation, stock
 from .effects import usable
 from .ledger import NEWS_SPEED
 from .profile import TIERS, power_tier, profile, ties
@@ -35,7 +38,11 @@ def condition(world) -> list[dict]:
     if me["posture"] and me["posture"] != "站立":
         tags.append({"text": me["posture"], "tone": "plain"})
     tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
-    tags += [{"text": f"持有{i}", "tone": "plain"} for i in me["carrying"]]
+    tags += [{"text": f"被{crowd.handle(world.graph, s)}围住", "tone": "warn"} for s in crowd.besiegers(world)]  # 人群(v9)
+    tags += [{"text": f"持有{i}" + (f"（{stock.measure(world.graph, i)}）" if stock.measure(world.graph, i) else ""), "tone": "plain"}
+             for i in me["carrying"]]
+    if me["money"] > stock.EPS:  # 银两(v9)：是数不是器物
+        tags.append({"text": f"银两{stock.say(me['money'])}", "tone": "plain"})
     tags += [{"text": f"身负{a['art']}" + ("" if a["stage"] in ("已会", "入门") else f"·{a['stage']}"), "tone": "plain"}
              for a in me["arts"] if a["learned"]]
     tags += [{"text": f"习练{a['art']}中", "tone": "plain"} for a in me["arts"] if not a["learned"]]
@@ -54,7 +61,8 @@ def scene(world) -> dict:
     people = at("person")
     return {"people": [p for p in people if p in close],
             "dead": [p for p in people if g.get(p, "status") == "dead" and (not wide or p in situation.cast(world))],
-            "features": at("feature"), "items": [i for i in at("item") if usable(world, i)]}
+            "features": at("feature"), "items": [i for i in at("item") if usable(world, i)],
+            "squads": crowd.squads(world)}  # 无名之众(v9)：一群算一个，近旁之内都在眼前
 
 
 def _salient(world, p) -> tuple:
@@ -123,12 +131,13 @@ def build(world) -> dict:
                    "posture": me["posture"], "skills": me["skills"], "inventory": carried,
                    "wound": body.wound(world)[0], "arts": [a["detail"] for a in growth.mastery(world)],
                    "origin": me["origin"], "goal": me["goal"], "conditions": me["conditions"], "threads": me["threads"],
-                   "synopsis": me["synopsis"], "en_route": me.get("en_route")},
+                   "synopsis": me["synopsis"], "en_route": me.get("en_route"), "money": stock.say(stock.funds(world, "player"))},
         "scene": {"name": here, "region": g.get(here, "region"), "desc": g.get(here, "desc"),
                   "state": g.get(here, "state"), "lore": g.get(here, "lore", [])},
         "features": [scenery.feature(world, f) for f in s["features"]],
         "items": [scenery.card(world, i) for i in s["items"]],  # 场景清单(v8)：寻常之物只有名字与方位，器物另有类别、描述与属性
         "people": people,
+        "squads": [crowd.card(world, q) for q in s["squads"]],  # 人群(v9)：叫法、站着几人、人人带着什么
         "dead": s["dead"],
         "relations": _relation_lines(world, s["people"] + s["dead"], visible),
         "party": situation.party(world),
@@ -228,7 +237,10 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
                     ("与主角相当" if gap == 0 else f"{'强' if gap > 0 else '弱'}于主角{abs(gap)}档"))
         if g.get(p, "power", 30) >= FEEBLE:
             outcome, loss = rule(gap, fate)
-            ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损"))
+            sly = crowd.agility(world, "player") - _tier_index(g.get(p, "power", 30))  # 偷取看身法(v9)：与 acts 同一口径
+            ruling.append(f"与{p}：{outcome}" + (f"，主角失气血约{loss}" if loss != "0" else "，主角无损")
+                          + f"｜夺取其身上之物{'夺得下' if outcome in WIN else '夺不下'}"
+                          + f"｜偷取{'得手' if sly >= 1 or (sly == 0 and fate >= crowd.STEAL_ROLL) else '必被察觉'}")
     study = growth.studiable(world, aim, [h for h in hidden if g.kind(h) == "item"])  # 玩家所指的秘籍与武学：出研习预裁
     dist = access.distances(world, here)  # 主角走得到的去处：绕开不通、条件未备与未被发现之路
     return {
@@ -241,21 +253,23 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
                      f"{'相关者已到位，可随时上演' if ev['id'] in ready else '今日稍后' if n <= 0 else f'最迟{n}日后'}·{ev['where']}：{ev['summary']}（{'、'.join(ev['actors'])}）"
                      for ev, n in upcoming],
         "ruling": ruling,
+        "crowd": crowd.lines(world),  # 群战预裁(v9)：整群之力、脱身、偷取
+        "money": _money(world, s["people"]),  # 各人身上的银两(v9)：掏得出多少由账定
         "tempo": _tempo(world, tempo),
         "fatigue": pacing.advise(world),
         "peril": "主角命悬一线：本回合必须以昏迷、被救、被俘或脱身收场，不得再受重创" if situation.imperiled(world) else "",
         "hidden": [f"{n}（{g.get(n, 'type')}）：{g.get(n, 'persona') or g.get(n, 'desc')}"
                    + (f"｜{g.get(n, 'hint')}" if g.get(n, "hint") else "")
-                   + (f"｜发现即写 push player inventory {n}（拍文里怎么称呼都行，指令用此名，不要另立物件）"
+                   + (f"｜找出来写 揭开 {n}、拿到手写 拿取 {n}（拍文里怎么称呼都行，事码里用此名，不要另立物件）"
                       if g.kind(n) == "item" else "") for n in hidden],
         "secrets": secrets,
         "agendas": [f"{p}：{g.get(p, 'agenda')}" for p in s["people"] if g.get(p, "agenda")],
         "odds": odds,
-        "grants": [f"{growth.progress(world, i)}（可得「{g.get(i, 'grants')['skill']}」；功力由系统分阶兑现，写 study 即可）"
+        "grants": [f"{growth.progress(world, i)}（可得「{g.get(i, 'grants')['skill']}」；功力由系统分阶兑现，写 研习 即可）"
                    + (f"｜研习预裁：{_luck(world, i)}" if i in study else "")
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]
                    if g.get(i, "grants")]
-                  + [f"{growth.progress(world, k)}（求教身边会的人，写 study {k}）｜研习预裁：{_luck(world, k)}"
+                  + [f"{growth.progress(world, k)}（求教身边会的人，写 研习 {k}）｜研习预裁：{_luck(world, k)}"
                      for k in study if g.kind(k) == "skill"],
         "focus": focus(world, aim),
         "drift": list(me.get("drift") or []),
@@ -274,6 +288,19 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置
         "dossiers": scenery.dossiers(world),  # 要物的内容与底细：有人翻看就照此写
     }
+
+
+WIN = {"险胜", "小胜", "得胜", "大胜，手到擒来", "轻敌失手，仍占上风"}  # 较量预裁里算赢的那几档：夺得下对方身上的东西(acts 夺取同用这一张表)
+
+
+def _money(world, people) -> list[str]:
+    """主角与在场之人身上有多少银两(零钱与钱袋里的)——拍里有人掏钱，掏得出多少由这笔账定。"""
+    g, out = world.graph, [f"主角：{stock.say(stock.funds(world, 'player'))}"]
+    for p in people:
+        bags = [i for i in stock.purses(world, p) if stock.purse(g, i) > stock.EPS]
+        if stock.funds(world, p) > stock.EPS:
+            out.append(f"{p}：{stock.say(stock.funds(world, p))}" + (f"（{'、'.join(f'{i}里{stock.say(stock.purse(g, i))}' for i in bags)}）" if bags else ""))
+    return out
 
 
 def _luck(world, source: str) -> str:

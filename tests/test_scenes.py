@@ -204,7 +204,7 @@ class ContextTest(unittest.TestCase):
         self.assertIn("- 剑架青钢剑（剑架上）｜兵刃｜", brief)
         self.assertIn("- 宾客茶碗（宾客椅旁的茶几上）\n", brief)                         # 寻常之物只有名字与方位
         self.assertIn("- 练武厅剑架：靠壁立着的木制剑架。", brief)
-        self.assertIn("剑湖宫·内堂｜景物：内堂书案｜暗藏：玉壁剑影图", brief)          # 近旁各处(后台)
+        self.assertIn("剑湖宫·内堂｜景物：内堂书案｜器物：内堂笔墨（书案上）、内堂信笺（书案上·二十张）｜暗藏：玉壁剑影图", brief)  # 近旁各处(后台；v9 隔壁的只报名字、方位与数量)
         self.assertIn("剑会胜负簿：内容「无量剑东西二宗比剑", brief)                     # 要物底细(后台)
         self.assertIn("随身：折扇", page)                                              # 编剧那份过视角掩码：生人的名号不带在器物上
         self.assertIn("- 剑会胜负簿（掌门座旁的茶几上）｜文书｜", page)
