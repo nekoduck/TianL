@@ -25,8 +25,8 @@ ANSWER = (("盘问", "答{}所问"), ("拦阻", "与{}理论去留"), ("催促",
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
 SEEK_PERSON = re.compile(r"寻|找|访|打听|探听|求见")  # 玩家要找某人(v12)：须与人名或叫法在同一分句——「往后山去，避开段誉」不是寻他
 SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
-TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|冒充|假冒|借|以)$"),                    # 话题里的人(v12)：名字前是说起、冒充、借、以
-         re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇)"))  # 名字后是之名、的下落、报仇——说的是他，不是要碰到他
+TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|提及|说到|谈到|讲起|论及|冒充|假冒|借|以|为|替|受|奉|救|托)$"),    # 话题里的人(v12)：名字前是说起、冒充、借、以；v14 为救、替、受托——为了他去做这件事，不是要碰到他
+         re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇|所托|之托|的嘱托|之事|的事)"))  # 名字后是之名、的下落、报仇、所托——说的是他，不是要碰到他
 
 
 SIMILAR = 0.6  # 两项物理对象相同、去标点后的二字组重合(Jaccard)过此，才算同一件事(v12)
@@ -126,14 +126,16 @@ def _fallbacks(world, pack_options, danger=None, said=None) -> list[tuple[str, l
         out += _rescue(world, said) + [("强撑伤势，寻隙脱身", [])]
     elif me.get("en_route"):
         out.append((f"继续赶往{me['en_route']['to']}", [me["en_route"]["to"]]))
+    errands = []
     for goal, meta in situation.quests(world).items():
         about = [a for a in meta.get("about", []) if _reachable(world, a, "寻")]
         if goal in me["threads"] and (about or me.get("turn", 0) - meta.get("touched", 0) <= FRESH):  # v14 久未推进、又够不着的事不再当兜底(52 回局「继续：探明神农帮虚实回报」出现在困于谷底的十几回里)
-            out.append((f"继续：{goal}"[:20], about))
+            errands.append((f"继续：{goal}"[:20], about))
     g = world.graph  # 攀谈先找与主角有过交集的人、再找叫得出名字的人——不按字码挑人
     salient = sorted(situation.around(world), key=lambda p: (-len((g.get(p, "bond") or {}).get("log", [])),
                                                           not perspective.knows(world, "player", p), p))
     out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in salient[:2]]
+    out += errands  # v14「继续：某事」排在攀谈之后：正做着的事再兜一遍是空话(run3 第 14、19 回)
     if not danger:
         out += [(e["way"], [e["name"]]) for e in access.exits(world) if e["days"] == 0 and not e["back"]][:2]
         out.append(("歇息", []))
@@ -230,6 +232,10 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
     for o in options:
         text = str(o.get("text") or "").strip()
         ids, body = take(text, o.get("targets") or [])
+        who = [i for i in body if world.graph.kind(i) == "person"]
+        if len(text) <= 4 and len(who) == 1 and perspective.handle(world, who[0]) not in text:  # v14 四字概括(「试探虚实」)写明对谁：向管家试探虚实
+            text = o["text"] = f"向{perspective.handle(world, who[0])}{text}"
+            ids, body = take(text, o.get("targets") or [])
         if fine(text, ids, body):
             picked.append((text, ids))
     mine = {t for t, _ in picked}                     # 编剧原拟：让位只在它们里挑，至少留一项

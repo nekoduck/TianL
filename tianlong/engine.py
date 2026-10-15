@@ -57,7 +57,7 @@ BODILY = re.compile(r"伤|毒|病|血|疼|痛|反噬|岔气|走火|经脉|内息
 HOOKS = 2         # 未兑现的伏笔至多记这么多条：悬念是稀缺品，多了便成了催债
 
 
-def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset()) -> int:
+def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset(), staff=frozenset()) -> int:
     """事件分量：0 不值一传 / 1 寻常江湖事 / 2 有人身亡。门槛由系统判定，不靠 LLM 自觉；见证者是眼前之人(rag.scene)，轻描淡写的态度 link 不算大事；
     寻常之物(v8 场景清单：一只茶碗)易手不是江湖事。"""
     def grave(op) -> bool:
@@ -67,6 +67,8 @@ def _newsworthy(applied: list, witnesses: int, hp_loss: int, trifles=frozenset()
         if kind in ("money", "forge", "doc"):  # 银两流转、写一封信、封拆撕合：不是江湖上传得开的事
             return False
         if kind in ("link", "unlink"):  # 结义、擒放、随行、结仇结交才是江湖上传得开的事；一句试探里的提防不是(v5)
+            if {op.get("src"), op.get("dst")} & staff:  # v14 伙计仆役领路随行不是江湖事(run3 第 16 回管家引路记成一桩，主角线「挣名字」随之了结)
+                return False
             return bond.structural(op.get("rel") or "") or abs(bond.weigh(op.get("rel") or "")) >= 3
         if kind == "drain":
             return True
@@ -294,7 +296,8 @@ class Game:
         memory = veil(sworn or (f"你意欲{deed}" if deed else "你凝神四顾") + (f"：{facts.replace('主角', '你')}" if facts else ""))
         if len(w.player["name"]) >= 2:  # 近事一律以「你」称主角：书记不会把「你」与主角名号当成两个人
             memory = memory.replace(w.player["name"], "你")
-        weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"], scenery.trifles(w))
+        weight = _newsworthy(applied, witnesses, hp0 - w.player["hp"], scenery.trifles(w),
+                             {p for p in w.graph.of("person") if w.graph.get(p, "staff")})
         if weight:  # 众目之下的大事才传开：记编剧核实过的一句话，没有便记系统核实过的后果；亲历、事发之日、事发之地
             told = (None if rifts else page["headline"]) or (sworn or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)

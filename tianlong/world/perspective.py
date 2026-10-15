@@ -128,9 +128,10 @@ def audience(world) -> set[str]:
     ears = (getattr(world, "turn", None) or {}).get("ears")
     if ears is not None:
         return set(ears) | {"player"}
-    g = world.graph
-    return {"player"} | {p for p in situation.around(world) | set(situation.party(world))
-                         if g.kind(p) == "person" and g.get(p, "status") != "dead"}
+    g, party = world.graph, set(situation.party(world))
+    return {"player"} | {p for p in situation.around(world) | party
+                         if g.kind(p) == "person" and g.get(p, "status") != "dead"
+                         and (p in party or g.get(p, "location") == world.here or situation.area(world, g.get(p, "location") or ""))}  # v14 同一屋里的才听得见：大厅里一句「段公子」，门房的门丁听不见(run3 第 13、18 回)
 
 
 def remains(world) -> set[str]:
@@ -531,7 +532,7 @@ def audit(world, beats: list[dict], present: set[str], commit=None, start: int =
                                                hard=who == "player"))
             if who != "player" and not knows(world, who, "player") and (me in q or _calls(q, "player", me)):
                 out.append(lexicon.Finding("name", i, "player", f"第{i}拍{who}叫出了主角的名号，可{who}并不知主角姓名："
-                                                                 f"要他知道，先让主角自报家门或由认得主角的人当面叫出"))
+                                                                 f"要他知道，先让主角自报家门或由认得主角的人当面叫出", hard=False))  # v14 掩码会把它换成「兄台」：不值得为此返工(run3 第 9 回)
     return out
 
 
@@ -652,7 +653,8 @@ def veil(world, pack: dict) -> dict:
     out["player"] = {**out["player"], "synopsis": mask(world, out["player"]["synopsis"]),
                      "threads": [mask(world, t) for t in out["player"]["threads"]],
                      "inventory": [_card(world, i) for i in out["player"]["inventory"]]}
-    out["features"] = [{**f, "desc": mask(world, f.get("desc") or ""), "state": mask(world, f["state"]) if isinstance(f.get("state"), str) else f.get("state")}
+    out["features"] = [{**f, "name": thing(world, f["name"]) if f.get("name") else f.get("name"),  # v14 景物也只叫它本身(「万劫谷厅案」→「厅案」)
+                        "desc": mask(world, f.get("desc") or ""), "state": mask(world, f["state"]) if isinstance(f.get("state"), str) else f.get("state")}
                        for f in out.get("features", [])]
     return out
 

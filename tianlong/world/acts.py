@@ -95,6 +95,9 @@ def normalize(world, act: dict) -> dict:
             out.pop(k, None)
     if v == "望见" and "对" not in out and out.get("谁") not in (None, "player"):  # 望见写在「谁」上(v12)：望见的是他，望的人是主角
         out["对"], out["谁"] = out.pop("谁"), "player"
+    if "谁" not in out and v in ("放下", "毁去", "撕开") and isinstance(out.get("物"), str) \
+            and world.graph.kind(holder := world.graph.get(out["物"], "holder")) == "person":
+        out["谁"] = holder  # v14 没写谁放下的：是那件东西此刻的持有者(「放下 龚光杰长剑」两局都缺省成主角、白返工)
     out.setdefault("谁", "player")
     raw = out.get("物")
     if isinstance(raw, str):

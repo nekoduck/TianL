@@ -123,6 +123,8 @@ class DriveTest(_World):
         self.assertIn("秦红棉", plot.idle(w, 10))                                    # 原著线变了：写
         w.graph.set("钟万仇", "drive", 5)
         self.assertEqual(plot.idle(w, 10)[0], "秦红棉")                               # 原著线变了的先写
+        self.assertNotIn("钟万仇", plot.idle(w, 10))                                 # v14 远在七日路程之外、原著线没变：不写(传闻要月余才到)
+        w.player.set("location", "无量山")
         self.assertIn("钟万仇", plot.idle(w, 10))                                    # 野心炽烈：原著尽了也闲不住
         w.graph.set("钟万仇", "drive", 0)
         self.assertNotIn("钟万仇", plot.idle(w, 10))                                 # 无欲无求：不写

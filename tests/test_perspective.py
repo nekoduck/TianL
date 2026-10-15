@@ -40,7 +40,8 @@ class PerspectiveTest(unittest.TestCase):
         r = judge(self.w, plan(("player", "你高声唤道：「段公子、钟姑娘，且慢行！」", [])))
         self.assertEqual(sorted(f.entity for f in r.hard if f.kind == "name"), ["段誉", "钟灵"])
         r = judge(self.w, plan(("段誉", "段誉回首喜道：「王兄！快随我们走。」", [], "player")))
-        self.assertEqual([f.entity for f in r.hard if f.kind == "name"], ["player"])
+        self.assertEqual([f.entity for f in r.soft if f.kind == "name"], ["player"])   # v14 仍是违例，但掩码会换成「兄台」：记软违例、不交返工
+        self.assertEqual([f for f in r.hard if f.kind == "name"], [])
 
     def test_names_are_heard_when_given(self):
         w = self.w

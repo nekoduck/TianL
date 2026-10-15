@@ -280,7 +280,8 @@ def books(world, text: str, applied=(), changes=()) -> dict:
     ware = lambda i: i + (f"（{stock.measure(g, i)}）" if stock.measure(g, i) else "")  # 一叠几张、一堆几两(v9)：拿了多少由正文定
     flock = [f"{s}（叫作{crowd.handle(g, s)}，站着{stock.cn(crowd.standing(g, s))}人）" for s in crowd.squads(world)]
     return {"text": text, "legend": legend,
-            "player": "｜".join([f"主角（{me['name']}）", f"在{here}", f"随身：{'、'.join(ware(i) for i in me['inventory']) or '无'}",
+            "player": "｜".join([f"主角（{me['name']}）", f"在{here}", f"伤势：{body.wound(world)[0]}",  # v14 账房看不到伤势，便把「捂着渗血的后背」报成「账上无伤」(run3 第 6 回)
+                                f"随身：{'、'.join(ware(i) for i in me['inventory']) or '无'}",
                                 f"银两：{stock.say(stock.funds(world, 'player'))}",
                                 f"境况：{'、'.join(me['conditions']) or '无'}", f"未了之事：{'；'.join(me['threads']) or '无'}"]),
             "people": [line(p) for p in people],
@@ -355,6 +356,9 @@ def admit(world, op) -> str | None:
     return None
 
 
+HEARSAY = re.compile(r"伤|无恙|气血|并无此人|没有此人|不在账上|查无此人")  # v14 账房说的伤势、查无此人不作数：伤势由规则与词表(hero_hurt)对账，查无此人多是它看不全账(run3 第 6、11 回)
+
+
 def _benign(world, op) -> bool:
     """读者已读到的主角平常之举(v14)：拿起无主之物(此地、近旁，够不够得着交 effects 照常裁决)。取人之物、偷夺、伤人杀人、花钱写信仍须授意。"""
     g = world.graph
@@ -381,6 +385,11 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
         mine = ch.get("谁") in ("player", "主角", me)
         actor = str(ch.get("谁") or "").strip()
         raw = [op for op in ch.get("ops") or [] if isinstance(op, dict)]
+        vanished = [effects.resolve(world, op.get("谁") or actor) for op in raw if acts.is_act(op) and acts.verb(op) == "前往"
+                    and world.graph.kind(effects.resolve(world, op.get("到"))) != "location"]
+        gone = situation.dismiss(world, [p for p in vanished if world.graph.kind(p) == "person"])  # v14 走开了、去处说不出：从眼前划掉(人仍在这一片)
+        if gone:
+            log.info("正文写他们走开、去向不明，从眼前划掉：%s", "、".join(gone))
         if actor and not mine:  # v13 单子写明了是谁做的，事码里没写「谁」：缺省会被当成主角（第 7 回「段誉服毒」成了「主角服用断肠散」），谁的单子就是谁做的
             raw = [{**op, "谁": actor} if acts.is_act(op) and "谁" not in op else op for op in raw]
         ops = [op for op in acts.expand(world, [op for op in raw if _known(world, op)])
@@ -410,7 +419,7 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
                 rifts.append(line)
     for r in bill.get("rifts") or []:
         basis, truth = str(r.get("据") or "").strip(), str(r.get("账上") or "").strip()
-        if len(_plain(basis)) >= BASIS and _plain(basis) in plain and truth:
+        if len(_plain(basis)) >= BASIS and _plain(basis) in plain and truth and not HEARSAY.search(truth):
             rifts.append(f"正文「{basis}」，账上：{truth}")
     return applied, rifts
 

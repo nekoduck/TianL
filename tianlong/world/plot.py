@@ -116,6 +116,9 @@ def drive(world, pid: str) -> int:
     return max(0, min(5, n))
 
 
+REACH = 7  # 原著线没变的人，离主角几日路程之内才由场外编剧续写(v14)
+
+
 def idle(world, limit: int = MAX_TASKS) -> list[str]:
     """该有下一步的人，交创作家续写：创作之中(原著线变了或原著已尽)、活着、在江湖上(未休眠、未隐匿)、不在主角的故事里、
     七日之内没有别的安排，且离上回写他已隔够了推力定的日子。原著线变了的人都写；没变的只写推力强的(不甘现状以上)，或近处推力不弱的。
@@ -124,6 +127,7 @@ def idle(world, limit: int = MAX_TASKS) -> list[str]:
     busy = situation.around(world) | situation.entangled(world) | lod.held(world)
     soon = {a for e in _pending(world) if e["day"] <= today + QUIET for a in e["actors"]}
     ring = {loc for loc, t in lod.tiers(world).items() if t <= 1}
+    dist = g.distances(world.here)
     pool = []
     for p in g.where(type="person"):
         node = g.nodes[p]
@@ -133,7 +137,8 @@ def idle(world, limit: int = MAX_TASKS) -> list[str]:
         if not d or today - world.plotted.get(p, -999) < CADENCE[d] or mode(world, p) != "创作":
             continue
         changed, near = bool(node.get("adrift")), node.get("location") in ring
-        if changed or d >= 4 or (d >= 3 and near):
+        far = dist.get(node.get("location"), 99) > REACH  # v14 原著线没变、又远在千里之外的人不写(run3 第 11 回替辽国穆贵妃、蓬莱都灵子写戏)：传闻要月余才到，省下的是两次大调用
+        if changed or (d >= 4 and not far) or (d >= 3 and near):
             pool.append((not changed, -d, not near, -(node.get("power") or 0), p))
     return [p for *_, p in sorted(pool)[:limit]]
 

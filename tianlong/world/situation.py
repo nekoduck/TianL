@@ -116,6 +116,21 @@ def enlist(world, pids):
     world.player.set("cast", now)
 
 
+def dismiss(world, pids) -> list[str]:
+    """这些人离开了主角跟前、去向不明(v14)：片区之内从名册上划掉，人仍在这一片、只是不在眼前了；擒者带着他的人质一并走开。
+    run3 第 7 回：司空玄押着钟灵「隐入密林、不见踪影」，账房写不出去处，两人在账上便一直站在主角眼前。返回划掉的人。"""
+    g, gone = world.graph, set()
+    for p in pids:
+        if area(world, g.get(p, "location") or "") and p in cast(world):
+            gone |= {p, *(e["dst"] for e in g.edges if e["src"] == p and e["rel"] in CUSTODY)}
+    world.player.set("cast", [q for q in cast_list(world) if q not in gone])
+    return sorted(gone)
+
+
+def cast_list(world) -> list[str]:
+    return list(world.player.get("cast") or [])
+
+
 def muster(world, before: set[str]):
     """主角走出了原来的近旁(before)：跟前的人留在原处，名册清空——同行者照旧随行，不靠名册。"""
     if world.here not in before:
@@ -228,7 +243,13 @@ def elsewhere(world) -> list[str]:
     """同在近旁的片区里、此刻却不在眼前、且已在江湖上露面的人：只交导演——要他们登场写 arrive(同在一片，不计路程)。"""
     g, spots, close = world.graph, near(world), around(world)
     return sorted(p for p in g.where(type="person") if g.get(p, "location") in spots and p not in close and _alive(g, p)
-                  and debuted(world, p))
+                  and (debuted(world, p) or at_home(g, p)))  # v14 主角登门拜访：主人在自己家里，原著戏份未到也见得着(run3 第 16~19 回进了万劫谷，谷主夫人一直不露面)
+
+
+def at_home(g, p) -> bool:
+    """此人正在自己的居所(home)里。"""
+    home, loc = g.get(p, "home"), g.get(p, "location") or ""
+    return bool(home) and (loc == home or loc.startswith(home + "·"))
 
 
 # ============================================================

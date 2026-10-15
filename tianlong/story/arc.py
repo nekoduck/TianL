@@ -18,6 +18,7 @@ HINTS = {"起意": "给主角一个够得着这件事的机会，让他看见门
          "抉择": "让他在这件事与某个人或某条道义之间取舍",
          "了结": "此线已了：从主角此刻最深的关系或最急的时限里，提一条新的所求，写 {\"做\":\"所求\",\"为\":\"一句话\"}"}
 WARD = "段誉"   # 「护世子周全」所护之人
+FAMED = 5       # 挣名字：众目之下、点名主角的江湖事件满几桩才算了结(v14 由三桩提到五桩：run3 第 16 回走进万劫谷就了结了)
 
 
 def _kind(goal: str) -> str:
@@ -49,7 +50,7 @@ def _reached(world, kind: str, arc: dict) -> int:
         return 1 if study or books or me["skills"] else 0
     if kind == "fame":
         n = _fame(world)
-        if n >= 3:
+        if n >= FAMED:
             return 4
         if n and (situation.captors(world, "player") or me["hp"] <= me["max_hp"] // 2):
             return 2

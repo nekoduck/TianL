@@ -6,7 +6,9 @@
           FoundTest(顺手之物：本回合揭出、玩家此举指着那一处才算授意)、SettleBenignTest(读者读到的拿起无主之物照记)、OverreachTest(越权的物理之举先交返工)、
           OptionTest(景物够得着、兜底不重样、久悬之事不兜底、歇息不连喂、候选不收报名与所求、不截半句、漏写「对象：」也认)、
           FaceTest(器物叫法去掉所在地、身况同口径、情绪标注不入正文、暗路补记、掉了血不是安然无恙)、StateTest(一时气氛不入现状、一记耳光不算负伤)、
-          WordTest(两字人名撞常用词、进境的否定、简称不连着、等到月出)
+          WordTest(两字人名撞常用词、进境的否定、简称不连着、等到月出)；
+          run3(人物戏多的一局)：PeopleTest(手边的毒药即是那一味毒、走开而去处说不出从眼前划掉、同一屋里才听得见、登门见得着主人、放下缺省为持有者)、
+          LedgerTest(账房看得见伤势、伤势与查无此人的说法不作数、伙计领路不是江湖事、挣名字五桩才了结)、OptionMoreTest(为救某人是话题、四字概括写明对谁、报名作废只去名字)
 [POS]: tests 的 v14 验收——导演对着真图写戏，驳回给正解，被否决的事不以文字活下来，读者读到的平常之举照记
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -15,7 +17,7 @@ import unittest
 from tests.test_adjudicate import judge, plan
 from tianlong.narrative import agents
 from tianlong.story import choices, timing
-from tianlong.world import adjudicate, body, effects, lexicon, menu, perspective, rag, scenery, settle, situation
+from tianlong.world import adjudicate, body, effects, lexicon, menu, perspective, rag, scenery, settle, situation, venue
 from tianlong.world.clock import PER_DAY, PER_SHICHEN
 from tianlong.world.world import World
 
@@ -26,6 +28,7 @@ BOOK = "北冥神功卷轴"
 def at(loc: str) -> World:
     w = World.create("测")
     w.player.set("location", loc)
+    venue.settle(w)  # 场所的近景(房间、伙计、陈设)要主角走近才布好
     w.turn = {}
     return w
 
@@ -224,6 +227,112 @@ class WordTest(unittest.TestCase):
         floor, why = timing.claim(w, plan(("player", "你缩在石隙里苦挨", [])), "寻处隐蔽山石静坐调息苦挨至月出")
         self.assertEqual(floor, 4 * PER_SHICHEN)                                      # 到酉时入夜(run2 第 11 回正文写月出，时钟停在申时)
         self.assertIn("等到入夜", why)
+
+
+class PeopleTest(unittest.TestCase):
+    def mountain(self):
+        w = at("无量山")
+        situation.enlist(w, ["司空玄", "段誉", "钟灵"])
+        for p in ("司空玄", "段誉", "钟灵"):
+            w.graph.set(p, "location", "无量山")
+        return w
+
+    def test_the_poison_in_hand_is_the_poison_given(self):
+        w = self.mountain()
+        effects.apply(w, [{"做": "境况", "对": "段誉", "添": "中毒"}], "director")
+        self.assertIn("断肠散", body.poisons(w, "段誉"))                              # run3 第 7 回只记了一个「中毒」字串
+        effects.apply(w, [{"做": "境况", "对": "司空玄", "添": "中毒"}], "director")
+        self.assertEqual(body.poisons(w, "司空玄"), {})                               # 自己身上的毒、地上的莽牯朱蛤都不算
+
+    def test_those_who_vanish_leave_the_hero_s_sight(self):
+        w = self.mountain()
+        effects.apply(w, [{"op": "link", "src": "司空玄", "dst": "钟灵", "rel": "扣为人质"}], "director")
+        text = "汉子推搡着少女，招呼帮众隐入险峻密林深处，转瞬不见了踪影。"
+        settle.commit(w, {"changes": [{"据": "招呼帮众隐入险峻密林深处，转瞬不见了踪影", "谁": "司空玄",
+                                        "ops": [{"做": "前往", "谁": "司空玄", "到": "密林深处"}]}]}, text)
+        self.assertEqual(situation.around(w), {"段誉"})                               # 押着的钟灵一并走开
+        self.assertEqual(w.graph.get("司空玄", "location"), "无量山")                 # 人仍在这一片
+
+    def test_a_word_in_the_hall_is_not_heard_at_the_gate(self):
+        w = at("万劫谷·大厅")
+        w.graph.set("段誉", "location", "万劫谷·大厅")
+        effects.apply(w, [{"op": "link", "src": "段誉", "dst": "player", "rel": "随行"}], "director")
+        self.assertIn("段誉", perspective.audience(w))
+        self.assertNotIn("万劫谷·门丁", perspective.audience(w))                     # run3 第 13、18 回门房的人也「听见」了
+
+    def test_the_mistress_is_at_home(self):
+        w = at("万劫谷·大厅")
+        self.assertIn("甘宝宝", situation.elsewhere(w))                               # run3 第 16~19 回谷主夫人一直不露面
+        ok, bad = effects.apply(w, [{"做": "赶来", "谁": "甘宝宝"}], "director")
+        self.assertTrue(ok and not bad)
+        self.assertNotIn("南海鳄神", situation.elsewhere(at("无量山")))               # 不在自己家里的，原著戏份未到仍不露面
+
+    def test_whoever_holds_it_puts_it_down(self):
+        w = at("剑湖宫·练武厅")
+        self.assertEqual(adjudicate.acts.normalize(w, {"做": "放下", "物": "龚光杰长剑"})["谁"], "龚光杰")  # 两局都缺省成主角、白返工
+
+
+class LedgerTest(unittest.TestCase):
+    def test_the_accountant_sees_the_hero_s_wound(self):
+        w = at(FLOOR)
+        w.player.set("hp", 90)
+        self.assertIn("伤势：皮肉之伤", settle.books(w, "")["player"])               # run3 第 6 回「账上无伤」
+
+    def test_health_and_missing_person_claims_are_not_rifts(self):
+        w = at(FLOOR)
+        text = "你身上的剑伤随风微痛。"
+        _, rifts = settle.commit(w, {"rifts": [{"据": "你身上的剑伤随风微痛", "账上": "主角伤势为安然无恙，并无剑伤"}]}, text)
+        self.assertEqual(rifts, [])                                                   # run3 第 11 回
+
+    def test_a_servant_showing_the_way_is_not_news(self):
+        from tianlong.engine import _newsworthy
+        link = [{"op": "link", "src": "万劫谷·管家", "dst": "player", "rel": "随行"}]
+        self.assertEqual(_newsworthy(link, 5, 0, staff={"万劫谷·管家"}), 0)         # run3 第 16 回管家引路成了一桩江湖事
+        self.assertGreater(_newsworthy([{"op": "link", "src": "段誉", "dst": "player", "rel": "随行"}], 5, 0), 0)
+
+    def test_a_name_takes_more_than_three_small_deeds(self):
+        from tianlong.story import arc
+        self.assertEqual(arc.FAMED, 5)
+
+
+class OptionMoreTest(unittest.TestCase):
+    def test_who_it_is_for_is_a_topic(self):
+        w = at("万劫谷·大厅")
+        w.graph.set("段誉", "location", "万劫谷·大厅")
+        picked = [t for t, _ in menu.check(w, [{"text": "答言为救钟灵姑娘而来请见谷主", "targets": ["管家"], "scale": "此刻"},
+                                                {"text": "主动提及钟灵被扣以探其神色", "targets": ["管家"], "scale": "机缘"}])]
+        self.assertIn("答言为救钟灵姑娘而来请见谷主", picked)                          # run3 第 14、19 回落选
+        self.assertIn("主动提及钟灵被扣以探其神色", picked)
+
+    def test_a_four_word_summary_says_to_whom(self):
+        w = at("万劫谷·大厅")
+        w.graph.set("万劫谷·管家", "location", "万劫谷·大厅")
+        opts = [{"text": "试探虚实", "targets": ["万劫谷·管家"], "scale": "此刻"}]
+        picked = [t for t, _ in menu.check(w, opts)]
+        self.assertIn("向管家试探虚实", picked)
+        self.assertEqual(opts[0]["text"], "向管家试探虚实")                           # 引擎按改过的文字记尺度
+
+    def test_a_voided_self_introduction_keeps_the_rest_of_the_speech(self):
+        w = at("万劫谷·门房")
+        r = judge(w, plan(("player", "你拱手道：「在下测，这位是舍弟杜誉。」", [{"做": "识名", "谁": "player"}], "万劫谷·管家")),
+                  adjudicate.targets(w, "替段誉遮掩身份"))
+        self.assertTrue(any("其余的话照说" in v for v in r.void))                    # run3 第 15 回连假名也略去了
+        self.assertIn(adjudicate.SELF, adjudicate.targets(w, "抢先代段誉编造假姓名"))  # 话里说到姓名，通名也在其中
+
+    def test_scenery_goes_by_its_own_name_for_the_writer(self):
+        w = at("万劫谷·大厅")
+        names = [f["name"] for f in perspective.veil(w, rag.build(w))["features"]]
+        self.assertIn("厅案", names)                                                   # run3 第 17 回「万劫谷厅案」
+
+
+class ForgedMoreTest(unittest.TestCase):
+    def test_a_generic_word_for_the_poison_in_hand(self):
+        w = PeopleTest().mountain()
+        self.assertFalse(adjudicate.forged(w, "腥黑药丸"))                              # run3 第 7 回
+        self.assertTrue(adjudicate.forged(w, "金创药"))                                # 有名有姓的另一味药仍是凭空
+        w.player.push("inventory", "通天草")
+        w.graph.set("通天草", "holder", "player")
+        self.assertFalse(adjudicate.forged(w, "怀中异草"))                              # run3 第 9 回
 
 
 if __name__ == "__main__":

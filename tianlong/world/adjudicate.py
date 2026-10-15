@@ -167,7 +167,7 @@ SELF = "@自报"    # 玩家原话里起意搭话、自报家门(v13)：主角�
 VOW = "@立志"     # 玩家原话里起意立志发愿(v13)：主角的所求只有玩家立志、或主角线已了结时才改
 MARKS = frozenset({WRITE, TRADE, STUDY, SELF, VOW})  # 授意标记(v12)：不是实体——选项验收的可达与去重只看实体，标记由引擎下回合从原话重算
 INTRO = re.compile(r"自报|报上|报出|报(?:个|出)?(?:名|姓名|名号|名字|家门)|通名|通报|自我介绍|介绍(?:一下)?自己|在下|我是|我叫|鄙人|小可|小生|"
-                   r"搭话|攀谈|寒暄|招呼|拜见|拜会|拜访|求见|行礼|拱手|作揖|相认|结识|结交|攀交")  # 自报家门，与寻常的上前结交——后者自然要通名
+                   r"搭话|攀谈|寒暄|招呼|拜见|拜会|拜访|求见|行礼|拱手|作揖|相认|结识|结交|攀交|姓名|名姓|化名|假名|名号")  # 自报家门，与寻常的上前结交——后者自然要通名；v14 话里说到姓名(替段誉编假名)，通名也在其中
 VOWS = re.compile(r"立志|发誓|立誓|誓要|誓必|立下[^，。；！？]{0,4}[誓志]|立愿|发愿|宣誓|矢志|志向|所求")
 ARC_DONE = 4      # story.arc.STAGES 里的「了结」：主角线已了，场记请导演提一条新的所求——这时导演写所求是系统请的
 SERVED = re.compile(r"[壶碗杯盏碟盘酒茶菜饭面馍药丸散膏包]")  # 店里端上来的多半是这些：凭空出现时提示写买下(v11)
@@ -424,7 +424,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         if over:  # 系统不替玩家做主：只剥掉越权的那几条，这一拍其余照演；越权之举留作下回合的选项，并明告编剧它没有发生
             deeds = [act for _, act, _ in over]
             r.candidates += [act for _, act, ent in over if ent not in (SELF, VOW) and act not in r.candidates]  # v14 候选只收看得见的举动：所求、报名不强插成选项(run1 第 3、4 回「改写你的所求」「报上姓名」)
-            r.void += [f"{a}——主角并未起意，未曾发生" for a in deeds]
+            r.void += [(f"{a}——主角并未起意：这一拍里他不提自己叫什么，其余的话照说" if a == "报上姓名" else f"{a}——主角并未起意，未曾发生")
+                       for a in deeds]  # v14 报名作废只去掉名字：run3 第 15 回连带把替段誉编的假名也略去了，玩家选的事没发生
             r.soft.append(lexicon.Finding("agency", i, "、".join(deeds), f"第{i}拍替主角{'、'.join(deeds)}，玩家并未授意"))
             acted = [act for _, act, ent in over if ent not in (SELF, VOW)]
             if acted:  # v14 越权的物理之举先交返工：拍文写着做了、账上却没做，编剧会照拍文写(run1 第 16 回)；返工仍写才剥掉
@@ -434,7 +435,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             if not raw:  # 这一拍只做了越权之事：整拍不演
                 shown.append({**beat, "text": ""})
                 continue
-            aside = f"（其中{'、'.join(f'「{a}」' for a in deeds)}主角并未起意，未曾发生）"
+            aside = f"（其中{'、'.join(f'「{a}」' for a in deeds)}主角并未起意，未曾发生" + ("；他不提自己的名号，其余的话照说" if "报上姓名" in deeds else "") + "）"
         after = beats[i]["text"] if i < len(beats) and isinstance(beats[i].get("text"), str) else ""
         ops, dropped, odd = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"), beat.get("to"))
         hero["intro"] = False
@@ -846,6 +847,10 @@ def brief(world, ruling: Ruling) -> list[str]:
     return lines
 
 
+KIN = (frozenset("药丹丸散膏"), frozenset("卷册谱书经"), frozenset("信笺函"))  # v14 器物泛称的类：末字同类即同一种东西
+KIN_TAILS = ("药丸", "丹丸", "药粉", "药末", "毒丸", "毒药", "毒粉", "丹药", "书卷", "书册", "经卷", "卷轴", "信笺", "书信", "信函")  # 只认泛称收尾：「金创药」是另一味药
+
+
 def _subseq(short: str, name: str) -> bool:
     it = iter(name)
     return all(ch in it for ch in short)
@@ -876,7 +881,11 @@ def forged(world, noun: str) -> bool:
         desc = node.get("desc") or ""
         if (noun in desc) if len(noun) > 1 else re.search(re.escape(noun) + r"(?=[，。；！？、]|$)", desc):  # 「一叠发黄的纸，」说的是纸；「信笺」不是信
             return False
-    if len(noun) == 2 and noun[0] in lexicon.GENERIC and noun[-1] in lexicon.KINDS:  # v13 「灵草」「宝剑」这样的泛称：手边同类的只有一件，说的就是它（第 8 回的「灵草」就是手里的通天草）；「断肠草」「密图」「金创药」这样有名有姓的不算
+    kin = next((c for c in KIN if noun[-1] in c), None) if noun.endswith(KIN_TAILS) else None  # v14 同一类的泛称：「腥黑药丸」就是司空玄手里的断肠散(丸、散、丹、药同是一类)，手边这一类只有一件即是它
+    if kin and len([n for n in reach if g.kind(n) == "item" and n[-1] in kin]) == 1:
+        return False
+    tail = noun[-2:]  # v14「怀中异草」收尾是泛称「异草」(run3 第 9 回)
+    if len(tail) == 2 and tail[0] in lexicon.GENERIC and tail[-1] in lexicon.KINDS:  # v13 「灵草」「宝剑」这样的泛称：手边同类的只有一件，说的就是它（第 8 回的「灵草」就是手里的通天草）；「断肠草」「密图」「金创药」这样有名有姓的不算
         return len([n for n in reach if g.kind(n) == "item" and n.endswith(noun[-1])]) != 1
     return True
 

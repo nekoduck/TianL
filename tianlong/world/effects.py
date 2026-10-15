@@ -611,7 +611,9 @@ def _arrival(world, pid: str) -> str | None:
         return f"{pid}身在{where}，距此{days}日路程，此刻赶不到"
     if crowd.is_squad(g, pid):
         return None  # 一群人的出没已由 active 判过
-    return None if situation.debuted(world, pid) else f"{pid}此时还没在江湖上露面"  # 原著里还没登场的人：等他自己的那一回
+    if situation.debuted(world, pid) or (situation.at_home(g, pid) and where in situation.near(world)):  # v14 主角登门：主人在自己家里见得着
+        return None
+    return f"{pid}此时还没在江湖上露面"  # 原著里还没登场的人：等他自己的那一回
 
 
 def _note(world, text: str | list):
@@ -818,9 +820,33 @@ ATMOSPHERE = re.compile(r"气氛|肃杀|惊愕|满座|满厅|寂静|死寂|静�
 LASTING = re.compile(r"[开闭关塌毁烧焚破裂封堵移倒断碎撬挖拆空搬锁撕沉淹陷燃熄灭尸翻掘凿埋藏插钉]|血迹|狼藉|不见了|换了")
 
 
+def _about(nid: str, text: str) -> bool:
+    """一句现状说到了这件东西本身(v14)：它的名字(去掉所在地)里有两个字连着出现在这句里。"""
+    name = nid.rpartition("·")[2]
+    return any(name[i:i + 2] in text for i in range(len(name) - 1)) or (len(name) == 1 and name in text)
+
+
 def fleeting(text: str) -> bool:
     """一句现状只是一时的气氛或描写，不是长久的物理之变(v14)：有气氛描写的字眼、却没有一个开闭毁坏挪动的字眼。"""
     return bool(ATMOSPHERE.search(text)) and not LASTING.search(text)
+
+
+def _venom(world, op):
+    """写某人「中毒」而手边那一味毒是有数据的(v14)：就是它，登记成规则态的毒——往后随光阴发作，对症才解。
+    run3 第 7 回：司空玄逼段誉吞下断肠散，导演只写了「境况 添 中毒」，一日之后段誉气血满回、毒却只是一个字串。手边的毒不止一味、或已登记过毒的不猜。"""
+    who, val = op.get("id"), op.get("value")
+    if op.get("op") != "push" or op.get("key") != "conditions" or not isinstance(val, str) or "毒" not in val \
+            or not isinstance(who, str) or not _bodily(world, who) or body.poisons(world, who):
+        return
+    g, turn = world.graph, getattr(world, "turn", None) or {}
+    hands = (situation.around(world) | set(turn.get("present") or ()) | {"player"}) - {who}  # 下毒的是旁人：自己身上带的毒不算(被貂咬了的司空玄不是中了自己的断肠散)
+    venom = [i for i in g.of("item") if (eff := g.get(i, "effect")) and isinstance(eff, dict) and eff.get("症") and eff.get("发")
+             and g.get(i, "kind") == "毒物" and usable(world, i)]
+    pool = [i for i in venom if g.get(i, "holder") in hands]  # 只认旁人手里的毒药：此地散着的(无量山的莽牯朱蛤)不是谁下的毒
+    if len(pool) == 1:
+        from . import trade  # 迟引：trade 依赖本模块
+        trade._cure(world, who, g.get(pool[0], "effect"), f"{pool[0]}之毒", item=pool[0])
+        _note(world, f"{'你' if who == 'player' else who}中的是{pool[0]}之毒：往后按时发作，对症才解")
 
 
 def _noop(world, op) -> bool:
@@ -843,6 +869,8 @@ def _noop(world, op) -> bool:
         return False
     if key == "state" and isinstance(op.get("value"), str) and g.kind(nid) in ("location", "feature", "item") and fleeting(op["value"]):
         return True  # v14 现状只记长久之变：一时的气氛与描写(满座惊愕、气氛肃杀、云雾缭绕)不入账，日后当作事实读(run1 第 7 回山崖「前路已绝」而图上有路下谷底)
+    if key == "state" and isinstance(op.get("value"), str) and g.kind(nid) in ("feature", "item") and not _about(nid, op["value"]):
+        return True  # v14 景物器物的现状须说的是它自己：「练武厅屋梁」的现状写成「厅内变故陡生，众人目光皆被尸首引去」(三局都有)不入账
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
     return key in ("location", "holder", "faction", "hidden", "spot") and g.get(nid, key) == op.get("value")
@@ -960,6 +988,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
         extra = _exec(world, op, origin)
         applied.append(op)
         applied += extra  # 同行者与人质随之同去(v12)：连带挪动也是成立的指令
+        _venom(world, op)
         if origin == "director" and not named(op) and op.get("key") != "epithet":  # 报个姓名、立个外号不算扰动原著：因果污染只记碰过的人与物
             world.taint.update(i for o in [op, *extra] for i in _ids(o) if i and i != "player")
     return applied, rejected
