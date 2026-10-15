@@ -6,7 +6,7 @@
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
-          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -310,6 +310,23 @@ class TopicTest(unittest.TestCase):
         texts = self.texts(("报马五德之名求饶", "神农帮众"), ("挥剑拼死劈开缺口", "神农帮众", "剑架青钢剑"),
                            ("佯称深谷藏有灵药", "神农帮众", "段誉"))
         self.assertEqual(texts, ["报马五德之名求饶", "挥剑拼死劈开缺口", "佯称深谷藏有灵药"])  # 日志第 13 回：三项全部入选
+
+
+class DedupeTest(unittest.TestCase):
+    """A3：对象相同且文字相近才去重——场面上只剩一两个实体时，不同路数的选项不再互相顶掉。"""
+
+    def test_same_target_different_moves_stay(self):
+        texts = TopicTest.texts(self, ("挟持段誉保命", "段誉", "神农帮众"), ("弃剑伏地求饶", "剑架青钢剑", "神农帮众"),
+                                ("劝段誉讲和脱身", "段誉", "神农帮众"))
+        self.assertEqual(texts, ["挟持段誉保命", "弃剑伏地求饶", "劝段誉讲和脱身"])         # 日志第 14 回
+        texts = TopicTest.texts(self, ("伏在岩后屏息观望", "澜沧江边高崖"), ("攀藤摸下高崖探看虚实", "澜沧江边高崖"))
+        self.assertEqual(texts[:2], ["伏在岩后屏息观望", "攀藤摸下高崖探看虚实"])            # 日志第 10 回
+        texts = TopicTest.texts(self, ("挺身护住段誉", "段誉"), ("挺身护住段誉退后", "段誉"))
+        self.assertIn("挺身护住段誉", texts)
+        self.assertNotIn("挺身护住段誉退后", texts)                                     # 同一件事换个说法：只留一项
+
+    def setUp(self):
+        self.w = cliff()
 
 
 class ReplayBaselineTest(unittest.TestCase):

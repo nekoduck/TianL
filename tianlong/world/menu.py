@@ -1,12 +1,12 @@
 """
 [INPUT]: 依赖 world/trade 的 shop（v12 此处的铺子）、world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked（v12 授意标记不是实体），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
-[OUTPUT]: 对外提供 SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
+[OUTPUT]: 对外提供 SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
        三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
        v12 选项链路：授意标记(@书写、@交易)不是实体，可达与去重只看实体、交还的对象不带标记(下回合引擎从原话重算)；买卖住店雇人此处没有铺子也没有当值伙计即办不成；
-       只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着
+       只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
@@ -18,6 +18,20 @@ SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求�
 SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
 TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|冒充|假冒|借|以)$"),                    # 话题里的人(v12)：名字前是说起、冒充、借、以
          re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇)"))  # 名字后是之名、的下落、报仇——说的是他，不是要碰到他
+
+
+SIMILAR = 0.6  # 两项物理对象相同、去标点后的二字组重合(Jaccard)过此，才算同一件事(v12)
+
+
+def _grams(text: str) -> set[str]:
+    t = re.sub(r"[\W_]", "", text)
+    return {t[i:i + 2] for i in range(len(t) - 1)} or {t}
+
+
+def alike(a: str, b: str) -> bool:
+    """两句是不是同一件事的两种说法(v12)：「挺身护住段誉」与「挺身护住段誉退后」是，「挟持段誉保命」与「劝段誉讲和脱身」不是。"""
+    x, y = _grams(a), _grams(b)
+    return len(x & y) / max(1, len(x | y)) >= SIMILAR
 
 
 def _things(world, text: str, given=()) -> list[str]:
@@ -113,7 +127,7 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
         body = ids if body is None else body
         return bool(text) and not lexicon.leaks(text) and not lexicon.secret_hits(text, secrets, tab) \
             and all(_reachable(world, i, text, ids) for i in body) and not _shopless(world, text) and text not in [t for t, _ in picked] \
-            and not (body and any(set(body) == set(bodies.get(t, o)) for t, o in picked))  # 三项各有所指：同一对象只留一项
+            and not (body and any(set(body) == set(bodies.get(t, o)) and alike(text, t) for t, o in picked))  # 对象相同且文字相近才是重复(v12)：同指段誉的挟持与劝和是两条路
 
     def take(text, given=()) -> tuple[list[str], list[str]]:
         ids, body = _objects(world, text, given)
