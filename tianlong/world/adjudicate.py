@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 HARD / UNSURE 另有 afar（v12 望见之人开口）、judge(seek=…)（v12 小片区里寻人而至即遇：_found）、judge(stall=…) / SEIZED（v12 僵持到期押走：_seize）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -30,19 +30,26 @@
        targets 认玩家说的钱(银子、钱)为够得着的碎银与钱袋、认写信留书为起意提笔；回合切面另记银两起止、经手之物(traded：拿了一部分、交出一部分)、有人倒下的人群；
        拍文里一群人有人倒下而账上人数没少即 fell(返工不作废)；forged 收紧为够得着之物(单字的名词须是器物名字的末字，「信」不是「内堂信笺」)，银两不是器物
        v10：回合开始记下眼前的人群(turn["flock0"]，主角先走一步他们仍可在后面的拍里结下随行)与眼前之人的银两(funds，谁的钱易手都对账)；WOUND 认一记耳光
+       v12 P1-7 僵持到期(_seize)：场的僵持计数不小于 pacing.STALL_SEIZE、本回合导演仍没写结构性变化，围困主角的人群照它写下的打算(crowd.seizure)擒人押走——
+       了断围攻、结下押解、那一群与被擒者前往去处，来源 RULED_BY(也是一处调遣)；先在副本上试，有一条落不了整桩不做、只记软违例；押的是主角即连那一群与在去处的首领上名册、
+       时间轴补上去处那一刻；连带写明谁照其所图把谁擒下押往哪里(或就地扣下)、turn["seized"] 记下；体检在此之前，看的是导演的拍。_custody 对人群押着主角而两端异地，提示同一拍里写那一群与主角都前往同一处
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
+import logging
 import re
 from dataclasses import dataclass, field
 
-from . import acts, actor, bond, crowd, effects, growth, lexicon, perspective, scenery, situation, stock
+from . import acts, actor, bond, crowd, effects, growth, lexicon, pacing, perspective, scenery, situation, stock, trade, venue
 from .graph import holds
 
+log = logging.getLogger("tianlong")
+
+SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押解→ 被擒者(situation.CUSTODY 之一)
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell"}
+        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
 
 @dataclass
@@ -55,6 +62,7 @@ class Ruling:
     notes: list[str] = field(default_factory=list)        # 连带后果（同伴跟上、研习进境、追认的获救与败走）
     candidates: list[str] = field(default_factory=list)   # 主角越权之举：不演，交编剧拟作下回合的选项
     addressed: list[str] = field(default_factory=list)    # 本回合对主角开口之人：下回合的选项须有回应
+    said: dict[str, int] = field(default_factory=dict)    # v12 开口之人 → 他最后一次对主角开口是第几拍(已成立之拍，从 0 起)：须回应只认收尾时仍悬着的话
     question: dict = field(default_factory=dict)          # 本幕之问 {ask, state, by}
     spawned: list[str] = field(default_factory=list)
 
@@ -62,30 +70,62 @@ class Ruling:
 # ============================================================
 #  实体名表：原著实体 + 别名 + 本回合的场景实体
 # ============================================================
+NAMED = ("person", "item", "group", "location", "skill")
+
+
+def _base(world) -> tuple[dict, dict]:
+    """名表里不随回合变的一大半(v11 按图的结构版本、别名表与散了的人群缓存)：原著实体、别名、去「·」的写法，连同它们的类别。"""
+    g = world.graph
+    key = (g.stamp[0], len(world.aliases), tuple(s for s in g.of(crowd.GROUP) if g.get(s, "disbanded")))
+    hit = g.memo.get("names")
+    if hit and hit[0] == key:
+        return hit[1], hit[2]
+    surface = {n: n for n in g.order(n for t in NAMED for n in g.of(t))
+               if not g.get(n, "disbanded")}  # 散了的人群(v9)只是占住 id 的空壳，谁也看不见
+    surface.update({a: n for a, n in world.aliases.items() if n in surface})
+    surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    kinds = {n: _kind(g, n) for n in set(surface.values())}
+    g.memo["names"] = (key, surface, kinds)
+    return surface, kinds
+
+
+def _kind(g, n) -> str:
+    node = g.nodes[n]
+    return ("thing" if node.get("ephemeral") and node["type"] == "item" else
+            "trifle" if node["type"] == "item" and node.get("grade") == scenery.TRIFLE else node["type"])  # 寻常之物(v8)：端起茶碗不必记账，取用只记软违例
+
+
 def names(world) -> tuple[list, dict]:
     g = world.graph
-    surface = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group", "location", "skill")
-               and not node.get("disbanded")}  # 散了的人群(v9)只是占住 id 的空壳，谁也看不见
-    surface.update({a: n for a, n in world.aliases.items() if n in surface})
-    surface.update({crowd.handle(g, s): s for s in g.where(type=crowd.GROUP) if crowd.is_squad(g, s)})  # 「东宗弟子」即东宗弟子众(v9)
-    surface.update({n.replace("·", ""): n for n in list(surface.values()) if "·" in n})
+    base, known = _base(world)
+    surface = dict(base)
+    squads = {crowd.handle(g, s): s for s in g.where(type=crowd.GROUP) if crowd.is_squad(g, s)}  # 「东宗弟子」即东宗弟子众(v9)
+    surface.update(squads)
+    surface.update({n.replace("·", ""): n for n in squads.values() if "·" in n})
     surface.update({short: loc for short, loc in situation.shortnames(world).items() if short not in surface})  # 「石级隧道」即琅嬛福地·石级隧道
-    seen = {p for p in situation.seen(world) if world.graph.kind(p) == "person"}
+    seen = {p for p in situation.seen(world) | set(situation.sighted(world)) if world.graph.kind(p) == "person"}  # v12 望见之人的叫法也认得
     surface.update({perspective.handle(world, p): p for p in seen
                     if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵——本回合见过的都算(v7：正文写到被甩在身后的人也认得)
     surface.update({c: p for c, p in perspective.calls(world, seen).items() if c not in surface})  # 「容师叔毙命」死的是容子矩，不是叫他的持剑少年(v7)
     surface.update({s: i for s, i in scenery.nicknames(world).items() if s not in surface})  # 「你取下青钢剑」说的是剑架青钢剑(v8 简称)
-    kinds = {n: ("thing" if g.get(n, "ephemeral") and node["type"] == "item" else
-                 "trifle" if node["type"] == "item" and node.get("grade") == scenery.TRIFLE else node["type"])
-             for n, node in g.nodes.items() if n in surface.values()}  # 寻常之物(v8)：端起茶碗不必记账，取用只记软违例
+    kinds = {**known, **{n: _kind(g, n) for n in set(surface.values()) - known.keys() if g.has(n)}}
     return lexicon.table(surface), kinds
 
 
+def pick(world, name, surface: dict | None = None):
+    """对象栏里的一个名字落到实体(v12)：先在名表里整词认——人群的叫法(神农帮众)、眼前之人的叫法、近处短名，落不到再交 effects.resolve。"""
+    if not isinstance(name, str):
+        return name
+    hit = (surface if surface is not None else dict(names(world)[0])).get(name.strip())
+    return hit or effects.resolve(world, name)
+
+
 def targets(world, deed: str, given=()) -> set[str]:
-    """玩家举动所指的实体：选项自带的对象，加上原话里认得出的名字（含主角对器物的近似叫法）。"""
+    """玩家举动所指的实体：选项自带的对象(v12 先在名表里整词认)，加上原话里认得出的名字（含主角对器物的近似叫法）。"""
     tab, _ = names(world)
     ents = lexicon.find(deed or "", tab)
-    out = {effects.resolve(world, t) for t in given if t} | {n for n, _, _ in ents}
+    surface = dict(tab) if given else {}
+    out = {pick(world, t, surface) for t in given if t} | {n for n, _, _ in ents}
     for word in filter(None, [lexicon.itemish(deed)]):
         hit = effects.resolve(world, word)
         if world.graph.kind(hit) == "item":
@@ -97,14 +137,23 @@ def targets(world, deed: str, given=()) -> set[str]:
         out |= {i for i in g.where(type="item") if (stock.is_cash(g, i) or stock.purse(g, i) > stock.EPS) and effects.usable(world, i)
                 and (g.get(i, "holder") in around or (g.get(i, "holder") is None and g.get(i, "location") in close))}
     out = {t for t in out if isinstance(t, str) and world.graph.has(t)}
-    return out | ({WRITE} if lexicon.WRITING.search(deed or "") else set())  # 起意提笔：书写没有实体可指，以此为记
+    deal = lexicon.TRADE_NOT.sub("", deed or "")  # 大喝、吃惊、点头不是吃喝买卖(v12)：先剔除再看，只为授意的精度
+    return out | ({WRITE} if lexicon.WRITING.search(deed or "") else set()) | ({TRADE} if lexicon.TRADING.search(deal) else set())  # 起意提笔、花钱：没有实体可指，以标记为记
 
 
 # ============================================================
 #  授意：主角做的事(主角的拍、或写「你」的旁白)里，取走他人或此地之物、毁物、杀人、吸功、研习，对象须在玩家所指之内
 # ============================================================
 TO_YOU = re.compile(r"(?:给|与|到|进|入)你|(?:向|朝)你(?:抛|掷|扔|递)")  # 你是收受的一方：东西是别人给的
-WRITE = "@书写"  # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
+WRITE = "@书写"   # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
+TRADE = "@交易"   # 玩家原话里起意买卖、吃喝、住店、请医、打听(v11)：花的是主角的钱，以此为记
+MARKS = frozenset({WRITE, TRADE})  # 授意标记(v12)：不是实体——选项验收的可达与去重只看实体，标记由引擎下回合从原话重算
+SERVED = re.compile(r"[壶碗杯盏碟盘酒茶菜饭面馍药丸散膏包]")  # 店里端上来的多半是这些：凭空出现时提示写买下(v11)
+
+
+def marked(x) -> bool:
+    """授意标记(v12)：@书写、@交易 不是实体，不当选项的对象。"""
+    return x in MARKS
 
 
 def _by_player(beat: dict) -> bool:
@@ -169,6 +218,8 @@ def _overreach(world, a: dict, allowed: set, ok) -> tuple[str, str] | None:
         return f"{v}{item}", item
     if v == "书写" and WRITE not in allowed:
         return "提笔书写", WRITE
+    if v in acts.MARKET and TRADE not in allowed and not (isinstance(item, str) and item in allowed):  # 花主角的钱、用主角的东西(v11)
+        return f"{v}{item or a.get('事') or ''}", TRADE
     return None
 
 
@@ -227,24 +278,31 @@ def _drawn(world, beats: list) -> list[str]:
     """名册由事件写入(v5)：同在这一片、已露面而尚未到跟前的人(situation.elsewhere)，导演让他开口、对他下指令，
     就是写他走到了主角跟前——不必另写 arrive，也不因「不在你身边」整拍作废。远处的人照旧要 arrive、照旧核路程。"""
     near, out = set(situation.elsewhere(world)), []
+    glimpsed = {acts.normalize(world, op).get("对") for b in beats for op in b.get("ops") or []
+                if acts.is_act(op) and acts.normalize(world, op).get("做") == "望见"}  # 本回合望见的人(v12)：署名、写进事码也不拉上名册
     for b in beats:
         ops = [op for op in b.get("ops") or [] if isinstance(op, dict)]
         for x in [b.get("who"), b.get("to")] + [op.get(k) for op in ops for k in ("id", "src", "dst", "谁", "对", "自", "与")]:
             x = effects.resolve(world, x)
-            if x in near and x not in out:
+            if x in near and x not in out and x not in glimpsed:
                 out.append(x)
     return out
 
 
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
-          no_interrupt: bool = False, drop: dict | None = None, then=None) -> Ruling:
-    """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力；cast：此地原著的相关者（可作打断的来源）；
+          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None, seek=(), stall: int = 0) -> Ruling:
+    """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力(门派级：只管补一队)；cast：此地原著的相关者（可作打断的来源）；
+    reserved(v12 lod.reserved)：原著近事要用的人马 {人群: 事件}——写进 world.turn["reserved"]，effects 拦赶来、crowd 拦分人(试演与定稿各写一次，结算同样被拦)；
+    seek(v12 menu.seeking)：玩家要找的人——诸拍与此地原著落定之后，他若同在主角近旁的小片区里而不在眼前，即上名册(连同同行者与扣着他的人)，寻到了；
+    stall(v12 场的僵持计数，旧场没有按 0)：不小于 pacing.STALL_SEIZE 而本回合没有结构性变化，规则照围困人群写下的打算擒人押走(_seize)；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
     then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
     一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
     同伴随行等诸拍落定才结算：拍中途解除了随行、被人擒住的，不会被主角先走一步带走。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
+    world.turn["reserved"] = dict(reserved or {})  # v12：带队之人级的禁令，物理(赶来、分人)与结算读它
+    world.turn["sighted"] = []                     # v12：本回合望见的人(望见事码记下)，试演与定稿各从空起
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     money0 = stock.funds(world, "player")
@@ -324,7 +382,9 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         r.beats.append({**{k: beat.get(k) for k in ("who", "to", "text", "mood")}, "text": (beat.get("text") or "") + aside})
         shown.append(beat)
         if beat.get("to") == "player" and beat.get("who") not in (None, "player"):
-            r.addressed.append(beat["who"])
+            speaker = effects.resolve(world, beat["who"])
+            r.addressed.append(speaker)
+            r.said[speaker] = len(r.beats) - 1
     route = world.turn.pop("route")
     if len(route) > 1:
         for pid in situation.party(world):
@@ -332,6 +392,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         effects._note(world, situation.follow(world, route))
     if then:
         then()
+    _found(world, seek)
     if not moments or moments[-1]["here"] != world.here:  # 主角最后到了哪里：那一刻的听众到成文时再看
         moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
@@ -339,8 +400,69 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
                            "money": money0, "flock": flock0, "funds": funds0}  # 编剧成文之后的对账也以此为准
     _examine(world, r, shown, power0, stripped, named)
     _question(world, r, cast, no_interrupt and 0 not in drop)
+    _seize(world, r, stall, world.here != here0)
     r.notes = list(world.turn.get("notes", []))
     return r
+
+
+def _seize(world, r: Ruling, stall: int, moved: bool):
+    """僵持到期(v12)：危局连着 STALL_SEIZE 回合没有结构性变化、本回合导演仍没写，围困主角的人群照它写下的打算(crowd.seizure)擒人押走——
+    规则只照剧情写下的打算落账，不替导演编剧情。指令依次为：了断那一群对主角的围攻、结下 那一群 —押解→ 被擒者、有去处时那一群与被擒者都前往去处；
+    来源 RULED_BY(也是一处调遣：本回合已被别处挪过的人押不走)。先在副本上试，全部成立才在本世界照做；有一条落不了(另有一群人也围着主角)整桩不做，只记软违例。
+    押的是主角且有去处：那一群与在去处的首领上名册(押到首领跟前)，时间轴补上去处那一刻；押的是别人，不动主角的名册。体检在此之前，看的是导演的拍。"""
+    if stall < pacing.STALL_SEIZE or pacing.structural(r.applied, moved):
+        return
+    plan = crowd.seizure(world, names(world)[0])
+    if not plan:
+        return
+    g, s, who, to = world.graph, plan["by"], plan["who"], plan["to"]
+    ops = [{"op": "unlink", "src": s, "dst": "player", "rel": crowd.BESIEGE}, {"op": "link", "src": s, "dst": who, "rel": SEIZED}]
+    ops += [{"op": "set", "id": x, "key": "location", "value": to} for x in (s, who)] if to else []
+    trial = copy.copy(world)
+    trial.graph, trial.player, trial.turn, trial.knowledge = (copy.deepcopy(x) for x in (world.graph, world.player, world.turn, world.knowledge))
+    _, rejected = effects.apply(trial, copy.deepcopy(ops), effects.RULED_BY)
+    if rejected:
+        why = "；".join(f"{effects.describe(op)}——{reason}" for op, reason in rejected)
+        r.soft.append(lexicon.Finding("seize", 0, s, f"僵持到期，{crowd.handle(g, s)}照其所图擒人不成：{why}", hard=False))
+        log.info("僵持到期押走不成：%s", why)
+        return
+    applied, _ = effects.apply(world, ops, effects.RULED_BY)
+    r.applied += applied
+    if who == "player" and to:
+        lead = g.get(s, "leader")
+        situation.enlist(world, [s] + ([lead] if lead and g.has(lead) and g.get(lead, "location") == to and g.get(lead, "status") != "dead" else []))
+        moments = world.turn.setdefault("moments", [])
+        if not moments or moments[-1]["here"] != world.here:  # 正文在去处听到的名字才落得到人
+            moments.append({"here": world.here, "ears": set(), "bodies": set()})
+    world.turn["seized"] = {"by": s, "who": who, "to": to}
+    effects._note(world, f"{crowd.handle(g, s)}照其所图，将{'你' if who == 'player' else who}擒下，{f'押往{to}' if to else '就地扣下'}")
+    log.info("僵持到期押走：%s", world.turn["seized"])
+
+
+def _found(world, seek):
+    """小片区里寻人而至即遇(v12)：玩家要找的人同在主角近旁的小片区里(situation.elsewhere 且 small_area)，到了这一片就寻到了——
+    此人、他的同行者与扣着他的人一并上名册；只写名册不挪人，纯规则，试演与定稿一致。中原、大理城这种大地方不算。"""
+    g, hidden = world.graph, set(situation.elsewhere(world))
+    for p in seek or ():
+        if p in hidden and situation.small_area(world, g.get(p, "location")):
+            situation.enlist(world, [p, *situation.company(world, p), *situation.captors(world, p)])
+            effects._note(world, f"你在这一带寻到了{p}")
+
+
+HANGING = 2  # 须回应只认本回合最后两拍里对主角开口的人(v12)：那句话之后又过了三四拍(有人毙命、放貂、求情)，早已过时
+
+
+def hanging(world, r: Ruling) -> list[str]:
+    """收尾时仍悬着的话(v12)：对主角开口的那一拍在本回合最后 HANGING 拍之内、此人此刻仍在眼前——按开口先后排。
+    编剧的【须回应】与选项验收的回应都只认这几人；被甩在身后的人、早已过时的话不再要求回应。"""
+    last, close = len(r.beats) - HANGING, situation.around(world)
+    return [p for p, i in sorted(r.said.items(), key=lambda x: x[1]) if i >= last and p in close]
+
+
+def lines_to_player(world, r: Ruling) -> dict[str, str]:
+    """本回合各人对主角说的最后一句(v12)：回应的措辞按那一句的主题定(盘问、拦阻、催促、赔罪)。"""
+    return {effects.resolve(world, b["who"]): b.get("text") or "" for b in r.beats
+            if b.get("to") == "player" and b.get("who") not in (None, "player")}
 
 
 # ============================================================
@@ -354,7 +476,8 @@ HEAL = re.compile(r"药|丹|丸|调息|运功|歇|养|疗|敷|包扎|吐纳|平�
 
 def physical(op) -> bool:
     """改变物理状态的指令：去留、得失、生死伤病、擒放随行、赶来、研习吸功、揭开暗路与隐情。
-    只有恩怨印象(其余关系)、未了之事、地点现状落不了是小事——丢那一条，拍照常成立。"""
+    只有恩怨印象(其余关系)、未了之事、地点现状落不了是小事——丢那一条，拍照常成立。
+    v12：打算、志向、所求与外号、神色一样是软状态，不算物理——落不了只丢这一条；节奏账也不把只改打算记成局面动了。"""
     if not isinstance(op, dict):
         return False
     if acts.is_act(op):  # 事码(v9)：规则之事都动物理(得失、撕合、书写、脱身、人群死伤)，软的几样不算
@@ -364,7 +487,7 @@ def physical(op) -> bool:
         return op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY
     if kind in ("arrive", "study", "drain", "reveal"):
         return not effects.named(op)  # 报个姓名是认知不是物理(v6)：落不了只丢这一条，拍照常成立
-    return key not in ("threads", "未了之事", "state", "note", "epithet", "mood", "spot")  # 器物挪个方位(v8)不是得失
+    return key not in ("threads", "未了之事", "state", "note", "epithet", "mood", "spot", "intent", "agenda", "goal")  # 器物挪个方位(v8)不是得失；打算志向(v12)不是物理
 
 
 def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tuple[list, list]:
@@ -400,14 +523,21 @@ def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tup
 
 
 def _custody(world, r: Ruling, touched: dict[str, int]):
-    """不变量：擒者与人质同处一地。本回合碰过其中一方而两人分处两地，是哪一拍写歪了，就记在哪一拍上。"""
-    for e in world.graph.edges:
+    """不变量：擒者与人质同处一地。本回合碰过其中一方而两人分处两地，是哪一拍写歪了，就记在哪一拍上。
+    v12 一群人押着主角而两端异地：押走就在同一拍里写那一群与主角都前往同一处，不押了就写了断。"""
+    g = world.graph
+    for e in g.edges:
         if e["rel"] not in situation.CUSTODY:
             continue
         a, b = e["src"], e["dst"]
         beat = max(touched.get(a, 0), touched.get(b, 0))
         pa, pb = effects.place(world, a), effects.place(world, b)
-        if beat and pa and pb and pa != pb:
+        if not (beat and pa and pb and pa != pb):
+            continue
+        if b == "player" and crowd.is_squad(g, a):
+            r.hard.append(lexicon.Finding("custody", beat, b, f"第{beat}拍之后你在{pb}、押着你的{crowd.handle(g, a)}却在{pa}：押走就在同一拍里写"
+                                                             f"那一群与主角都前往同一处；不押了就写 了断 {a}→player {e['rel']}"))
+        else:
             r.hard.append(lexicon.Finding("custody", beat, b, f"第{beat}拍之后{b}在{pb}、擒住{b}的{a}却在{pa}：擒者走则人质随之；"
                                                              f"要{b}随你走，须先写明救下{b}（了断拘押、结下随行）"))
 
@@ -424,7 +554,8 @@ def _view(world, start: dict, power0=None) -> lexicon.View:
                         traded=set(world.turn.get("traded", ())), money_start=start.get("money", 0.0),
                         money_end=stock.funds(world, "player"),
                         funds={p: (v, stock.funds(world, p)) for p, v in (start.get("funds") or {}).items()},
-                        felled={s for s, n in (start.get("flock") or {}).items() if not crowd.is_squad(g, s) or crowd.standing(g, s) < n})
+                        felled={s for s, n in (start.get("flock") or {}).items() if not crowd.is_squad(g, s) or crowd.standing(g, s) < n},
+                        sighted=set(situation.sighted(world)))
 
 
 def _examine(world, r: Ruling, shown, power0, stripped=frozenset(), named=()):
@@ -544,11 +675,20 @@ def brief(world, ruling: Ruling) -> list[str]:
         if f.kind in ("acquire", "give", "void") and g.kind(f.entity) == "item":  # 暗藏在隔壁的东西：主角要先到那里(同一拍里先走过去也行)
             line += f"（{f.entity}现{_where(world, f.entity)}）"
         elif f.kind in ("unnamed", "conjure"):
-            near = [i for i in g.where(type="item") if effects.place(world, i) in situation.near(world)
-                    and not g.get(i, "hidden") and effects.usable(world, i)]
-            line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）"
+            near = [i for i in effects.things(world, situation.near(world)) if not g.get(i, "hidden") and effects.usable(world, i)]
+            shop = trade.shop(world)
+            ware = trade.ware_of(world, shop, f.entity) if shop and f.kind == "conjure" else None
+            if shop and f.kind == "conjure" and (ware or (venue.wares(world, shop) and SERVED.search(f.entity))):  # 店里的货：要买下才到得了桌上
+                shelf = "、".join(k[2:] for k in venue.wares(world, shop))
+                line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）——这是铺子里的货(货架上有{shelf})：主角要它就写 买下(吃喝也可写 打尖)，钱照价目付；不买就别写端上来"
+            else:
+                line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）"
         elif f.kind == "absent":
             line += f"（{f.entity}现在{g.get(f.entity, 'location')}；要他来，写 赶来，系统按路程裁定赶不赶得到）"
+            if f.entity in situation.sightable(world):  # v12：他在望得见的地方
+                line += "；只是远远望见就写 望见；主角走到别处才望见的，望见写在走到之后"
+        elif f.kind == "afar":
+            line += "（远远望见的人说什么主角听不到：删去他的台词，或写他赶来、主角走过去）"
         elif f.kind == "move":  # 体检只陈述事实，怎么改是给导演的话：不随作废缘由流到编剧那里
             line += "（主角真要去留就写 前往；没走成就改写成正要前往或止步）"
         lines.append(line)

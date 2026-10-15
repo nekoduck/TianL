@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/lexicon 的 Finding / table / find（实体名的最长匹配）、world/situation 的 seen / around / bodies（本回合见过的人、眼前之人、眼前的遗体），World 门面（graph / player / aliases / knowledge / turn）
-[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、audience()（听得见的人：主角与此刻耳边的人——眼前与同行，时间轴上那一刻的听众优先）、sight() / remains()（v7 名字落得到的人：耳边的活人，连同眼前的遗体）、
+[OUTPUT]: 对外提供 knows()（甲是否知乙姓名）、learn()、identified() / identify()（v12 识底：主角知不知道此人的头衔门派关系）、audience()（听得见的人：主角与此刻耳边的人——眼前与同行，时间轴上那一刻的听众优先）、sight() / remains()（v7 名字落得到的人：耳边的活人，连同眼前的遗体）、
           moment()（v7 在时间轴的某一刻听写与落账：那一刻的听众与遗体，出来即复原）、seed()（开局相识）、handle()（主角眼中某人的叫法）、by_handle()、surname()、
           guise()（不论识不识名，此人在主角眼中的样子：外号或外貌）、distinguish()（v7 叫法即主键：撞了叫法的几人各分一个稳定外号，返回 set epithet 指令）、
           calls()（v7「姓+称谓」→ 其人：称谓按男女分，同姓的几人都不收）、
@@ -10,7 +10,8 @@
           veil()（把玩家视锥译成主角的视角：不识名之人只剩外貌叫法，身份与关系一概不露；v5 随身之物、地上器物、传闻、地点现状与设定一并过掩码；
           v8 器物是 world/scenery 的卡片(名字、等级、方位、类别、描述、属性、内容)，名字过 thing、其余过 mask，景物的描述与现状亦然）、
           thing()（器物在主角眼中的叫法：名字里带着不识之人的名号就只叫那件东西本身）
-[POS]: world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
+[POS]: v11 伙计(staff)只有职名：guise 叫他的职名(掌柜、店小二)，同职几人再由 distinguish 分外号。
+        world 层的认知视角——「视角即上下文」：每段文字都从某个视角写出，那个视角不知道的名字就不给它。
        识名是认知最表层的一环：主角初见钟灵，只知是「大眼圆脸的少女」；她自报姓名、或认得她的人当面叫她，主角才知道她叫钟灵。
        人物之间：原著里有关系、同一门派即互相识名，戏里听见的另记在人物节点的 knows 上；主角所识之人记在黑板的 acquaintances 上（系统维护，导演写不动）。
        纯规则、零调用：追认只增加认知，从不挪动任何人；查不出的旁白漏名，由 mask 在交编剧之前确定性地换掉——不给即不泄露
@@ -26,6 +27,7 @@
        (手里有兵刃的叫持剑的，否则按 id 的稳定散列取一个外貌字眼，同组不重样)，立下不改，人散了也不改回；「容师叔」「钟姑娘」也是叫法，calls 让它落得回原人；
        名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
        称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
+       v12：mask 把本回合望见的人当作见过(只叫外貌)，veil 另过远处可见；veil 对人群的首领与眼下之事过掩码；识名不等于识底——识名而未识底的人头衔门派不露、关系行只留两端都识底的，hear 在报名那一句里认出头衔即带 know:身份；
        v9：thing 让分出来的那一份(玉壁剑影图·1)叫回那件东西、剧中人写下的文书叫作「你写给某人的书信」(主角经手、读过或是收信人才知道谁写给谁，收信人照旧只叫外貌)；veil 另过人群的描述
        v10：handle 让一群人叫他们的叫法(东宗弟子)，随行的人群在编剧那里也是叫法
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -36,6 +38,7 @@ import re
 import zlib
 
 from . import lexicon, situation
+from .ledger import famous
 
 KNOWS = "knows"                   # 人物节点属性：此人在戏里听来的名字（含 "player"）
 COMPOUND = ("慕容", "司空", "南宫", "欧阳", "上官", "东方", "诸葛", "公孙", "皇甫", "令狐", "司马", "独孤", "赫连", "完颜",
@@ -100,6 +103,25 @@ def learn(world, who: str, target: str) -> bool:
     return True
 
 
+def identified(world, pid: str) -> bool:
+    """主角知不知道此人的底细(v12)：头衔、门派、关系——识名不等于识底。段誉只报了「小生段誉」，主角不该就此知道他是镇南王世子。"""
+    return pid == "player" or pid in (world.player.get("identified") or [])
+
+
+def identify(world, pid: str) -> bool:
+    """主角得知此人的底细(v12)：开局常识(seed)、或戏里有人说破来历(识名事码带 知:身份，听写器在报名的那句里认出他的头衔)。返回是否新知。"""
+    if identified(world, pid) or world.graph.kind(pid) != "person":
+        return False
+    world.player.push("identified", pid)
+    return True
+
+
+def _titled(world, pid: str, text: str) -> bool:
+    """这句话里说破了此人的来历(v12)：他头衔的某一段(两字以上)原样出现在报名的那一句里——「小生大理段誉，镇南王世子」。"""
+    title = world.graph.get(pid, "title") or ""
+    return any(len(part.strip()) >= 2 and part.strip() in text for part in re.split(r"[、，,]", title))
+
+
 def audience(world) -> set[str]:
     """听得见的人(v6)：此刻在主角耳边的——主角、眼前之人与同行者(活着的)。回合开始时在、后来被主角甩在身后的人听不见：
     主角在密林里报的名，剑湖宫厅上的人不会知道。裁决器逐拍听写时把那一拍的听众记在 turn["ears"](说话时在场的，连同这一拍赶来的)。"""
@@ -143,18 +165,23 @@ HOSTS = re.compile(r"掌门|帮主|谷主|庄主|宫主|岛主|方丈")
 
 def seed(world, also=()):
     """开局相识：出身里写到的人（随从之于马五德、王府小吏之于段誉）与主角互相识名；also 另加（旧档里与主角已有交情的人）。
-    开场之地当众主持其事的一派之主（剑会上的左子穆、辛双清），主角与在座诸人都叫得出名字——他们却不识得一个随从。"""
+    开场之地当众主持其事的一派之主（剑会上的左子穆、辛双清），主角与在座诸人都叫得出名字——他们却不识得一个随从。
+    v12 识底：出身带来的人、当众主持的掌门、江湖闻名之人(ledger.famous)，主角开局即知其底细。"""
     g, tab = world.graph, lexicon.table(_surfaces(world))
     for p in {pid for pid, _, _ in lexicon.find(world.player["origin"] or "", tab)} | set(also):
         if g.kind(p) == "person":
             learn(world, "player", p)
             learn(world, p, "player")
+            identify(world, p)
     present = g.where(type="person", location=world.here)
     for p in present:
         if HOSTS.search(g.get(p, "title") or ""):
+            identify(world, p)
             for q in ["player", *present]:
                 if q != p:
                     learn(world, q, p)
+    for p in g.order(n for n in g.of("person") if famous(g.nodes[n])):
+        identify(world, p)
 
 
 # ============================================================
@@ -194,6 +221,8 @@ def guise(world, pid: str) -> str:
     g = world.graph
     if g.get(pid, "epithet"):
         return g.get(pid, "epithet")
+    if g.get(pid, "staff") and g.get(pid, "role"):  # 伙计(v11)只有职名：掌柜、店小二、坐堂大夫——人人这样叫他
+        return g.get(pid, "role")
     look = re.split(r"[，。；、]", g.get(pid, "appearance") or "")[0].strip()
     if look and NOUN.search(look) and len(look) <= 6:
         return look
@@ -262,7 +291,7 @@ def by_handle(world, name: str) -> str | None:
 def _surfaces(world) -> dict[str, str]:
     """人名的一切写法 → id：正名、别名、去「·」写法。"""
     g = world.graph
-    out = {n: n for n, node in g.nodes.items() if node["type"] == "person"}
+    out = {n: n for n in g.of("person")}
     out.update({a: n for a, n in world.aliases.items() if g.kind(n) == "person"})
     return out
 
@@ -411,10 +440,13 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
     to = to if to in present else None
     near = [p for p in dict.fromkeys([who, to, *near]) if p and p in present]
     said: list[tuple] = []
+    known: set[str] = set()  # 报名的那一句里连来历一并说破的人(v12 识底)
 
-    def say(pid, ears=None):
+    def say(pid, ears=None, where=""):
         if pid not in faces:
             return
+        if where and _titled(world, pid, where):
+            known.add(pid)
         for ear in ([None] if ears is None else sorted(set(ears) - {pid})):
             if (pid, ear) not in said:
                 said.append((pid, ear))
@@ -426,17 +458,17 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
         ears = _listeners(world, head, s, aimed, whos, near)
         for pid, a, b in lexicon.find(q, names):
             if _introduced(q, a, b):  # 「小生段誉」「在下郑大风」只能是本人说的：名字本身就是说话人，听者按本人说给谁算
-                say(pid, ears if s == pid else _listeners(world, head, pid, aimed if who == pid else None, whos, near))
+                say(pid, ears if s == pid else _listeners(world, head, pid, aimed if who == pid else None, whos, near), q)
             elif s and s != pid and knows(world, s, pid):
-                say(pid, ears)  # 认得他的人当面叫出
+                say(pid, ears, q)  # 认得他的人当面叫出(连来历一并说破即识底)
         for x in SPELLED.finditer(q):  # 「姓段，单名一个誉字」：说的人认不认得都一样，读者读到了这个名字
             pid = _spell(names, x.group(1), x.group(2))
             if pid:
-                say(pid, ears)
+                say(pid, ears, q)
         if s:
             for p in sorted(faces - {s}):
                 if knows(world, s, p) and _calls(q, p, me if p == "player" else p):
-                    say(p, ears)
+                    say(p, ears, q)
     last: list[str] = []
     for sent in re.split(r"[。！？\n]", QUOTE.sub("「」", text)):  # 旁白：互通姓名、自报家门、点明某人叫什么
         people = [p for p, _, _ in lexicon.find(sent, whos) if p != "player" and p in present]
@@ -445,7 +477,7 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
                 continue
             for pid, a, _ in lexicon.find(clause, names):
                 if CALLED.search(clause[max(0, a - 4):a]):
-                    say(pid, {to, "player"} - {None} if to else None)
+                    say(pid, {to, "player"} - {None} if to else None, sent)
             if MUTUAL.search(clause):
                 pair = list(dict.fromkeys((["player"] if "你" in sent else []) + people))
                 pool = [p for p in dict.fromkeys([*near, *last]) if p not in pair and p != "player"]
@@ -460,11 +492,12 @@ def hear(world, text: str, who=None, to=None, near=(), present=None, miss=None) 
                 head = sent[:sent.index(clause) + m.start()]
                 teller = _agent(world, head, whos, near or last) or (who if who in present else None)
                 if teller:
-                    say(teller, {to, "player"} - {None} if to else None)
+                    say(teller, {to, "player"} - {None} if to else None, sent)
                 elif miss is not None:
                     miss.append(sent)
         last = people or last
-    return [{"op": "reveal", "id": pid, "key": "name", **({"to": ear} if ear else {})} for pid, ear in said]
+    return [{"op": "reveal", "id": pid, "key": "name", **({"to": ear} if ear else {}), **({"know": "身份"} if pid in known else {})}
+            for pid, ear in said]
 
 
 # ============================================================
@@ -513,7 +546,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     """主角不识名之人：旁白里换成叫法，台词里换成当面的称呼；说话者不知主角姓名，他口中的主角名号与「王兄」换成泛称。"""
     if not text:
         return text
-    seen = situation.seen(world)  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他
+    seen = situation.seen(world) | set(situation.sighted(world))  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他；v12 远远望见的也一样(名号显赫的司空玄亦然)
     tab = lexicon.table({s: p for s, p in _surfaces(world).items()  # 当面不识其人，或连其名都未曾听过——久仰的不在眼前，照叫其名
                          if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))})
     me = world.player["name"]
@@ -575,17 +608,23 @@ def veil(world, pack: dict) -> dict:
         if not knows(world, "player", pid):
             p.update(name=handle(world, pid), title="来历不明", faction="门派不明",
                      toward_you=[mask(world, t) for t in p["toward_you"]])
+        elif not identified(world, pid):  # 识名不识底(v12)：叫得出名字，头衔门派仍不露
+            p.update(title="来历未明", faction="门派不明")
         p["carrying"] = [thing(world, c) for c in p["carrying"]]
         if p.get("intent"):
             p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
-    out["squads"] = [{**q, "desc": mask(world, q.get("desc") or "")} for q in out.get("squads", [])]  # 人群(v9)：叫法本就是外貌门派
-    out["relations"] = [r for r in out["relations"] if mask(world, r) == r]
+    out["squads"] = [{**q, "desc": mask(world, q.get("desc") or ""), "leader": handle(world, q["leader"]) if q.get("leader") else None,
+                      "intent": mask(world, q["intent"]) if q.get("intent") else q.get("intent")}
+                     for q in out.get("squads", [])]  # 人群(v9)：叫法本就是外貌门派；v12 首领与眼下之事也从主角的视角说
+    out["relations"] = [r for r in out["relations"] if mask(world, r) == r and _bared(world, r)]  # v12 关系行只留两端都识底(或一端是主角)的
     out["party"] = [handle(world, p) for p in out.get("party", [])]
     g, shown = world.graph, {p["name"] for p in pack["people"]}
-    out["nearby"] = [f"{handle(world, p)}" + (f"（{g.get(p, 'title')}）" if knows(world, "player", p) else "") + f"在{g.get(p, 'location')}"
+    out["nearby"] = [f"{handle(world, p)}" + (f"（{g.get(p, 'title')}）" if identified(world, p) and knows(world, "player", p) else "") + f"在{g.get(p, 'location')}"
                      for p in sorted(situation.around(world) - shown)]
     out["dead"] = [handle(world, p) for p in out.get("dead", [])]
+    out["afar"] = [{**a, "name": handle(world, a["name"]) if a.get("kind") != "group" else a["name"],
+                    "appearance": mask(world, a.get("appearance") or "")} for a in out.get("afar", [])]  # v12 远处可见：生人只叫外貌
     out["journal"] = [mask(world, j) for j in out["journal"]]
     out["news"] = [mask(world, n) for n in out.get("news", [])]  # 传闻也从主角的视角说：不识的人只剩叫法
     out["items"] = [_card(world, i) for i in out.get("items", [])]
@@ -597,6 +636,12 @@ def veil(world, pack: dict) -> dict:
     out["features"] = [{**f, "desc": mask(world, f.get("desc") or ""), "state": mask(world, f["state"]) if isinstance(f.get("state"), str) else f.get("state")}
                        for f in out.get("features", [])]
     return out
+
+
+def _bared(world, line: str) -> bool:
+    """一行关系「甲—关系—乙（…）」两端主角都识底(或一端是主角)：段誉只报了姓名，「段正淳—父子—段誉」不该给编剧。"""
+    m = re.match(r"^(.+?)—(.+?)—(.+?)(?:（|$)", line)
+    return not m or all(x == "player" or identified(world, x) for x in (m.group(1), m.group(3)))
 
 
 def _card(world, c: dict) -> dict:

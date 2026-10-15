@@ -12,10 +12,13 @@
        (易手仍是 set holder / push inventory，银两是 money，人群是 squad，造物是 forge，文书是 doc)，恩怨、兑现原著、江湖事件照旧从记录里读
        偷得无人察觉的记录带 stealth(恩怨账不记)；夺取一个人身上的东西看较量预裁(rag.WIN 那几档才夺得下)，偷取看身法；书写用过的纸笔、拿过一部分的原物记作经手(turn["traded"])，
        主角这一拍正要走进去的那一间，那里的纸笔也够得着(与取物同一口径)
+       v11 世界底座：市——买下、卖出、服用、打探、办事(服务名即事码：住宿、打尖、诊治……)交 world/trade 执行，花主角的钱须是玩家起意(MARKET)；
+       v12：望见——隔着关口远远看见某人或一群人(situation.sightable)，记进本回合望见的人，不挪人不上名册；识名事码另可写「知」:「身份」——连来历一并说破，主角听见即识底；
+       P1-7 脱身认围攻与押解(crowd.holders)：一样须过整群一半之力，冲得出去即了断那一条拘押；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import access, body, crowd, effects, scribe, situation, stock
+from . import access, body, crowd, effects, scribe, situation, stock, trade
 
 # ============================================================
 #  动词表：规范名 → 别名(模型常写的单字或口语)
@@ -30,19 +33,26 @@ VERBS = {
     "前往": ("去", "走", "到", "移动"), "赶来": ("来", "到来", "赶到"), "脱身": ("逃", "突围", "逃脱", "冲出"),
     "伤人": ("伤", "打伤", "刺伤"), "疗伤": ("疗", "医", "治伤"), "杀死": ("杀", "击杀", "杀了"), "打晕": ("晕", "点倒", "打昏", "击晕"),
     "境况": ("境",), "结下": ("结", "立"), "了断": ("断", "解除"), "看法": ("看", "态度"),
-    # 心：认知与软状态
+    # 心：认知与软状态(v12 望见：隔着关口远远看见)
+    "望见": ("望", "远望", "遥望", "瞥见"),
     "识名": ("名", "报名", "道名", "姓名"), "神色": ("色", "情绪"), "打算": ("意", "意图"), "外号": ("号", "叫法"),
     "揭开": ("揭", "找出", "发现"), "现状": ("景", "状态"), "应承": ("诺", "答应", "承诺"), "了结": ("了", "完结"),
     "所求": ("立志", "志向"),
     # 功
     "研习": ("习", "练", "求教"), "吸功": ("吸",),
+    # 市(v11 世界底座)：买卖、服用、办事、打探——货架、价目、伙计与消息都在数据里
+    "买下": ("买", "购买", "采买", "沽"), "卖出": ("卖", "出售", "变卖", "典当", "当掉"),
+    "服用": ("服", "服下", "吃", "喝", "饮", "敷", "敷上"), "打探": ("打听", "探听", "听书", "问讯"),
+    "办事": ("雇", "托办", "请办"),
 }
 ALIAS = {a: v for v, aliases in VERBS.items() for a in (v, *aliases)}
-RULE = {"拿取", "放下", "交给", "偷取", "夺取", "毁去", "撕开", "拼合", "书写", "封缄", "拆封", "阅读", "脱身"}  # 在这里执行的规则之事
+RULE = {"拿取", "放下", "交给", "偷取", "夺取", "毁去", "撕开", "拼合", "书写", "封缄", "拆封", "阅读", "脱身",
+        "买下", "卖出", "服用", "打探", "办事", "望见"}  # 在这里执行的规则之事(v11 市：交 trade；v12 望见)
+MARKET = {"买下", "卖出", "服用", "打探", "办事"}  # 花主角的钱、用主角的东西：须是玩家起意(授意)
 RULED = {"伤人", "疗伤", "杀死", "打晕", "研习", "吸功"}  # 伤病生死、功力进境归规则：正文写了也改不了账(结算只记分歧)
-SOFT = {"神色", "打算", "外号", "现状", "看法", "应承", "了结", "识名", "所求"}  # 不是物理：落不了只丢这一条，拍照常成立
+SOFT = {"神色", "打算", "外号", "现状", "看法", "应承", "了结", "识名", "所求", "望见"}  # 不是物理：落不了只丢这一条，拍照常成立
 MONEY = "银两"
-FIELDS = ("谁", "物", "量", "与", "自", "对", "数", "到", "为", "文", "致", "处", "因", "添", "消", "听", "秘", "路", "血", "份", "直到")
+FIELDS = ("谁", "物", "量", "与", "自", "对", "数", "到", "为", "文", "致", "处", "因", "添", "消", "听", "秘", "路", "血", "份", "直到", "事", "知")
 ENTITY = ("谁", "与", "自", "对", "到", "致", "听")
 ME = {"你", "主角", "player", "自己"}
 
@@ -75,10 +85,15 @@ def _resolve(world, name):
 def normalize(world, act: dict) -> dict:
     v = ALIAS.get(str(act.get("做") or "").strip(), str(act.get("做") or "").strip())
     out = {"做": v, **{k: act[k] for k in FIELDS if k in act and act[k] not in (None, "", [])}}
+    if v not in ALIAS and v in ((getattr(world, "atlas", None) or {}).get("services") or ()):  # 服务名即事码(v11)：住宿、打尖、诊治、摆渡……
+        out.update({"做": "办事", "事": v})
+        v = "办事"
     for k in ENTITY:
         out[k] = _resolve(world, out[k]) if k in out else out.get(k)
         if out.get(k) is None:
             out.pop(k, None)
+    if v == "望见" and "对" not in out and out.get("谁") not in (None, "player"):  # 望见写在「谁」上(v12)：望见的是他，望的人是主角
+        out["对"], out["谁"] = out.pop("谁"), "player"
     out.setdefault("谁", "player")
     raw = out.get("物")
     if isinstance(raw, str):
@@ -86,8 +101,8 @@ def normalize(world, act: dict) -> dict:
         squad_side = crowd.is_squad(world.graph, out.get("自"))
         if raw in stock.MONEY_WORDS:
             out["物"] = MONEY
-        elif v == "书写":
-            out["物"] = raw  # 写的是一种文书(书信、字条)，不是既有之物
+        elif v in ("书写", "买下", "打探", "办事"):
+            out["物"] = raw  # 写的是一种文书、货架上的一样货、打听的事——不是既有之物
         elif not squad_side:  # 从人群身上偷夺：物是他们身上那一样(长剑)，交 crowd 认
             out["物"] = _resolve(world, raw)
     money = out.get("物") == MONEY or stock.is_cash(world.graph, out.get("物")) or bool(stock.purse(world.graph, out.get("物")))
@@ -127,8 +142,9 @@ def lower(world, a: dict) -> list[dict] | None:
         return [{"op": "unlink", "src": who, "dst": to, "rel": val}]
     if v == "看法":
         return [{"op": "link", "src": who, "dst": to or "player", "rel": val, **({"note": a["因"]} if a.get("因") else {})}]
-    if v == "识名":
-        return [{"op": "reveal", "id": who, "key": "name", **({"to": a["听"]} if a.get("听") else {})}]
+    if v == "识名":  # v12 「知」:"身份"——连来历一并说破，主角听见即识底(头衔、门派、关系)
+        return [{"op": "reveal", "id": who, "key": "name", **({"to": a["听"]} if a.get("听") else {}),
+                 **({"know": effects.KNOW} if a.get("知") == effects.KNOW else {})}]
     if v in ("神色", "打算", "外号"):
         return [{"op": "set", "id": who, "key": {"神色": "mood", "打算": "intent", "外号": "epithet"}[v], "value": val}]
     if v == "现状":
@@ -204,6 +220,8 @@ def describe(a: dict) -> str:
         "封缄": f"{who}封缄{item}", "拆封": f"{who}拆开{item}", "阅读": f"{who}阅读{item}",
         "脱身": f"{who}从{src or '围困'}中脱身" + (f"，往{a['到']}" if a.get("到") else ""),
         "杀死": f"{who}杀死{to}" + (f"{stock.cn(a['数'])}人" if a.get("数") else ""),
+        "买下": f"{who}买下{thing}", "卖出": f"{who}卖出{thing}", "服用": f"{who}服用{item}" + (f"（给{to}）" if to else ""),
+        "打探": f"{who}向{_who(None, a.get('与'))}打探" + (f"「{item}」" if item else ""), "办事": f"{who}请人办{a.get('事') or '事'}",
         "打晕": f"{who}打晕{to}" + (f"{stock.cn(a['数'])}人" if a.get("数") else ""),
     }
     return lines.get(v, f"{who}{v}{item or to or ''}")
@@ -456,10 +474,10 @@ def _strike(world, a, who, heading):
 
 
 def _flee(world, a, who, heading):
-    """脱身：被一群人围住，一方之力须过整群一半；冲得出去便解了围、往去处(没写就往近处一条出路)。没人围着就只是前往。"""
+    """脱身：被一群人围住(v12 或押着)，一方之力须过整群一半；冲得出去便了断那一条拘押、往去处(没写就往近处一条出路)。没人拘着就只是前往。"""
     g = world.graph
-    sieges = crowd.besiegers(world, who)
-    src = a.get("自") if a.get("自") in sieges else (sieges[0] if sieges else None)
+    hold = dict(crowd.holders(world, who))  # 围攻与押解(v12)
+    src = a.get("自") if a.get("自") in hold else (next(iter(hold)) if hold else None)
     dest = a.get("到")
     if who == "player" and not dest:
         way = next((e for e in access.exits(world) if not e.get("back")), None) or next(iter(access.exits(world)), None)
@@ -469,14 +487,28 @@ def _flee(world, a, who, heading):
     why = crowd.escape(world, who, src)
     if why:
         return [], why
-    g.unlink(src, who, crowd.BESIEGE)
+    rel = hold[src]
+    g.unlink(src, who, rel)
     if not dest:
-        return [{"op": "unlink", "src": src, "dst": who, "rel": crowd.BESIEGE}], None
+        return [{"op": "unlink", "src": src, "dst": who, "rel": rel}], None
     done, why = _move(world, [{"op": "set", "id": who, "key": "location", "value": dest}])
     if why:
-        g.link(src, who, crowd.BESIEGE)
+        g.link(src, who, rel)
         return [], why
-    return [{"op": "unlink", "src": src, "dst": who, "rel": crowd.BESIEGE}, *done], None
+    return [{"op": "unlink", "src": src, "dst": who, "rel": rel}, *done], None
+
+
+def _glimpse(world, a, who, heading):
+    """望见(v12)：隔着悬崖、险径、水路远远看见某人或一群人(situation.sightable)——记进本回合望见的人(turn["sighted"]，按先后、不重复)；
+    不挪人、不改名册、不产生指令记录、不算因果污染。就在眼前的原样不动；望不见的驳回(软的：只丢这一条)。"""
+    g, x = world.graph, a.get("对")
+    if x in situation.around(world) or (crowd.is_squad(g, x) and crowd.present(world, x)):
+        return [], None
+    if x not in situation.sightable(world):
+        return [], f"{crowd.handle(g, x) if crowd.is_squad(g, x) else x}不在望得见的地方"
+    if getattr(world, "turn", None) is not None and x not in world.turn.setdefault("sighted", []):
+        world.turn["sighted"].append(x)
+    return [], None
 
 
 def _write(world, a, who, heading):
@@ -503,7 +535,8 @@ HANDLERS = {
     "封缄": lambda w, a, who, h: scribe.seal(w, who, a.get("物")),
     "拆封": lambda w, a, who, h: scribe.unseal(w, who, a.get("物")),
     "阅读": lambda w, a, who, h: scribe.read(w, who, a.get("物")),
-    "脱身": _flee, "杀死": _strike, "打晕": _strike,
+    "脱身": _flee, "杀死": _strike, "打晕": _strike, "望见": _glimpse,
+    "买下": trade.buy, "卖出": trade.sell, "服用": trade.consume, "打探": trade.inquire, "办事": trade.serve,
 }
 
 

@@ -1,6 +1,6 @@
 """
 [INPUT]: 只依赖 re；实体名表由调用方给出（surface → id 与实体类别），状态以 View（回合起止两个切面）给出
-[OUTPUT]: 对外提供 View、table()（实体名表）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
+[OUTPUT]: v11 PRODUCE 另认端上、斟上、摆上、沏上、盛上(店小二端上来的酒没买即凭空出现)；对外提供 TRADING(v11 起意花钱、吃喝住店、请医打听的措辞)、TRADE_NOT(v12 大喝、吃惊、点头之类带着吃喝买卖字眼却不是的词)、View、table()（实体名表，v11 Table 另按名字的头两字建索引：名表上万条，一段文字只看文中出现过的两字起头的名字，结果不变）、find()（文中提到的实体，最长优先）、scan()（拍文与账本的一致性体检 → Finding 列表；dedupe=False 逐句定位，v7 结算复核用）、
           unbacked()（场外说法对账：去留、生死、伤病、擒放、得失须有指令，提到主角即不成立）、ARRIVE / DEPART / QUOTED（主角的去留：完成体的到与离，台词不算）、
           NEGATE / REMOTE / YET（否定、远处与回忆、未然——v7 正文时间轴判主角是否真动了身也用它们）、
           leaks()（后台术语）、secret_hits()（未揭隐情两端与关系词同现）、itemish()、ware()（拿出、取来、递上之后紧跟的器物名词，v8）、mastery()（主角的进境措辞）、
@@ -17,6 +17,7 @@
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
        不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
        主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
+       望见(v12 View.sighted)：远远望见的人做出看得见的动作不算现身，开口(SPEAK)才记 afar；离去(v12)认动词前最近的主语(连同并列在前的)，「离去的方向」是定语——「你借着马五德遮掩，朝段誉二人离去的方向奔去」不是马五德离去；
        场景清单(v8)：寻常之物(trifle：茶碗、瓜子)的取用与交出只记软违例；谁都一样，拿出、取来、递上的东西若不是名表里的任何一件，即 conjure(世上有没有由调用方对账)；
        DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
        物量(v9)：MONEYISH 说到了钱(查前先挖去实体名：钱光胜不是钱)、COIN 名词就是钱、WRITING 起意提笔、FELL 一群人里有人倒下；
@@ -68,7 +69,7 @@ PRACTICE = re.compile(r"练|演|参研|参悟|参详|钻研|研习|研读|修习
                       r"摸索.{0,4}(?:心法|内功|功夫|步法|招式|口诀)")
 YET = re.compile(r"尚未|还未|未曾|不曾|远未|仍未|未能|没能|不能|难以|无法|何时才能|若能|但愿|盼着|梦想")
 # 器物入戏(v8 场景清单)：有人拿出、取来、递上一件东西——动词后紧跟的器物名词由 ware() 摘出，那东西须是世上有的(调用方对账)
-PRODUCE = re.compile(r"取出|掏出|摸出|拿出|翻出|捧出|端出|取来|拿来|捧来|端来|送来|递来|递上|递过|呈上|献上|奉上|送上|交给|递给|塞给|交与|递与|"
+PRODUCE = re.compile(r"取出|掏出|摸出|拿出|翻出|捧出|端出|取来|拿来|捧来|端来|送来|递来|递上|递过|呈上|献上|奉上|送上|交给|递给|塞给|交与|递与|端上|斟上|摆上|沏上|盛上|"
                      r"拾起|捡起|拿起|抓起|抄起|捧起|去取|取下|取走|取过|取回|取得|取了|取(?!信于)")
 WARE = (r"(?:书信|令牌|令箭|包袱|火折|火把|匕首|银子|银两|金子|铜钱|钥匙|药粉|图|谱|册|簿|卷|信|笺|帖|函|契|令|牌|符|印|匣|盒|箱|瓶|罐|坛|壶|囊|袋|包|"
         r"碗|杯|盏|灯|烛|剑|刀|枪|棍|鞭|杖|钩|爪|斧|锤|戟|弓|箭|镖|针|珠|钏|镯|佩|簪|镜|玉|银|钱|药|丹|丸|散|膏|草|锁|绳|索|纸)")
@@ -77,10 +78,15 @@ WARE_NOUN = re.compile(r"^(?:你|他|她|我|众人)?(?:[一两几数半那这�
 MONEYISH = re.compile(r"银子|银两|碎银|铜钱|铜板|金子|银票|银锭|金叶子|钱财|盘缠|零钱|赏钱|钱")  # 说到了钱(v9)：查前先挖去实体名(钱光胜)
 COIN = re.compile(r"(?:银子|银两|碎银|铜钱|铜板|金子|银票|银锭|金叶子|钱)$")                    # 这个名词就是钱(拿出「两银子」不是凭空造器物)
 WRITING = re.compile(r"写信|写下|写了|写一|写张|写封|写个|写几|写道|写给|提笔|修书|留书|手书|留字|写字|书写|执笔")  # 起意提笔(v9)
+TRADING = re.compile(r"买|购|卖|典当|当掉|住店|投宿|住下|住宿|开间|要间|要一|来一|来壶|来碗|点[了些几一]|打尖|吃|喝|饮|服下|服用|敷|雇|请.{0,4}(?:大夫|郎中|医)|"
+                     r"看病|诊|抓药|疗伤|治伤|打听|打探|探听|询问|问问|问路|听书|结账|会钞|付钱|摆渡|渡河|雇船|雇车|带信|寄存|喂马")  # 起意花钱、吃喝住店、请医打听(v11)
+TRADE_NOT = re.compile(r"吃了一惊|点了点头|卖个破绽|大喝|怒喝|断喝|暴喝|厉喝|喝道|喝止|喝问|喝令|呼喝|吆喝|喝彩|吃惊|吃亏|吃力|吃紧|吃痛|"
+                       r"讨好|买好|卖弄|卖力|点头|点穴|点倒|再来一|饮恨|饮泣")  # 带着吃喝买卖字眼、却不是吃喝买卖(v12)：判起意花钱之前先剔除
 ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|丸|散|膏|秘籍|秘笈|卷轴|帛卷|经书|剑谱|刀谱|图谱|珠|钏|镯|盒|匣|瓶|信|令牌|钥匙|锦囊|宝剑|宝刀|草)")
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
 GROUP = re.compile(r"二女|二人|两人|三人|众人|诸人|她们|他们|一行人|一众")
+SPEAK = re.compile(r"^[^，。；！？：]*?(?:说|喊|叫|问|答|嚷|骂)(?:道|了|着|[:：「“『])")  # 开口(v12)：叫道、喊了一声、问道：——单个「道」(山道)、挥手、招呼不算
 PLAYER = ("你",)
 
 
@@ -104,6 +110,7 @@ class View:
     money_start: float = 0.0                              # 主角回合开始与结束时身上的银两(v9)
     money_end: float = 0.0
     funds: dict = field(default_factory=dict)             # 主角与回合开始时眼前之人身上的银两 {谁: (起, 止)}(v10：NPC 之间给钱也对账)
+    sighted: set[str] = field(default_factory=set)        # 本回合望见的人(v12)：远远看得见他举动，不算现身；开口才是违例(afar)
 
 
 @dataclass
@@ -115,15 +122,41 @@ class Finding:
     hard: bool = True
 
 
+class Table(list):
+    """名表(长名在前)；v11 另按名字的头两个字建索引——世界底座让名表上万条，一段文字只看以文中出现过的两字起头的名字，结果与逐条看一样。"""
+    _index = None
+
+    def index(self) -> tuple[dict, list]:
+        if self._index is None:
+            heads, short = {}, []
+            for pos, (surface, _) in enumerate(self):
+                if len(surface) >= 2:
+                    heads.setdefault(surface[:2], []).append(pos)
+                elif surface:
+                    short.append(pos)
+            self._index = (heads, short)
+        return self._index
+
+
 def table(names: dict[str, str]) -> list[tuple[str, str]]:
     """surface → id 的列表，长名在前：「闪电貂毒解药」先于「闪电貂」被认出，不让短名截胡。"""
-    return sorted(names.items(), key=lambda kv: -len(kv[0]))
+    return Table(sorted(names.items(), key=lambda kv: -len(kv[0])))
+
+
+def _candidates(text: str, tab):
+    if not isinstance(tab, Table) or len(tab) < 64:
+        return tab
+    heads, short = tab.index()
+    hits = set(short)
+    for i in range(len(text) - 1):
+        hits.update(heads.get(text[i:i + 2], ()))
+    return [tab[pos] for pos in sorted(hits)]
 
 
 def find(text: str, tab: list[tuple[str, str]]) -> list[tuple[str, int, int]]:
     """文中提到的实体 (id, 起, 止)：最长优先、互不重叠。"""
     taken, out = [False] * len(text), []
-    for surface, nid in tab:
+    for surface, nid in _candidates(text, tab):
         if not surface:
             continue
         start = text.find(surface)
@@ -207,7 +240,7 @@ def scan(beats: list[dict], view: View, tab, kinds: dict[str, str], dedupe: bool
             far = bool(REMOTE.search(sent))  # 「远处传来钟万仇的呼喝」：整句都不算他现身
             for clause in _clauses(sent):
                 if not NEGATE.search(clause) and not REMOTE.search(clause):
-                    out += _clause(i, clause, who, view, tab, kinds, far)
+                    out += _clause(i, clause, who, view, tab, kinds, far, bool(QUOTED.search(text)))
             if not NEGATE.search(sent) and not far:
                 found, prev = _sentence(i, sent, who, view, tab, kinds, prev)
                 out += found
@@ -243,7 +276,7 @@ def bare(text: str, ents) -> str:
     return text
 
 
-def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
+def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -> list[Finding]:
     """分句内：你取得了什么、交出了什么，谁开口动手。v9：拿了一部分(原物仍在原处)、交出一部分(仍在身上)的不算漏记；
     说你得了钱、交了钱，你的银两却分文未动，即为漏记；v10 谁都一样：「段誉把三两银子递给马五德」而两人的银两都没动，也是漏记。"""
     out, ents = [], find(clause, tab)
@@ -279,6 +312,10 @@ def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
         if far or kinds.get(nid) != "person" or nid == "player" or nid in view.dead:
             continue
         if (who == nid or ACT.match(clause[end:])) and nid not in view.here_start | view.here_end | view.arrived:
+            if nid in view.sighted:  # 远远望见的人(v12)：举动看得见，话听不见——开口才是违例
+                if SPEAK.match(clause[end:]) or (who == nid and quoted):
+                    out.append(Finding("afar", i, nid, f"第{i}拍让{nid}开口，{nid}只在远处望得见、听不见"))
+                continue
             out.append(Finding("absent", i, nid, f"第{i}拍让{nid}现身言行，{nid}此刻却不在你身边"))
     return out
 
@@ -328,12 +365,25 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
         company = people + ([p for p in prev if p not in people] if GROUP.search(sent) else [])  # 「二人」只指上一句里的人，不扩到全场
         out += [Finding("follow", i, p, f"第{i}拍写{p}随你同行，账上{p}却留在原地")
                 for p in company if p in view.here_start and p not in view.here_end]
-    m = LEAVE.search(sent)
-    if m and not follow:
-        for p, a, b in ents:  # 去者须是动词之前的主语，且与动词之间没有「你」——「你掠过司空玄遁去」走的是你
-            if a < m.start() and "你" not in sent[b:m.start()] and p in view.here_end:
+    for m in ([] if follow else LEAVE.finditer(sent)):
+        if sent[m.end():m.end() + 1] == "的":  # 「离去的方向」「远去的背影」是定语，不是离去(v12)
+            continue
+        for p, a, b in _leavers(sent, ents, m):  # 去者是动词之前最近的那个人(连同并列在前的)，与动词之间没有「你」——「你掠过司空玄遁去」走的是你
+            if "你" not in sent[b:m.start()] and p in view.here_end and not any(f.kind == "leave" and f.entity == p for f in out):
                 out.append(Finding("leave", i, p, f"第{i}拍写{p}离去，账上{p}却仍在你身边"))
     return out, people or prev
+
+
+def _leavers(sent: str, ents, m) -> list[tuple]:
+    """离去的是谁(v12)：动词之前最近的那个人，连同以「、与和及同」并列在他前面的人(同 _dying 的写法)——
+    「你借着马五德身躯遮掩，朝段誉二人离去的方向奔去」不是马五德离去；「段誉与钟灵相携离去」是两个人。"""
+    before = sorted((e for e in ents if e[2] <= m.start()), key=lambda e: -e[2])
+    group = before[:1]
+    for e in before[1:]:
+        if not re.fullmatch(r"[、与和及同跟]", sent[e[2]:group[-1][1]]):
+            break
+        group.append(e)
+    return group
 
 
 # ============================================================

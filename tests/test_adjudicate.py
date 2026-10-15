@@ -5,7 +5,8 @@
           原著救人之事在人已获救时不再照演、一人一回合只听一处调遣(v11 导演与日程两处：原著与场外剧情同一条轨道)、纠缠之人的场外原著不照本宣科、
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
-          越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
+          越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)；LeaveTest：离去取最近的主语(C3)；PettyTest：只指着琐物碎银的选项近三回合已入选两回即不再入选、危局里一回(P2-2)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -13,7 +14,7 @@ import unittest
 
 from tests.test_engine import StubLLM, WRITER
 from tianlong.engine import Game
-from tianlong.world import adjudicate, growth, lexicon, lod, menu, rag, situation
+from tianlong.world import adjudicate, growth, lexicon, lod, menu, perspective, rag, situation
 from tianlong.world.world import World
 
 GO = lambda dest: {"op": "set", "id": "player", "key": "location", "value": dest}
@@ -103,6 +104,8 @@ class SituationTest(unittest.TestCase):
         nid, why = situation.spawn(w, {"kind": "thing", "name": "火折"})
         self.assertEqual((nid, why), (None, situation.FORGE))                        # v8：器物在创世时布齐，剧情不新造物件
         self.assertFalse(w.graph.has("火折"))
+        for s in list(w.graph.where(type="group", faction="神农帮")):  # 世界底座(v11 23)在无量山一带本有神农帮的人群：先撤走
+            del w.graph.nodes[s]
         _, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮"}, embargo={"神农帮"})
         self.assertIn("尚未到此", why)                                                # 原著近事里尚未到场的势力
         _, why = situation.spawn(w, {"kind": "group", "name": "少林僧众", "faction": "少林派"})
@@ -231,6 +234,215 @@ class MenuTest(unittest.TestCase):
         game.act("与大眼圆脸的少女说话")
         self.assertIn("【焦点·主角此举所指之物的真相（主角未必知道）】\n- 钟灵", llm.director_prompts[-1])
         self.assertIn("【未兑现的伏笔】\n- 远处有女子娇叱", llm.director_prompts[-1])
+
+
+class OptionChainTest(unittest.TestCase):
+    """v12 选项链路：15 回实录里 8 回编剧原拟的一项被换掉——授意标记、话题里的人、对象相同即去重、过时的须回应。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def test_marks_are_not_option_targets(self):
+        w = self.w                                                                      # A1：大喝、打听、写信不是够不着的对象
+        picked = menu.check(w, [{"text": "大喝一声，喝止众人", "targets": []},
+                                {"text": "向段誉打听来历", "targets": ["段誉"]},
+                                {"text": "写一封信给左子穆", "targets": ["左子穆"]}])
+        self.assertEqual([t for t, _ in picked], ["大喝一声，喝止众人", "向段誉打听来历", "写一封信给左子穆"])
+        self.assertFalse(any(adjudicate.marked(i) for _, ids in picked for i in ids))   # 交还引擎的对象不带标记
+        self.assertNotIn(adjudicate.TRADE, adjudicate.targets(w, "大喝一声"))
+        self.assertNotIn(adjudicate.TRADE, adjudicate.targets(w, "顺段誉佛理大喝神农帮滥杀必遭天谴"))
+        self.assertIn(adjudicate.TRADE, adjudicate.targets(w, "向店小二要一壶黄酒"))     # 真要花钱的照旧是授意
+
+    def test_shopping_needs_a_shop(self):
+        from tests.test_founding import INN, STREET, at, go, shichen
+        w = self.w
+        texts = [t for t, _ in menu.check(w, [{"text": "向店小二买一壶黄酒", "targets": []}])]
+        self.assertNotIn("向店小二买一壶黄酒", texts)                                    # 练武厅里没有铺子
+        self.assertIn("卖个破绽诱敌", [t for t, _ in menu.check(w, [{"text": "卖个破绽诱敌", "targets": []}])])
+        w = at(World.create("测"), STREET)
+        go(w, INN)
+        shichen(w, "辰")
+        texts = [t for t, _ in menu.check(w, [{"text": "向店小二打听近来江湖上的新鲜事", "targets": []}])]
+        self.assertIn("向店小二打听近来江湖上的新鲜事", texts)                          # 进了客栈：打听照收
+        self.assertIn("向店小二买一壶黄酒", [t for t, _ in menu.check(w, [{"text": "向店小二买一壶黄酒", "targets": []}])])
+
+
+def cliff(w=None):
+    """日志第 12–15 回的崖上场面：主角在澜沧江边高崖被神农攻山帮众围住，段誉在眼前，手里有剑架青钢剑，马五德留在剑湖宫。"""
+    from tianlong.world import crowd, effects
+    w = w or World.create("测")
+    w.player.set("location", "澜沧江边高崖")
+    crowd.relocate(w, "神农攻山帮众", "澜沧江边高崖")
+    w.graph.link("神农攻山帮众", "player", "围攻")
+    w.graph.set("段誉", "location", "澜沧江边高崖")
+    effects._hand(w, "剑架青钢剑", holder="player")
+    return w
+
+
+class TopicTest(unittest.TestCase):
+    """A2：只对物理对象验可达，话题放行；眼前的遗体够得着；对象栏的叫法先查名表。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def texts(self, *opts):
+        return [t for t, _ in menu.check(self.w, [{"text": t, "targets": list(o)} for t, *o in opts])]
+
+    def test_a_name_in_talk_is_not_a_touch(self):
+        self.w.graph.set("马五德", "location", "大理城")
+        self.assertIn("报马五德之名求饶", self.texts(("报马五德之名求饶",)))               # 第 13 回：报他的名头，不是要碰到他
+        self.assertNotIn("报马五德之名求饶", self.texts(("报马五德之名求饶", "马五德")))  # 对象栏写了他：他就是物理对象
+        self.assertNotIn("向乔峰讨教降龙掌", self.texts(("向乔峰讨教降龙掌", "乔峰")))
+        self.assertNotIn("向乔峰讨教降龙掌", self.texts(("向乔峰讨教降龙掌", "降龙十八掌")))  # 讨教要人在跟前，对象写武学也一样
+
+    def test_a_body_in_front_can_be_searched(self):
+        from tianlong.world import effects
+        w = self.w
+        w.graph.set("容子矩", "location", "剑湖宫·练武厅")
+        effects.apply(w, [{"op": "set", "id": "容子矩", "key": "status", "value": "dead"}], "director")
+        self.assertIn("搜检容子矩的遗体", self.texts(("搜检容子矩的遗体",)))              # 第 7 回：遗体就在厅上
+        w.graph.set("容子矩", "location", "无量山")
+        self.assertNotIn("搜检容子矩的遗体", self.texts(("搜检容子矩的遗体",)))
+
+    def test_the_target_column_knows_a_crowds_handle(self):
+        w = cliff(self.w)
+        self.assertIn("神农攻山帮众", adjudicate.targets(w, "挥剑虚晃抢步贴近段誉身旁", ["段誉", "神农帮众"]))
+        texts = self.texts(("报马五德之名求饶", "神农帮众"), ("挥剑拼死劈开缺口", "神农帮众", "剑架青钢剑"),
+                           ("佯称深谷藏有灵药", "神农帮众", "段誉"))
+        self.assertEqual(texts, ["报马五德之名求饶", "挥剑拼死劈开缺口", "佯称深谷藏有灵药"])  # 日志第 13 回：三项全部入选
+
+
+class DedupeTest(unittest.TestCase):
+    """A3：对象相同且文字相近才去重——场面上只剩一两个实体时，不同路数的选项不再互相顶掉。"""
+
+    def test_same_target_different_moves_stay(self):
+        texts = TopicTest.texts(self, ("挟持段誉保命", "段誉", "神农帮众"), ("弃剑伏地求饶", "剑架青钢剑", "神农帮众"),
+                                ("劝段誉讲和脱身", "段誉", "神农帮众"))
+        self.assertEqual(texts, ["挟持段誉保命", "弃剑伏地求饶", "劝段誉讲和脱身"])         # 日志第 14 回
+        texts = TopicTest.texts(self, ("伏在岩后屏息观望", "澜沧江边高崖"), ("攀藤摸下高崖探看虚实", "澜沧江边高崖"))
+        self.assertEqual(texts[:2], ["伏在岩后屏息观望", "攀藤摸下高崖探看虚实"])            # 日志第 10 回
+        texts = TopicTest.texts(self, ("挺身护住段誉", "段誉"), ("挺身护住段誉退后", "段誉"))
+        self.assertIn("挺身护住段誉", texts)
+        self.assertNotIn("挺身护住段誉退后", texts)                                     # 同一件事换个说法：只留一项
+
+    def setUp(self):
+        self.w = cliff()
+
+
+class ReplyTest(unittest.TestCase):
+    """A4：须回应只认收尾时仍悬着的话；候选、回应、此后按优先级合并，不按下标覆盖。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def opts(self, *texts, scales=()):
+        return [{"text": t, "targets": [], **({"scale": scales[i]} if scales else {})} for i, t in enumerate(texts)]
+
+    def test_candidate_and_reply_both_stay_with_one_of_the_writers(self):
+        w = self.w
+        mine = ("护着段誉退向宫门", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(w, self.opts(*mine), addressed=["干光豪"], candidates=["取走辛双清的长剑"])]
+        self.assertIn("取走辛双清的长剑", texts)                                         # 越权候选
+        self.assertIn(f"回应{perspective.handle(w, '干光豪')}", texts)                  # 须回应
+        self.assertEqual(texts[0], mine[0])                                             # 编剧原拟至少留一项
+
+    def test_the_one_that_gives_way_repeats_a_target(self):
+        mine = ("挟持段誉保命", "劝段誉讲和离去", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(self.w, self.opts(*mine), addressed=["干光豪"])]
+        self.assertEqual(texts[:2], ["挟持段誉保命", "抓起剑架上的青钢剑防身"])       # 让位的是对象重复的那一项，不是固定的第三项
+
+    def test_three_wants_insert_only_two(self):
+        mine = ("挟持段誉保命", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        later = [("寻个僻静处歇息养伤（两个时辰）", [])]
+        texts = [t for t, _ in menu.check(self.w, self.opts(*mine, scales=("此刻", "此刻", "机缘")), addressed=["干光豪"],
+                                          candidates=["取走辛双清的长剑"], later=later)]
+        self.assertEqual(sum(t in mine for t in texts), 1)                              # 强插至多两项
+        self.assertNotIn(later[0][0], texts)                                            # 第三条要求作罢
+
+    def test_only_the_last_two_beats_still_hang(self):
+        w = self.w
+        r = judge(w, plan(("player", "你上前一步", []), ("龚光杰", "龚光杰喝道：「你是什么来历？」", [], "player"),
+                          ("左子穆", "左子穆喝止龚光杰", [], "龚光杰"), (None, "容子矩一声闷哼，倒在地上", []),
+                          ("左子穆", "左子穆转向辛双清拱手", [], "辛双清")))
+        self.assertEqual(adjudicate.hanging(w, r), [])                                  # 第 3、4、8 回：那句话之后又过了三四拍
+        mine = ("护着段誉退向宫门", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        self.assertEqual([t for t, _ in menu.check(w, self.opts(*mine), adjudicate.hanging(w, r))], list(mine))
+        w = World.create("测")
+        r = judge(w, plan(("player", "你上前一步", []), ("左子穆", "左子穆道：「阁下请坐。」", [], "player"),
+                          ("干光豪", "干光豪喝道：「你是何人？报上名来！」", [], "player"), ("马五德", "马五德向左子穆赔笑", [], "左子穆")))
+        self.assertEqual(adjudicate.hanging(w, r), ["干光豪"])
+        first = [{"text": "冷冷瞪了持剑少年一眼", "targets": ["干光豪"]}, {"text": "向左子穆陈说利害", "targets": []},
+                 {"text": "抓起剑架上的青钢剑防身", "targets": []}]
+        self.assertEqual([t for t, _ in menu.check(w, first, adjudicate.hanging(w, r))][1:], ["向左子穆陈说利害", "抓起剑架上的青钢剑防身"])
+        mine = ("挟持段誉保命", "劝段誉讲和离去", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(w, self.opts(*mine), adjudicate.hanging(w, r), said=adjudicate.lines_to_player(w, r))]
+        self.assertIn(f"答{perspective.handle(w, '干光豪')}所问", texts)                # 回应的措辞按那一句的主题：盘问即答其所问
+
+    def test_who_has_walked_off_is_not_owed_a_reply(self):
+        def turn(ops):
+            llm = StubLLM({"说书人与导演": {"beats": [{"who": "干光豪", "to": "player", "text": "干光豪喝道：「哼，你等着！」", "ops": ops}],
+                                       "pace": "瞬息"}})
+            Game(World.create("测"), llm).act("看")
+            return llm.writer_prompts[-1]
+        self.assertIn("【须回应】", turn([]))
+        self.assertNotIn("【须回应】", turn([{"做": "前往", "谁": "干光豪", "到": "无量山"}]))  # 回合末已不在眼前
+
+
+class LeaveTest(unittest.TestCase):
+    """C3：体检的离去取动词前最近的主语(连同并列在前的人)，「离去的方向」是定语不是离去。
+    日志第 5 回导演首稿第 1 拍被判「马五德离去」引出一次返工；编剧正文里同样的句子又让账房那一路误判一次、交复核。"""
+
+    def leavers(self, text, *present):
+        tab, kinds = adjudicate.names(World.create("测"))
+        view = lexicon.View(here_start=set(present), here_end=set(present))
+        return sorted(f.entity for f in lexicon.scan([{"who": None, "text": text}], view, tab, kinds) if f.kind == "leave")
+
+    def test_the_nearest_subject_leaves(self):
+        self.assertEqual(self.leavers("你借着马五德身躯遮掩，疾步朝殿门外段誉二人离去的方向奔去", "马五德"), [])
+        self.assertEqual(self.leavers("你推开马五德的拉扯，拔步便朝殿门外段誉二人逃走的方向奔去", "马五德"), [])
+        self.assertEqual(self.leavers("马五德拂袖离去", "马五德"), ["马五德"])
+        self.assertEqual(self.leavers("段誉与钟灵相携离去", "段誉", "钟灵"), ["段誉", "钟灵"])
+
+
+class PettyTest(unittest.TestCase):
+    """P2-2 琐物衰减：日志第 1、2、4、5、6 回五次给碎银(第 6 回玩家选了)——只指着琐物碎银的选项，近三回合已入选两回即不再入选，危局里一回。"""
+
+    SILVER = {"text": "趁众人分神拾取地上碎银", "targets": ["碎银"]}
+    OTHERS = [{"text": "低声劝阻青衫少年别惹事", "targets": ["段誉"]}, {"text": "借端茶退至门旁", "targets": []}]
+
+    def texts(self, w, danger=None):
+        return [t for t, _ in menu.check(w, [self.SILVER, *self.OTHERS], danger=danger)]
+
+    def test_silver_offered_twice_in_three_turns_drops_out(self):
+        w = World.create("测")
+        self.assertTrue(menu._petty(w, "碎银"))
+        w.player.set("offered", [["碎银"], ["段誉"], ["碎银", "马五德"]])           # 第 2、4 回给过
+        texts = self.texts(w)
+        self.assertNotIn(self.SILVER["text"], texts)
+        self.assertEqual(len(texts), 3)                                                 # 兜底补齐
+        w.player.set("offered", [["段誉"], ["碎银"], ["段誉"]])                       # 只给过一回：平常照收
+        self.assertIn(self.SILVER["text"], self.texts(w))
+        self.assertNotIn(self.SILVER["text"], self.texts(w, danger=["主角被神农帮众围住"]))  # 危局里一回即不再入选
+        w.player.set("offered", [["碎银"], ["碎银"], ["段誉"], ["段誉"]])             # 三回合之前的不算
+        self.assertIn(self.SILVER["text"], self.texts(w))
+
+    def test_an_option_with_a_person_in_it_does_not_decay(self):
+        w = World.create("测")
+        w.player.set("offered", [["碎银"], ["碎银"], ["碎银"]])
+        opts = [{"text": "趁乱拾银，顺手护住马五德", "targets": ["碎银", "马五德"]}, *self.OTHERS]
+        self.assertIn("趁乱拾银，顺手护住马五德", [t for t, _ in menu.check(w, opts)])
+
+    def test_the_engine_keeps_three_turns_of_offers(self):
+        w = World.create("测")
+        game = Game(w, StubLLM({"小说家": "厅上一片寂静\n===\n梗概：静观\n选项：\n1. 趁众人分神拾取地上碎银｜对象：碎银\n2. 与青衫少年搭话｜对象：青衫少年\n伏笔：无\n传言：无"}))
+        given = ["趁众人分神拾取地上碎银" in game.act("看")["options"] for _ in range(5)]
+        self.assertEqual(given, [True, True, False, False, True])                       # 给了两回即让位，三回合里只剩一回又可以给
+        self.assertEqual(len(w.player["offered"]), menu.OFFERED_TURNS)
+        old = w.dump()
+        old["player"].pop("offered")
+        self.assertEqual(World.from_dump(old).player["offered"], [])                    # 旧档没有：按空读
+        from tianlong.world import effects
+        self.assertTrue(effects.apply(w, [{"op": "set", "id": "player", "key": "offered", "value": []}], "director")[1])  # 系统维护，导演写不动
 
 
 class ReplayBaselineTest(unittest.TestCase):

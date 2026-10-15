@@ -1,13 +1,14 @@
 """
-[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track（情境层与连带）、
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track / carried / enlist（情境层与连带；v12 同行与押解随调遣）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
-         world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
-[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
+         world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / holders / is_squad / handle（人群与围攻；v12 押解）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+[OUTPUT]: 对外提供 SOFT_KEYS（v12 人的软状态）、KNOW（v12 识名指令连来历一并说破）、apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
-          place()（任一节点此刻所在之地）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
-[POS]: world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
+          place()（任一节点此刻所在之地）、things()（v11 此刻在某几处的器物：地上的连同那里的人手里的，按索引取、与 place 同一口径）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
+[POS]: v11 世界底座：RULED_BY 规则自己落的账(药力、医治)不算哪一方写的剧情、不顺带降内伤；describe 说买卖(trade)、服务(service)、打听来的话(lore)；主角走进一处新立的场所即进它的前堂(venue.door)，走到哪里近处的场所便布好(venue.settle)，过关付关钱。
+       world 层唯一的写入通道——LLM 创造的是剧情，剧情的后果经此作用于既有世界：10 指令(set/add/push/pull/link/unlink/reveal + arrive/study/drain)，
        人物生死伤病、去留、恩怨、主角的得失与行止、器物易手、隐情与暗路的揭开、有人赶来、研习与吸功。单条指令的规整、物理与执行在此，拍与拍之间的关系归 adjudicate。
        地理与器物属于基础设施：没有任何"新造"指令；地点/景物只可改 state，器物只可改流转属性(location/holder/hidden/state)与方位 spot(v8 场景清单：
        剑架上、茶几上——软的：_hand 流转即清，到了谁手里没有方位、落下便是「地上」；「去掉方位」之类的写法与主角的方位不算错也不入账，原样不动的方位不是一件事)。
@@ -41,6 +42,8 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过(或望见)的人即可落账，不看回合末所在；同批的望见排在主角移动之后；
+       P1-7 被一群人押着也走不脱(_held 读 crowd.holders：围攻写团团围住，押解写押着)，押着他的那一群同批已先到了他要去的地方就不拦——导演一拍押走照样成立
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -54,7 +57,7 @@
 # ============================================================
 import re
 
-from . import access, actor, body, bond, growth, perspective, situation
+from . import access, actor, body, bond, growth, perspective, situation, venue
 from . import acts, crowd, stock  # 事码(v9)：LLM 说的类代码在这里化为指令或交 acts 执行；人群与银两的数由规则管
 from .clock import PER_DAY
 from .graph import PLIGHT, ROAD
@@ -62,12 +65,13 @@ from .graph import PLIGHT, ROAD
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
 FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route", "money",
-                      "drift", "scene", "clocks", "arc", "spines", "setups"}
+                      "drift", "scene", "clocks", "arc", "spines", "setups", "met", "identified", "offered"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
 ITEM_FLOW = {"location", "holder", "hidden", "state", "spot"}  # 器物：定义不可改，只可流转、显隐、损耗，挪个方位(v8 spot：剑架上、茶几上)
 OFFSCREEN = {"derived"}                          # 场外剧情(v11 衍生事件)：主角不在场，碰不到主角本人
+RULED_BY = "rule"                                # 规则自己落的账(v11 药力、医治)：调用方(trade)已核过在场，不算哪一方写的剧情
 RESOLVED_KEYS = {"location", "holder", "inventory", "skills", "faction"}  # 这些值是实体名，须经别名表归一
 NUMERIC = {"hp", "power", "age"}                 # 数值属性：只可 set 或 add 一个数
 LISTS = {"inventory", "skills", "conditions", "threads"}  # 清单属性：逐项 push/pull；境况与线头亦可整体 set 成一列文字
@@ -76,6 +80,8 @@ NOTE_LEN = 40                                    # 关系边上的印象一句�
 SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN, "spot": 16}  # 人物身上的一句话属性；器物在一处地方的方位(v8)
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 NAME = "name"                                    # reveal 的 id 形(v6)：某人的姓名被说了出来——认知唯一的落账通道
+KNOW = "身份"                                    # reveal 的 id 形另带 know(v12)：连来历(头衔、门派)一并说破——主角在场即识底
+SOFT_KEYS = {"intent", "mood", "epithet", "agenda"}  # 人的软状态(v12)：打算、神色、外号、志向——本回合见过的人即可落账，不是物理
 NAMEISH = {"姓名", "名字", "名号", "名姓", "真名", "身份", "来历", "name"}  # reveal 写成关系形、rel 说的是姓名
 
 
@@ -100,6 +106,25 @@ def place(world, nid: str) -> str | None:
     if g.kind(nid) == "item" and g.get(nid, "holder"):
         return place(world, g.get(nid, "holder"))
     return g.get(nid, "location")
+
+
+def things(world, spots) -> list[str]:
+    """此刻在这些地方的器物(v11 按索引取，不扫全部器物)：落在那里的，连同那里的人(主角在其中即主角)手里、怀里所装的——
+    与 place(器物) in spots 同一口径，按创世次序。"""
+    g, spots, out = world.graph, set(spots), set()
+    todo = ["player"] if world.here in spots else []
+    for s in spots:
+        for n in g.where(location=s):
+            if g.kind(n) == "item":
+                out.add(n)
+            if n != "player":
+                todo.append(n)
+    while todo:
+        for i in g.where(type="item", holder=todo.pop()):
+            if i not in out:
+                out.add(i)
+                todo.append(i)
+    return g.order(out)
 
 
 def usable(world, item: str) -> bool:
@@ -178,6 +203,14 @@ def describe(op) -> str:
                                                                         else f"（从{src}）" if op.get("from") and v > 0 else "")
     if kind == "squad":
         return f"{nid}被{'杀' if key == 'dead' else '打倒'}{stock.cn(v)}人"
+    if kind == "trade":  # 买卖与服用(v11)
+        word = {"bought": "买下", "sold": "卖出", "pawned": "当掉", "used": "服用了"}.get(key, key)
+        return f"主角{word}{nid}" + (f"，花了{stock.say(op['price'])}" if key == "bought" and op.get("price")
+                                    else f"，得了{stock.say(op['price'])}" if key in ("sold", "pawned") and op.get("price") else "")
+    if kind == "service":
+        return f"{op.get('by')}替主角办了{key}" + (f"（{stock.say(op['price'])}）" if op.get("price") else "")
+    if kind == "lore":  # 打听来的话照原样说(可以是假的)：编剧照这句写进台词
+        return f"{op.get('by')}说起：{v}"
     if kind == "forge":
         return f"{'主角' if op.get('by') == 'player' else op.get('by')}写成了{nid}"
     if kind == "doc":  # 逐键说成人话(不预先格式化：撕成几份只对 torn 有数可说)
@@ -199,7 +232,7 @@ def describe(op) -> str:
     if kind == "drain":
         return f"主角吸取{v}的内力"
     if kind == "reveal" and key == NAME:
-        whose = "主角的名号" if nid == "player" else f"{nid}的姓名"
+        whose = "主角的名号" if nid == "player" else f"{nid}的姓名" + ("与来历" if op.get("know") == KNOW else "")
         return f"{name(op['to'])}得知{whose}" if op.get("to") else f"在场之人得知{whose}"
     if kind == "reveal" and op.get("rel") == ROAD:
         return f"发现{op.get('src')}与{op.get('dst')}之间的暗路"
@@ -260,6 +293,7 @@ def _naming(world, op):
     set epithet 为其本名(给段誉立外号「段誉」)、reveal 的关系形 rel=姓名、push 主角的 acquaintances 或某人的 knows。"""
     g, kind, key = world.graph, op.get("op"), op.get("key")
     person = lambda x: x == "player" or g.kind(x) == "person"
+    know = op.get("know")  # 连来历一并说破(v12 识底)：规整之后照带着
     if kind == "reveal" and op.get("rel") in NAMEISH and person(op.get("src")):
         who, to = op["src"], op.get("dst")
     elif kind == "reveal" and "src" not in op and "dst" not in op and op.get("id"):
@@ -272,7 +306,7 @@ def _naming(world, op):
     else:
         return
     op.clear()
-    op.update({"op": "reveal", "id": who, "key": NAME, **({"to": to} if person(to) else {})})
+    op.update({"op": "reveal", "id": who, "key": NAME, **({"to": to} if person(to) else {}), **({"know": KNOW} if know == KNOW else {})})
 
 
 def naming(world, op) -> dict | None:
@@ -441,7 +475,12 @@ def _travel(world, op, origin) -> str | None:
 # ------------------------------------------------------------
 #  在场性：谁能碰到谁
 # ------------------------------------------------------------
-def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
+def _far_sight(world, nid, glimpse=frozenset()) -> bool:
+    """本回合望见了此人(或同批望见、望得见)(v12)：对他写神色、打算、外号够得着——远远看见他的神情举止，不是碰到他。"""
+    return nid in situation.sighted(world) or (nid in glimpse and nid in situation.sightable(world))
+
+
+def _reach(world, op, origin, scope, heading=frozenset(), glimpse=frozenset()) -> str | None:
     if named(op):  # 名字是谁的要看得见(活人或眼前的遗体)，谁听见要在耳边(v7)：对着遗体叫出「容师叔」，满厅的人都知道了死者是谁
         if origin in OFFSCREEN:
             return "主角不在场，无从听见"
@@ -467,7 +506,7 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
             return f"{far[0]}不在这桩事所及之处"
     if origin == "director" and op["op"] in ("link", "unlink"):
         return _bond(world, op)
-    if origin == "canon" or op["op"] in ("link", "unlink", "reveal"):
+    if origin in ("canon", RULED_BY) or op["op"] in ("link", "unlink", "reveal"):
         return None
     g, nid = world.graph, op.get("id")
     where = place(world, nid)
@@ -483,10 +522,15 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if op.get("key") == "power":
             return "功力由系统结算：研习写 研习，吸功写 吸功，不得直接增减"
         close = situation.near(world)
+        soft = op["op"] == "set" and op.get("key") in SOFT_KEYS
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
-            if nid not in situation.seen(world):
+            if nid not in situation.seen(world) and not (soft and _far_sight(world, nid, glimpse)):
                 return f"{nid}不在你身边，主角够不着"
+            if soft:
+                return None  # 软状态(v12)：本回合见过(或望见)的人即可落账，不看回合末所在——主角溜出了厅，厅上的人照样拔剑追出、照样打算
         if crowd.is_squad(g, nid) and not crowd.present(world, nid) and nid not in set(getattr(world, "turn", {}).get("flock0", ())):
+            if soft and _far_sight(world, nid, glimpse):
+                return None  # 远远望见的一群人：他们的打算、神色照样落账
             return f"{crowd.handle(g, nid)}不在你跟前，要他们来写 赶来(系统按路程裁定)"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
@@ -552,6 +596,9 @@ def _arrival(world, pid: str) -> str | None:
         return f"{pid}不在当下的江湖中"
     if crowd.is_squad(g, pid) and crowd.standing(g, pid) <= 0:
         return f"{crowd.handle(g, pid)}已无人站着"
+    held = (getattr(world, "turn", None) or {}).get("reserved") or {}
+    if pid in held:  # 原著近事要用的人马(v12)：带队之人是近事的相关者，事前不得先行登场(远远望见可以)
+        return f"{crowd.handle(g, pid)}要在原著近事「{held[pid]}」里登场，此时不得先行赶来"
     if situation.routed(world, pid):
         return f"{pid}新败而逃，不会这么快卷土重来"
     if situation.captors(world, pid):
@@ -573,8 +620,10 @@ def _note(world, text: str | list):
         turn.setdefault("notes", []).extend([text] if isinstance(text, str) else text)
 
 
-def _exec(world, op, origin):
-    """一条指令落账。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；日程(原著与场外剧情)挪走带队之人，同在一处的这一门人群随他走。"""
+def _exec(world, op, origin) -> list[dict]:
+    """一条指令落账，返回随之连带落账的指令(v12)。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；日程(原著与场外剧情)挪走带队之人，同在一处的这一门人群随他走。
+    同行与押解随调遣(v12)：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处——每一次连带挪动都是一条成立的指令(带 by)；
+    原著与场外剧情挪人不带人(回合末 situation.sunder 了断异地的同行)；人群不在此列，沿用随首领的规矩。"""
     g, nid = world.graph, op.get("id")
     moving = op["op"] == "set" and op.get("key") == "location"
     if (moving or op["op"] == "arrive") and crowd.is_squad(g, nid):
@@ -583,11 +632,35 @@ def _exec(world, op, origin):
             situation.enlist(world, [nid])
             if getattr(world, "turn", None) is not None:
                 world.turn.setdefault("arrived", set()).add(nid)
-        return
+        return []
     old = g.get(nid, "location") if moving and g.kind(nid) == "person" else None
+    band = situation.carried(world, nid, g.get(nid, "location")) if origin == "director" and (moving or op["op"] == "arrive") else []
     _exec_one(world, op, origin)
     if old is not None and origin in ("canon", "derived"):
         crowd.escort(world, nid, old)
+    return _carry(world, op, nid, band)
+
+
+def _carry(world, op, pid: str, band: list[str]) -> list[dict]:
+    """同行者与人质随 pid 到同一处(v12)：记进本回合的调遣(movers)，赶来的上名册、记作赶来；连带写一句交编剧(用 id，引擎交编剧前过掩码)。"""
+    if not band:
+        return []
+    g, turn = world.graph, getattr(world, "turn", None)
+    dest, out = g.get(pid, "location"), []
+    for q in band:
+        g.set(q, "location", dest)
+        g.nodes[q].pop("strayed", None)  # 导演挪动了他：回到原著的轨道上
+        if turn is not None:
+            turn.setdefault("movers", {})[q] = "director"
+        if op["op"] == "arrive":
+            situation.enlist(world, [q])
+            if turn is not None:
+                turn.setdefault("arrived", set()).add(q)
+            out.append({"op": "arrive", "id": q, "by": pid})
+        else:
+            out.append({"op": "set", "id": q, "key": "location", "value": dest, "by": pid})
+    _note(world, f"{'、'.join(band)}随{pid}" + ("一同来到" if op["op"] == "arrive" else f"同往{dest}"))
+    return out
 
 
 def _exec_one(world, op, origin):
@@ -630,6 +703,8 @@ def _exec_one(world, op, origin):
     elif named(op):  # 姓名被说了出来：此刻在场的人都听见了(to 则只那一人)
         for who in _hearers(world, op):
             perspective.learn(world, who, op["id"])
+        if op.get("know") == KNOW and op.get("to") in (None, "player"):  # 连来历一并说破(v12)：主角听见即识底
+            perspective.identify(world, op["id"])
     elif kind == "reveal":
         if origin == "director":  # 远方原著揭开的身世，主角不会当场知道：随事件入账，由 Knowledge.learn 按传闻或亲历送达
             world.knowledge.reveal(op["src"], op["dst"], op["rel"])
@@ -727,8 +802,9 @@ def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
     「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
     g, kind = world.graph, op.get("op")
-    if named(op):  # 人人早已知道他叫什么：不是一件事
-        return all(perspective.knows(world, who, op.get("id")) for who in _hearers(world, op))
+    if named(op):  # 人人早已知道他叫什么：不是一件事(v12 连来历一并说破而主角还不识底，仍是一件事)
+        fresh = op.get("know") == KNOW and op.get("to") in (None, "player") and not perspective.identified(world, op.get("id"))
+        return not fresh and all(perspective.knows(world, who, op.get("id")) for who in _hearers(world, op))
     if kind in ("link", "unlink") and all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
         has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
         return has if kind == "link" else not has
@@ -740,6 +816,18 @@ def _noop(world, op) -> bool:
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
     return key in ("location", "holder", "faction", "hidden", "spot") and g.get(nid, key) == op.get("value")
+
+
+def _held(world, dest) -> str | None:
+    """主角要走，却被人群拘着(crowd.holders)：围攻即团团围住；押解等其余拘押即押着——押着他的那一群已先到了他要去的地方(同批里先挪了那一群)就不拦，
+    导演一拍写「了断围攻、结下押解、那一群前往X、主角前往X」照样成立(v12)。"""
+    g, hold = world.graph, crowd.holders(world)
+    ring = [s for s, rel in hold if rel == crowd.BESIEGE]
+    if ring:
+        return f"被{'、'.join(crowd.handle(g, s) for s in ring)}团团围住，走不脱：写脱身，成败看群战预裁"
+    spots = situation.near(world, dest) if g.kind(dest) == "location" else {dest}
+    guard = [s for s, rel in hold if g.get(s, "location") not in spots]
+    return f"被{'、'.join(crowd.handle(g, s) for s in guard)}押着，走不脱：写脱身，成败看群战预裁" if guard else None
 
 
 def _hearers(world, op) -> list[str]:
@@ -766,7 +854,9 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     applied, rejected = [], []
     ops = ops if isinstance(ops, list) else []  # 偶有把一条指令写成单值的：整批作废，不让世界崩
     ops = acts.expand(world, ops)  # 事码(v9)：平常之事化为指令，规则之事留作一件事交 acts 执行；旧写法的指令原样照收
-    ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
+    sights = [op for op in ops if acts.verb(op) == "望见"]  # 望见(v12)排在最后：「你来到无量山，抬头见高崖上段誉挥手」望的是到了之后的景
+    ops = [op for op in ops if not _moves_player(world, op) and acts.verb(op) != "望见"] + [op for op in ops if _moves_player(world, op)] + sights
+    glimpse = {op.get("对") for op in sights}  # 同批望见的人：对他写的神色、打算、外号算够得着(B3)
     heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, destination(op)), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西
     for op in ops:
         if acts.is_act(op):  # 规则之事：前提、规则、执行都在 acts；不成即整条不成，什么也不动
@@ -793,16 +883,21 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             _summon(world, op, origin)
             if _noop(world, op):
                 continue  # 本就如此：既非成立也非驳回
-            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading) or _travel(world, op, origin)
+            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading, glimpse) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩
             reason = "格式不可解"
         if reason:
             rejected.append((op, reason))
             continue
-        if _moves_player(world, op) and crowd.besiegers(world) and op["value"] != world.here:  # 被一群人围住(v9)：走不脱，只有脱身
-            rejected.append((op, f"被{'、'.join(crowd.handle(world.graph, x) for x in crowd.besiegers(world))}团团围住，走不脱：写脱身，成败看群战预裁"))
-            continue
+        if _moves_player(world, op) and op["value"] != world.here:  # 被一群人围住(v9)、押着(v12)：走不脱，只有脱身
+            held = _held(world, op["value"])
+            if held:
+                rejected.append((op, held))
+                continue
         if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，光阴走满即途中歇脚；前半程照走，后半程回告编剧
+            front = venue.door(world, op["value"])  # 走进店里(v11)：进的是前堂，掌柜伙计与货都在屋里
+            if front:
+                op["value"] = front
             dest, turn = op["value"], getattr(world, "turn", None)
             budget = max(1, turn["minutes"] // PER_DAY) if turn and turn.get("minutes") else None
             route, why = access.walk(world, dest, budget)
@@ -819,8 +914,12 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             me.set("came_from", route[-2])
             me.set("en_route", {"to": dest, "left": world.graph.distances(route[-1]).get(dest, 0)}
                    if why and why.startswith(access.ON_ROAD) else None)  # 途中：记着去向，下回合可续行，也可在途中生事
-            _exec(world, op, origin)
+            applied += _exec(world, op, origin)
+            toll = access.tolls(world, route)
+            if toll and stock.pay(world, "player", toll):  # 过关付的关钱(v11)：barrier 已核过够不够
+                _note(world, f"过关付了关钱{stock.say(toll)}")
             situation.muster(world, before)  # 走出了原来的近旁：跟前的人留在原处
+            venue.settle(world)  # 走进店里、站到街上(v11)：近处的场所布好近景——伙计、陈设、货架
             applied.append(op)
             turn = getattr(world, "turn", None)
             if turn is not None and "route" in turn:  # 裁决器在场：同伴等诸拍落定再跟（拍中途解除随行的人不被带走）
@@ -828,8 +927,9 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             else:
                 _note(world, situation.follow(world, route))
             continue
-        _exec(world, op, origin)
+        extra = _exec(world, op, origin)
         applied.append(op)
+        applied += extra  # 同行者与人质随之同去(v12)：连带挪动也是成立的指令
         if origin == "director" and not named(op) and op.get("key") != "epithet":  # 报个姓名、立个外号不算扰动原著：因果污染只记碰过的人与物
-            world.taint.update(i for i in _ids(op) if i and i != "player")
+            world.taint.update(i for o in [op, *extra] for i in _ids(o) if i and i != "player")
     return applied, rejected

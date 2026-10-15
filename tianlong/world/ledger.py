@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/graph 的 Graph（观察时读取真相）
-[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS、FAME / famous()
+[OUTPUT]: 对外提供 Truth（绝对真实账本）、Knowledge（玩家认知账本：信念 + 已知事件 + 已知隐情）、Messenger（消息延迟队列）、PUBLIC_KEYS、FAME / TITLE_PARTS / famous()（v12 头衔各段的末尾）
 [POS]: world 层的双重账本；Truth 只追加，Knowledge 是玩家视角下的世界投影，Messenger 是两者之间唯一的时间差通道（亲历之事即时送达，不等传闻）。
        开局常识只含地理、门派与 FAME(名号显赫或四大恶人)之人——无名之辈的下落与器物所在不是江湖常识，要亲见或听闻才知；
        限定知情者之事（public=false）唯亲历可知，江湖无从传开；每个节点记着最新消息的日子(asof)，迟到的旧闻不盖新见；
@@ -35,12 +35,16 @@ class Truth:
 # ============================================================
 #  玩家认知账本：信念（node → 公开属性）+ 已知事件 + 已知隐情（secret 边）
 # ============================================================
-FAME = re.compile(r"掌门|帮主|谷主|庄主|宫主|岛主|尊主|方丈|首座|法王|王|帝|太子|世子|公子|盟主|恶|圣|宗主|大师|名医|阎王|神医|镖头|寨主|将军")
+FAME = re.compile(r"(?:掌门|帮主|谷主|庄主|宫主|岛主|尊主|方丈|首座|法王|王|王妃|王子|帝|太子|公子|盟主|恶|圣|宗主|大师|名医|阎王|神医|镖头|寨主|将军)$")
+TITLE_PARTS = re.compile(r"[、，,]")  # 头衔分段：「镇南王府护卫、樵夫」是两段
 
 
 def famous(node: dict) -> bool:
-    """江湖闻名：头衔是一派之主、王侯、名号响亮的恶人，或身属四大恶人——主角久仰其名，却未必认得其面。"""
-    return bool(FAME.search(node.get("title") or "")) or node.get("faction") == "四大恶人"
+    """江湖闻名：头衔是一派之主、王侯、名号响亮的恶人，或身属四大恶人——主角久仰其名，却未必认得其面。
+    v12 头衔按「、，,」分段，任一段以 FAME 里的词结尾才算：「王家婢女」「镇南王府护卫」「星宿派大师兄」不再因中间带个王字、大师而闻名；
+    「世子」不在词表里(段誉的名号不是江湖常识)，补了「王妃」「王子」(镇南王妃、吐蕃王子照旧闻名)。"""
+    return any(FAME.search(part.strip()) for part in TITLE_PARTS.split(node.get("title") or "") if part.strip()) \
+        or node.get("faction") == "四大恶人"
 
 
 class Knowledge:

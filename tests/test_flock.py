@@ -7,7 +7,7 @@
           醒转(打晕的人过两个时辰醒转归队，落在原地的东西还在就捡回去，被人拿走的捡不回)；
           NPC 银两(段誉给马五德三两即段誉少三两马五德多三两、不够即给不出、正文写了易手而两人的银两没动即漏记、账房开的单子入账)；
           创世(门下模板 kits、人物零钱 money、原著器物补注 canon_items、不识字 illiterate、人群的 leader/since/until 校验，错一处拒绝开局)；
-          真模型实测抓到的(一记耳光也是伤)
+          真模型实测抓到的(一记耳光也是伤)；v12 B2 原著近事要用的人群事前叫不来、分不出人，后台单列(ReservedTest)；P1-2 首领所图眼下(LeaderTest)
 [POS]: tests 的 v10 验证——「弟子群是纯 NPC 资源：人头、零钱、兵刃衣衫都有账，随剧情驱动底层」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -86,10 +86,11 @@ class RegroupTest(unittest.TestCase):
         self.assertEqual((r.spawned, w.aliases.get("西宗众人")), ([WEST], WEST))       # 就是那一群，叫法照旧
 
     def test_a_supplied_band_is_a_pure_npc_squad(self):
-        w = World.create("测")
+        w = scatter(World.create("测"), "神农帮")
         nid, why = situation.spawn(w, {"kind": "group", "name": "神农帮帮众", "faction": "神农帮", "count": 12})
         self.assertEqual((nid, why), ("神农帮帮众", None))
-        self.assertEqual(w.graph.get(nid, "pool"), {"银两": 1.2, "兵刃": 12, "衣衫": 12})  # 人头、零钱、兵刃、衣衫
+        tpl = crowd.template(w.graph, "神农帮")                                          # 门下模板(23)
+        self.assertEqual(w.graph.get(nid, "pool"), {"银两": round(12 * tpl["money"], 3), **{t["name"]: 12 for t in tpl["items"]}})  # 人头、零钱、兵刃、衣衫
         self.assertIn(nid, crowd.squads(w))
         self.assertIn("至多五十人", situation.spawn(w, {"kind": "group", "name": "大队", "faction": "神农帮", "count": 80})[1])
         self.assertEqual(situation.spawn(w, {"kind": "group", "name": "采药的帮众", "faction": "神农帮", "count": 4})[0], "采药的帮众")
@@ -103,11 +104,18 @@ class RegroupTest(unittest.TestCase):
         self.assertIn("四散逃去", " ".join(w.turn.get("notes", [])))
 
     def test_a_faction_template_dresses_the_band(self):
-        w = World.create("测")
+        w = scatter(World.create("测"), "神农帮")
         w.graph.nodes["神农帮"]["squad_kit"] = {"handle": "神农帮帮众", "power": 20, "money": 0.2,
                                                 "items": [{"name": "药锄", "kind": "兵刃", "steal": True}]}
         nid, _ = situation.spawn(w, {"kind": "group", "name": "采药的帮众", "faction": "神农帮", "count": 6})
         self.assertEqual((w.graph.get(nid, "power"), w.graph.get(nid, "pool")), (20, {"银两": 1.2, "药锄": 6}))
+
+
+def scatter(w, faction):
+    """世界底座(v11 23)在无量山一带本就布了神农帮的人群：要验「附近没有同门人群才补一队」，先把这一门的人群撤走。"""
+    for s in list(w.graph.where(type=crowd.GROUP, faction=faction)):
+        del w.graph.nodes[s]
+    return w
 
 
 class TravelTest(unittest.TestCase):
@@ -202,8 +210,9 @@ class MoneyTest(unittest.TestCase):
 
     def test_duan_yu_pays_ma_wude(self):
         w = self.w
+        his = stock.funds(w, "马五德")
         self.assertEqual(do(w, {"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"})[1], [])
-        self.assertEqual((stock.funds(w, "段誉"), stock.funds(w, "马五德")), (2.0, 23.0))
+        self.assertEqual((stock.funds(w, "段誉"), stock.funds(w, "马五德")), (2.0, his + 3))
         self.assertIn("给不出", do(w, {"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"})[1][0])
 
     def test_money_written_but_not_moved_is_caught(self):
@@ -222,6 +231,80 @@ class MoneyTest(unittest.TestCase):
                                                          "ops": [{"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"}]}]}, text)
         self.assertEqual((rifts, stock.funds(w, "段誉")), ([], 2.0))
         self.assertIn("银两：二两", next(p for p in settle.books(w, text)["people"] if p.startswith("段誉")))
+
+
+class ReservedTest(unittest.TestCase):
+    """v12 B2：原著近事要用的人群——带队之人是近事的相关者，事前叫不来、分不出人，后台单列一节(远远望见可以)。
+    日志第 11 回：后台一边写「其相关者与其门派人马不得提前登场」，一边写「近处的人群……剧情要他们来写 赶来」，导演照后一句赶来了神农帮众。"""
+    EVENT = "神农帮留钟灵下毒逼援"
+
+    def setUp(self):
+        from tianlong.world import lod
+        self.w = World.create("测")
+        self.w.done += ["无量剑第四场比剑", "龚光杰掌掴段誉", "容子矩毒伤毙命"]  # lod.upcoming 至多列三桩：先了掉厅上那三桩
+        self.w.player.set("location", "澜沧江边高崖")
+        self.soon = lod.upcoming(self.w)
+        self.held = lod.reserved(self.w, self.soon)
+
+    def test_the_leaders_crowd_is_held_for_the_canon(self):
+        from tianlong.world import lod
+        w, g = self.w, self.w.graph
+        self.assertEqual(self.held, {"神农攻山帮众": self.EVENT})                       # 首领司空玄是这桩近事的相关者
+        self.assertNotIn(EAST, self.held)                                              # 东宗弟子众没有首领：不受影响
+        r = judge(w, plan((None, "林莽间钻出一群黄衫汉子", [{"做": "赶来", "谁": "神农帮众"}])), reserved=self.held)
+        self.assertEqual(g.get("神农攻山帮众", "location"), "无量山")
+        self.assertTrue(any("原著近事" in f.message for f in r.hard))                  # 赶来被驳回：整拍交返工
+        r = judge(w, plan(spawn=[{"kind": "group", "name": "围山的帮众", "faction": "神农帮", "count": 5}]), reserved=self.held)
+        self.assertTrue(any(f.kind == "spawn" and "原著近事" in f.message for f in r.hard))  # 分人也被驳回
+        self.assertEqual(crowd.standing(g, "神农攻山帮众"), 28)
+        r = judge(w, plan((None, "东宗弟子赶到崖上", [{"做": "赶来", "谁": EAST}])), reserved=self.held)
+        self.assertEqual(g.get(EAST, "location"), "澜沧江边高崖")
+        self.assertEqual(lod.reserved(w, lod.upcoming(w, {self.EVENT})), {})          # 那一桩被拉上台作主干：它的人马就能用了
+        w.done.append(self.EVENT)
+        held = lod.reserved(w, lod.upcoming(w))
+        self.assertEqual(held, {})                                                     # 那一桩了了：可以赶来
+        judge(w, plan((None, "林莽间钻出一群黄衫汉子", [{"做": "赶来", "谁": "神农帮众"}])), reserved=held)
+        self.assertEqual(g.get("神农攻山帮众", "location"), "澜沧江边高崖")
+
+    def test_the_backstage_lists_them_apart(self):
+        from tianlong.narrative import prompts
+        gm = rag.backstage(self.w, upcoming=self.soon, reserved=self.held)
+        self.assertFalse(any("神农攻山帮众" in x for x in gm["flocks"]))               # 【近处的人群】里没有它
+        self.assertTrue(any("神农攻山帮众" in x and self.EVENT in x for x in gm["reserved"]))
+        text = prompts.render_backstage({**gm, "upcoming": []})
+        self.assertIn("【原著近事要用的人马·事前不得登场（远远望见可以）", text)
+
+
+class LeaderTest(unittest.TestCase):
+    """v12 P1-2：人群卡与群战预裁显示首领、门派所图、眼下之事——日志第 12–15 回人群卡只写「站着28人｜分工行事」，帮众四回只会合围砍杀。"""
+    GOAL = "所图：奉灵鹫宫令攻占无量山要地"
+
+    def test_the_backstage_shows_the_leader_and_the_aim(self):
+        from tests.test_adjudicate import cliff
+        w = cliff()
+        line = next(x for x in rag.backstage(w)["crowd"] if x.startswith("神农攻山帮众"))
+        self.assertIn("首领司空玄（在无量山）", line)                                  # 首领不在群里：注明他在哪
+        self.assertIn(self.GOAL, line)
+        w2 = World.create("测")
+        w2.player.set("location", "剑湖宫·宫门")
+        line = next(x for x in rag.backstage(w2)["flocks"] if x.startswith("神农攻山帮众"))
+        self.assertIn(f"首领司空玄｜{self.GOAL}", line)                                 # 近处的人群：首领与他们同处
+
+    def test_the_writer_sees_a_masked_leader_and_their_aim(self):
+        from tests.test_adjudicate import cliff
+        from tianlong.narrative import prompts
+        from tianlong.world import perspective
+        w = cliff()
+        w.graph.set("司空玄", "location", "澜沧江边高崖")                              # 首领在眼前，主角不识其名(帮主名号显赫，不在眼前时照叫其名)
+        do(w, {"做": "打算", "谁": "神农帮众", "为": "擒下司空玄要的人"})
+        self.assertEqual(w.graph.get("神农攻山帮众", "intent"), "擒下司空玄要的人")    # 导演可给一群人写打算
+        view = perspective.veil(w, rag.build(w))
+        q = view["squads"][0]
+        self.assertEqual(q["leader"], perspective.handle(w, "司空玄"))
+        self.assertNotIn("司空玄", q["intent"])
+        text = prompts.render(view)
+        self.assertIn(f"首领：{perspective.handle(w, '司空玄')}", text)
+        self.assertNotIn("司空玄", text)
 
 
 class LiveTest(unittest.TestCase):

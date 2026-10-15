@@ -5,7 +5,8 @@
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概与场外编剧写好的剧情线) / debug(另列场外剧情线) / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
-[POS]: 两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
+[POS]: v11 世界底座：回合开始布好主角近处的场所(venue.settle)，同城的街巷按里数记光阴(access.stroll)，跨了日子补货(venue.restock)。
+        两层唯一的交汇点——游戏主循环，「LLM 提议，世界裁决，文字只渲染已成立之事」：
        授意(选项自带的对象 + 原话里的名字) → 先了远方到期的原著 → [story] 原著窗口拉起将至的此地原著、到期的时限、续场或开场、主角线、场记 → 焦点检索与后台(场记放在第一节) → 导演逐拍提议(报场况 scene，译成本幕之问)
        → 在世界副本上试演(逐拍落账 → 此地原著 → 词表体检)，硬违例交导演返工一次，仍不成立的拍号交定稿整拍作废 → 定稿落账
        → 导演演掉的原著按签名记作兑现、导演立的时限入账 → 时长按措辞、规则主张(story/timing：研习、求教、养伤、此后之举)与道路结算，无人相逼、本幕未被打断时导演写的幕间省略(cut)再让光阴跳过(歇满两个时辰即按规则养伤) → 传闻投递 → 编剧从主角视角(视锥与节拍先过 veil/mask，成文按段再过一遍 mask——编剧熟读原著，名字可能是它自己带来的)只凭已成立之事成文、拟选项与伏笔
@@ -29,6 +30,7 @@
        v11 场外编剧：到期的场外之事前提未变就照日程演(原著与衍生事件同一条轨道，不调模型)；前提破了，只差路程的延后，否则作罢(相关的活人原著线已变)，
        附近的、分量重的原著另交场外编剧改写；回合收尾先查谁的心愿了了(plot.awaken)，跨过了日子再续写该有下一步的人(plot.idle)——
        创作家写、规则审(world/plot.vet)、审稿，在后台对着世界的快照跑(_compose)，下一回合开始前(flush)对着真世界再过一遍规则审才排进日程(_adopt)；离线不写新剧情、作罢即止
+       v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码；回合收尾了断两端异地的同行(situation.sunder)；原著近事要用的人马(lod.reserved)交后台与裁决；危局算两次(槽位用成文前的，此后槽、菜单与合场用结算之后的)，合场与僵持计数交 scene；回合收尾记下见过的人(situation.meet)；玩家要找的人(menu.seeking)交裁决，小片区里寻而至即遇；场的僵持计数(stall)交裁决：僵持满四回合仍无结构性变化，规则照围困人群的打算押走；验收之后记下入选选项的对象(menu.offer，P2-2 琐物衰减)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -39,7 +41,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .narrative import agents
 from .story import arc, brief, canon, choices, scene, stakes, timing
-from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, plot, rag, scenery, settle, situation
+from .world import access, adjudicate, body, bond, crowd, growth, lod, menu, pacing, perspective, plot, rag, scenery, settle, situation, venue
 from .world.clock import PER_DAY
 from .world.effects import describe
 from .world.world import World
@@ -150,6 +152,7 @@ class Game:
         w.turn, self._tasks = {}, []
         w.player.set("turn", w.player["turn"] + 1)
         origin, day0, before, hp0 = w.here, w.clock.day, w.clock.label(), w.player["hp"]
+        venue.settle(w)                               # 近大远小(v11)：主角所在与一步之遥的场所布好近景——伙计、陈设、货架
         self._distinguish(w)                          # 叫法即主键(v7)：撞名的人在任何人落笔之前分到稳定的外号
         glance0 = settle.glance(w)                    # 两相对账(v7)：回合开始时主角看得见的账，回合末与之求差
         aim = adjudicate.targets(w, deed, self.menu.get(deed, ()))  # 玩家所指：选项自带的对象 + 原话里认得出的名字
@@ -167,8 +170,9 @@ class Game:
         story = brief.compose(w, staged, due, scale)
         skip = {ev["id"] for ev, _ in offstage} | ({staged["id"]} if staged else set())
         soon = lod.upcoming(w, skip)
+        held = lod.reserved(w, soon)                  # v12 原著近事要用的人马(带队之人是近事相关者)：事前叫不来、分不出人；拉上台的那一桩不在 soon 里
         gm = rag.backstage(w, stage=staged, upcoming=soon, tempo=self.tempo, aim=aim,
-                           ready={ev["id"] for ev in canon.ready(w, skip)})
+                           ready={ev["id"] for ev in canon.ready(w, skip)}, reserved=held)
         gm["brief"] = story["text"]
         w.player.set("drift", [])                     # 上回合正文的偏差已交导演后台：交代一次即清
         pack = rag.build(w)
@@ -179,7 +183,10 @@ class Game:
         rules = {"embargo": {w.graph.get(a, "faction") for ev, _ in soon for a in ev["actors"]
                              if a not in situation.around(w)} - {None},
                  "cast": set(staged["actors"]) if staged else set(),
-                 "no_interrupt": self.tempo[-2:] == ["interrupted", "interrupted"]}
+                 "no_interrupt": self.tempo[-2:] == ["interrupted", "interrupted"],
+                 "reserved": held,
+                 "seek": menu.seeking(w, deed, aim),       # v12 玩家要找的人：小片区里寻人而至即遇
+                 "stall": (w.player["scene"] or {}).get("stall", 0)}  # v12 危局僵持满四回合、本回合仍无结构性变化：规则照围困人群的打算押走(旧场按 0)
         plan, drop = self._rehearse(plan, aim, staged, day0, rules, pack, gm, deed, scale)
         ruling = self._enact(w, plan, aim, staged, day0, rules, drop, deed, scale)  # 定稿：仍不成立的拍整拍作废
         if 0 in drop and ruling.question.get("state") == "interrupted":
@@ -191,7 +198,8 @@ class Game:
             stakes.plant(w, spec)
         w.witness(applied)                            # 主角眼前发生的变化当场入认知，随即离开也记得
         stops = [origin, *(op["value"] for op in applied if op.get("id") == "player" and op.get("key") == "location")]
-        journey = sum(access.distances(w, a).get(b, 0) for a, b in zip(stops, stops[1:])) * PER_DAY  # 每一程都算，不由 LLM 估算
+        journey = sum(access.distances(w, a).get(b, 0) * PER_DAY or access.stroll(w, a, b)  # 每一程都算，不由 LLM 估算；同城的街巷按里数(v11)
+                      for a, b in zip(stops, stops[1:]))
         spent = max(w.turn["minutes"], journey)
         days, _ = w.advance(spent)                    # 时长由措辞换算，不由 LLM 报数
         scene_end = w.clock.label()
@@ -206,6 +214,7 @@ class Game:
         elif veto:
             log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
+        venue.restock(w, days)                        # 跨了日子(v11)：店里每日补货的货补回原数
         mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
         mend = "；".join(x for x in [mend, *crowd.recover(w)] if x)  # 打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
         arrived = w.sync()
@@ -228,13 +237,15 @@ class Game:
         emit("head", copy.deepcopy(turn))  # 快照：之后要往 turn 里填正文与选项，不能让监听者看到它变
         view = perspective.veil(w, rag.build(w))  # 编剧从主角的视角写：不识名之人只剩叫法，不给即不泄露
         veil = lambda text, who=None: perspective.mask(w, text, who)
+        hang = [perspective.handle(w, p) for p in adjudicate.hanging(w, ruling)]  # v12 须回应只认收尾时仍悬着的话
+        danger = pacing.danger(w, ruling.beats)       # v12 危局的单一口径：槽位用成文前的拍与世界
         frame = {"deed": deed or "环顾四周", "beats": [veil(b["text"], b["who"]) + (f"〔{b['mood']}〕" if b.get("mood") else "") for b in ruling.beats if b["text"]],
                  "void": [veil(v) for v in void], "span": span, "prev": self.last_text[-TAIL:],
                  "notes": [veil(n) for n in ruling.notes + ([mend] if mend else []) + _arrival(w, origin)],
-                 "addressed": [perspective.handle(w, p) for p in ruling.addressed],
+                 "addressed": hang,
                  "candidates": [veil(c) for c in ruling.candidates],
                  "news": [veil(e["summary"]) for e in arrived if not e.get("witnessed")],  # 亲历之事已在节拍里，不再当传闻
-                 "slots": choices.slots(w)}                # 选项先定槽位：此刻 / 此后 / 机缘
+                 "slots": [veil(x) for x in choices.slots(w, addressed=hang, danger=danger, seek=rules["seek"])]}  # 选项先定槽位：此刻 / 此后 / 机缘(危局另有三槽)；v12 槽位也从主角的视角说
         gate = settle.Gate(w, near=settle.partners(ruling))  # 正文出闸：段里有人报了姓名先入账，再按说话人过主角的视角(编剧熟读原著，名字可能是它自己带来的)
 
         def show(delta):
@@ -262,8 +273,11 @@ class Game:
             w.player.set("drift", rifts)
             log.info("账文分歧：%s", rifts)
         turn["status"] = rag.condition(w)  # 结算之后的身况：得失随正文入了账，界面与账本同一口径
-        later = choices.later(w)                      # 此后槽的兜底：选项里没有一件持续之事，就补一项
-        picked = menu.check(w, page["options"], ruling.addressed, ruling.candidates, plan["options"], later=later)  # 兜底项看局面，归 menu
+        danger = pacing.danger(w, ruling.beats)       # v12 结算之后再算一次：账房可能新添了拘押，此后槽、菜单与合场以它为准
+        later = choices.later(w, danger)              # 此后槽的兜底：选项里没有一件持续之事，就补一项(危局里没有)
+        picked = menu.check(w, page["options"], adjudicate.hanging(w, ruling), ruling.candidates, plan["options"], later=later,
+                            said=adjudicate.lines_to_player(w, ruling), danger=danger)  # 兜底项看局面，归 menu；v12 按优先级合并，回应的措辞按那一句的主题
+        menu.offer(w, picked)                         # v12 P2-2 记下入选选项的对象：只指着琐物碎银的选项据此衰减
         scales = {o["text"]: o.get("scale") for o in page["options"]} | {t: "此后" for t, _ in later}
         picked = [(veil(text), ids, scales.get(text)) for text, ids in picked]  # 选项也从主角的视角说：叫不出的名字不出现在选项上
         self.menu = {text: ids for text, ids, _ in picked}
@@ -279,7 +293,7 @@ class Game:
             told = (None if rifts else page["headline"]) or (sworn or facts).replace("你", w.player["name"]).replace("主角", w.player["name"])
             w.record(told, origin, applied, "director", weight, day=day0, witnessed=True)
         self._offstage(days)  # 新到期的远方之事与场外编剧(v5 在成文、验收之后)：编剧落笔、掩码、选项验收看的是同一个世界，其传闻本就迟到
-        self._close(ruling, page, memory, moved=w.here != origin, deed=deed, spine=story["spine"])
+        self._close(ruling, page, memory, moved=w.here != origin, deed=deed, spine=story["spine"], pressed=bool(danger))
         self.options, self.last_text = turn["options"], page["text"]
         self.tempo = (self.tempo + [ruling.question.get("state") or "open"])[-3:]
         return turn
@@ -361,11 +375,13 @@ class Game:
                     world.taint.update(staged["actors"])
         return adjudicate.judge(world, plan, aim, drop=drop, then=canon, **rules)
 
-    def _close(self, ruling, page, memory, moved=False, deed="", spine="deed"):
-        """回合收尾：场的推进与合场、主角线、主干轮转、近事、未了之事的推进与了结、伏笔账、节奏账、场景实体回收；近事溢出则交后台折叠梗概。"""
+    def _close(self, ruling, page, memory, moved=False, deed="", spine="deed", pressed=False):
+        """回合收尾：场的推进与合场、主角线、主干轮转、近事、未了之事的推进与了结、伏笔账、节奏账、场景实体回收；近事溢出则交后台折叠梗概。
+        v12：合要有账可依的口径随危局变(scene.settles)——危局里只认结构性变化；危局里没有结构性变化，僵持计数加一。"""
         w, me = self.world, self.world.player
-        settled = moved or any(op.get("key") not in ("mood", "epithet") for op in ruling.applied)  # 合要有账可依
-        scene.close(w, ruling.question, deed, settled)
+        shifted = pacing.structural(ruling.applied, moved)
+        settled = scene.settles(ruling.applied, moved, pressed)  # 合要有账可依
+        scene.close(w, ruling.question, deed, settled, pressed=pressed, shifted=shifted)
         arc.track(w)
         brief.remember(w, spine)
         touched = {i for op in ruling.applied for i in (op.get("id"), op.get("src"), op.get("dst"), op.get("value"))
@@ -374,6 +390,9 @@ class Game:
         for goal in situation.settle(w):
             log.info("未了之事了结：%s", goal)
         situation.sweep(w)
+        for line in situation.sunder(w):  # v12 两端异地的同行了断：原著把人挪走了，同行之名不再悬着
+            log.info("了断：%s", line)
+        situation.meet(w)  # v12 记下本回合见过的人：近处的熟人另收三日内见过的(没报过名、没交过手的也算)
         hooks = [h for h in me["hooks"] if h["due"] > me["turn"] - 1]  # 到期之后再给导演一回合交代，然后静默作罢
         pacing.record(w, ruling.beats, moved or any(adjudicate.physical(op) for op in ruling.applied))
         if page.get("hook") and not BODILY.search(page["hook"]["text"]):  # 身体归规则，伤病不作悬念

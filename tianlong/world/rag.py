@@ -3,9 +3,10 @@
          world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress / mastery / studiable（研习进度、进境投影、研习对象）
          与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单）、world/crowd 的 squads / card / lines / agility / besiegers / handle / STEAL_ROLL（v9 人群）、world/stock 的 funds / say / measure / purses / purse（v9 银两），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
-[OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
+[OUTPUT]: 对外提供 vista()（v12 隔着关口望得见的人与人群，给导演）、scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
-[POS]: world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
+[POS]: v11 世界底座：视锥另有此处铺面(shop：招牌、货与价目、能办的事)与主角听来的消息(heard)；后台另有铺子底细、此处打听得到(假的附真相)、国法与规矩、风物天时、人物底子(取自 world/locale)；近处去向不列近旁的房间。
+        world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
        状态字段一律取自 profile(v4 单一投影)：condition、build、backstage 只取不同切面，不各算一遍——进境、伤势、心境、眼下之事、立场三处同时看得见；
        场景清单(v8)：视锥里的景物与器物按等级详略(寻常只有名字与方位，器物另有类别、描述与属性，主角身上的要物连内容)，后台另列近旁各处摆着、藏着什么与要物的内容底细；
        build 给编剧——在场取真相、场外取认知，只含玩家已知（他人暗中的心思在揭开之前不入视锥），人物带伤势、神色、眼下之事、境况与对你的立场，主角带武学与进境，另列近旁之人与同行者；近日传闻不含主角自己的作为（那在近来里）；
@@ -17,11 +18,12 @@
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
        v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
+       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁；焦点里同在这一片而不在眼前的人写明主角正在寻他；视锥另有远处可见(afar)，后台另有隔着关口望得见(vista)；身况标签把人群的押解与围攻并列(被X押着)
        v11：近事里场外编剧排进日程的衍生事件标作「场外剧情」，与原著一样只可借风声伏笔；dossier 是场外编剧任务书里一个人的底子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, actor, body, crowd, growth, lod, pacing, perspective, scenery, situation, stock
+from . import access, actor, body, crowd, growth, locale, lod, pacing, perspective, scenery, situation, stock
 from .effects import usable
 from .ledger import NEWS_SPEED
 from .profile import TIERS, power_tier, profile, ties
@@ -41,6 +43,7 @@ def condition(world) -> list[dict]:
         tags.append({"text": me["posture"], "tone": "plain"})
     tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
     tags += [{"text": f"被{crowd.handle(world.graph, s)}围住", "tone": "warn"} for s in crowd.besiegers(world)]  # 人群(v9)
+    tags += [{"text": f"被{crowd.handle(world.graph, s)}押着", "tone": "warn"} for s, rel in crowd.holders(world) if rel != crowd.BESIEGE]  # v12
     tags += [{"text": f"持有{i}" + (f"（{stock.measure(world.graph, i)}）" if stock.measure(world.graph, i) else ""), "tone": "plain"}
              for i in me["carrying"]]
     if me["money"] > stock.EPS:  # 银两(v9)：是数不是器物
@@ -72,16 +75,28 @@ def _salient(world, p) -> tuple:
     return (-len((world.graph.get(p, "bond") or {}).get("log", [])), not perspective.knows(world, "player", p), p)
 
 
-def acquainted(world, limit: int = 5) -> list[str]:
-    """近处的熟人(v5)：一日路程之内、此刻不在眼前，主角叫得出名字或与之有过交集的人——导演知道他们就在不远处，剧情需要时可以让他们找来。"""
+MET_DAYS = 3  # 近处的熟人另收几日内见过的人(v12)：钟灵在厅上当着主角放貂救人，没报过名、没交过手，也是熟人
+
+
+def _ties(world, p) -> str:
+    """此人带着谁(v12)：与谁同行、押着谁——导演叫他来，同行者与人质会一并来(situation.carried)。"""
+    band, held = situation.company(world, p), situation.hostages(world, p)
+    return (f"｜与{'、'.join(band)}同行" if band else "") + (f"｜押着{'、'.join(held)}" if held else "")
+
+
+def acquainted(world, limit: int = 6) -> list[str]:
+    """近处的熟人(v5)：一日路程之内、此刻不在眼前，主角叫得出名字或与之有过交集的人——导演知道他们就在不远处，剧情需要时可以让他们找来。
+    v12 另收 MET_DAYS 日内见过的人(黑板 met)，未识名的注明主角只识其貌；每行附与谁同行、押着谁；至多六人。"""
     g, dist, close = world.graph, world.graph.distances(world.here), situation.around(world) | set(situation.elsewhere(world))
+    met, today = world.player.get("met") or {}, world.clock.day
     known = [p for p in g.where(type="person") if p not in close and g.get(p, "status") != "dead" and not g.get(p, "dormant")
              and dist.get(g.get(p, "location"), lod.NEAR + 1) <= lod.NEAR
-             and (perspective.knows(world, "player", p) or (g.get(p, "bond") or {}).get("log"))]
+             and (perspective.knows(world, "player", p) or (g.get(p, "bond") or {}).get("log") or today - met.get(p, -10 ** 6) <= MET_DAYS)]
     out = []
     for p in sorted(known, key=lambda p: _salient(world, p))[:limit]:
         where, belief = g.get(p, "location"), world.knowledge.view(p).get("location")
-        out.append(f"{p}：身在{where}（距此{dist.get(where, '?')}日）" + (f"，主角以为在{belief}" if belief and belief != where else ""))
+        out.append(f"{p}：身在{where}（距此{dist.get(where, '?')}日）" + (f"，主角以为在{belief}" if belief and belief != where else "")
+                   + ("" if perspective.knows(world, "player", p) else f"｜主角只识其貌：{perspective.guise(world, p)}") + _ties(world, p))
     return out
 
 
@@ -147,7 +162,38 @@ def build(world) -> dict:
         "exits": access.exits(world),
         "news": news,
         "journal": me["journal"],
+        "afar": _afar(world),                     # 远处可见(v12)：本回合望见的人与人群——隔着关口望得见、听不见、够不着
+        "shop": locale.shop(world, writer=True),  # 此处的铺面(v11)：招牌、货与价目、能办的事——进了店都看得见
+        "heard": locale.heard(world),             # 主角听来的消息(v11)：照原样，未必是真
     }
+
+
+def _afar(world) -> list[dict]:
+    """远处可见(v12，给编剧)：本回合望见的人(叫法由 veil 换、外貌、所在)与人群(叫法、约多少人、所在)。"""
+    g, out = world.graph, []
+    for x in situation.sighted(world):
+        if crowd.is_squad(g, x):
+            out.append({"kind": "group", "name": crowd.handle(g, x), "count": crowd.standing(g, x), "where": g.get(x, "location")})
+        elif g.kind(x) == "person":
+            out.append({"kind": "person", "name": x, "appearance": g.get(x, "appearance"), "where": g.get(x, "location")})
+    return out
+
+
+def vista(world, reserved=None) -> list[str]:
+    """隔着关口望得见的人与人群(v12，给导演)：带关口种类——「段誉（镇南王世子）在无量山（隔着险径）」；原著近事要用的人马也列，注明只可望见。"""
+    g, gates, out = world.graph, situation._vistas(world), []
+    able = situation.sightable(world)
+    for loc in sorted(gates):
+        across = "、".join(sorted(gates[loc]))
+        for x in sorted(able):
+            if g.get(x, "location") != loc:
+                continue
+            if crowd.is_squad(g, x):
+                out.append(f"{x}（{crowd.handle(g, x)}，站着{stock.cn(crowd.standing(g, x))}人）在{loc}（隔着{across}）"
+                           + ("：原著近事要用的人马，只可望见" if x in (reserved or {}) else ""))
+            else:
+                out.append(f"{x}（{g.get(x, 'title') or '无名'}）在{loc}（隔着{across}）")
+    return out
 
 
 # ============================================================
@@ -202,7 +248,8 @@ def focus(world, ids) -> list[str]:
         if kind == "person":
             where, held = g.get(nid, "location"), situation.captors(world, nid)
             line = f"{nid}：{STATUS_WORD.get(g.get(nid, 'status'), '')}，身在{where}（距此{dist.get(where, '?')}日）" \
-                + (f"，受制于{'、'.join(held)}" if held else "") + ("，正随你同行" if nid in situation.party(world) else "")
+                + (f"，受制于{'、'.join(held)}" if held else "") + ("，正随你同行" if nid in situation.party(world) else "") \
+                + ("｜主角正在寻他：要他现身写赶来；寻不到也要在拍里交代缘由" if nid in situation.elsewhere(world) else "")  # v12 同在这一片而不在眼前
         elif kind == "item":
             holder = g.get(nid, "holder")
             line = f"{nid}：" + ("在你身上" if holder == "player" else f"由{holder}随身（{holder}在{g.get(holder, 'location')}）"
@@ -221,7 +268,7 @@ def focus(world, ids) -> list[str]:
 STATUS_WORD = {"alive": "安好", "wounded": "负伤", "dead": "已死"}
 
 
-def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), ready=frozenset()) -> dict:
+def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), ready=frozenset(), reserved=None) -> dict:
     g, me, here = world.graph, world.player, world.here
     s = scene(world)
     hidden = [n for n in g.where(location=here) if g.get(n, "hidden") and not g.get(n, "dormant")]
@@ -257,7 +304,9 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
                      for ev, n in upcoming],  # 场外剧情(v11)：场外编剧排进日程的衍生事件，与原著同样只可借风声伏笔
         "ruling": ruling,
         "crowd": crowd.lines(world),  # 群战预裁(v9)：整群之力、脱身、偷取
-        "flocks": crowd.afar(world),  # 近处不在跟前的人群(v10)：要他们来写赶来，要几人从中分出
+        "flocks": crowd.afar(world, held=reserved),  # 近处不在跟前的人群(v10)：要他们来写赶来，要几人从中分出
+        "reserved": crowd.reserved_lines(world, reserved or {}),  # 原著近事要用的人马(v12 lod.reserved)：事前不得登场，远远望见可以
+        "vista": vista(world, reserved),     # 隔着关口望得见的人与人群(v12)：远远看见写 望见，要他到跟前写 赶来
         "money": _money(world, s["people"]),  # 各人身上的银两(v9)：掏得出多少由账定
         "tempo": _tempo(world, tempo),
         "fatigue": pacing.advise(world),
@@ -285,12 +334,18 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "arts": _arts(world, ["player", *s["people"]]),
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
-        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1]) if loc != here][:PLACES_SHOWN],
-        "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带"  # 有过交集的、怀有图谋的在前
+        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
+                   if loc != here and loc not in situation.near(world)][:PLACES_SHOWN],  # 近旁的房间不占名额(v11)：它们在【近旁】里
+        "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带" + _ties(world, p)  # 有过交集的、怀有图谋的在前；v12 附同行、押着
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
         "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置
         "dossiers": scenery.dossiers(world),  # 要物的内容与底细：有人翻看就照此写
+        "shop": locale.shop(world),           # 铺子底细(v11)：当值的伙计、货架存货、能办的事、招工
+        "asks": locale.asks(world),           # 此处打听得到的消息(v11)：向谁、怎么问、赏钱多少，假的附真相
+        "law": locale.law(world),             # 此地的国法与在场门派的规矩(v11)
+        "season": locale.season(world),       # 天时：四季气候、节令集期、此地的险(v11)
+        "traits": locale.traits(world),       # 在场有名之人的底子(v11)：名声、好恶软肋、手段底线、能替人做的事
     }
 
 

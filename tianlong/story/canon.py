@@ -1,9 +1,9 @@
 """
-[INPUT]: 依赖 world/lod 的 broken（前提核对）、world/situation 的 near / around / party / CUSTODY（此地与近旁同属 LOD0），World 门面的 canon / done / clock / here / graph / player
+[INPUT]: 依赖 world/lod 的 broken（前提核对）、world/situation 的 near / around / party / CUSTODY / small_area（此地与近旁同属 LOD0；v12 小片区里在这一片即算到位），World 门面的 canon / done / clock / here / graph / player
 [OUTPUT]: 对外提供 pull()（主角在场、相关者到位的原著提前上演：窗口的「拉」）、consume()（导演演掉的原著按后果签名记作兑现）、signature()、
           ready()（此刻拉得起来的原著 id，后台近事据此改写措辞）、PULL、WITHIN
 [POS]: story 层的原著窗口——「原著是有窗口的因果轨道」(宪法第 6 条 v4)：原著排定之日不再是一个冻住的日子，而是窗口的锚：
-       拉——主角就在事发之地或其近旁、相关者都在身边、前提未破、按 order 之前没有牵涉同一批人的原著悬着，PULL 日之内将至的那一桩今天就可以上演；
+       拉——主角就在事发之地或其近旁、相关者都在身边(v12：或在主角近旁的小片区里——片区里上名册靠的正是上演)、前提未破、按 order 之前没有牵涉同一批人的原著悬着，PULL 日之内将至的那一桩今天就可以上演；
        推——过了排定之日仍未上演，照旧由 lod.split_due 交场外结算(v11：前提未变照原著演，破了延后、作罢或交场外编剧改写)；
        消费——导演已成立的后果与某桩未演原著的「后果签名」(擒放、生死、易手、人物去向)过半重合，那桩原著记作已兑现(变体)，不再到期、不交场外编剧。
        消费只记账、不改物理状态；签名先比筋骨(擒放、生死、易手)，没有筋骨的原著才比人物去向，过半且至少一条重合
@@ -21,8 +21,14 @@ def _pending(world) -> list[dict]:
 
 
 def _gathered(world, ev: dict) -> bool:
-    g, close = world.graph, situation.around(world) | set(situation.party(world))
-    return all(a in close and g.get(a, "status") != "dead" for a in ev["actors"])
+    """相关者都到位：在眼前或正同行；v12 另外，他所在之处在主角近旁、且是小片区(situation.small_area)，也算到位——
+    片区里相关者上名册靠的正是上演(engine 上演时把这一片的相关者 enlist)，不能反过来要他先上名册才拉得起来。"""
+    g, close, spots = world.graph, situation.around(world) | set(situation.party(world)), situation.near(world)
+
+    def here(a) -> bool:
+        loc = g.get(a, "location")
+        return a in close or (loc in spots and situation.small_area(world, loc))
+    return all(here(a) and g.get(a, "status") != "dead" for a in ev["actors"])
 
 
 def ready(world, skip=frozenset()) -> list[dict]:

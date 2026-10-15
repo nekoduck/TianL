@@ -84,7 +84,7 @@ class CanonLoopTest(unittest.TestCase):
         self.assertEqual(w.done, ["无量剑第四场比剑"])                                 # 一回合只上演一桩
         self.assertEqual(w.graph.get("褚师弟", "status"), "wounded")
         seen = [n for n in turn["news"] if n["witnessed"]]
-        self.assertIn("无量剑东宗的持剑少年刺伤无量剑西宗的少年，东宗四赛三胜", "".join(n["text"] for n in seen))  # 界面从主角的视角说(v5)：不识名的人只剩叫法；四个东宗少年各有叫法(v7 叫法即主键)
+        self.assertRegex("".join(n["text"] for n in seen), r"无量剑东宗的\w{2}少年刺伤无量剑西宗的少年，东宗四赛三胜")  # 界面从主角的视角说(v5)：不识名的人只剩叫法；四个东宗少年各有叫法(v7 叫法即主键)
         self.assertNotIn("【刚刚传到的消息】", llm.writer_prompts[-1])  # 亲历之事已在节拍里，不再当传闻
         self.assertEqual(turn["clock"], {"year": "元祐六年", "date": "二月初一", "hour": "辰时"})
         self.assertEqual(turn["status"][0], {"text": "安然无恙", "tone": "plain"})

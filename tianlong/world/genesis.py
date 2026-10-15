@@ -1,6 +1,6 @@
 """
-[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/WORLD_PROMPT.md 第十四节；19~26 世界底座为 v11 草案，尚未编译），依赖 world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT、world/crowd 的 GROUP / DISBAND（v9 人群）
-[OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads/gates/relations/canon/aliases/player/start_tick/seed）、GenesisError、DATA、SCENES、GRADES
+[INPUT]: 读取 data/canon/*.json（外部抽取的原著硬知识，格式见 data/EXTRACT_PROMPT.md 与 data/ACCESS_PROMPT.md；场景清单 18_scenes.json 见 data/WORLD_PROMPT.md 第十四节；19~27 世界底座交 world/founding 编译），依赖 world/founding 的 found（v11 世界底座）、world/clock 的 day_of / PER_DAY / PER_SHICHEN、world/graph 的 PLIGHT、world/crowd 的 GROUP / DISBAND（v9 人群）
+[OUTPUT]: 对外提供 load()（编译出 World 可直接加载的创世字典：nodes/roads(地点, 地点, 骑马日数, 里数)/gates/relations/canon/aliases/player/start_tick/seed，v11 另有只读共用的 atlas）、GenesisError、DATA、SCENES、GRADES
 [POS]: world 层的创世导入器——原著硬知识进入基础设施的唯一入口：裁剪抽取元数据、排定原著日程、
        处理开端未明的人物（休眠）、开局带伤者记下剧情上的伤(PLIGHT)、标出片区(area：下辖子地点或以自身为区域的大地名，同在片区不等于同处一室)、道路补丁(15 修伪捷径、16 补走廊)依次先删再加再改且须与原路严丝合缝、路程按骑马换算(PACE)、有向通行条件(14)编译为关口、
        按章成簇排定日程、编译别名表、保留隐情的揭示事件(revealed_by)、并入情境前提(17：某人仍受制于人)、校验全部 id 引用；任何错误都在开局前失败，绝不带病入世；
@@ -10,6 +10,7 @@
        squads 编入无名之众(type=group)：须属已登记的门派、在场景之内、人数三到二百、每人的功力与零钱是数、身上之物各有不同的名字，pool 按人头算好总数(_squad)
        v10 场景清单的顶层段落(v11 草案 data/WORLD_PROMPT.md 改归 23/22/21/22，此处仍认 v10 写法)：门下模板 kits 挂到门派节点(squad_kit)、人物零钱 money、原著器物补注 canon_items(只补 ENRICH 的字段)、不识字 illiterate；
        人群没写 kit 即用门下模板，leader/since/until 在 _validate 里核对；文书状态 doc 只取三态、残片 torn 须写全本几份
+       v11 世界底座：01~06 立好之后交 world/founding 先立处所与场所、再落货品人物门派人群(19~27)，场景清单(18)最后布；道路成四元组(零日之路另带里数)，19 的补丁与场所接路在 15/16 与场景之后打；关口另有钥匙、时辰、关钱、把守(gates_patch 补到 14 已有的关口上)；22 的新关系并入 07；静态的表(atlas)不随 load 拷贝；v10 写在 18 顶层的原著器物补注只认 05 登记的器物(21 补注过等级也照认)，改写全本份数而没写存哪几份即按改写的算
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -19,6 +20,7 @@ from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
 
+from . import founding
 from .clock import DAYS_PER_MONTH, PER_DAY, PER_SHICHEN, day_of
 from .crowd import DISBAND, GROUP
 from .graph import PLIGHT
@@ -51,7 +53,7 @@ SITUATION = "17_situation.json"  # 原著事件的情境前提补充（某人仍
 SCENES = "18_scenes.json"  # 场景清单(v8 布景)：建筑、景物、分级器物——世界生成时一次布齐，剧情只调度、不新造
 GRADES = ("寻常", "器物", "要物")  # 器物的详略：寻常只有名字；器物带几样简单属性；要物详写(文书另有内容 text 与底细 secret)
 DRESSED = ("grade", "kind", "desc", "location", "holder", "hidden", "hint", "spot", "props", "text", "secret", "effect",
-           "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc", "torn")  # 布景器物入世的字段；v9 数量、银两、钱袋、可分、全本几份(所存哪几份)、用途、文书状态、撕开的残片
+           "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc", "torn", "price", "known")  # 布景器物入世的字段；v9 数量、银两、钱袋、可分、全本几份(所存哪几份)、用途、文书状态、撕开的残片；v11 估值、知者
 ENRICH = ("grade", "props", "text", "secret", "qty", "unit", "cash", "purse", "split", "full", "pages", "uses", "doc", "torn", "spot")  # v10 原著器物(05)可补注的字段：着落与持有归原著，不在此改
 DOC_STATES = ("写成", "封缄", "拆封")  # 文书的状态(与 world/scribe 同一张表)
 
@@ -88,38 +90,46 @@ def _patches(root: Path) -> list[tuple[str, dict]]:
     return out
 
 
-def _roads(root: Path) -> list[tuple[str, str, int]]:
-    """原路依次打上补丁（每个补丁先删、再加、再改，各只一次），返回步行日数；不依 parent 自动连路。
-    补丁须与它所补的路严丝合缝：删与改的路必须存在、加的路必须不存在——对不上即补丁与原路版本错配，拒绝开局。"""
+def _roads(root: Path, extra: list[tuple[str, dict]] = ()) -> list[tuple[str, str, int, float]]:
+    """原路依次打上补丁（每个补丁先删、再加、再改，各只一次），返回 (地点, 地点, 步行日数, 里数)；不依 parent 自动连路。
+    补丁须与它所补的路严丝合缝：删与改的路必须存在、加的路必须不存在——对不上即补丁与原路版本错配，拒绝开局。
+    v11 世界底座(extra：19 的道路补丁与场所接路)在 15/16 与场景清单之后打；零日之路另带步行里数，同一座建筑之内记 0 里。"""
     roads, errors = {}, []
     for a, b, days in _read(root, "02_roads.json"):
         if frozenset((a, b)) in roads:
             errors.append(f"道路「{a}—{b}」重复登记")
-        roads[frozenset((a, b))] = (a, b, days)
-    for name, patch in _patches(root):
-        for a, b in patch.get("remove", ()):
+        roads[frozenset((a, b))] = (a, b, days, 0)
+    for name, patch in [*_patches(root), *extra]:
+        for a, b, *_ in patch.get("remove", ()):
             if roads.pop(frozenset((a, b)), None) is None:
                 errors.append(f"{name} 要删的「{a}—{b}」并不存在")
-        for a, b, days in patch.get("add", ()):
+        for a, b, days, *li in patch.get("add", ()):
             if frozenset((a, b)) in roads:
                 errors.append(f"{name} 要加的「{a}—{b}」已经存在")
-            roads[frozenset((a, b))] = (a, b, days)
-        for a, b, days in patch.get("change", ()):
+            roads[frozenset((a, b))] = (a, b, days, (li or [0])[0] or 0)
+        for a, b, days, *li in patch.get("change", ()):
             if frozenset((a, b)) not in roads:
                 errors.append(f"{name} 要改的「{a}—{b}」并不存在")
-            roads[frozenset((a, b))] = (a, b, days)
+            roads[frozenset((a, b))] = (a, b, days, (li or [0])[0] or 0)
     if errors:
         raise GenesisError(f"道路补丁有 {len(errors)} 处对不上原路，首条：{errors[0]}")
     return list(roads.values())
 
 
-def _gates(root: Path) -> list[tuple[str, str, dict]]:
-    """有向通行条件 (来处, 去处, 关口)：blocked/requires 由系统硬判，hidden 待剧情发现，how/risk 交导演在剧情里兑现。"""
+def _gates(root: Path, extra=(), patches=()) -> list[tuple[str, str, dict]]:
+    """有向通行条件 (来处, 去处, 关口)：blocked/requires 由系统硬判，hidden 待剧情发现，how/risk 交导演在剧情里兑现。
+    v11 世界底座：19 的新关口接在 14 之后(另有钥匙 key、时辰 hours、关钱 toll、把守 guard)，gates_patch 给 14 已有的关口补这几项。"""
     out = []
     for r in _read(root, "14_access.json"):
         gate = {k: r.get(k) for k in GATE}
         gate.update(blocked=bool(gate["blocked"]), hidden=bool(gate["hidden"]), requires=gate["requires"] or [])
         out.append((r["from"], r["to"], gate))
+    out += list(extra)
+    by = {(a, b): gate for a, b, gate in out}
+    for a, b, more in patches:
+        if (a, b) not in by:
+            raise GenesisError(f"关口补丁：「{a}→{b}」不是已有的关口")
+        by[(a, b)].update(more)
     return out
 
 
@@ -204,10 +214,12 @@ def _inside(nodes: dict, top: str) -> set[str]:
 
 
 def _dress(row: dict) -> dict:
-    """一件布景器物入世：只取游戏字段；寻常之物没有描述也无妨，器物与要物须有。一部书写了全本几份(full)而没写存哪几份，即全本都在。"""
+    """一件布景器物入世：只取游戏字段；寻常之物没有描述也无妨，器物与要物须有。一部书写了全本几份(full)而没写存哪几份，即全本都在。
+    v11 层级 tier 入世改称 layer(缺省：寻常与器物三层、要物二层)，估值 price 与知者 known 照收。"""
     node = {"type": "item", "kind": "杂物", "desc": None, "location": None, "holder": None, "hidden": False, "hint": None,
             "grants": None, "effect": None, "state": {"exists": True, "available": True}}
     node.update({k: row[k] for k in DRESSED if k in row})
+    node["layer"] = row.get("tier") or (2 if node.get("grade") == "要物" else 3)
     node["hidden"] = bool(node["hidden"])
     if node.get("full") and "pages" not in node and isinstance(node.get("qty", node["full"]), (int, float)):
         node["pages"] = list(range(int(node.get("qty", node["full"]))))
@@ -255,7 +267,7 @@ def _kit_errors(ctx: str, who: str, kit, power) -> list[str]:
     return out
 
 
-def _extras(data: dict, nodes: dict) -> list[str]:
+def _extras(data: dict, nodes: dict, canon_items: set = frozenset()) -> list[str]:
     """场景清单的顶层段落(v10，交外部依原著抽取)：门派的无名弟子模板 kits、有名有姓之人开端时身上的零钱 money、
     原著器物(05)的补注 canon_items(等级、属性、内容、数量、全本几份、用途)、不识字的人 illiterate——错一处拒绝开局。"""
     errors, ctx = [], "场景清单"
@@ -280,7 +292,7 @@ def _extras(data: dict, nodes: dict) -> list[str]:
     for row in data.get("canon_items") or []:
         nid = row.get("id")
         node = nodes.get(nid)
-        if not node or node.get("type") != "item" or node.get("grade"):  # 只补原著(05)里的器物，场景清单新布的器物在各场景里写全
+        if not node or node.get("type") != "item" or nid not in canon_items:  # 只补原著(05)里的器物，场景清单新布的器物在各场景里写全
             errors.append(f"{ctx}·原著器物：「{nid}」不是原著登记的器物")
             continue
         extra = {k: row[k] for k in ENRICH if k in row}
@@ -288,6 +300,10 @@ def _extras(data: dict, nodes: dict) -> list[str]:
         if wrong:
             errors.append(f"{ctx}·原著器物：「{nid}」只可补注 {'/'.join(ENRICH)}，不改 {'、'.join(wrong)}")
         trial = {**node, **extra}
+        if "full" in extra and "pages" not in extra:  # 改写了全本几份而没写存哪几份：按改写的算(世界底座 21 补注过的份数作废)
+            trial.pop("pages", None)
+            if "qty" not in extra:
+                trial.pop("qty", None)
         if trial.get("full") and "pages" not in trial:
             trial["pages"] = list(range(int(trial.get("qty", trial["full"])))) if isinstance(trial.get("qty", trial["full"]), (int, float)) else []
         if "pages" in trial and isinstance(trial["pages"], list):
@@ -340,7 +356,8 @@ def _stage(root: Path, nodes: dict) -> list[str]:
     if not (root / SCENES).exists():
         return []
     data = _read(root, SCENES)
-    errors, raw = _extras(data, nodes), _raw_aliases(root)
+    canon_items = {r["id"] for r in _read(root, "05_items.json")} if (root / "05_items.json").exists() else set()
+    errors, raw = _extras(data, nodes, canon_items), _raw_aliases(root)
     for sc in data.get("scenes") or []:
         top = sc.get("scene")
         if nodes.get(top, {}).get("type") != "location":
@@ -368,7 +385,8 @@ def _stage(root: Path, nodes: dict) -> list[str]:
                 if row.get("location") not in inside:
                     errors.append(f"{ctx}：景物「{row['id']}」不在场景之内")
                 nodes[row["id"]] = {"type": "feature", "location": row.get("location"), "desc": row.get("desc"),
-                                    "state": row.get("state"), "hidden": bool(row.get("hidden"))}
+                                    "state": row.get("state"), "hidden": bool(row.get("hidden")), "layer": row.get("tier") or 3,
+                                    **{k: row[k] for k in ("hint", "known") if row.get(k)}}  # v11 层级、暗藏的找法、知者
         for row in sc.get("items") or []:
             if not fresh(row.get("id"), "器物"):
                 continue
@@ -426,10 +444,10 @@ def _validate(nodes, roads, gates, relations, canon) -> list[str]:
             for k in ("since", "until"):
                 if n.get(k) is not None and n[k] not in canon_ids:
                     errors.append(f"人群 {nid}.{k}：「{n[k]}」不是原著事件")
-    for a, b, days in roads:
+    for a, b, *_ in roads:
         need(a, ("location",), "道路")
         need(b, ("location",), "道路")
-    pairs, seen = {frozenset((a, b)) for a, b, _ in roads}, set()
+    pairs, seen = {frozenset((a, b)) for a, b, *_ in roads}, set()
     for a, b, gate in gates:
         ctx = f"通行 {a}→{b}"
         if frozenset((a, b)) not in pairs:
@@ -480,8 +498,9 @@ def _situate(root: Path, canon: list[dict]) -> list[str]:
 
 
 def load(root: Path = DATA) -> dict:
-    """每次返回独立副本：世界会被就地修改，编译结果只读缓存。"""
-    return copy.deepcopy(_compile(str(root)))
+    """每次返回独立副本：世界会被就地修改，编译结果只读缓存。v11 静态的表(atlas：场所的近景、货品、国法、消息、风物、剧情线)只读、不拷贝，各个世界共用一份。"""
+    d = _compile(str(root))
+    return {**copy.deepcopy({k: v for k, v in d.items() if k != "atlas"}), "atlas": d.get("atlas") or {}}
 
 
 def _areas(nodes: dict):
@@ -497,19 +516,22 @@ def _areas(nodes: dict):
 def _compile(root: str) -> dict:
     root = Path(root)
     nodes = _nodes(root)
-    staged = _stage(root, nodes)  # 场景清单(v8)：建筑、景物、分级器物先入图，片区与道路随之
+    events = _read(root, "08_canon.json")
+    base = {frozenset((a, b)) for a, b, *_ in _roads(root)}
+    founded = founding.found(root, nodes, _raw_aliases(root), events, base)  # 世界底座(v11)：先立处所与场所，再落货品、人物、门派人群，静态的表进 atlas
+    staged = _stage(root, nodes)  # 场景清单(v8)：建筑、景物、分级器物最后布——底座立好的处所、场所它都认得
     _areas(nodes)
-    roads = [(a, b, _ride(days)) for a, b, days in _roads(root)]
-    gates = _gates(root)
+    roads = [(a, b, _ride(days), li) for a, b, days, li in _roads(root, [("世界底座", founded.roads)])]
+    gates = _gates(root, founded.gates, founded.patches)
     relations = [{k: r[k] for k in ("src", "dst", "rel", "secret", "revealed_by") if k in r}
-                 for r in _read(root, "07_relations.json")]
-    canon = _schedule(_read(root, "08_canon.json"))
+                 for r in _read(root, "07_relations.json")] + founded.relations
+    canon = _schedule(events)
     aliases = _aliases(root, nodes)
-    errors = staged + _situate(root, canon) + _validate(nodes, roads, gates, relations, canon)
+    errors = founded.errors + staged + _situate(root, canon) + _validate(nodes, roads, gates, relations, canon)
     if errors:
         raise GenesisError(f"原著数据有 {len(errors)} 处引用错误，首条：{errors[0]}")
     first = canon[0]
     return {"seed": 1092, "start_tick": first["day"] * PER_DAY + START_MINUTE,
             "player": {"location": first["where"]},
             "nodes": nodes, "roads": roads, "gates": gates, "relations": relations, "canon": canon,
-            "aliases": aliases}
+            "aliases": aliases, "atlas": founded.atlas}

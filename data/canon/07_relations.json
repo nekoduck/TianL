@@ -954,20 +954,6 @@
     "src_ref": "第13回"
   },
   {
-    "src": "阿胜",
-    "dst": "慕容复",
-    "rel": "效忠",
-    "secret": false,
-    "src_ref": "第13回"
-  },
-  {
-    "src": "阿洪",
-    "dst": "慕容复",
-    "rel": "效忠",
-    "secret": false,
-    "src_ref": "第13回"
-  },
-  {
     "src": "褚万里",
     "dst": "段正淳",
     "rel": "护卫",

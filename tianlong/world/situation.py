@@ -1,24 +1,28 @@
 """
 [INPUT]: 依赖 world/access 的 barrier / steps（同伴过关、溃退去处）、world/graph 的 holds（谓词口径），World 门面（graph / player / clock / here / aliases / turn，鸭子类型）
 [OUTPUT]: 对外提供 情境层的查询与连带——
-          near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
+          near()（近旁：同一处所之内、零日可达、无不通之关也不隔着悬崖暗门的子地点；v11 零日而有里数(li)的路不算近旁，结果按图的戳记缓存——关口要看主角身上之物的不缓存）、APART、around()（主角身边之人：此地 + 近旁，片区里的须在名册上）、
           area() / cast() / enlist() / muster() / elsewhere() / debuted() / inhabited() / bodies() / seen()（眼前(v5)：片区不是一间屋子，名册记着被剧情带到跟前的人，走出近旁即清空；
           shortnames() 近处子地点的短名(体检与落账同一口径)；
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
-          party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
+          party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前；v12 不在路上的同伴了断随行、不再瞬移，同伴带着的人一并跟来）、
+          SIGHT / vista() / sightable() / sighted()（v12 望见：隔着悬崖险径水路望得见、听不见、够不着）、meet() / MET_KEEP（v12 回合末记下见过的人）、BIG_FORMS / small_area()（v12 小片区：寻人而至即遇、原著相关者在这一片即算到位）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
           quests()：track() / touch() / settle()（未了之事：至多四条、谓词满足即自动收束、久未推进者提示）、
           entangled()（与主角故事纠缠之人：同行者、未了之事所系者——lod 与 effects 据此拦住场外对他们的改写）、MAX_QUESTS、STALE
-[POS]: world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
+[POS]: v11 世界底座：不当值的伙计不在眼前(venue.on_duty)；上了锁的房门隔开人(锁着的库房不是隔壁)；带时辰的关口让近旁随光阴而变(不缓存)；场所房间的短名认得最后一截。
+       world 层的情境层——原著数据里没有、剧情却要依赖的状态：谁此刻在主角眼前、谁跟着谁走、谁被谁扣着、谁新败而逃、此地临时多出来的人和物、主角还欠着什么。
        「在眼前」只有一个口径(around)：裁决、选项、视锥、认知校正、见证人数、原著的分身之禁都读它。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
+       v12 同行与押解随调遣：导演挪动一个人，他的同行者与人质一并同去(effects 据 carried 连带落账)；原著挪人不带人，回合末两端异地的同行由 sunder 了断；离队的同伴不再瞬移回主角身边；
+       P1-7 擒者是人群、两端异地的拘押(原著挪走首领，人群随之而去)回合末也由 sunder 了断
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import access
+from . import access, venue
 from .graph import holds
 
 FOLLOW = "随行"                                                     # X —随行→ player
@@ -46,25 +50,48 @@ APART = {"悬崖", "险径", "水路", "秘道", "机关", "阵法", "其他"}  
 
 
 def _apart(edge: dict) -> bool:
-    return any(gate.get("hidden") or gate.get("kind") in APART for gate in (edge.get("gates") or {}).values())
+    """隔开了人的关口：悬崖暗门之类，v11 另有上了锁的房门(锁着的库房不是隔壁——东西要开了锁才拿得着)。"""
+    return any(gate.get("hidden") or gate.get("kind") in APART or gate.get("key") for gate in (edge.get("gates") or {}).values())
+
+
+def _volatile(edge: dict) -> bool:
+    """这条路的关口要看主角身上的东西(requires 写着 player)或时辰(v11 hours)：近旁随主角、随光阴而变，不缓存。"""
+    return any(gate.get("hours") or any(r and r[0] == "player" for r in gate.get("requires") or [])
+               for gate in (edge.get("gates") or {}).values())
 
 
 def near(world, loc: str | None = None) -> set[str]:
-    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。"""
+    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。
+    v11 零日而有里数(li)的路不算近旁：同城的另一坊、街对面的客栈当日走得到，却不是喊一声就到；结果按图的戳记缓存。"""
     g, loc = world.graph, loc or world.here
-    seen, todo = {loc}, [loc]
+    hit = g.memo.get(("near", loc))
+    if hit and hit[0] == g.stamp:
+        return set(hit[1])
+    seen, todo, volatile = {loc}, [loc], False
     while todo:
         a = todo.pop()
         for b, e in g.ways(a):
-            if b not in seen and e["days"] == 0 and _root(b) == _root(loc) and not _apart(e) \
+            if b not in seen and e["days"] == 0 and not e.get("li") and _root(b) == _root(loc) and not _apart(e) \
                     and access.barrier(world, a, b, e, player=False) is None:
                 seen.add(b)
                 todo.append(b)
+                volatile = volatile or _volatile(e)
+    if not volatile:
+        g.memo[("near", loc)] = (g.stamp, frozenset(seen))
     return seen
 
 
 def area(world, loc) -> bool:
     return bool(world.graph.get(loc, "area"))
+
+
+BIG_FORMS = {"区域", "都城", "大城", "州城", "县城", "市镇", "水域", "部落", "洲岛"}  # 大地方(v12)：中原、江南、大理城——同在一片也未必碰得上
+
+
+def small_area(world, loc) -> bool:
+    """小片区(v12)：片区之中形制不大的(山岭、峡谷、庄院、寺观、坊市……)——在这里寻人而至即遇，原著相关者在这一片即算到位；
+    中原、江南、大理城这种大地方不算。adjudicate 的寻人与 story/canon 的原著窗口共用这一个口径。"""
+    return bool(loc) and area(world, loc) and world.graph.get(loc, "form") not in BIG_FORMS
 
 
 def cast(world) -> set[str]:
@@ -96,8 +123,8 @@ def around(world, loc: str | None = None) -> set[str]:
     """主角身边之人（此地 + 近旁，活着、未隐匿、未休眠）：片区里的人须在名册上或正随行——同在「中原」的四十人不同处一室。"""
     g, spots = world.graph, near(world, loc)
     seen = cast(world) | set(party(world)) if loc is None or loc in near(world) else set()
-    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
-            and (not area(world, n.get("location")) or p in seen)}
+    return {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and venue.on_duty(world, p)
+            and (not area(world, s) or p in seen)}  # 不当值的伙计(v11)回屋歇着了，不在眼前
 
 
 def shortnames(world) -> dict[str, str]:
@@ -106,17 +133,18 @@ def shortnames(world) -> dict[str, str]:
     local = near(world) | set(access.steps(world, world.here))
     out: dict[str, str] = {}
     for loc in sorted(local):
-        if "·" in loc:
-            short = loc.split("·", 1)[1]
-            out[short] = None if short in out else loc
+        parts = loc.split("·")
+        for k in range(1, len(parts)):  # v11 场所的房间多一截：「东街客栈·大堂」「大堂」都认得，「客房·上房一」「上房一」亦然
+            short = "·".join(parts[k:])
+            out[short] = None if short in out and out[short] != loc else loc
     return {k: v for k, v in out.items() if v}
 
 
 def bodies(world) -> set[str]:
     """近旁的遗体(v5)：死在主角眼前、或被抬到跟前的人(片区里亦须在名册上)——看得见、搜得着、抬得走，却叫不出名字。"""
     g, spots, roster = world.graph, near(world), cast(world)
-    return {p for p, n in g.nodes.items() if n.get("type") == "person" and n.get("status") == "dead" and n.get("location") in spots
-            and not n.get("hidden") and (not area(world, n.get("location")) or p in roster)}
+    return {p for s in spots for p in g.where(type="person", location=s) if g.get(p, "status") == "dead"
+            and not g.get(p, "hidden") and (not area(world, s) or p in roster)}
 
 
 def seen(world) -> set[str]:
@@ -126,11 +154,60 @@ def seen(world) -> set[str]:
     return around(world) | set(turn.get("present", ())) | set(turn.get("arrived", ())) | bodies(world)
 
 
+MET_KEEP = 30  # 见过的人只记三十日内的(v12)
+
+
+def meet(world):
+    """回合末记下本回合见过的人(v12 黑板 met：{人: 最后见到的日子})：此刻眼前与本回合见过的(seen)，连同时间轴上各时刻耳边的人；
+    只留 MET_KEEP 日内的。望见(隔着关口远远看见)不算见过——seen 本就不收望见之人。"""
+    g, day = world.graph, world.clock.day
+    turn = getattr(world, "turn", None) or {}
+    faces = seen(world) | {p for m in turn.get("moments") or () for p in m.get("ears") or ()}
+    met = {p: d for p, d in (world.player.get("met") or {}).items() if day - d <= MET_KEEP}
+    met.update({p: day for p in faces if p != "player" and g.kind(p) == "person"})
+    world.player.set("met", met)
+
+
 def inhabited(world) -> bool:
     """这一片有没有人(不论在不在跟前)：传闻要有传话的人——独处石洞，江湖上的事传不进来。"""
     g, spots = world.graph, near(world)
-    return bool(party(world)) or any(n.get("type") == "person" and n.get("location") in spots and _alive(g, p)
-                                     for p, n in g.nodes.items())
+    return bool(party(world)) or any(_alive(g, p) for s in spots for p in g.where(type="person", location=s))  # 歇着的伙计也传得了话
+
+
+SIGHT = {"悬崖", "险径", "水路"}  # 望得见、够不着的关口(v12)：崖顶望得见谷底、隔着深涧望得见对崖；暗门秘道、机关阵法、上锁的门后看不见
+
+
+def _vistas(world) -> dict[str, set[str]]:
+    """近旁之外一步、零日、有关口且关口全在 SIGHT 里(不暗不锁)的地点 → 隔着的关口种类。没有关口的路不算：宫门—无量山走得到，不是望得见够不着。"""
+    g, close, out = world.graph, near(world), {}
+    for a in close:
+        for b, e in g.ways(a):
+            gates = list((e.get("gates") or {}).values())
+            if b not in close and e["days"] == 0 and gates \
+                    and all(x.get("kind") in SIGHT and not x.get("hidden") and not x.get("key") for x in gates):
+                out.setdefault(b, set()).update(x["kind"] for x in gates)
+    return out
+
+
+def vista(world) -> set[str]:
+    """隔着关口望得见的地方(v12)：主角在澜沧江边高崖，望得见无量山；在无量山·山崖，望得见谷底。"""
+    return set(_vistas(world))
+
+
+def sightable(world) -> set[str]:
+    """此刻望得见的人与人群(v12)：vista 里活着、已露面、当值的人；vista 里的人群，与近旁片区里未到跟前的人群(有人站着、未藏、正当出没)；
+    连同同在一片而未到跟前(elsewhere)、当值的人。望得见不等于在眼前：不进 around、seen、audience，导演够不着。"""
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    g, spots, close = world.graph, vista(world), near(world)
+    people = {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and debuted(world, p) and venue.on_duty(world, p)}
+    groups = {s for s in g.where(type=GROUP) if crowd.is_squad(g, s) and not g.get(s, "hidden") and crowd.active(world, s)
+              and crowd.standing(g, s) > 0 and (g.get(s, "location") in spots or (g.get(s, "location") in close and not crowd.present(world, s)))}
+    return people | groups | {p for p in elsewhere(world) if venue.on_duty(world, p)}
+
+
+def sighted(world) -> list[str]:
+    """本回合望见的人与人群(v12 turn["sighted"]，按先后)：望见不是见过——不上名册、不进眼前、不记进 met。"""
+    return list((getattr(world, "turn", None) or {}).get("sighted") or [])
 
 
 def debuted(world, pid: str) -> bool:
@@ -179,13 +256,24 @@ def part(world, pid: str):
 
 
 def follow(world, route: list[str]) -> list[str]:
-    """主角走完 route 之后，同伴沿同一路线跟上；某一步对同伴不通，就留在那一步之前。返回连带说明。"""
+    """主角走完 route 之后，同伴沿同一路线跟上；某一步对同伴不通，就留在那一步之前。返回连带说明。
+    v12：只带走此刻在这条路线上任一处或其近旁的同伴，连同他一并带走的人(carried：他的同行者与人质)，到了即上名册；
+    不在路上的(被导演送去了别处)了断随行、回告「X已不在你身边」——不再从大理城瞬移回主角身边。"""
     g, notes = world.graph, []
+    way = set().union(*(near(world, loc) for loc in route)) if route else set()
+    turn = getattr(world, "turn", None)
+    movers = turn.setdefault("movers", {}) if turn is not None else {}
     for pid in party(world):
         if captors(world, pid):
             part(world, pid)
             notes.append(f"{pid}身受拘押，未能随你同行")
             continue
+        at = g.get(pid, "location")
+        if at not in way:
+            part(world, pid)
+            notes.append(f"{pid}已不在你身边")
+            continue
+        band = [q for q in carried(world, pid, at) if q not in party(world)]
         stop = route[-1]
         for a, b in zip(route, route[1:]):
             edge = g.road(a, b)
@@ -193,10 +281,81 @@ def follow(world, route: list[str]) -> list[str]:
                 stop = a
                 break
         g.set(pid, "location", stop)
+        for q in band:
+            g.set(q, "location", stop)
+            movers[q] = "director"
         if stop != route[-1]:
             part(world, pid)
-            notes.append(f"{pid}过不去，留在了{stop}")
+            notes.append(f"{pid}过不去，留在了{stop}" + (f"，{'、'.join(band)}也留在那里" if band else ""))
+        elif band:
+            enlist(world, band)
+            notes.append(f"{'、'.join(band)}随{pid}一同跟来")
     return notes
+
+
+# ============================================================
+#  同行与押解(v12)：NPC 之间的随行、擒者与人质——一人被调遣，同行者与人质一并动身；回合末两端异地的同行了断
+# ============================================================
+def company(world, pid: str) -> list[str]:
+    """与 pid 同行的人：以「随行」相连、两端都不是主角，按无向连通算(段誉→钟灵与钟灵→段誉同义)；只收活人。"""
+    g, links = world.graph, {}
+    for e in g.edges:
+        if e["rel"] == FOLLOW and "player" not in (e["src"], e["dst"]):
+            links.setdefault(e["src"], set()).add(e["dst"])
+            links.setdefault(e["dst"], set()).add(e["src"])
+    seen, todo = {pid}, [pid]
+    while todo:
+        for q in sorted(links.get(todo.pop(), ())):
+            if q not in seen and g.kind(q) == "person" and g.get(q, "status") != "dead":
+                seen.add(q)
+                todo.append(q)
+    return sorted(seen - {pid})
+
+
+def hostages(world, pid: str) -> list[str]:
+    """pid 扣着的人：pid 作擒者、关系是拘押(围攻除外——一群人围住某人，不是押着他走)。"""
+    return sorted({e["dst"] for e in world.graph.edges if e["src"] == pid and e["rel"] in CUSTODY - {"围攻"}})
+
+
+def carried(world, pid: str, at: str | None) -> list[str]:
+    """pid 从 at 动身时一并带走的人：同行者，连同他与同行者扣着的人质——逐一筛：此刻在 at 或其近旁；活着、未隐匿、未休眠；
+    本回合没被别的来源(原著、场外剧情)调遣；受制于人的，擒者须也在被带走之列(免得把人质与擒者拆开)。"""
+    g = world.graph
+    if not at or g.kind(pid) != "person":
+        return []
+    band = company(world, pid)
+    want = list(dict.fromkeys(band + [h for p in [pid, *band] for h in hostages(world, p)]))
+    spots = near(world, at)
+    movers = (getattr(world, "turn", None) or {}).get("movers", {})
+    keep = [q for q in want if q != pid and g.kind(q) == "person" and g.get(q, "location") in spots and _alive(g, q)
+            and movers.get(q, "director") == "director"]
+    crew = set(keep) | {pid}
+    return [q for q in keep if all(c in crew for c in captors(world, q))]
+
+
+def sunder(world) -> list[str]:
+    """回合末了断名存实亡的同行(engine 在 sweep 之后调)：NPC 之间两端异地(不在彼此近旁)的随行了断(原著把段誉挪走，钟灵留下)；
+    随行→主角的边，随行者不在主角近旁也了断；擒者是人群、两端异地的拘押也了断(v12 P1-7)。返回说明，写日志。"""
+    g, out, close = world.graph, [], near(world)
+    for e in [e for e in g.edges if e["rel"] == FOLLOW]:
+        a, b = e["src"], e["dst"]
+        if "player" in (a, b):
+            other = a if b == "player" else b
+            apart = g.get(other, "location") not in close
+        else:
+            la, lb = g.get(a, "location"), g.get(b, "location")
+            apart = not la or not lb or lb not in near(world, la)
+        if apart:
+            g.unlink(a, b, FOLLOW)
+            out.append(f"{a}与{'你' if b == 'player' else b}已不同行")
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    for e in [e for e in g.edges if e["rel"] in CUSTODY and crowd.is_squad(g, e["src"])]:  # 人群的拘押两端异地(原著挪走首领，人群随之而去)：了断
+        a, b = e["src"], e["dst"]
+        la, lb = g.get(a, "location"), (world.here if b == "player" else g.get(b, "location"))
+        if not la or not lb or lb not in near(world, la):
+            g.unlink(a, b, e["rel"])
+            out.append(f"{'你' if b == 'player' else b}不再受{crowd.handle(g, a)}看押")
+    return out
 
 
 # ============================================================

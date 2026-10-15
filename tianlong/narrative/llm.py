@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 urllib（标准库直连 Gemini REST，零第三方依赖），读取环境变量 GEMINI_API_KEY / GEMINI_MODEL
-[OUTPUT]: 对外提供 Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL，含收尾缘由 finishReason；v11 json 漏了末尾几个右括号按括号栈补齐(_mend)）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
+[OUTPUT]: 对外提供 _object()（v12 JSON 回包 → 对象的纯函数：去围栏、补括号、单元素数组取其中的对象，重演工具同一口径）、Gemini（text / json / stream 三种调用，可选 trace 把每次调用记成 JSONL，含收尾缘由 finishReason；v11 json 漏了末尾几个右括号按括号栈补齐(_mend)）、sse_texts()（SSE 行 → 文本增量）、LLMError、from_env()
 [POS]: narrative 层的模型网关，是全项目唯一发出网络请求的地方；关闭思考预算以省 token，累计用量供 /debug 查看。
        stream 走 streamGenerateContent?alt=sse，供编剧边写边送；trace 供提示词迭代留下证据。
        一切网络与回包故障（连不上、超时、断流 IncompleteRead、回包不是 JSON、被安全策略半途截断）都化为 LLMError，交上层兜底——绝不让一回合半途炸开；
@@ -9,6 +9,7 @@
 """
 import http.client
 import json
+import logging
 import os
 import re
 import threading
@@ -19,6 +20,7 @@ from pathlib import Path
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}"
 DEFAULT_MODEL = "gemini-flash-latest"
 NET_ERRORS = (OSError, http.client.HTTPException, ValueError)  # 连不上、超时、断流(IncompleteRead)、回包不是 JSON：一律化为 LLMError
+log = logging.getLogger("tianlong")
 
 
 class LLMError(Exception):
@@ -97,21 +99,7 @@ class Gemini:
         return self._call(system, user, as_json=False, max_tokens=max_tokens, temperature=temperature).strip()
 
     def json(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.7) -> dict:
-        raw = self._call(system, user, as_json=True, max_tokens=max_tokens, temperature=temperature)
-        raw = re.sub(r"^```(?:json)?|```$", "", raw.strip()).strip()
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError as e:
-            mended = _mend(raw)
-            try:
-                data = json.loads(mended) if mended else None
-            except json.JSONDecodeError:
-                data = None
-            if data is None:
-                raise LLMError(f"JSON 解析失败：{raw[:200]}") from e
-        if not isinstance(data, dict):
-            raise LLMError("期望 JSON 对象")
-        return data
+        return _object(self._call(system, user, as_json=True, max_tokens=max_tokens, temperature=temperature))
 
     def stream(self, system: str, user: str, max_tokens: int = 1024, temperature: float = 0.9):
         """逐块产出正文增量；任何网络或解析失败都化为 LLMError（调用方据已得多少决定如何收场）。"""
@@ -129,6 +117,28 @@ class Gemini:
             self._log(system, user, "".join(parts), usage.get("total", 0), t0, usage.get("finish"))
         if usage.get("finish") not in (None, "STOP", "MAX_TOKENS"):  # 安全策略等半途截断：交上层判断已写出的够不够用
             raise LLMError(f"流式输出被截断：{usage['finish']}")
+
+
+def _object(raw: str) -> dict:
+    """模型的 JSON 回包 → 一个对象(纯函数，重演工具同一口径)：去掉围栏；漏了末尾几个右括号按括号栈补齐(_mend)；
+    v12 偶尔回成单元素数组 [{…}]，元素是对象即取它(记一条日志)；多元素或不是对象仍抛 LLMError 交兜底。"""
+    raw = re.sub(r"^```(?:json)?|```$", "", raw.strip()).strip()
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        mended = _mend(raw)
+        try:
+            data = json.loads(mended) if mended else None
+        except json.JSONDecodeError:
+            data = None
+        if data is None:
+            raise LLMError(f"JSON 解析失败：{raw[:200]}") from e
+    if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict):
+        log.info("模型回了单元素数组，取其中的对象")
+        data = data[0]
+    if not isinstance(data, dict):
+        raise LLMError("期望 JSON 对象")
+    return data
 
 
 def _mend(raw: str) -> str | None:

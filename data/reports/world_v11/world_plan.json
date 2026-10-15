@@ -1,0 +1,4098 @@
+{
+  "notes": [
+    "本报告是已执行的最终抽取计划，取代仅供审阅的第一阶段报告。",
+    "用户提供仓库并授权自行寻找后，已在完全匹配提示词的固定提交上完成抽取。",
+    "所有方位街名、商业密度、价格和经营数值为情理推定，不作为史实考据。",
+    "13份基准JSON均来自同一提交，原著以用户上传的世纪新修版TXT为准。",
+    "场所先以in/li接入，再展开房间；不在19重复登记20的447个新场所。"
+  ],
+  "status": "extraction_completed_pending_runtime_integration",
+  "baseline": {
+    "repository": "https://github.com/nekoduck/TianL.git",
+    "branch": "claude/tianlong-sandbox",
+    "commit": "772a250d9c8d9c31f28927372acb6f594ac4892c",
+    "counts": {
+      "locations": 202,
+      "persons": 242,
+      "factions": 55,
+      "items": 98,
+      "skills": 119,
+      "events": 235
+    }
+  },
+  "source": {
+    "edition": "世纪新修版",
+    "chapters": 50,
+    "encoding": "GB18030严格解码",
+    "sha256": "87f840d000b9cc7a41109529908dbad013db8e18299d557400ef2bdfb2c1dcea",
+    "cleaning": "忽略论坛水印、现代作者附注及导读；不把现代说明写入世界初始认知。"
+  },
+  "initial_slice": "第一回第四场比剑之前；元祐六年二月仅沿用游戏纪年约定。",
+  "template_types": [
+    {
+      "type": "客栈",
+      "tier": 2,
+      "rooms": 7,
+      "staff_roles": 3,
+      "services": 8
+    },
+    {
+      "type": "酒楼",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "茶馆",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "饭铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "当铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 3
+    },
+    {
+      "type": "钱庄",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "杂货铺",
+      "tier": 2,
+      "rooms": 2,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "米粮铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "布庄",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "成衣铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "书肆",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "香烛铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "肉铺",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "铁匠铺",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "兵器铺",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "木匠铺",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "棺材铺",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 3
+    },
+    {
+      "type": "药铺",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "医馆",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "车马行",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 3,
+      "services": 4
+    },
+    {
+      "type": "马市",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "渡口",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 2
+    },
+    {
+      "type": "码头",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "驿站",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "镖局",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "牙行",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 3
+    },
+    {
+      "type": "赌坊",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 1
+    },
+    {
+      "type": "武馆",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 2,
+      "services": 1
+    },
+    {
+      "type": "瓦舍勾栏",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 3,
+      "services": 1
+    },
+    {
+      "type": "集市",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 2,
+      "services": 3
+    },
+    {
+      "type": "榷场",
+      "tier": 2,
+      "rooms": 3,
+      "staff_roles": 3,
+      "services": 3
+    },
+    {
+      "type": "大寺",
+      "tier": 2,
+      "rooms": 7,
+      "staff_roles": 3,
+      "services": 4
+    },
+    {
+      "type": "小庙",
+      "tier": 2,
+      "rooms": 6,
+      "staff_roles": 2,
+      "services": 4
+    },
+    {
+      "type": "道观",
+      "tier": 2,
+      "rooms": 6,
+      "staff_roles": 2,
+      "services": 5
+    },
+    {
+      "type": "土地庙",
+      "tier": 2,
+      "rooms": 2,
+      "staff_roles": 1,
+      "services": 2
+    },
+    {
+      "type": "州衙",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 3,
+      "services": 2
+    },
+    {
+      "type": "县衙",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 3,
+      "services": 2
+    },
+    {
+      "type": "牢狱",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 2,
+      "services": 1
+    },
+    {
+      "type": "官库",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 2,
+      "services": 0
+    },
+    {
+      "type": "军营",
+      "tier": 2,
+      "rooms": 5,
+      "staff_roles": 2,
+      "services": 0
+    },
+    {
+      "type": "王府",
+      "tier": 2,
+      "rooms": 8,
+      "staff_roles": 3,
+      "services": 0
+    },
+    {
+      "type": "官宅",
+      "tier": 2,
+      "rooms": 6,
+      "staff_roles": 3,
+      "services": 0
+    },
+    {
+      "type": "大户",
+      "tier": 2,
+      "rooms": 6,
+      "staff_roles": 3,
+      "services": 0
+    },
+    {
+      "type": "庄院",
+      "tier": 2,
+      "rooms": 7,
+      "staff_roles": 3,
+      "services": 0
+    },
+    {
+      "type": "民居",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 1,
+      "services": 0
+    },
+    {
+      "type": "农舍",
+      "tier": 2,
+      "rooms": 4,
+      "staff_roles": 1,
+      "services": 0
+    },
+    {
+      "type": "茅屋",
+      "tier": 2,
+      "rooms": 2,
+      "staff_roles": 1,
+      "services": 0
+    },
+    {
+      "type": "帐幕",
+      "tier": 2,
+      "rooms": 2,
+      "staff_roles": 1,
+      "services": 0
+    }
+  ],
+  "settlements": [
+    {
+      "id": "大理城",
+      "type": "都城",
+      "tier": 1,
+      "scale": "都城",
+      "region_order": 1,
+      "polity": "大理国",
+      "street_ids": [
+        "大理城·东街",
+        "大理城·西街",
+        "大理城·南街",
+        "大理城·北街",
+        "大理城·中街",
+        "大理城·东市",
+        "大理城·西市",
+        "大理城·南市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 2,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "兵器铺": 1,
+        "布庄": 1,
+        "成衣铺": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "镖局": 1,
+        "赌坊": 1,
+        "大寺": 2,
+        "小庙": 1,
+        "道观": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "瓦舍勾栏": 1,
+        "棺材铺": 1,
+        "集市": 1,
+        "马市": 1,
+        "饭铺": 1
+      },
+      "municipal_count": 32,
+      "venue_ids_including_residences_and_canon_sites": [
+        "大理城·东街客栈",
+        "大理城·西街客栈",
+        "大理城·南街酒楼",
+        "大理城·北街酒楼",
+        "大理城·中街茶馆",
+        "大理城·东市茶馆",
+        "大理城·西市当铺",
+        "大理城·南市钱庄",
+        "大理城·东街药铺",
+        "大理城·西街医馆",
+        "大理城·南街铁匠铺",
+        "大理城·北街兵器铺",
+        "大理城·中街布庄",
+        "大理城·东市成衣铺",
+        "大理城·西市杂货铺",
+        "大理城·南市米粮铺",
+        "大理城·东街书肆",
+        "大理城·西街车马行",
+        "大理城·南街驿站",
+        "大理城·北街镖局",
+        "大理城·中街赌坊",
+        "大理城·东市大寺",
+        "大理城·西市州衙",
+        "大理城·南市牢狱",
+        "大理城·东街瓦舍勾栏",
+        "大理城·西街棺材铺",
+        "大理城·南街集市",
+        "大理城·北街马市",
+        "大理城·中街饭铺",
+        "大理皇宫",
+        "镇南王府",
+        "玉虚观",
+        "天龙寺",
+        "拈花寺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 34,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "苏州",
+      "type": "大城",
+      "tier": 1,
+      "scale": "大城",
+      "region_order": 2,
+      "polity": "大宋",
+      "street_ids": [
+        "苏州·东街",
+        "苏州·西街",
+        "苏州·南街",
+        "苏州·北街",
+        "苏州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "大寺": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "集市": 1,
+        "码头": 1,
+        "渡口": 1
+      },
+      "municipal_count": 22,
+      "venue_ids_including_residences_and_canon_sites": [
+        "苏州·东街客栈",
+        "苏州·西街客栈",
+        "苏州·南街酒楼",
+        "苏州·北街酒楼",
+        "苏州·中市茶馆",
+        "苏州·东街当铺",
+        "苏州·西街钱庄",
+        "苏州·南街药铺",
+        "苏州·北街医馆",
+        "苏州·中市铁匠铺",
+        "苏州·东街布庄",
+        "苏州·西街杂货铺",
+        "苏州·南街米粮铺",
+        "苏州·北街书肆",
+        "苏州·中市车马行",
+        "苏州·东街驿站",
+        "苏州·西街大寺",
+        "苏州·南街州衙",
+        "苏州·北街牢狱",
+        "苏州·中市集市",
+        "苏州·东街码头",
+        "苏州·西街渡口"
+      ],
+      "venue_count_including_residences_and_canon_sites": 22,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "无锡",
+      "type": "大城",
+      "tier": 1,
+      "scale": "大城",
+      "region_order": 2,
+      "polity": "大宋",
+      "street_ids": [
+        "无锡·东街",
+        "无锡·西街",
+        "无锡·南街",
+        "无锡·北街",
+        "无锡·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "大寺": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "集市": 1,
+        "码头": 1,
+        "渡口": 1
+      },
+      "municipal_count": 22,
+      "venue_ids_including_residences_and_canon_sites": [
+        "无锡·东街客栈",
+        "无锡·西街客栈",
+        "无锡·南街酒楼",
+        "无锡·北街茶馆",
+        "无锡·中市当铺",
+        "无锡·东街钱庄",
+        "无锡·西街药铺",
+        "无锡·南街医馆",
+        "无锡·北街铁匠铺",
+        "无锡·中市布庄",
+        "无锡·东街杂货铺",
+        "无锡·西街米粮铺",
+        "无锡·南街书肆",
+        "无锡·北街车马行",
+        "无锡·中市驿站",
+        "无锡·东街大寺",
+        "无锡·西街州衙",
+        "无锡·南街牢狱",
+        "无锡·北街集市",
+        "无锡·中市码头",
+        "无锡·东街渡口",
+        "松鹤楼"
+      ],
+      "venue_count_including_residences_and_canon_sites": 22,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "普洱",
+      "type": "市镇",
+      "tier": 2,
+      "scale": "市镇",
+      "region_order": 1,
+      "polity": "大理国",
+      "street_ids": [
+        "普洱·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "杂货铺": 1,
+        "药铺": 1,
+        "茶馆": 1,
+        "集市": 1
+      },
+      "municipal_count": 6,
+      "venue_ids_including_residences_and_canon_sites": [
+        "普洱·中街客栈",
+        "普洱·中街饭铺",
+        "普洱·中街杂货铺",
+        "普洱·中街药铺",
+        "普洱·中街茶馆",
+        "普洱·中街集市"
+      ],
+      "venue_count_including_residences_and_canon_sites": 6,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "陆凉州",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 1,
+      "polity": "大理国",
+      "street_ids": [
+        "陆凉州·东街",
+        "陆凉州·西街",
+        "陆凉州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "陆凉州·东街客栈",
+        "陆凉州·西街客栈",
+        "陆凉州·中市酒楼",
+        "陆凉州·东街茶馆",
+        "陆凉州·西街当铺",
+        "陆凉州·中市药铺",
+        "陆凉州·东街医馆",
+        "陆凉州·西街铁匠铺",
+        "陆凉州·中市布庄",
+        "陆凉州·东街杂货铺",
+        "陆凉州·西街车马行",
+        "陆凉州·中市驿站",
+        "陆凉州·东街州衙",
+        "陆凉州·西街牢狱",
+        "身戒寺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "善巨郡",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 1,
+      "polity": "大理国",
+      "street_ids": [
+        "善巨郡·东街",
+        "善巨郡·西街",
+        "善巨郡·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "善巨郡·东街客栈",
+        "善巨郡·西街客栈",
+        "善巨郡·中市酒楼",
+        "善巨郡·东街茶馆",
+        "善巨郡·西街当铺",
+        "善巨郡·中市药铺",
+        "善巨郡·东街医馆",
+        "善巨郡·西街铁匠铺",
+        "善巨郡·中市布庄",
+        "善巨郡·东街杂货铺",
+        "善巨郡·西街车马行",
+        "善巨郡·中市驿站",
+        "善巨郡·东街小庙",
+        "善巨郡·西街州衙",
+        "善巨郡·中市牢狱"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "信阳",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "信阳·东街",
+        "信阳·西街",
+        "信阳·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "信阳·东街客栈",
+        "信阳·西街酒楼",
+        "信阳·中市茶馆",
+        "信阳·东街当铺",
+        "信阳·西街药铺",
+        "信阳·中市医馆",
+        "信阳·东街铁匠铺",
+        "信阳·西街布庄",
+        "信阳·中市杂货铺",
+        "信阳·东街车马行",
+        "信阳·西街驿站",
+        "信阳·中市小庙",
+        "信阳·东街州衙",
+        "信阳·西街牢狱",
+        "康敏家",
+        "信阳酒馆"
+      ],
+      "venue_count_including_residences_and_canon_sites": 16,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "晋阳",
+      "type": "大城",
+      "tier": 1,
+      "scale": "大城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "晋阳·东街",
+        "晋阳·西街",
+        "晋阳·南街",
+        "晋阳·北街",
+        "晋阳·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "大寺": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "集市": 1
+      },
+      "municipal_count": 20,
+      "venue_ids_including_residences_and_canon_sites": [
+        "晋阳·东街客栈",
+        "晋阳·西街客栈",
+        "晋阳·南街酒楼",
+        "晋阳·北街酒楼",
+        "晋阳·中市茶馆",
+        "晋阳·东街当铺",
+        "晋阳·西街钱庄",
+        "晋阳·南街药铺",
+        "晋阳·北街医馆",
+        "晋阳·中市铁匠铺",
+        "晋阳·东街布庄",
+        "晋阳·西街杂货铺",
+        "晋阳·南街米粮铺",
+        "晋阳·北街书肆",
+        "晋阳·中市车马行",
+        "晋阳·东街驿站",
+        "晋阳·西街大寺",
+        "晋阳·南街州衙",
+        "晋阳·北街牢狱",
+        "晋阳·中市集市"
+      ],
+      "venue_count_including_residences_and_canon_sites": 20,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "洛阳",
+      "type": "大城",
+      "tier": 1,
+      "scale": "大城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "洛阳·东街",
+        "洛阳·西街",
+        "洛阳·南街",
+        "洛阳·北街",
+        "洛阳·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "大寺": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "集市": 1
+      },
+      "municipal_count": 20,
+      "venue_ids_including_residences_and_canon_sites": [
+        "洛阳·东街客栈",
+        "洛阳·西街客栈",
+        "洛阳·南街酒楼",
+        "洛阳·北街酒楼",
+        "洛阳·中市茶馆",
+        "洛阳·东街当铺",
+        "洛阳·西街钱庄",
+        "洛阳·南街药铺",
+        "洛阳·北街医馆",
+        "洛阳·中市铁匠铺",
+        "洛阳·东街布庄",
+        "洛阳·西街杂货铺",
+        "洛阳·南街米粮铺",
+        "洛阳·北街书肆",
+        "洛阳·中市车马行",
+        "洛阳·东街驿站",
+        "洛阳·西街大寺",
+        "洛阳·南街州衙",
+        "洛阳·北街牢狱",
+        "洛阳·中市集市"
+      ],
+      "venue_count_including_residences_and_canon_sites": 20,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "汴梁",
+      "type": "都城",
+      "tier": 1,
+      "scale": "都城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "汴梁·东街",
+        "汴梁·西街",
+        "汴梁·南街",
+        "汴梁·北街",
+        "汴梁·中街",
+        "汴梁·东市",
+        "汴梁·西市",
+        "汴梁·南市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "兵器铺": 1,
+        "布庄": 1,
+        "成衣铺": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "镖局": 1,
+        "赌坊": 1,
+        "大寺": 1,
+        "小庙": 1,
+        "道观": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "瓦舍勾栏": 1,
+        "棺材铺": 1,
+        "集市": 1,
+        "马市": 1,
+        "饭铺": 1
+      },
+      "municipal_count": 30,
+      "venue_ids_including_residences_and_canon_sites": [
+        "汴梁·东街客栈",
+        "汴梁·西街客栈",
+        "汴梁·南街酒楼",
+        "汴梁·北街酒楼",
+        "汴梁·中街茶馆",
+        "汴梁·东市当铺",
+        "汴梁·西市钱庄",
+        "汴梁·南市药铺",
+        "汴梁·东街医馆",
+        "汴梁·西街铁匠铺",
+        "汴梁·南街兵器铺",
+        "汴梁·北街布庄",
+        "汴梁·中街成衣铺",
+        "汴梁·东市杂货铺",
+        "汴梁·西市米粮铺",
+        "汴梁·南市书肆",
+        "汴梁·东街车马行",
+        "汴梁·西街驿站",
+        "汴梁·南街镖局",
+        "汴梁·北街赌坊",
+        "汴梁·中街小庙",
+        "汴梁·东市道观",
+        "汴梁·西市州衙",
+        "汴梁·南市牢狱",
+        "汴梁·东街瓦舍勾栏",
+        "汴梁·西街棺材铺",
+        "汴梁·南街集市",
+        "汴梁·北街马市",
+        "汴梁·中街饭铺",
+        "大相国寺",
+        "汴梁皇宫"
+      ],
+      "venue_count_including_residences_and_canon_sites": 31,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "长安",
+      "type": "大城",
+      "tier": 1,
+      "scale": "大城",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "长安·东街",
+        "长安·西街",
+        "长安·南街",
+        "长安·北街",
+        "长安·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "大寺": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "集市": 1
+      },
+      "municipal_count": 20,
+      "venue_ids_including_residences_and_canon_sites": [
+        "长安·东街客栈",
+        "长安·西街客栈",
+        "长安·南街酒楼",
+        "长安·北街酒楼",
+        "长安·中市茶馆",
+        "长安·东街当铺",
+        "长安·西街钱庄",
+        "长安·南街药铺",
+        "长安·北街医馆",
+        "长安·中市铁匠铺",
+        "长安·东街布庄",
+        "长安·西街杂货铺",
+        "长安·南街米粮铺",
+        "长安·北街书肆",
+        "长安·中市车马行",
+        "长安·东街驿站",
+        "长安·西街州衙",
+        "长安·南街牢狱",
+        "长安·北街集市",
+        "净影寺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 20,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "汝州",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "汝州·东街",
+        "汝州·西街",
+        "汝州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "汝州·东街客栈",
+        "汝州·西街客栈",
+        "汝州·中市酒楼",
+        "汝州·东街茶馆",
+        "汝州·西街当铺",
+        "汝州·中市药铺",
+        "汝州·东街医馆",
+        "汝州·西街铁匠铺",
+        "汝州·中市布庄",
+        "汝州·东街杂货铺",
+        "汝州·西街车马行",
+        "汝州·中市驿站",
+        "汝州·东街小庙",
+        "汝州·西街州衙",
+        "汝州·中市牢狱"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "梁县",
+      "type": "县城",
+      "tier": 2,
+      "scale": "县城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "梁县·东街",
+        "梁县·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "铁匠铺": 1,
+        "杂货铺": 1,
+        "小庙": 1,
+        "县衙": 1,
+        "官库": 1
+      },
+      "municipal_count": 10,
+      "venue_ids_including_residences_and_canon_sites": [
+        "梁县·东街客栈",
+        "梁县·中街饭铺",
+        "梁县·东街茶馆",
+        "梁县·中街当铺",
+        "梁县·东街药铺",
+        "梁县·中街铁匠铺",
+        "梁县·东街杂货铺",
+        "梁县·中街小庙",
+        "梁县·东街县衙",
+        "梁县·中街官库"
+      ],
+      "venue_count_including_residences_and_canon_sites": 10,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "定州",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "定州·东街",
+        "定州·西街",
+        "定州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "定州·东街客栈",
+        "定州·西街客栈",
+        "定州·中市酒楼",
+        "定州·东街茶馆",
+        "定州·西街当铺",
+        "定州·中市药铺",
+        "定州·东街医馆",
+        "定州·西街铁匠铺",
+        "定州·中市布庄",
+        "定州·东街杂货铺",
+        "定州·西街车马行",
+        "定州·中市驿站",
+        "定州·东街小庙",
+        "定州·西街州衙",
+        "定州·中市牢狱"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "秦州",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "秦州·东街",
+        "秦州·西街",
+        "秦州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "秦州·东街客栈",
+        "秦州·西街客栈",
+        "秦州·中市酒楼",
+        "秦州·东街茶馆",
+        "秦州·西街当铺",
+        "秦州·中市药铺",
+        "秦州·东街医馆",
+        "秦州·西街铁匠铺",
+        "秦州·中市布庄",
+        "秦州·东街杂货铺",
+        "秦州·西街车马行",
+        "秦州·中市驿站",
+        "秦州·东街小庙",
+        "秦州·西街州衙",
+        "秦州·中市牢狱"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "皋兰",
+      "type": "县城",
+      "tier": 2,
+      "scale": "县城",
+      "region_order": 4,
+      "polity": null,
+      "street_ids": [
+        "皋兰·东街",
+        "皋兰·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "铁匠铺": 1,
+        "杂货铺": 1,
+        "小庙": 1,
+        "县衙": 1
+      },
+      "municipal_count": 9,
+      "venue_ids_including_residences_and_canon_sites": [
+        "皋兰·东街客栈",
+        "皋兰·中街饭铺",
+        "皋兰·东街茶馆",
+        "皋兰·中街当铺",
+        "皋兰·东街药铺",
+        "皋兰·中街铁匠铺",
+        "皋兰·东街杂货铺",
+        "皋兰·中街小庙",
+        "皋兰·东街县衙"
+      ],
+      "venue_count_including_residences_and_canon_sites": 9,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "汉中",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "汉中·东街",
+        "汉中·西街",
+        "汉中·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1
+      },
+      "municipal_count": 15,
+      "venue_ids_including_residences_and_canon_sites": [
+        "汉中·东街客栈",
+        "汉中·西街客栈",
+        "汉中·中市酒楼",
+        "汉中·东街茶馆",
+        "汉中·西街当铺",
+        "汉中·中市药铺",
+        "汉中·东街医馆",
+        "汉中·西街铁匠铺",
+        "汉中·中市布庄",
+        "汉中·东街杂货铺",
+        "汉中·西街车马行",
+        "汉中·中市驿站",
+        "汉中·东街小庙",
+        "汉中·西街州衙",
+        "汉中·中市牢狱"
+      ],
+      "venue_count_including_residences_and_canon_sites": 15,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "广元",
+      "type": "县城",
+      "tier": 2,
+      "scale": "县城",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "广元·东街",
+        "广元·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "铁匠铺": 1,
+        "杂货铺": 1,
+        "小庙": 1,
+        "县衙": 1
+      },
+      "municipal_count": 9,
+      "venue_ids_including_residences_and_canon_sites": [
+        "广元·东街客栈",
+        "广元·中街饭铺",
+        "广元·东街茶馆",
+        "广元·中街当铺",
+        "广元·东街药铺",
+        "广元·中街铁匠铺",
+        "广元·东街杂货铺",
+        "广元·中街小庙",
+        "广元·东街县衙"
+      ],
+      "venue_count_including_residences_and_canon_sites": 9,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "剑阁",
+      "type": "关隘",
+      "tier": 2,
+      "scale": "市镇",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "剑阁·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "杂货铺": 1,
+        "药铺": 1
+      },
+      "municipal_count": 4,
+      "venue_ids_including_residences_and_canon_sites": [
+        "剑阁·中街客栈",
+        "剑阁·中街饭铺",
+        "剑阁·中街杂货铺",
+        "剑阁·中街药铺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 4,
+      "exceptions": [
+        "关隘按市镇级行旅需求配置，不把关隘当县城史实。"
+      ],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "梓潼",
+      "type": "县城",
+      "tier": 2,
+      "scale": "县城",
+      "region_order": 4,
+      "polity": "大宋",
+      "street_ids": [
+        "梓潼·东街",
+        "梓潼·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "铁匠铺": 1,
+        "杂货铺": 1,
+        "小庙": 1,
+        "县衙": 1
+      },
+      "municipal_count": 9,
+      "venue_ids_including_residences_and_canon_sites": [
+        "梓潼·东街客栈",
+        "梓潼·中街饭铺",
+        "梓潼·东街茶馆",
+        "梓潼·中街当铺",
+        "梓潼·东街药铺",
+        "梓潼·中街铁匠铺",
+        "梓潼·东街杂货铺",
+        "梓潼·中街小庙",
+        "梓潼·东街县衙"
+      ],
+      "venue_count_including_residences_and_canon_sites": 9,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "卫辉",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "卫辉·东街",
+        "卫辉·西街",
+        "卫辉·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "码头": 1
+      },
+      "municipal_count": 16,
+      "venue_ids_including_residences_and_canon_sites": [
+        "卫辉·东街客栈",
+        "卫辉·西街客栈",
+        "卫辉·中市酒楼",
+        "卫辉·东街茶馆",
+        "卫辉·西街当铺",
+        "卫辉·中市药铺",
+        "卫辉·东街医馆",
+        "卫辉·西街铁匠铺",
+        "卫辉·中市布庄",
+        "卫辉·东街杂货铺",
+        "卫辉·西街车马行",
+        "卫辉·中市驿站",
+        "卫辉·东街小庙",
+        "卫辉·西街州衙",
+        "卫辉·中市牢狱",
+        "卫辉·东街码头"
+      ],
+      "venue_count_including_residences_and_canon_sites": 16,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "云州",
+      "type": "州城",
+      "tier": 2,
+      "scale": "州城",
+      "region_order": 5,
+      "polity": null,
+      "street_ids": [
+        "云州·东街",
+        "云州·西街",
+        "云州·中市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 1,
+        "茶馆": 1,
+        "当铺": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "布庄": 1,
+        "杂货铺": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "榷场": 1
+      },
+      "municipal_count": 16,
+      "venue_ids_including_residences_and_canon_sites": [
+        "云州·东街客栈",
+        "云州·西街客栈",
+        "云州·中市酒楼",
+        "云州·东街茶馆",
+        "云州·西街当铺",
+        "云州·中市药铺",
+        "云州·东街医馆",
+        "云州·西街铁匠铺",
+        "云州·中市布庄",
+        "云州·东街杂货铺",
+        "云州·西街车马行",
+        "云州·中市驿站",
+        "云州·东街小庙",
+        "云州·西街州衙",
+        "云州·中市牢狱",
+        "云州·东街榷场",
+        "秦家寨"
+      ],
+      "venue_count_including_residences_and_canon_sites": 17,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "南京",
+      "type": "都城",
+      "tier": 1,
+      "scale": "都城",
+      "region_order": 5,
+      "polity": "大辽",
+      "street_ids": [
+        "南京·东街",
+        "南京·西街",
+        "南京·南街",
+        "南京·北街",
+        "南京·中街",
+        "南京·东市",
+        "南京·西市",
+        "南京·南市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "兵器铺": 1,
+        "布庄": 1,
+        "成衣铺": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "镖局": 1,
+        "赌坊": 1,
+        "大寺": 2,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "瓦舍勾栏": 1,
+        "棺材铺": 1,
+        "集市": 1,
+        "马市": 1,
+        "饭铺": 1
+      },
+      "municipal_count": 30,
+      "venue_ids_including_residences_and_canon_sites": [
+        "南京·东街客栈",
+        "南京·西街客栈",
+        "南京·南街酒楼",
+        "南京·北街酒楼",
+        "南京·中街茶馆",
+        "南京·东市当铺",
+        "南京·西市钱庄",
+        "南京·南市药铺",
+        "南京·东街医馆",
+        "南京·西街铁匠铺",
+        "南京·南街兵器铺",
+        "南京·北街布庄",
+        "南京·中街成衣铺",
+        "南京·东市杂货铺",
+        "南京·西市米粮铺",
+        "南京·南市书肆",
+        "南京·东街车马行",
+        "南京·西街驿站",
+        "南京·南街镖局",
+        "南京·北街赌坊",
+        "南京·中街大寺",
+        "南京·东市小庙",
+        "南京·西市州衙",
+        "南京·南市牢狱",
+        "南京·东街瓦舍勾栏",
+        "南京·西街棺材铺",
+        "南京·南街集市",
+        "南京·北街马市",
+        "南京·中街饭铺",
+        "南院大王府",
+        "悯忠寺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 31,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "上京",
+      "type": "都城",
+      "tier": 1,
+      "scale": "都城",
+      "region_order": 5,
+      "polity": "大辽",
+      "street_ids": [
+        "上京·东街",
+        "上京·西街",
+        "上京·南街",
+        "上京·北街",
+        "上京·中街",
+        "上京·东市",
+        "上京·西市",
+        "上京·南市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "兵器铺": 1,
+        "布庄": 1,
+        "成衣铺": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "镖局": 1,
+        "赌坊": 1,
+        "大寺": 2,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "瓦舍勾栏": 1,
+        "棺材铺": 1,
+        "集市": 1,
+        "马市": 1,
+        "饭铺": 1
+      },
+      "municipal_count": 30,
+      "venue_ids_including_residences_and_canon_sites": [
+        "上京·东街客栈",
+        "上京·西街客栈",
+        "上京·南街酒楼",
+        "上京·北街酒楼",
+        "上京·中街茶馆",
+        "上京·东市当铺",
+        "上京·西市钱庄",
+        "上京·南市药铺",
+        "上京·东街医馆",
+        "上京·西街铁匠铺",
+        "上京·南街兵器铺",
+        "上京·北街布庄",
+        "上京·中街成衣铺",
+        "上京·东市杂货铺",
+        "上京·西市米粮铺",
+        "上京·南市书肆",
+        "上京·东街车马行",
+        "上京·西街驿站",
+        "上京·南街镖局",
+        "上京·北街赌坊",
+        "上京·中街大寺",
+        "上京·东市大寺",
+        "上京·西市小庙",
+        "上京·南市州衙",
+        "上京·东街牢狱",
+        "上京·西街瓦舍勾栏",
+        "上京·南街棺材铺",
+        "上京·北街集市",
+        "上京·中街马市",
+        "上京·东市饭铺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 30,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "兴州",
+      "type": "都城",
+      "tier": 1,
+      "scale": "都城",
+      "region_order": 6,
+      "polity": "西夏国",
+      "street_ids": [
+        "兴州·东街",
+        "兴州·西街",
+        "兴州·南街",
+        "兴州·北街",
+        "兴州·中街",
+        "兴州·东市",
+        "兴州·西市",
+        "兴州·南市"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "酒楼": 2,
+        "茶馆": 1,
+        "当铺": 1,
+        "钱庄": 1,
+        "药铺": 1,
+        "医馆": 1,
+        "铁匠铺": 1,
+        "兵器铺": 1,
+        "布庄": 1,
+        "成衣铺": 1,
+        "杂货铺": 1,
+        "米粮铺": 1,
+        "书肆": 1,
+        "车马行": 1,
+        "驿站": 1,
+        "镖局": 1,
+        "赌坊": 1,
+        "大寺": 2,
+        "小庙": 1,
+        "州衙": 1,
+        "牢狱": 1,
+        "瓦舍勾栏": 1,
+        "棺材铺": 1,
+        "集市": 2,
+        "马市": 1,
+        "饭铺": 1
+      },
+      "municipal_count": 31,
+      "venue_ids_including_residences_and_canon_sites": [
+        "兴州·东街客栈",
+        "兴州·西街酒楼",
+        "兴州·南街酒楼",
+        "兴州·北街茶馆",
+        "兴州·中街当铺",
+        "兴州·东市钱庄",
+        "兴州·西市药铺",
+        "兴州·南市医馆",
+        "兴州·东街铁匠铺",
+        "兴州·西街兵器铺",
+        "兴州·南街布庄",
+        "兴州·北街成衣铺",
+        "兴州·中街杂货铺",
+        "兴州·东市米粮铺",
+        "兴州·西市书肆",
+        "兴州·南市车马行",
+        "兴州·东街驿站",
+        "兴州·西街镖局",
+        "兴州·南街赌坊",
+        "兴州·北街大寺",
+        "兴州·中街大寺",
+        "兴州·东市州衙",
+        "兴州·西市牢狱",
+        "兴州·南市瓦舍勾栏",
+        "兴州·东街棺材铺",
+        "兴州·西街集市",
+        "兴州·南街集市",
+        "兴州·北街马市",
+        "兴州·中街饭铺",
+        "西夏皇宫",
+        "西夏宾馆",
+        "西夏古庙"
+      ],
+      "venue_count_including_residences_and_canon_sites": 32,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "许家集",
+      "type": "市镇",
+      "tier": 2,
+      "scale": "市镇",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "许家集·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 2,
+        "饭铺": 1,
+        "杂货铺": 1,
+        "药铺": 1,
+        "医馆": 1
+      },
+      "municipal_count": 6,
+      "venue_ids_including_residences_and_canon_sites": [
+        "许家集·中街客栈",
+        "许家集·中街客栈二",
+        "许家集·中街饭铺",
+        "许家集·中街杂货铺",
+        "许家集·中街药铺",
+        "许家集·中街医馆"
+      ],
+      "venue_count_including_residences_and_canon_sites": 6,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "三甲镇",
+      "type": "市镇",
+      "tier": 2,
+      "scale": "市镇",
+      "region_order": 3,
+      "polity": "大宋",
+      "street_ids": [
+        "三甲镇·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "杂货铺": 1,
+        "药铺": 1
+      },
+      "municipal_count": 4,
+      "venue_ids_including_residences_and_canon_sites": [
+        "三甲镇·中街客栈",
+        "三甲镇·中街饭铺",
+        "三甲镇·中街杂货铺",
+        "三甲镇·中街药铺"
+      ],
+      "venue_count_including_residences_and_canon_sites": 4,
+      "exceptions": [],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "双凤驿",
+      "type": "驿站",
+      "tier": 2,
+      "scale": "市镇",
+      "region_order": 1,
+      "polity": "大理国",
+      "street_ids": [
+        "双凤驿·中街"
+      ],
+      "municipal_type_counts": {
+        "客栈": 1,
+        "饭铺": 1,
+        "杂货铺": 1,
+        "药铺": 1,
+        "驿站": 1
+      },
+      "municipal_count": 5,
+      "venue_ids_including_residences_and_canon_sites": [
+        "双凤驿·中街客栈",
+        "双凤驿·中街饭铺",
+        "双凤驿·中街杂货铺",
+        "双凤驿·中街药铺",
+        "双凤驿·中街驿站"
+      ],
+      "venue_count_including_residences_and_canon_sites": 5,
+      "exceptions": [
+        "驿站聚落按市镇级配点。"
+      ],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "盐井",
+      "type": "场所",
+      "tier": 2,
+      "scale": null,
+      "region_order": 1,
+      "polity": null,
+      "street_ids": [],
+      "municipal_type_counts": {},
+      "municipal_count": 0,
+      "venue_ids_including_residences_and_canon_sites": [],
+      "venue_count_including_residences_and_canon_sites": 0,
+      "exceptions": [
+        "第50回新探资源设施，不是城镇；不设开端店铺或采盐产出。"
+      ],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "宋境乡村",
+      "type": "村落",
+      "tier": 2,
+      "scale": null,
+      "region_order": 3,
+      "polity": null,
+      "street_ids": [],
+      "municipal_type_counts": {},
+      "municipal_count": 0,
+      "venue_ids_including_residences_and_canon_sites": [],
+      "venue_count_including_residences_and_canon_sites": 0,
+      "exceptions": [
+        "抽象乡村节点，不虚构具名村镇；不因结尾墓地补商业。"
+      ],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    },
+    {
+      "id": "女真部落",
+      "type": "部落",
+      "tier": 2,
+      "scale": "部落",
+      "region_order": 5,
+      "polity": "女真族",
+      "street_ids": [],
+      "municipal_type_counts": {},
+      "municipal_count": 0,
+      "venue_ids_including_residences_and_canon_sites": [
+        "女真部落·东侧木屋",
+        "女真部落·西侧帐幕"
+      ],
+      "venue_count_including_residences_and_canon_sites": 2,
+      "exceptions": [
+        "仅两处代表性住宅，无商业铺面；以物易物由风闻与模板说明。"
+      ],
+      "src": null,
+      "inferred": true,
+      "basis": "情理：依提示词规模配置；原著同类型场所占名额，宫殿庄院另列。"
+    }
+  ],
+  "canonical_venue_mappings": [
+    {
+      "id": "无量洞",
+      "type": "庄院",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "万劫谷",
+      "type": "庄院",
+      "tier": 1,
+      "owner": "钟万仇",
+      "inferred": true,
+      "basis": "谷地住宅群使用一套庄院底子，不另在谷口重复建庄院。"
+    },
+    {
+      "id": "木婉清居所",
+      "type": "大户",
+      "tier": 2,
+      "owner": "木婉清",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "大理皇宫",
+      "type": "王府",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "情理：只借王府厅室作底子；宫廷守卫另由23配置。"
+    },
+    {
+      "id": "镇南王府",
+      "type": "王府",
+      "tier": 1,
+      "owner": "段正淳",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "玉虚观",
+      "type": "道观",
+      "tier": 2,
+      "owner": "刀白凤",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "天龙寺",
+      "type": "大寺",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "拈花寺",
+      "type": "小庙",
+      "tier": 2,
+      "owner": "黄眉僧",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "身戒寺",
+      "type": "小庙",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "参合庄",
+      "type": "庄院",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "琴韵小筑",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "阿碧",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "听香水榭",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "阿朱",
+      "inferred": true,
+      "basis": "宅院及厨房复用；老顾由04/22安置，不生成第二位同名厨子。"
+    },
+    {
+      "id": "曼陀山庄",
+      "type": "庄院",
+      "tier": 1,
+      "owner": "王夫人",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "青云庄",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "邓百川",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "赤霞庄",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "公冶乾",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "金风庄",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "包不同",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "玄霜庄",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "风波恶",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "松鹤楼",
+      "type": "酒楼",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "天宁寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "碾坊",
+      "type": "农舍",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "农舍模板只供生活区；原著碾磨工坊另补，既有人物由22安置。"
+    },
+    {
+      "id": "少林寺",
+      "type": "大寺",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "乔三槐家",
+      "type": "农舍",
+      "tier": 2,
+      "owner": "乔三槐",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "聚贤庄",
+      "type": "庄院",
+      "tier": 1,
+      "owner": "游骥",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "止观寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": "智光",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "康敏家",
+      "type": "民居",
+      "tier": 2,
+      "owner": "康敏",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "小镜湖·竹屋",
+      "type": "民居",
+      "tier": 2,
+      "owner": "阮星竹",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "薛慕华居所",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "薛慕华",
+      "inferred": true,
+      "basis": "私宅补诊室；神医诊疗由22薛慕华服务承担，不另造神医。"
+    },
+    {
+      "id": "英雄大会客店",
+      "type": "客栈",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "泰山单家",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "单正",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "清凉寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "大相国寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "信阳酒馆",
+      "type": "客栈",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "第22回用饭处是客栈大堂；沿用既有ID，按客栈配置。"
+    },
+    {
+      "id": "汴梁皇宫",
+      "type": "王府",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "情理：只借王府厅室作底子；宫廷守卫另由23配置。"
+    },
+    {
+      "id": "擂鼓山·木屋",
+      "type": "茅屋",
+      "tier": 2,
+      "owner": "苏星河",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "净影寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "秦家寨",
+      "type": "庄院",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "南院大王府",
+      "type": "王府",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "府邸沿用基准；不把萧峰未来受封提前写为开端主人。"
+    },
+    {
+      "id": "辽国皇宫",
+      "type": "王府",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "情理：只借王府厅室作底子；宫廷守卫另由23配置。"
+    },
+    {
+      "id": "悯忠寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "辽国军营",
+      "type": "军营",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "沿用基准行营节点，只配驻营物资；行营时间地点有基准风险。"
+    },
+    {
+      "id": "雪地客店",
+      "type": "客栈",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "第25回简陋独营小店；两坛酒按每坛十斤估量且不日补。"
+    },
+    {
+      "id": "灵鹫宫",
+      "type": "庄院",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "西夏皇宫",
+      "type": "王府",
+      "tier": 1,
+      "owner": null,
+      "inferred": true,
+      "basis": "情理：只借王府厅室作底子；宫廷守卫另由23配置。"
+    },
+    {
+      "id": "西夏宾馆",
+      "type": "客栈",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "官办馆舍；使用客栈房舍但入住须官署安排，招亲宾客未预置。"
+    },
+    {
+      "id": "西夏古庙",
+      "type": "小庙",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "原著过路歇宿古庙；不推定有常驻僧人经营香火。"
+    },
+    {
+      "id": "大轮寺",
+      "type": "大寺",
+      "tier": 1,
+      "owner": "鸠摩智",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "王夫人山庄",
+      "type": "庄院",
+      "tier": 2,
+      "owner": "王夫人",
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "东林寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    },
+    {
+      "id": "普渡寺",
+      "type": "大寺",
+      "tier": 2,
+      "owner": null,
+      "inferred": true,
+      "basis": "基准场所沿用原名；房舍陈设与日常服务按情理补全。"
+    }
+  ],
+  "location_coverage": [
+    {
+      "id": "中原",
+      "type": "区域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "江南",
+      "type": "区域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "塞外",
+      "type": "区域",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "西域",
+      "type": "区域",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "无量山",
+      "type": "山岭",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "剑湖宫",
+      "type": "庄院",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "剑湖宫·练武厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "无量后山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "无量山·山崖",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "无量山·谷底",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "无量玉壁",
+      "type": "区域",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琅嬛福地",
+      "type": "洞窟",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琅嬛福地·玉像石室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琅嬛福地·书房",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琅嬛福地·石级隧道",
+      "type": "道路",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "无量洞",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": "庄院"
+    },
+    {
+      "id": "无量洞·囚室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "澜沧江",
+      "type": "水域",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷",
+      "type": "峡谷",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": "庄院"
+    },
+    {
+      "id": "万劫谷·谷口",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·大厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·石屋",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·药室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·地道",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "木婉清居所",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": "大户"
+    },
+    {
+      "id": "大理城",
+      "type": "都城",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "大理皇宫",
+      "type": "宫苑",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": "王府"
+    },
+    {
+      "id": "镇南王府",
+      "type": "府邸",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": "王府"
+    },
+    {
+      "id": "镇南王府·书房",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "玉虚观",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": "道观"
+    },
+    {
+      "id": "天龙寺",
+      "type": "寺观",
+      "tier": 1,
+      "polity": "大理国",
+      "template_type": "大寺"
+    },
+    {
+      "id": "天龙寺·牟尼堂",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "天龙寺·菩提树下",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "拈花寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": "小庙"
+    },
+    {
+      "id": "陆凉州",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "身戒寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": "小庙"
+    },
+    {
+      "id": "普洱",
+      "type": "市镇",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "苏州",
+      "type": "大城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "太湖",
+      "type": "水域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "燕子坞",
+      "type": "庄院",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "参合庄",
+      "type": "庄院",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "还施水阁",
+      "type": "房间",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "琴韵小筑",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "听香水榭",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "听香水榭·厨房",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "曼陀山庄",
+      "type": "庄院",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "琅嬛玉洞",
+      "type": "房间",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "青云庄",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "赤霞庄",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "金风庄",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "玄霜庄",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "无锡",
+      "type": "大城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "松鹤楼",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "酒楼"
+    },
+    {
+      "id": "杏子林",
+      "type": "荒野",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "天宁寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "少室山",
+      "type": "山岭",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺",
+      "type": "寺观",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "少林寺·菩提院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·玄苦禅房",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·大雄宝殿",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·藏经阁",
+      "type": "荒野",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·戒律院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "乔三槐家",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "农舍"
+    },
+    {
+      "id": "聚贤庄",
+      "type": "庄院",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "聚贤庄·大厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "聚贤庄·后院",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "雁门关",
+      "type": "关隘",
+      "tier": 1,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "雁门关·石壁",
+      "type": "山岭",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "泰山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "天台山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "止观寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "信阳",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "康敏家",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "民居"
+    },
+    {
+      "id": "小镜湖",
+      "type": "水域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "小镜湖·方竹林",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "小镜湖·竹屋",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "民居"
+    },
+    {
+      "id": "小镜湖·青石桥",
+      "type": "道路",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "晋阳",
+      "type": "大城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "女真部落",
+      "type": "部落",
+      "tier": 2,
+      "polity": "女真族",
+      "template_type": null
+    },
+    {
+      "id": "南京",
+      "type": "都城",
+      "tier": 1,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "南院大王府",
+      "type": "府邸",
+      "tier": 1,
+      "polity": "大辽",
+      "template_type": "王府"
+    },
+    {
+      "id": "南院大王府·偏殿",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "南院大王府·铁笼",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "白马桥",
+      "type": "区域",
+      "tier": 2,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "辽国皇宫",
+      "type": "宫苑",
+      "tier": 1,
+      "polity": "大辽",
+      "template_type": "王府"
+    },
+    {
+      "id": "星宿海",
+      "type": "水域",
+      "tier": 1,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "擂鼓山",
+      "type": "山岭",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "擂鼓山·棋局场",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "擂鼓山·木屋",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "茅屋"
+    },
+    {
+      "id": "函谷关",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "天山",
+      "type": "山岭",
+      "tier": 1,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "缥缈峰",
+      "type": "山岭",
+      "tier": 1,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "灵鹫宫",
+      "type": "宫苑",
+      "tier": 1,
+      "polity": null,
+      "template_type": "庄院"
+    },
+    {
+      "id": "灵鹫宫·铁索桥",
+      "type": "道路",
+      "tier": 3,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "西夏",
+      "type": "区域",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "兴州",
+      "type": "都城",
+      "tier": 1,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "西夏皇宫",
+      "type": "宫苑",
+      "tier": 1,
+      "polity": "西夏国",
+      "template_type": "王府"
+    },
+    {
+      "id": "西夏皇宫·冰库",
+      "type": "房间",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "西夏皇宫·招亲厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "西夏宾馆",
+      "type": "场所",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": "客栈"
+    },
+    {
+      "id": "西夏古庙",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": "小庙"
+    },
+    {
+      "id": "西夏枯井",
+      "type": "场所",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "吐蕃",
+      "type": "区域",
+      "tier": 2,
+      "polity": "吐蕃国",
+      "template_type": null
+    },
+    {
+      "id": "大雪山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "吐蕃国",
+      "template_type": null
+    },
+    {
+      "id": "大轮寺",
+      "type": "寺观",
+      "tier": 1,
+      "polity": "吐蕃国",
+      "template_type": "大寺"
+    },
+    {
+      "id": "皋兰",
+      "type": "县城",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "秦州",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "汉中",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "广元",
+      "type": "县城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "剑阁",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "梓潼",
+      "type": "县城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "双凤驿",
+      "type": "驿站",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "红沙滩",
+      "type": "荒野",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "王夫人山庄",
+      "type": "庄院",
+      "tier": 2,
+      "polity": null,
+      "template_type": "庄院"
+    },
+    {
+      "id": "王夫人山庄·木柱陷阱",
+      "type": "房间",
+      "tier": 3,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "善巨郡",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "不老长春谷",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "长白山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "五台山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "清凉寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "庐山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "东林寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "汴梁",
+      "type": "都城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "汴梁皇宫",
+      "type": "宫苑",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": "王府"
+    },
+    {
+      "id": "崇庆殿",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "定州",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "洛阳",
+      "type": "大城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "海南岛",
+      "type": "洲岛",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "五指山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "赤焰洞",
+      "type": "洞窟",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "碧磷洞",
+      "type": "洞窟",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "伏牛山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "蓬莱",
+      "type": "区域",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "青城山",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "薛慕华居所",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "王夫人山庄·大厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "虎牢关",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "秦家寨",
+      "type": "寨堡",
+      "tier": 2,
+      "polity": null,
+      "template_type": "庄院"
+    },
+    {
+      "id": "英雄大会客店",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "客栈"
+    },
+    {
+      "id": "汝州山洞",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "智光禅房",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "泰山单家",
+      "type": "庄院",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "庄院"
+    },
+    {
+      "id": "宋境乡村",
+      "type": "村落",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "盐井",
+      "type": "场所",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "青凤阁",
+      "type": "房间",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "悯忠寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大辽",
+      "template_type": "大寺"
+    },
+    {
+      "id": "少林寺·证道院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·药王院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "少林寺·舍利院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "镇南王府·云锦楼",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "圣慈宫",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "许家集",
+      "type": "市镇",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "卫辉",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "卫辉·船舱",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "三甲镇",
+      "type": "市镇",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "上京",
+      "type": "都城",
+      "tier": 1,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "辽国军营",
+      "type": "军营",
+      "tier": 2,
+      "polity": null,
+      "template_type": "军营"
+    },
+    {
+      "id": "雪地客店",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "客栈"
+    },
+    {
+      "id": "万仙大会山谷",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "西夏皇宫·冰库底层",
+      "type": "房间",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "灵鹫宫·石室",
+      "type": "房间",
+      "tier": 1,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "少林寺·山门",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "洞庭湖",
+      "type": "水域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "君山",
+      "type": "洲岛",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "西夏石室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "慕容复土坟",
+      "type": "坟冢",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "曼陀山庄·茶花园",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "碾坊",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "农舍"
+    },
+    {
+      "id": "碾坊·阁楼",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "汝州",
+      "type": "州城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "梁县",
+      "type": "县城",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "大相国寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "普渡寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "长安",
+      "type": "大城",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "净影寺",
+      "type": "寺观",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "大寺"
+    },
+    {
+      "id": "少林寺·达摩院",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "信阳酒馆",
+      "type": "场所",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": "客栈"
+    },
+    {
+      "id": "长春谷外山岭",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琅嬛福地·铜镜后室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "云州",
+      "type": "州城",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "陕西",
+      "type": "区域",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "薛慕华居所·地窖",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "南京·北门",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "澜沧江边高崖",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·谷外树林",
+      "type": "荒野",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "万劫谷·钟氏卧室",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大理国",
+      "template_type": null
+    },
+    {
+      "id": "琴韵小筑·锦瑟居",
+      "type": "房间",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "灵鹫宫·独尊厅",
+      "type": "房间",
+      "tier": 3,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "万仙大会山谷·雪峰",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "万仙大会山谷·雪覆断涧",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "南院大王府·地道",
+      "type": "道路",
+      "tier": 3,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "南京·西门",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "大辽",
+      "template_type": null
+    },
+    {
+      "id": "雁门关·谷底",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    },
+    {
+      "id": "慕容家庄后",
+      "type": "荒野",
+      "tier": 2,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "慕容博墓",
+      "type": "坟冢",
+      "tier": 1,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "慕容博墓·临掘地道",
+      "type": "道路",
+      "tier": 3,
+      "polity": "大宋",
+      "template_type": null
+    },
+    {
+      "id": "兴州道上山口",
+      "type": "关隘",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "兴州道上山口·关外山径",
+      "type": "道路",
+      "tier": 3,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "兴州道旁悬崖",
+      "type": "山岭",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "兴州道旁悬空处",
+      "type": "区域",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "兴州道旁深谷",
+      "type": "峡谷",
+      "tier": 2,
+      "polity": "西夏国",
+      "template_type": null
+    },
+    {
+      "id": "雪峰·落脚雪坡",
+      "type": "山岭",
+      "tier": 2,
+      "polity": null,
+      "template_type": null
+    }
+  ],
+  "scene_plan": [
+    {
+      "ordinal": 1,
+      "root": "无量山",
+      "present": true,
+      "features_added": 14,
+      "items_added": 4
+    },
+    {
+      "ordinal": 2,
+      "root": "万劫谷",
+      "present": true,
+      "features_added": 7,
+      "items_added": 0
+    },
+    {
+      "ordinal": 3,
+      "root": "木婉清居所",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 4,
+      "root": "大理城",
+      "present": true,
+      "features_added": 8,
+      "items_added": 0
+    },
+    {
+      "ordinal": 5,
+      "root": "苏州",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 6,
+      "root": "江南",
+      "present": true,
+      "features_added": 9,
+      "items_added": 3
+    },
+    {
+      "ordinal": 7,
+      "root": "吐蕃",
+      "present": true,
+      "features_added": 1,
+      "items_added": 0
+    },
+    {
+      "ordinal": 8,
+      "root": "无锡",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 9,
+      "root": "碾坊",
+      "present": true,
+      "features_added": 3,
+      "items_added": 4
+    },
+    {
+      "ordinal": 10,
+      "root": "天宁寺",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 11,
+      "root": "少室山",
+      "present": true,
+      "features_added": 7,
+      "items_added": 3
+    },
+    {
+      "ordinal": 12,
+      "root": "英雄大会客店",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 13,
+      "root": "聚贤庄",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 14,
+      "root": "雁门关",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 15,
+      "root": "卫辉",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 16,
+      "root": "泰山",
+      "present": true,
+      "features_added": 2,
+      "items_added": 1
+    },
+    {
+      "ordinal": 17,
+      "root": "天台山",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 18,
+      "root": "信阳",
+      "present": true,
+      "features_added": 5,
+      "items_added": 0
+    },
+    {
+      "ordinal": 19,
+      "root": "星宿海",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 20,
+      "root": "小镜湖",
+      "present": true,
+      "features_added": 5,
+      "items_added": 0
+    },
+    {
+      "ordinal": 21,
+      "root": "晋阳",
+      "present": true,
+      "features_added": 1,
+      "items_added": 0
+    },
+    {
+      "ordinal": 22,
+      "root": "雪地客店",
+      "present": true,
+      "features_added": 1,
+      "items_added": 0
+    },
+    {
+      "ordinal": 23,
+      "root": "塞外",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 24,
+      "root": "辽国军营",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 25,
+      "root": "上京",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 26,
+      "root": "南京",
+      "present": true,
+      "features_added": 6,
+      "items_added": 0
+    },
+    {
+      "ordinal": 27,
+      "root": "中原",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 28,
+      "root": "薛慕华居所",
+      "present": true,
+      "features_added": 7,
+      "items_added": 0
+    },
+    {
+      "ordinal": 29,
+      "root": "擂鼓山",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 30,
+      "root": "万仙大会山谷",
+      "present": true,
+      "features_added": 6,
+      "items_added": 0
+    },
+    {
+      "ordinal": 31,
+      "root": "洞庭湖",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 32,
+      "root": "天山",
+      "present": true,
+      "features_added": 7,
+      "items_added": 0
+    },
+    {
+      "ordinal": 33,
+      "root": "西夏",
+      "present": true,
+      "features_added": 12,
+      "items_added": 1
+    },
+    {
+      "ordinal": 34,
+      "root": "宋境乡村",
+      "present": true,
+      "features_added": 3,
+      "items_added": 0
+    },
+    {
+      "ordinal": 35,
+      "root": "西夏枯井",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 36,
+      "root": "王夫人山庄·木柱陷阱",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 37,
+      "root": "王夫人山庄",
+      "present": true,
+      "features_added": 4,
+      "items_added": 0
+    },
+    {
+      "ordinal": 38,
+      "root": "双凤驿",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 39,
+      "root": "汴梁",
+      "present": true,
+      "features_added": 2,
+      "items_added": 0
+    },
+    {
+      "ordinal": 40,
+      "root": "善巨郡",
+      "present": true,
+      "features_added": 5,
+      "items_added": 0
+    }
+  ],
+  "coverage": {
+    "cards": 202,
+    "new_places_explicit": 133,
+    "venue_templates": 48,
+    "venue_instances": 496,
+    "new_venues": 447,
+    "new_places_before_room_expansion": 580,
+    "goods": 448,
+    "canon_items": 98,
+    "named_people": 242,
+    "existing_factions": 55,
+    "new_factions": 7,
+    "kits": 74,
+    "squads": 79,
+    "polities": 6,
+    "jianghu_rules": 30,
+    "precepts": 25,
+    "lore": 316,
+    "scenes": 41,
+    "scene_roots_appended": 40,
+    "plot_lines": 50,
+    "event_annotations": 235
+  }
+}
