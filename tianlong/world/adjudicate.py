@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -418,7 +418,8 @@ HEAL = re.compile(r"药|丹|丸|调息|运功|歇|养|疗|敷|包扎|吐纳|平�
 
 def physical(op) -> bool:
     """改变物理状态的指令：去留、得失、生死伤病、擒放随行、赶来、研习吸功、揭开暗路与隐情。
-    只有恩怨印象(其余关系)、未了之事、地点现状落不了是小事——丢那一条，拍照常成立。"""
+    只有恩怨印象(其余关系)、未了之事、地点现状落不了是小事——丢那一条，拍照常成立。
+    v12：打算、志向、所求与外号、神色一样是软状态，不算物理——落不了只丢这一条；节奏账也不把只改打算记成局面动了。"""
     if not isinstance(op, dict):
         return False
     if acts.is_act(op):  # 事码(v9)：规则之事都动物理(得失、撕合、书写、脱身、人群死伤)，软的几样不算
@@ -428,7 +429,7 @@ def physical(op) -> bool:
         return op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY
     if kind in ("arrive", "study", "drain", "reveal"):
         return not effects.named(op)  # 报个姓名是认知不是物理(v6)：落不了只丢这一条，拍照常成立
-    return key not in ("threads", "未了之事", "state", "note", "epithet", "mood", "spot")  # 器物挪个方位(v8)不是得失
+    return key not in ("threads", "未了之事", "state", "note", "epithet", "mood", "spot", "intent", "agenda", "goal")  # 器物挪个方位(v8)不是得失；打算志向(v12)不是物理
 
 
 def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tuple[list, list]:

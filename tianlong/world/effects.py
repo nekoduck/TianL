@@ -3,7 +3,7 @@
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
          world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
-[OUTPUT]: 对外提供 apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
+[OUTPUT]: 对外提供 SOFT_KEYS（v12 人的软状态）、apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
           place()（任一节点此刻所在之地）、things()（v11 此刻在某几处的器物：地上的连同那里的人手里的，按索引取、与 place 同一口径）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
@@ -42,7 +42,7 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
-       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过的人即可落账，不看回合末所在
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -79,6 +79,7 @@ NOTE_LEN = 40                                    # 关系边上的印象一句�
 SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN, "spot": 16}  # 人物身上的一句话属性；器物在一处地方的方位(v8)
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 NAME = "name"                                    # reveal 的 id 形(v6)：某人的姓名被说了出来——认知唯一的落账通道
+SOFT_KEYS = {"intent", "mood", "epithet", "agenda"}  # 人的软状态(v12)：打算、神色、外号、志向——本回合见过的人即可落账，不是物理
 NAMEISH = {"姓名", "名字", "名号", "名姓", "真名", "身份", "来历", "name"}  # reveal 写成关系形、rel 说的是姓名
 
 
@@ -516,6 +517,8 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
             if nid not in situation.seen(world):
                 return f"{nid}不在你身边，主角够不着"
+            if op["op"] == "set" and op.get("key") in SOFT_KEYS:
+                return None  # 软状态(v12)：本回合见过的人即可落账，不看回合末所在——主角溜出了厅，厅上的人照样拔剑追出、照样打算
         if crowd.is_squad(g, nid) and not crowd.present(world, nid) and nid not in set(getattr(world, "turn", {}).get("flock0", ())):
             return f"{crowd.handle(g, nid)}不在你跟前，要他们来写 赶来(系统按路程裁定)"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \

@@ -4,7 +4,7 @@
           用户报告的病(正文里与段誉互报了姓名，账上却不知，之后两回合又互报一遍)及其各种写法；结算覆盖状态的各个维度(去留、易手、神色、打算、现状、应承之事、看法)；
           据须是正文原句；规则之事(生死伤病、功力进境)与主角未起意之举只记分歧、交下回合导演；结算与导演的账幂等；
           出闸放行即存档、报名先入账再掩码(不再「小生兄台」)；低声报名只那人听见；识名指令的几种写法、在场、原样不动、不算污染、不随传闻误读；
-          此地原著的亲历以回合开始的所在为准
+          此地原著的亲历以回合开始的所在为准；v12 B3 软状态对本回合见过的人即可落账，易手去留照旧按回合末(SoftStateTest)
 [POS]: tests 的结算验证——v6 根治「双写」的离线证据：导演的指令与编剧的正文各写各的，结算让下一回合在一本与玩家所读相符的账上接着演
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -243,6 +243,43 @@ class WitnessTest(unittest.TestCase):
         ev = next(e for e in w.truth.events if e["summary"].startswith("龚光杰刺伤褚师弟"))
         self.assertTrue(ev["witnessed"])                                             # 导演把它编在主角动身之前：亲历以回合开始的所在为准
 
+
+
+class SoftStateTest(unittest.TestCase):
+    """v12 B3：打算、神色、外号、志向是软状态——本回合见过的人即可落账，不看回合末所在；易手、去留等物理之事照旧按回合末。
+    日志第 9 回：主角从练武厅溜到无量山，账房开的两条打算被驳回「不在你身边」，记成了账文分歧。"""
+
+    def test_the_hall_still_acts_after_you_slip_out(self):
+        w = World.create("测")
+        prose = ("你趁乱溜出大厅，一路奔上无量山。那守门的持剑少年与一众东宗门人轰然应诺，杀气腾腾拔剑随同抢出。"
+                 "马五德脱开你的拉扯，钻入近旁的乱木荒草。那东宗少年把长剑交给了你。")
+        extra = bill(("杀气腾腾拔剑随同抢出", "干光豪", [{"做": "打算", "谁": "干光豪", "为": "拔剑抢出宫门迎战强敌"}]),
+                     ("钻入近旁的乱木荒草", "马五德", [{"做": "打算", "谁": "马五德", "为": "追寻趁乱走散的刘马"}]),
+                     ("那东宗少年把长剑交给了你", "干光豪", [{"做": "交给", "谁": "干光豪", "物": "干光豪·长剑", "与": "player"}]))
+        llm = StubLLM({"说书人与导演": {"beats": [{"who": "player", "text": "你趁乱溜出大厅，奔上无量山",
+                                                 "ops": [{"做": "前往", "到": "无量山"}]}], "pace": "片刻"},
+                       "小说家": page(prose), **extra})
+        Game(w, llm).act("趁乱开溜")
+        self.assertEqual(w.here, "无量山")
+        self.assertEqual(w.graph.get("干光豪", "intent"), "拔剑抢出宫门迎战强敌")       # 两条打算入账
+        self.assertEqual(w.graph.get("马五德", "intent"), "追寻趁乱走散的刘马")
+        drift = "；".join(w.player["drift"])
+        self.assertNotIn("intent", drift)                                               # 不记分歧
+        self.assertIn("长剑", drift)                                                     # 易手照旧按回合末：仍记作分歧
+        self.assertNotIn("干光豪·长剑", w.player["inventory"])
+
+    def test_the_directors_soft_beat_stands(self):
+        from tianlong.world import adjudicate
+        from tests.test_adjudicate import GO
+        w = World.create("测")
+        r = judge(w, plan(("player", "你趁乱溜出大厅，奔上无量山", [GO("无量山")]),
+                          ("干光豪", "干光豪拔剑追出宫门", [{"做": "打算", "谁": "干光豪", "为": "追出宫门"}]),
+                          (None, "远处隐隐有马蹄声", [{"做": "打算", "谁": "乔峰", "为": "北上"}])))
+        self.assertEqual(w.graph.get("干光豪", "intent"), "追出宫门")                    # 拍 2 成立
+        self.assertNotIn(2, adjudicate.doomed(r))
+        self.assertIsNone(w.graph.get("乔峰", "intent"))                                 # 本回合没见过的人：改打算仍被驳回
+        self.assertNotIn(3, adjudicate.doomed(r))                                       # 软的：只丢这一条，拍照常成立
+        self.assertFalse(adjudicate.physical({"op": "set", "id": "段誉", "key": "intent", "value": "x"}))
 
 if __name__ == "__main__":
     unittest.main()
