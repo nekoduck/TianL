@@ -6,7 +6,7 @@
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
-          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)；LeaveTest：离去取最近的主语(C3)
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)；LeaveTest：离去取最近的主语(C3)；PettyTest：只指着琐物碎银的选项近三回合已入选两回即不再入选、危局里一回(P2-2)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -402,6 +402,47 @@ class LeaveTest(unittest.TestCase):
         self.assertEqual(self.leavers("你推开马五德的拉扯，拔步便朝殿门外段誉二人逃走的方向奔去", "马五德"), [])
         self.assertEqual(self.leavers("马五德拂袖离去", "马五德"), ["马五德"])
         self.assertEqual(self.leavers("段誉与钟灵相携离去", "段誉", "钟灵"), ["段誉", "钟灵"])
+
+
+class PettyTest(unittest.TestCase):
+    """P2-2 琐物衰减：日志第 1、2、4、5、6 回五次给碎银(第 6 回玩家选了)——只指着琐物碎银的选项，近三回合已入选两回即不再入选，危局里一回。"""
+
+    SILVER = {"text": "趁众人分神拾取地上碎银", "targets": ["碎银"]}
+    OTHERS = [{"text": "低声劝阻青衫少年别惹事", "targets": ["段誉"]}, {"text": "借端茶退至门旁", "targets": []}]
+
+    def texts(self, w, danger=None):
+        return [t for t, _ in menu.check(w, [self.SILVER, *self.OTHERS], danger=danger)]
+
+    def test_silver_offered_twice_in_three_turns_drops_out(self):
+        w = World.create("测")
+        self.assertTrue(menu._petty(w, "碎银"))
+        w.player.set("offered", [["碎银"], ["段誉"], ["碎银", "马五德"]])           # 第 2、4 回给过
+        texts = self.texts(w)
+        self.assertNotIn(self.SILVER["text"], texts)
+        self.assertEqual(len(texts), 3)                                                 # 兜底补齐
+        w.player.set("offered", [["段誉"], ["碎银"], ["段誉"]])                       # 只给过一回：平常照收
+        self.assertIn(self.SILVER["text"], self.texts(w))
+        self.assertNotIn(self.SILVER["text"], self.texts(w, danger=["主角被神农帮众围住"]))  # 危局里一回即不再入选
+        w.player.set("offered", [["碎银"], ["碎银"], ["段誉"], ["段誉"]])             # 三回合之前的不算
+        self.assertIn(self.SILVER["text"], self.texts(w))
+
+    def test_an_option_with_a_person_in_it_does_not_decay(self):
+        w = World.create("测")
+        w.player.set("offered", [["碎银"], ["碎银"], ["碎银"]])
+        opts = [{"text": "趁乱拾银，顺手护住马五德", "targets": ["碎银", "马五德"]}, *self.OTHERS]
+        self.assertIn("趁乱拾银，顺手护住马五德", [t for t, _ in menu.check(w, opts)])
+
+    def test_the_engine_keeps_three_turns_of_offers(self):
+        w = World.create("测")
+        game = Game(w, StubLLM({"小说家": "厅上一片寂静\n===\n梗概：静观\n选项：\n1. 趁众人分神拾取地上碎银｜对象：碎银\n2. 与青衫少年搭话｜对象：青衫少年\n伏笔：无\n传言：无"}))
+        given = ["趁众人分神拾取地上碎银" in game.act("看")["options"] for _ in range(5)]
+        self.assertEqual(given, [True, True, False, False, True])                       # 给了两回即让位，三回合里只剩一回又可以给
+        self.assertEqual(len(w.player["offered"]), menu.OFFERED_TURNS)
+        old = w.dump()
+        old["player"].pop("offered")
+        self.assertEqual(World.from_dump(old).player["offered"], [])                    # 旧档没有：按空读
+        from tianlong.world import effects
+        self.assertTrue(effects.apply(w, [{"op": "set", "id": "player", "key": "offered", "value": []}], "director")[1])  # 系统维护，导演写不动
 
 
 class ReplayBaselineTest(unittest.TestCase):

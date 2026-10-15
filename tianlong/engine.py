@@ -30,7 +30,7 @@
        v11 场外编剧：到期的场外之事前提未变就照日程演(原著与衍生事件同一条轨道，不调模型)；前提破了，只差路程的延后，否则作罢(相关的活人原著线已变)，
        附近的、分量重的原著另交场外编剧改写；回合收尾先查谁的心愿了了(plot.awaken)，跨过了日子再续写该有下一步的人(plot.idle)——
        创作家写、规则审(world/plot.vet)、审稿，在后台对着世界的快照跑(_compose)，下一回合开始前(flush)对着真世界再过一遍规则审才排进日程(_adopt)；离线不写新剧情、作罢即止
-       v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码；回合收尾了断两端异地的同行(situation.sunder)；原著近事要用的人马(lod.reserved)交后台与裁决；危局算两次(槽位用成文前的，此后槽、菜单与合场用结算之后的)，合场与僵持计数交 scene；回合收尾记下见过的人(situation.meet)；玩家要找的人(menu.seeking)交裁决，小片区里寻而至即遇；场的僵持计数(stall)交裁决：僵持满四回合仍无结构性变化，规则照围困人群的打算押走
+       v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码；回合收尾了断两端异地的同行(situation.sunder)；原著近事要用的人马(lod.reserved)交后台与裁决；危局算两次(槽位用成文前的，此后槽、菜单与合场用结算之后的)，合场与僵持计数交 scene；回合收尾记下见过的人(situation.meet)；玩家要找的人(menu.seeking)交裁决，小片区里寻而至即遇；场的僵持计数(stall)交裁决：僵持满四回合仍无结构性变化，规则照围困人群的打算押走；验收之后记下入选选项的对象(menu.offer，P2-2 琐物衰减)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -277,6 +277,7 @@ class Game:
         later = choices.later(w, danger)              # 此后槽的兜底：选项里没有一件持续之事，就补一项(危局里没有)
         picked = menu.check(w, page["options"], adjudicate.hanging(w, ruling), ruling.candidates, plan["options"], later=later,
                             said=adjudicate.lines_to_player(w, ruling), danger=danger)  # 兜底项看局面，归 menu；v12 按优先级合并，回应的措辞按那一句的主题
+        menu.offer(w, picked)                         # v12 P2-2 记下入选选项的对象：只指着琐物碎银的选项据此衰减
         scales = {o["text"]: o.get("scale") for o in page["options"]} | {t: "此后" for t, _ in later}
         picked = [(veil(text), ids, scales.get(text)) for text, ids in picked]  # 选项也从主角的视角说：叫不出的名字不出现在选项上
         self.menu = {text: ids for text, ids, _ in picked}
