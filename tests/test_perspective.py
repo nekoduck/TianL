@@ -3,7 +3,8 @@
 [OUTPUT]: unittest 用例——43 回对局(王侠墨)里「主角都没认识钟灵，开口就是钟姑娘」逐条转成离线验收：
           开局只识出身带来的人与当众主持剑会的掌门、无名之辈不在开局常识里、叫出不知其名之人(全名或姓+称谓)即违例、
           NPC 不知主角姓名却叫「王兄」即违例、自报家门与当面点名让在场者听来名字、编剧从主角视角看世界(只剩外貌叫法、不露身份)、
-          交编剧之前与成文之后确定性地把漏出的名字换成叫法与泛称(编剧熟读原著，名字可能是它自己带来的)、编剧与玩家用的叫法落得回实体
+          交编剧之前与成文之后确定性地把漏出的名字换成叫法与泛称(编剧熟读原著，名字可能是它自己带来的)、编剧与玩家用的叫法落得回实体；
+          v12 A5：编剧提示词全文(连同【选项槽位】)没有未识之人的真名与「图谋」，C 槽读看得见的眼下之事
 [POS]: tests 的认知视角验证——v3 方案 P0-2「视角即上下文」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -74,6 +75,18 @@ class PerspectiveTest(unittest.TestCase):
         self.assertNotIn("钟灵", turn["text"])                                       # 编剧熟读原著、自己写出的名字，成文也过一遍主角的视角
         prompt = game.llm.writer_prompts[-1]
         self.assertNotIn("钟灵", prompt.split("【近日传闻】")[0])                    # 编剧眼前没有她的名字
+        self.assertNotIn("钟灵", prompt)                                               # v12 A5：排在后面的【选项槽位】也一样
+
+    def test_slots_speak_from_the_heros_eyes(self):
+        w = self.w
+        self.assertTrue(w.graph.get("段誉", "agenda"))                                # 段誉怀着图谋，主角却不识他
+        w.graph.set("段誉", "intent", "护着钟灵离开练武厅")
+        game = Game(w, StubLLM(director()))
+        game.act("看")
+        prompt = game.llm.writer_prompts[-1]
+        for word in ("段誉", "钟灵", "图谋"):                                         # 第 1 回：槽位直呼「段誉的图谋」，视锥里却只有青衫少年
+            self.assertNotIn(word, prompt)
+        self.assertIn("青衫少年眼下：护着大眼圆脸的少女离开练武厅", prompt)             # C 槽读看得见的眼下之事
 
 
 if __name__ == "__main__":

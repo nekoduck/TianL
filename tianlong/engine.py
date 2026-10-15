@@ -30,7 +30,7 @@
        v11 场外编剧：到期的场外之事前提未变就照日程演(原著与衍生事件同一条轨道，不调模型)；前提破了，只差路程的延后，否则作罢(相关的活人原著线已变)，
        附近的、分量重的原著另交场外编剧改写；回合收尾先查谁的心愿了了(plot.awaken)，跨过了日子再续写该有下一步的人(plot.idle)——
        创作家写、规则审(world/plot.vet)、审稿，在后台对着世界的快照跑(_compose)，下一回合开始前(flush)对着真世界再过一遍规则审才排进日程(_adopt)；离线不写新剧情、作罢即止
-       v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题
+       v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
@@ -240,7 +240,7 @@ class Game:
                  "addressed": hang,
                  "candidates": [veil(c) for c in ruling.candidates],
                  "news": [veil(e["summary"]) for e in arrived if not e.get("witnessed")],  # 亲历之事已在节拍里，不再当传闻
-                 "slots": choices.slots(w, addressed=hang)}  # 选项先定槽位：此刻 / 此后 / 机缘
+                 "slots": [veil(x) for x in choices.slots(w, addressed=hang)]}  # 选项先定槽位：此刻 / 此后 / 机缘；v12 槽位也从主角的视角说
         gate = settle.Gate(w, near=settle.partners(ruling))  # 正文出闸：段里有人报了姓名先入账，再按说话人过主角的视角(编剧熟读原著，名字可能是它自己带来的)
 
         def show(delta):
