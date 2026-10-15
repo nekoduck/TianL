@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 tianlong.engine 的 Game、tianlong.world.world 的 World 与 blackboard 的 ORIGINS、world/situation 的 around / cast、narrative/llm 的 LLMError；
+[INPUT]: 依赖 tianlong.engine 的 Game、tianlong.world.world 的 World 与 blackboard 的 ORIGINS、world/situation 的 around / cast、narrative/llm 的 LLMError / _object（v12 原始输出与线上同一口径解析）；
          读一份对局日志(markdown：每回合「#### 角色（trace 第 N 行…）」下有 <details> 里的系统提示与上下文，其后是模型的原始输出)
 [OUTPUT]: 命令行工具：python -m tools.rerun <日志.md> [--turns N] [--watch 人名,…] [--out 报告.md]——
           用日志里真实的导演/返工/编剧/账房(v6)/复核(v7)/场外编剧与审稿(v11)/书记输出驱动当前引擎重演一遍，逐回合报告去处、未成立之事、体检、结算入账与账文分歧、补记与新立的外号(v7)、眼前之人、
@@ -9,14 +9,13 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
-import json
 import logging
 import re
 import sys
 from pathlib import Path
 
 from tianlong.engine import Game
-from tianlong.narrative.llm import LLMError
+from tianlong.narrative.llm import LLMError, _object
 from tianlong.world import situation
 from tianlong.world.blackboard import ORIGINS
 from tianlong.world.world import World
@@ -59,13 +58,6 @@ def parse(text: str) -> list[dict]:
     return turns
 
 
-def _json(raw: str):
-    try:
-        return json.loads(raw)
-    except ValueError:
-        return None
-
-
 class ReplayLLM:
     """按回合吐出日志里的原始输出：导演首稿与返工、编剧正文、账房的结算单(v6)、复核的裁定(v7)按本回合取；场外编剧与审稿(v11，后台写)、书记按出现次序排队。没有的就当模型失声
     (账房失声即只以词表对账——v6 之前的日志没有账房；复核失声，那几句只记分歧)。"""
@@ -80,31 +72,35 @@ class ReplayLLM:
         self.now = i
         self.repairs = list(self.turns[i]["calls"].get("repair", []))
 
-    def _queued(self, kind: str):
+    def _queued(self, kind: str) -> str:
         q, n = self.queues[kind], self.used[kind]
         if n >= len(q):
             raise LLMError(f"日志里没有更多的{kind}输出")
         self.used[kind] += 1
-        return _json(q[n])
+        return q[n]
 
     def json(self, system, user, max_tokens=0):
+        """原始输出过 narrative/llm._object 再交引擎(v12)：与线上同一口径——单元素数组取其中的对象，解析不了即抛 LLMError 交兜底。"""
+        return _object(self._raw(system, user))
+
+    def _raw(self, system, user) -> str:
         calls = self.turns[self.now]["calls"]
         if "说书人与导演" in system:
             if "【上一稿】" in user:
                 if not self.repairs:
                     raise LLMError("这一回合日志里没有返工")
-                return _json(self.repairs.pop(0))
+                return self.repairs.pop(0)
             if not calls.get("draft"):
                 raise LLMError("这一回合日志里导演失声")
-            return _json(calls["draft"][0])
+            return calls["draft"][0]
         if "复核" in system:  # v7 双录复核：旧日志没有即当失声，那几句只记分歧
             if not calls.get("recheck"):
                 raise LLMError("这一回合日志里没有复核")
-            return _json(calls["recheck"][0])
+            return calls["recheck"][0]
         if "账房" in system:
             if not calls.get("settle"):
                 raise LLMError("这一回合日志里没有账房")
-            return _json(calls["settle"][0])
+            return calls["settle"][0]
         for key, kind in QUEUED:
             if key in system:
                 return self._queued(kind)
