@@ -14,6 +14,7 @@
        主角这一拍正要走进去的那一间，那里的纸笔也够得着(与取物同一口径)
        v11 世界底座：市——买下、卖出、服用、打探、办事(服务名即事码：住宿、打尖、诊治……)交 world/trade 执行，花主角的钱须是玩家起意(MARKET)；
        v12：望见——隔着关口远远看见某人或一群人(situation.sightable)，记进本回合望见的人，不挪人不上名册；识名事码另可写「知」:「身份」——连来历一并说破，主角听见即识底；
+       P1-7 脱身认围攻与押解(crowd.holders)：一样须过整群一半之力，冲得出去即了断那一条拘押；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -473,10 +474,10 @@ def _strike(world, a, who, heading):
 
 
 def _flee(world, a, who, heading):
-    """脱身：被一群人围住，一方之力须过整群一半；冲得出去便解了围、往去处(没写就往近处一条出路)。没人围着就只是前往。"""
+    """脱身：被一群人围住(v12 或押着)，一方之力须过整群一半；冲得出去便了断那一条拘押、往去处(没写就往近处一条出路)。没人拘着就只是前往。"""
     g = world.graph
-    sieges = crowd.besiegers(world, who)
-    src = a.get("自") if a.get("自") in sieges else (sieges[0] if sieges else None)
+    hold = dict(crowd.holders(world, who))  # 围攻与押解(v12)
+    src = a.get("自") if a.get("自") in hold else (next(iter(hold)) if hold else None)
     dest = a.get("到")
     if who == "player" and not dest:
         way = next((e for e in access.exits(world) if not e.get("back")), None) or next(iter(access.exits(world)), None)
@@ -486,14 +487,15 @@ def _flee(world, a, who, heading):
     why = crowd.escape(world, who, src)
     if why:
         return [], why
-    g.unlink(src, who, crowd.BESIEGE)
+    rel = hold[src]
+    g.unlink(src, who, rel)
     if not dest:
-        return [{"op": "unlink", "src": src, "dst": who, "rel": crowd.BESIEGE}], None
+        return [{"op": "unlink", "src": src, "dst": who, "rel": rel}], None
     done, why = _move(world, [{"op": "set", "id": who, "key": "location", "value": dest}])
     if why:
-        g.link(src, who, crowd.BESIEGE)
+        g.link(src, who, rel)
         return [], why
-    return [{"op": "unlink", "src": src, "dst": who, "rel": crowd.BESIEGE}, *done], None
+    return [{"op": "unlink", "src": src, "dst": who, "rel": rel}, *done], None
 
 
 def _glimpse(world, a, who, heading):

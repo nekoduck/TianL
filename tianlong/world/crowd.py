@@ -6,7 +6,7 @@
           forecast()（群战预裁：硬拼胜不胜、冲不冲得出去、偷不偷得到、败了失多少气血）、lines()（后台的群战预裁）、card()（视锥里的一群人；v12 另有首领与眼下之事）、tail()（v12 首领、所图、眼下）、
           kit()（一群人身上的东西；名字宽松认——去掉这一群的名目再看包含与末一字：佩剑、青钢剑都是长剑，长衫、衣服都是衣衫）、CLOTH、
           v10：active()（出没时段 since/until）、present()（与人同一口径的眼前）、recover()（打晕的两个时辰醒转归队、捡回东西）、escort() / relocate()（随首领、换地方即解围）、
-          afar()（近处不在跟前的人群；v12 不列原著近事要用的人马）、reserved_lines()（v12 原著近事要用的人马：要在哪一桩里登场）、template() / split() / rejoin() / muster()（spawn 的一队人马：重组或补充，离远并回）、RECOVER / SUPPLY / DEFAULT_KIT、steal() / rob() / strike() / escape()（偷取、夺取、杀伤打晕、脱身——规则之事，不成即返回缘由）
+          afar()（近处不在跟前的人群；v12 不列原著近事要用的人马）、reserved_lines()（v12 原著近事要用的人马：要在哪一桩里登场）、template() / split() / rejoin() / muster()（spawn 的一队人马：重组或补充，离远并回）、RECOVER / SUPPLY / DEFAULT_KIT、steal() / rob() / strike() / escape()（偷取、夺取、杀伤打晕、脱身——规则之事，不成即返回缘由）、holders()（v12 在近旁拘着某人的人群：围攻与押解）、SEIZE / SEIZE_NOT / UNSEIZE / seizure()（v12 僵持到期：围困的人群照其所图擒谁押往哪里）
 [POS]: world 层的人群规则——原著里有名有姓的人是一个个节点；同门的无名之众(东西宗各十五名弟子)是一群：十五人一体，各有一点零钱、一件衣衫、一柄剑。
        对其中一人动手就是对整群动手(同仇敌忾)：
        夺物、杀伤、打晕须一方之力过整群——武力按功力取指数(档位本是对数尺度：每高九点功力，力气约翻一倍)，整群之力是站着的人数乘每人之力；
@@ -16,12 +16,16 @@
        is_squad 只认场景清单布下的人群：剧情临时立的一队人马(ephemeral)只活在叙事里；一群人只在近旁走动(effects 拦远行)
        v10 人群随剧情驱动底层：一群人远行、赶来(按道路里程)、随行、随首领(原著挪走带队之人)、按出没时段在场；打晕的人倒下满两个时辰醒转归队(纯规则)；
        剧情临时立的一队人马是既有人群的重组(从同门人群里分出几人，身上之物按人头带走，离远即并回)，附近没有同门人群或人数不够才按门下模板补一队纯 NPC——人头、零钱、兵刃、衣衫，绝不立有名有姓的人
-       v12：原著近事要用的人马(world.turn["reserved"]，lod 算好交来；本模块不 import lod)事前分不出人；后台的每一群写明首领(不同处即注明在哪)、门派所图、眼下之事
+       v12：原著近事要用的人马(world.turn["reserved"]，lod 算好交来；本模块不 import lod)事前分不出人；后台的每一群写明首领(不同处即注明在哪)、门派所图、眼下之事；
+       P1-7 押着走：对主角有拘押边的人群在近旁即在跟前(present)；被围住与被押着都只有脱身(holders)；seizure 读这一群的眼下之事——有擒拿字眼、没被否定，
+       被擒者是认得出的眼前之人(首领与同门不算，没写人即主角)、冲不出这一群，去处依次取打算里写着的地方、首领所在、门派据点(不在近旁、一日之内、主角走得到)，都不成即就地扣下；
+       名表由调用方给(本模块不 import adjudicate)；后台与卡片把押解与围攻并列
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import body, bond, situation, stock
 
 import copy
+import re
 
 GROUP = "group"
 BESIEGE = "围攻"             # 人群 —围攻→ 某人：同仇敌忾地围住(situation.CUSTODY 之一：被围者受制、走不脱)
@@ -64,12 +68,15 @@ def active(world, s) -> bool:
 
 
 def present(world, s, loc: str | None = None) -> bool:
-    """这一群此刻在不在跟前：在近旁、未散、未藏、正当出没；片区里(无量山、中原)须被剧情带到跟前(名册)或正随行——与人同一口径。"""
+    """这一群此刻在不在跟前：在近旁、未散、未藏、正当出没；片区里(无量山、中原)须被剧情带到跟前(名册)或正随行——与人同一口径。
+    v12 对主角有拘押边(围攻、押解……)的人群，在近旁即在跟前，不看名册——押着你的人就在你身边。"""
     g = world.graph
     at = g.get(s, "location")
     if not is_squad(g, s) or g.get(s, "hidden") or not active(world, s) or at not in situation.near(world, loc):
         return False
-    return not situation.area(world, at) or s in situation.cast(world) | set(situation.party(world))
+    if not situation.area(world, at) or s in situation.cast(world) | set(situation.party(world)):
+        return True
+    return loc is None and any(e["src"] == s and e["dst"] == "player" and e["rel"] in situation.CUSTODY for e in g.edges)
 
 
 def standing(g, s) -> int:
@@ -93,6 +100,16 @@ def squads(world) -> list[str]:
 def besiegers(world, who: str = "player") -> list[str]:
     g = world.graph
     return [e["src"] for e in g.edges if e["rel"] == BESIEGE and e["dst"] == who and is_squad(g, e["src"])]
+
+
+def holders(world, who: str = "player") -> list[tuple[str, str]]:
+    """拘着 who 的人群(v12)：在 who 所在之处或其近旁、对 who 有拘押边(围攻也在内)的人群 → [(人群, 关系)]，按 id 排序；两端异地的不算。
+    被围住与被押着都只有脱身一条路(effects 拦走、acts 的脱身认它)。"""
+    g = world.graph
+    at = world.here if who == "player" else g.get(who, "location")
+    spots = situation.near(world, at) if at else set()
+    return sorted((e["src"], e["rel"]) for e in g.edges if e["dst"] == who and e["rel"] in situation.CUSTODY
+                  and is_squad(g, e["src"]) and g.get(e["src"], "location") in spots)
 
 
 def might(world, s) -> float:
@@ -177,7 +194,9 @@ def lines(world) -> list[str]:
     for s in squads(world):
         f, n = forecast(world, "player", s), standing(g, s)
         fallen = "".join(f"，{w}{stock.cn(g.get(s, k))}人" for k, w in (("down", "倒地(两个时辰内醒转)"), ("dead", "已死")) if g.get(s, k))
-        head = f"{s}（{handle(g, s)}，站着{stock.cn(n)}人{fallen}）" + ("此刻正围攻主角" if s in besiegers(world) else "")
+        held = [rel for h, rel in holders(world) if h == s and rel != BESIEGE]
+        head = f"{s}（{handle(g, s)}，站着{stock.cn(n)}人{fallen}）" + ("此刻正围攻主角" if s in besiegers(world) else "") \
+            + ("此刻正押着主角" if held else "")  # v12 押解与围攻并列
         fight = "主角之力压得住整群：夺物、杀伤、打晕由他" if f["fight"] else \
             f"主角之力不及整群：对其中任何一人硬夺、杀伤、打晕，整群同仇敌忾一拥而上，必败，主角失气血约{f['loss']}" \
             f"（写 结下 {s}→player 围攻，再写 伤人）"
@@ -213,12 +232,66 @@ def reserved_lines(world, held: dict) -> list[str]:
     return out
 
 
+# ============================================================
+#  僵持到期(v12)：围困的人群照它写下的打算擒人押走——规则只照剧情写下的打算落账，不替导演编剧情
+# ============================================================
+SEIZE = re.compile(r"擒|捉|绑|掳|扣下|扣押|押回|押走|押往|押去|押解|押上|押到|押送|拿下(?:此人|这人|那人|他|她|这小子|那小子|这厮|此子)")
+SEIZE_NOT = re.compile(r"罢手|作罢|放他走|放她走|放了他|放了她|饶了他|饶了她|饶过")   # 整句看的否定：不擒了
+UNSEIZE = re.compile(r"(?:不再|不必|不要|不用|无须|休要|莫要|莫|别|勿|不可|不准)$")    # 紧挨擒拿字眼之前的否定——不用 lexicon.NEGATE：它把「正要擒下」也当否定
+
+
+def _grabs(text: str) -> bool:
+    """这句打算是要擒人(v12)：有擒拿字眼、紧挨着它前面没有否定、整句也没说罢手放人。「拿下无量山要地」不是擒人。"""
+    if not text or SEIZE_NOT.search(text):
+        return False
+    return any(not UNSEIZE.search(text[:m.start()]) for m in SEIZE.finditer(text))
+
+
+def seizure(world, tab) -> dict | None:
+    """僵持到期时，哪一群照其所图擒谁押往哪里(v12)：在围攻主角的人群里(按 id 排序)取第一群眼下之事(intent)要擒人的——
+    被擒者是 intent 里认得出的人(先去掉这一群的首领与同门)里在眼前的那一个；写了人而都不在眼前，这一群另有所图，不算；没写人即主角。
+    被擒者冲得出这一群(群战预裁 flee)即不成。押往依次试：intent 里写着的地点；首领所在(活着、未藏、不与这一群同处)；这一门的据点——
+    须不在近旁、在一日路程内，押的是主角还须走得到(路线以去处收尾、没有止步缘由)；都不成即就地扣下(to 为 None)。
+    tab 是调用方给的名表(adjudicate.names，本模块不 import adjudicate)。返回 {by, who, to, intent}。"""
+    from . import access, lexicon  # access 引 situation、lexicon 是纯函数：用时才引
+    g, close, around = world.graph, situation.near(world), situation.around(world)
+    dist = g.distances(world.here)
+    for s in sorted(besiegers(world)):
+        intent = g.get(s, "intent") or ""
+        if not _grabs(intent):
+            continue
+        named = [n for n, _, _ in lexicon.find(intent, tab)]
+        leader, faction = g.get(s, "leader"), g.get(s, "faction")
+        people = [n for n in named if g.kind(n) == "person" and n != leader and not (faction and g.get(n, "faction") == faction)]
+        if people and not [p for p in people if p in around]:
+            continue  # 写了人而都不在眼前：另有所图
+        who = next((p for p in people if p in around), "player")
+        if forecast(world, who, s)["flee"]:
+            continue
+        lead_at = g.get(leader, "location") if leader and g.has(leader) and g.get(leader, "status") != "dead" \
+            and not g.get(leader, "hidden") and g.get(leader, "location") != g.get(s, "location") else None
+        tries = [n for n in named if g.kind(n) == "location"] + [lead_at, g.get(faction, "base") if faction else None]
+        to = None
+        for loc in tries:
+            if not loc or loc in close or dist.get(loc, 99) > 1:
+                continue
+            if who == "player":
+                route, why = access.walk(world, loc, 1)
+                if why or not route or route[-1] != loc:
+                    continue
+            to = loc
+            break
+        return {"by": s, "who": who, "to": to, "intent": intent}
+    return None
+
+
 def card(world, s) -> dict:
     """视锥里的一群人(给编剧)。v12 另有首领(leader：只在他也在主角眼前时)与眼下之事(intent)——引擎交编剧前由 perspective.veil 过掩码。"""
     g = world.graph
     leader = g.get(s, "leader")
     return {"name": s, "handle": handle(g, s), "count": standing(g, s), "down": g.get(s, "down") or 0, "dead": g.get(s, "dead") or 0,
             "desc": g.get(s, "desc"), "kit": _kit_text(g, s), "hostile": s in besiegers(world),
+            "holding": any(h == s and rel != BESIEGE for h, rel in holders(world)),  # v12 此刻正押着你
             "leader": leader if leader in situation.around(world) else None, "intent": g.get(s, "intent")}
 
 
@@ -342,7 +415,7 @@ def dissolve(world, s) -> str:
 
 
 def escape(world, who, s) -> str | None:
-    """脱身：一方之力过整群一半才冲得出去；冲得出去返回 None(调用方解围、挪人)。"""
+    """脱身：一方之力过整群一半才冲得出去；冲得出去返回 None(调用方解围、挪人)。被押着(v12)也一样。"""
     g = world.graph
     return None if forecast(world, who, s)["flee"] else f"冲不出{handle(g, s)}的围困：须有整群一半之力"
 

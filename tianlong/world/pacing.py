@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 re，world/situation 的 captors / imperiled / around / party / FOLLOW / CUSTODY、world/crowd 的 besiegers / squads / handle（v12 危局的单一口径）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
-[OUTPUT]: 对外提供 danger()（v12 危局的单一口径）、structural()（v12 结构性变化）、STALL_WARN、THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
+[OUTPUT]: 对外提供 danger()（v12 危局的单一口径）、structural()（v12 结构性变化）、STALL_WARN、STALL_SEIZE（v12 僵持满几回合即由规则照围困人群的打算押走）、THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
           advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：无人相逼、本幕未被打断才许光阴跳过——v5 悬而未决的一幕也可隔夜）、CUTS、STREAK / WINDOW / LOG
 [POS]: world 层的阻尼器——慢变量之外，剧情还会在「快变量」上打转：连着几回合都是被拦、赔罪、催促，同一个人反复同一句诉求，
        主角在一处僵持多回合而局面纹丝不动（43 回与 25 回两份实录里都见过）。这里只做确定性统计：按词表给每回合打主题标签、
@@ -33,6 +33,7 @@ CUTS = ("一顿饭", "半日", "一夜", "一日")  # 幕间省略可取的措�
 UNTIL = ("入夜", "天明", "正午")             # 幕间省略也可以是「到某一刻」：{"until": 入夜/天明/正午/某个时限}，换算归 story/timing
 TENSE = {"拦阻", "追杀"}                   # 本回合还在写这些，局面就没有平静下来
 STALL_WARN = 3                             # 危局僵持几回合，场记要求本回合须有结构性的变化(v12)
+STALL_SEIZE = 4                            # 僵持满几回合，再无结构性变化即由规则照围困人群写下的打算擒人押走(v12)
 
 
 def tag(text: str) -> list[str]:

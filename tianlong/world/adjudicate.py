@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 HARD / UNSURE 另有 afar（v12 望见之人开口）、judge(seek=…)（v12 小片区里寻人而至即遇：_found）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 HARD / UNSURE 另有 afar（v12 望见之人开口）、judge(seek=…)（v12 小片区里寻人而至即遇：_found）、judge(stall=…) / SEIZED（v12 僵持到期押走：_seize）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -30,15 +30,22 @@
        targets 认玩家说的钱(银子、钱)为够得着的碎银与钱袋、认写信留书为起意提笔；回合切面另记银两起止、经手之物(traded：拿了一部分、交出一部分)、有人倒下的人群；
        拍文里一群人有人倒下而账上人数没少即 fell(返工不作废)；forged 收紧为够得着之物(单字的名词须是器物名字的末字，「信」不是「内堂信笺」)，银两不是器物
        v10：回合开始记下眼前的人群(turn["flock0"]，主角先走一步他们仍可在后面的拍里结下随行)与眼前之人的银两(funds，谁的钱易手都对账)；WOUND 认一记耳光
+       v12 P1-7 僵持到期(_seize)：场的僵持计数不小于 pacing.STALL_SEIZE、本回合导演仍没写结构性变化，围困主角的人群照它写下的打算(crowd.seizure)擒人押走——
+       了断围攻、结下押解、那一群与被擒者前往去处，来源 RULED_BY(也是一处调遣)；先在副本上试，有一条落不了整桩不做、只记软违例；押的是主角即连那一群与在去处的首领上名册、
+       时间轴补上去处那一刻；连带写明谁照其所图把谁擒下押往哪里(或就地扣下)、turn["seized"] 记下；体检在此之前，看的是导演的拍。_custody 对人群押着主角而两端异地，提示同一拍里写那一群与主角都前往同一处
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
+import logging
 import re
 from dataclasses import dataclass, field
 
-from . import acts, actor, bond, crowd, effects, growth, lexicon, perspective, scenery, situation, stock, trade, venue
+from . import acts, actor, bond, crowd, effects, growth, lexicon, pacing, perspective, scenery, situation, stock, trade, venue
 from .graph import holds
 
+log = logging.getLogger("tianlong")
+
+SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押解→ 被擒者(situation.CUSTODY 之一)
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
         "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
@@ -283,10 +290,11 @@ def _drawn(world, beats: list) -> list[str]:
 
 
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
-          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None, seek=()) -> Ruling:
+          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None, seek=(), stall: int = 0) -> Ruling:
     """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力(门派级：只管补一队)；cast：此地原著的相关者（可作打断的来源）；
     reserved(v12 lod.reserved)：原著近事要用的人马 {人群: 事件}——写进 world.turn["reserved"]，effects 拦赶来、crowd 拦分人(试演与定稿各写一次，结算同样被拦)；
     seek(v12 menu.seeking)：玩家要找的人——诸拍与此地原著落定之后，他若同在主角近旁的小片区里而不在眼前，即上名册(连同同行者与扣着他的人)，寻到了；
+    stall(v12 场的僵持计数，旧场没有按 0)：不小于 pacing.STALL_SEIZE 而本回合没有结构性变化，规则照围困人群写下的打算擒人押走(_seize)；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
     then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
     一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
@@ -392,8 +400,43 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
                            "money": money0, "flock": flock0, "funds": funds0}  # 编剧成文之后的对账也以此为准
     _examine(world, r, shown, power0, stripped, named)
     _question(world, r, cast, no_interrupt and 0 not in drop)
+    _seize(world, r, stall, world.here != here0)
     r.notes = list(world.turn.get("notes", []))
     return r
+
+
+def _seize(world, r: Ruling, stall: int, moved: bool):
+    """僵持到期(v12)：危局连着 STALL_SEIZE 回合没有结构性变化、本回合导演仍没写，围困主角的人群照它写下的打算(crowd.seizure)擒人押走——
+    规则只照剧情写下的打算落账，不替导演编剧情。指令依次为：了断那一群对主角的围攻、结下 那一群 —押解→ 被擒者、有去处时那一群与被擒者都前往去处；
+    来源 RULED_BY(也是一处调遣：本回合已被别处挪过的人押不走)。先在副本上试，全部成立才在本世界照做；有一条落不了(另有一群人也围着主角)整桩不做，只记软违例。
+    押的是主角且有去处：那一群与在去处的首领上名册(押到首领跟前)，时间轴补上去处那一刻；押的是别人，不动主角的名册。体检在此之前，看的是导演的拍。"""
+    if stall < pacing.STALL_SEIZE or pacing.structural(r.applied, moved):
+        return
+    plan = crowd.seizure(world, names(world)[0])
+    if not plan:
+        return
+    g, s, who, to = world.graph, plan["by"], plan["who"], plan["to"]
+    ops = [{"op": "unlink", "src": s, "dst": "player", "rel": crowd.BESIEGE}, {"op": "link", "src": s, "dst": who, "rel": SEIZED}]
+    ops += [{"op": "set", "id": x, "key": "location", "value": to} for x in (s, who)] if to else []
+    trial = copy.copy(world)
+    trial.graph, trial.player, trial.turn, trial.knowledge = (copy.deepcopy(x) for x in (world.graph, world.player, world.turn, world.knowledge))
+    _, rejected = effects.apply(trial, copy.deepcopy(ops), effects.RULED_BY)
+    if rejected:
+        why = "；".join(f"{effects.describe(op)}——{reason}" for op, reason in rejected)
+        r.soft.append(lexicon.Finding("seize", 0, s, f"僵持到期，{crowd.handle(g, s)}照其所图擒人不成：{why}", hard=False))
+        log.info("僵持到期押走不成：%s", why)
+        return
+    applied, _ = effects.apply(world, ops, effects.RULED_BY)
+    r.applied += applied
+    if who == "player" and to:
+        lead = g.get(s, "leader")
+        situation.enlist(world, [s] + ([lead] if lead and g.has(lead) and g.get(lead, "location") == to and g.get(lead, "status") != "dead" else []))
+        moments = world.turn.setdefault("moments", [])
+        if not moments or moments[-1]["here"] != world.here:  # 正文在去处听到的名字才落得到人
+            moments.append({"here": world.here, "ears": set(), "bodies": set()})
+    world.turn["seized"] = {"by": s, "who": who, "to": to}
+    effects._note(world, f"{crowd.handle(g, s)}照其所图，将{'你' if who == 'player' else who}擒下，{f'押往{to}' if to else '就地扣下'}")
+    log.info("僵持到期押走：%s", world.turn["seized"])
 
 
 def _found(world, seek):
@@ -480,14 +523,21 @@ def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tup
 
 
 def _custody(world, r: Ruling, touched: dict[str, int]):
-    """不变量：擒者与人质同处一地。本回合碰过其中一方而两人分处两地，是哪一拍写歪了，就记在哪一拍上。"""
-    for e in world.graph.edges:
+    """不变量：擒者与人质同处一地。本回合碰过其中一方而两人分处两地，是哪一拍写歪了，就记在哪一拍上。
+    v12 一群人押着主角而两端异地：押走就在同一拍里写那一群与主角都前往同一处，不押了就写了断。"""
+    g = world.graph
+    for e in g.edges:
         if e["rel"] not in situation.CUSTODY:
             continue
         a, b = e["src"], e["dst"]
         beat = max(touched.get(a, 0), touched.get(b, 0))
         pa, pb = effects.place(world, a), effects.place(world, b)
-        if beat and pa and pb and pa != pb:
+        if not (beat and pa and pb and pa != pb):
+            continue
+        if b == "player" and crowd.is_squad(g, a):
+            r.hard.append(lexicon.Finding("custody", beat, b, f"第{beat}拍之后你在{pb}、押着你的{crowd.handle(g, a)}却在{pa}：押走就在同一拍里写"
+                                                             f"那一群与主角都前往同一处；不押了就写 了断 {a}→player {e['rel']}"))
+        else:
             r.hard.append(lexicon.Finding("custody", beat, b, f"第{beat}拍之后{b}在{pb}、擒住{b}的{a}却在{pa}：擒者走则人质随之；"
                                                              f"要{b}随你走，须先写明救下{b}（了断拘押、结下随行）"))
 

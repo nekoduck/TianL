@@ -18,7 +18,8 @@
        「在眼前」只有一个口径(around)：裁决、选项、视锥、认知校正、见证人数、原著的分身之禁都读它。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
-       v12 同行与押解随调遣：导演挪动一个人，他的同行者与人质一并同去(effects 据 carried 连带落账)；原著挪人不带人，回合末两端异地的同行由 sunder 了断；离队的同伴不再瞬移回主角身边
+       v12 同行与押解随调遣：导演挪动一个人，他的同行者与人质一并同去(effects 据 carried 连带落账)；原著挪人不带人，回合末两端异地的同行由 sunder 了断；离队的同伴不再瞬移回主角身边；
+       P1-7 擒者是人群、两端异地的拘押(原著挪走首领，人群随之而去)回合末也由 sunder 了断
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import access, venue
@@ -334,7 +335,7 @@ def carried(world, pid: str, at: str | None) -> list[str]:
 
 def sunder(world) -> list[str]:
     """回合末了断名存实亡的同行(engine 在 sweep 之后调)：NPC 之间两端异地(不在彼此近旁)的随行了断(原著把段誉挪走，钟灵留下)；
-    随行→主角的边，随行者不在主角近旁也了断。返回说明，写日志。"""
+    随行→主角的边，随行者不在主角近旁也了断；擒者是人群、两端异地的拘押也了断(v12 P1-7)。返回说明，写日志。"""
     g, out, close = world.graph, [], near(world)
     for e in [e for e in g.edges if e["rel"] == FOLLOW]:
         a, b = e["src"], e["dst"]
@@ -347,6 +348,13 @@ def sunder(world) -> list[str]:
         if apart:
             g.unlink(a, b, FOLLOW)
             out.append(f"{a}与{'你' if b == 'player' else b}已不同行")
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    for e in [e for e in g.edges if e["rel"] in CUSTODY and crowd.is_squad(g, e["src"])]:  # 人群的拘押两端异地(原著挪走首领，人群随之而去)：了断
+        a, b = e["src"], e["dst"]
+        la, lb = g.get(a, "location"), (world.here if b == "player" else g.get(b, "location"))
+        if not la or not lb or lb not in near(world, la):
+            g.unlink(a, b, e["rel"])
+            out.append(f"{'你' if b == 'player' else b}不再受{crowd.handle(g, a)}看押")
     return out
 
 

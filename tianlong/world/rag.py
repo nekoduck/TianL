@@ -18,7 +18,7 @@
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
        v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
-       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁；焦点里同在这一片而不在眼前的人写明主角正在寻他；视锥另有远处可见(afar)，后台另有隔着关口望得见(vista)
+       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁；焦点里同在这一片而不在眼前的人写明主角正在寻他；视锥另有远处可见(afar)，后台另有隔着关口望得见(vista)；身况标签把人群的押解与围攻并列(被X押着)
        v11：近事里场外编剧排进日程的衍生事件标作「场外剧情」，与原著一样只可借风声伏笔；dossier 是场外编剧任务书里一个人的底子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -43,6 +43,7 @@ def condition(world) -> list[dict]:
         tags.append({"text": me["posture"], "tone": "plain"})
     tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
     tags += [{"text": f"被{crowd.handle(world.graph, s)}围住", "tone": "warn"} for s in crowd.besiegers(world)]  # 人群(v9)
+    tags += [{"text": f"被{crowd.handle(world.graph, s)}押着", "tone": "warn"} for s, rel in crowd.holders(world) if rel != crowd.BESIEGE]  # v12
     tags += [{"text": f"持有{i}" + (f"（{stock.measure(world.graph, i)}）" if stock.measure(world.graph, i) else ""), "tone": "plain"}
              for i in me["carrying"]]
     if me["money"] > stock.EPS:  # 银两(v9)：是数不是器物

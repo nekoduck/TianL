@@ -2,7 +2,7 @@
 [INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track / carried / enlist（情境层与连带；v12 同行与押解随调遣）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
-         world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
+         world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / holders / is_squad / handle（人群与围攻；v12 押解）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
 [OUTPUT]: 对外提供 SOFT_KEYS（v12 人的软状态）、KNOW（v12 识名指令连来历一并说破）、apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
@@ -42,7 +42,8 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
-       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过(或望见)的人即可落账，不看回合末所在；同批的望见排在主角移动之后
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过(或望见)的人即可落账，不看回合末所在；同批的望见排在主角移动之后；
+       P1-7 被一群人押着也走不脱(_held 读 crowd.holders：围攻写团团围住，押解写押着)，押着他的那一群同批已先到了他要去的地方就不拦——导演一拍押走照样成立
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -817,6 +818,18 @@ def _noop(world, op) -> bool:
     return key in ("location", "holder", "faction", "hidden", "spot") and g.get(nid, key) == op.get("value")
 
 
+def _held(world, dest) -> str | None:
+    """主角要走，却被人群拘着(crowd.holders)：围攻即团团围住；押解等其余拘押即押着——押着他的那一群已先到了他要去的地方(同批里先挪了那一群)就不拦，
+    导演一拍写「了断围攻、结下押解、那一群前往X、主角前往X」照样成立(v12)。"""
+    g, hold = world.graph, crowd.holders(world)
+    ring = [s for s, rel in hold if rel == crowd.BESIEGE]
+    if ring:
+        return f"被{'、'.join(crowd.handle(g, s) for s in ring)}团团围住，走不脱：写脱身，成败看群战预裁"
+    spots = situation.near(world, dest) if g.kind(dest) == "location" else {dest}
+    guard = [s for s, rel in hold if g.get(s, "location") not in spots]
+    return f"被{'、'.join(crowd.handle(g, s) for s in guard)}押着，走不脱：写脱身，成败看群战预裁" if guard else None
+
+
 def _hearers(world, op) -> list[str]:
     """识名指令的听者：写了 to 只那一人，否则此刻在场的人(说名字的人自己不算)。"""
     return [op["to"]] if op.get("to") else sorted(perspective.audience(world) - {op.get("id")})
@@ -876,9 +889,11 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
         if reason:
             rejected.append((op, reason))
             continue
-        if _moves_player(world, op) and crowd.besiegers(world) and op["value"] != world.here:  # 被一群人围住(v9)：走不脱，只有脱身
-            rejected.append((op, f"被{'、'.join(crowd.handle(world.graph, x) for x in crowd.besiegers(world))}团团围住，走不脱：写脱身，成败看群战预裁"))
-            continue
+        if _moves_player(world, op) and op["value"] != world.here:  # 被一群人围住(v9)、押着(v12)：走不脱，只有脱身
+            held = _held(world, op["value"])
+            if held:
+                rejected.append((op, held))
+                continue
         if _moves_player(world, op):  # 远行：途中遇关或绝路即止步于前，光阴走满即途中歇脚；前半程照走，后半程回告编剧
             front = venue.door(world, op["value"])  # 走进店里(v11)：进的是前堂，掌柜伙计与货都在屋里
             if front:

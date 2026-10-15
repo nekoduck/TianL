@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 story/scene（场）、story/stakes（时限）、story/arc（主角线）、story/setups（系统伏笔），world/situation 的 around，World 门面的 graph / player（鸭子类型）
+[INPUT]: 依赖 story/scene（场）、story/stakes（时限）、story/arc（主角线）、story/setups（系统伏笔），world/situation 的 around，world/pacing 的 danger 与僵持阈值，world/crowd 的 seizure 与 world/adjudicate 的 names（v12 僵持押走的预告），World 门面的 graph / player（鸭子类型）
 [OUTPUT]: 对外提供 compose()（本回合的场记：几行字 + 主干的来源 canon/clock/crisis(v12)/setup/scene/arc/agenda/deed）、allow_pull()（轮转：原著连占三场主干，就不再提前拉原著）、remember()（记下本回合主干的来源）、SPINES
 [POS]: story 层的戏剧调度器与场记——给导演的焦点：确定性地选出本回合的主干，优先级(v5，与 L1 宪法同构)
        主角眼前上演的原著(v11 场外编剧写到主角跟前的那一桩同此) > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(无人、或主角线刚有进展则是主角线) > 顺着主角的举动推进；
@@ -7,13 +7,29 @@
        轮转：最近 SPINES 回合的主干都来自原著，就不再提前拉原著(到期的照演)，让主角线有机会作主干——「段誉占四成」由此回落。
        场记是导演上下文的第一节、「至少要处理什么」而非「只处理什么」：场况与问题、主干、开场时眼前有谁(抵达即遭遇)、
        在场各怀打算之人(不得当他们不在)、已试路数、最急的时限、主角线、伏笔、光阴与收场提示；
-       v12 危局：危局里新开的场主干是眼前的危局(不落回某人的图谋)；危局僵持满 STALL_WARN 回合，写明本回合须有结构性的变化
+       v12 危局：危局里新开的场主干是眼前的危局(不落回某人的图谋)；危局僵持满 STALL_WARN 回合，写明本回合须有结构性的变化，
+       并说明僵持下去系统的兜底(P1-7 _seizing：围困的人群照其所图把谁擒下押往哪里；满 STALL_SEIZE 即本回合；没写打算即教导演写)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from ..world import pacing, situation
+from ..world import adjudicate, crowd, pacing, situation
 from . import arc, scene, setups, stakes
 
 SPINES = 3
+
+
+def _seizing(world, stall: int) -> list[str]:
+    """僵持下去系统会怎样兜底(v12 P1-7)：围困的人群写下了擒人的打算即说明它将擒谁押往哪里(满 STALL_SEIZE 即本回合)；
+    没写而有人群围着主角，教导演写打算；危局里没有人群围攻(只是命悬一线)就不写。"""
+    plan = crowd.seizure(world, adjudicate.names(world)[0])
+    if plan:
+        g = world.graph
+        who = "主角" if plan["who"] == "player" else plan["who"]
+        whither = f"押往{plan['to']}" if plan["to"] else "就地扣下"
+        when = "本回合" if stall >= pacing.STALL_SEIZE else ""
+        return [f"{when}再无结构性变化，{crowd.handle(g, plan['by'])}将照其所图把{who}擒下{whither}（系统落账）"]
+    if crowd.besiegers(world):
+        return ["这群人若要擒人，写 打算（谁=那一群，为=擒下某人押往某处）；再僵持下去系统照此落账"]
+    return []
 
 
 def allow_pull(world) -> bool:
@@ -88,6 +104,7 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     if sc.get("stall", 0) >= pacing.STALL_WARN:  # 危局僵持(v12)：与场的上限并存——上限管一场演多久，僵持管危局里有没有动
         lines.append(f"危局已僵持{sc['stall']}回合：本回合须有结构性的变化——被擒押走、脱身、有人赶来解围、谈妥罢手（了断围攻）或有人倒下；"
                      "只扣气血、只改打算不算；上回合已说过的话不再原样重说")
+        lines += _seizing(world, sc["stall"])
     lines.append("光阴：pace 照拍里的事如实取；无人相逼时，平静的光阴(等候、练功、歇宿、赶路)用 cut 跳过，不必逐刻细磨"
                  "（可写一段长度，或 {\"until\":\"入夜/天明/正午/某个时限\"}）；本场有了结果才写合")
     return {"text": "\n".join(lines), "spine": spine, "tension": scene.tension(sc, bool(hurry and hurry[1] == "迫在眉睫"))}
