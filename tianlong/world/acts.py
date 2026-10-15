@@ -272,8 +272,19 @@ def _move(world, ops) -> tuple[list, str | None]:
 def _item(world, item) -> str | None:
     g = world.graph
     if not isinstance(item, str) or g.kind(item) != "item":
-        return f"世上没有「{item}」这件器物"
+        return f"世上没有「{item}」这件器物" + (f"；器物一件也不新造，要用此地与身边的东西，就用后台列着的原名" if isinstance(item, str) else "")
     return None if effects.usable(world, item) else f"{item}已不复存在"
+
+
+def where(world, item) -> str:
+    """一件东西此刻在哪(v14 驳回给正解)：在谁手里、在哪一处(暗藏注明找法)——返工清单写明，导演不必另编一件。"""
+    g = world.graph
+    holder = g.get(item, "holder")
+    if holder:
+        return f"在{_who(world, holder)}手里"
+    loc = g.get(item, "location")
+    hint = g.get(item, "hint") if g.get(item, "hidden") else None
+    return f"在{loc}" + (f"，暗藏着（{hint}）" if hint else "，暗藏着" if g.get(item, "hidden") else "")
 
 
 def _take(world, a, who, heading):
@@ -287,7 +298,7 @@ def _take(world, a, who, heading):
     if holder not in (None, who):
         return [], f"{item}在{_who(world, holder)}手里：要么他交给，要么偷取、夺取"
     if holder is None and not _reach(world, who, item, heading):
-        return [], f"{item}不在此地，够不着" + ("（暗藏着，要人到了那里才找得着）" if g.get(item, "hidden") else "")
+        return [], f"{item}不在此地，够不着：它{where(world, item)}——此处写不出它，要先到那里" + ("、照找法找出来" if g.get(item, "hidden") else "")
     if stock.purse(g, item) > stock.EPS and n:  # 从钱袋里取钱：钱袋留着
         if n > stock.purse(g, item) + stock.EPS:
             return [], f"{item}里只有{stock.say(stock.purse(g, item))}"

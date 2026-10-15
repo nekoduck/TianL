@@ -170,7 +170,7 @@ def _akin(world, name: str, scene_only: bool = False) -> str | None:
         if name in n or n in name or (set(name) <= set(n) and len(n) - len(name) <= 2):
             return (0, abs(len(n) - len(name)), t, 0)
         common = _common(name, n)
-        if common >= max(3, (len(name) + 1) // 2):
+        if common >= max(3, (min(len(name), len(n)) + 1) // 2):  # v14 过半看两者里短的那个：「北冥神功兼凌波微步帛卷」→「北冥神功卷轴」(run1 第 12 回认不回，返工把奇遇演没了)
             return (1, t, -common, 0)
         desc = g.get(n, "desc") or ""
         if t == 0 and _common(where, n) < 2 and any(head[i:i + 2] in desc for i in range(len(head) - 1) if THINGISH.search(head[i:i + 2])):
@@ -814,6 +814,15 @@ def _ruled(world, op, origin) -> str | None:
             "发作与消退由系统按光阴结算；服了对不上的药，毒仍在")
 
 
+ATMOSPHERE = re.compile(r"气氛|肃杀|惊愕|满座|满厅|寂静|死寂|静谧|幽寂|云雾|缭绕|杀气|凝重|紧张|骚乱|喧哗|大乱|乱作一团|鸦雀无声|剑拔弩张|人人|众人|一片|前路已绝|深不见底|万丈|无底")
+LASTING = re.compile(r"[开闭关塌毁烧焚破裂封堵移倒断碎撬挖拆空搬锁撕沉淹陷燃熄灭尸翻掘凿埋藏插钉]|血迹|狼藉|不见了|换了")
+
+
+def fleeting(text: str) -> bool:
+    """一句现状只是一时的气氛或描写，不是长久的物理之变(v14)：有气氛描写的字眼、却没有一个开闭毁坏挪动的字眼。"""
+    return bool(ATMOSPHERE.search(text)) and not LASTING.search(text)
+
+
 def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
     「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
@@ -832,6 +841,8 @@ def _noop(world, op) -> bool:
         return kind == "set" and key == "location" and op.get("value") == world.here
     if kind != "set" or not isinstance(nid, str) or not g.has(nid):
         return False
+    if key == "state" and isinstance(op.get("value"), str) and g.kind(nid) in ("location", "feature", "item") and fleeting(op["value"]):
+        return True  # v14 现状只记长久之变：一时的气氛与描写(满座惊愕、气氛肃杀、云雾缭绕)不入账，日后当作事实读(run1 第 7 回山崖「前路已绝」而图上有路下谷底)
     if key == "status":  # 剧情上的伤另有一笔：气血养好而原著之伤仍在的人，明写「安好」不是空话
         return g.get(nid, key) == op.get("value") and bool(g.get(nid, PLIGHT)) == (op.get("value") == "wounded")
     return key in ("location", "holder", "faction", "hidden", "spot") and g.get(nid, key) == op.get("value")

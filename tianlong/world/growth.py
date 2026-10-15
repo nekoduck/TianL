@@ -159,7 +159,8 @@ def _progress(world, source: str, art: str) -> str:
     wait = max(0, rec["since"] + gap - world.clock.day) if rec["stage"] else 0
     spent = f"（已习练{rec['minutes']}分钟，折合功候{rec['credit']}）" if rec["credit"] != rec["minutes"] else ""
     return (f"{art}：{STAGES[rec['stage'] - 1][0] if rec['stage'] and not skill else ('入门' if rec['stage'] else '未入门')}，"
-            f"距「{name}」尚需研习{max(0, need - rec['credit'])}分钟{spent}" + (f"、且须再隔{wait}日" if wait else ""))
+            + (f"火候已到「{name}」的门槛，只差一回顺利的研习{spent}" if 0 < need - rec["credit"] <= 1 else  # v14 受阻卡在门槛下：不报「尚需1分钟」
+             f"距「{name}」尚需研习{max(0, need - rec['credit'])}分钟{spent}") + (f"、且须再隔{wait}日" if wait else ""))
 
 
 def drain(world, target: str, art: str) -> str:

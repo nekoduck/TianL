@@ -303,7 +303,8 @@ class AgreementTest(unittest.TestCase):
         self.assertEqual(r.candidates, ["取走琅嬛洞烛台"])
         self.assertIn("取走琅嬛洞烛台——主角并未起意，未曾发生", r.void)                 # 编剧知道那件事没有发生
         self.assertIn("「取走琅嬛洞烛台」主角并未起意", r.beats[0]["text"])
-        self.assertEqual(r.hard, [])                                                  # 剥掉的那件不再算拍文违例
+        self.assertEqual([f.kind for f in r.hard], ["overreach"])                     # v14 越权的物理之举先交返工(拍文写着做了，编剧会照写)
+        self.assertEqual(adjudicate.doomed(r), {})                                    # 返工仍写才剥掉，不作废整拍
 
     def test_a_narrated_hand_is_still_the_players(self):
         w = self.w

@@ -67,9 +67,11 @@ MASTERY_LEVELS = (  # 进境措辞所需的阶：1 入门即可、2 小成、3 �
     (1, r"练成|学会|学成|领悟了|运转如意|得心应手|身如游龙|已然入门|初窥门径|入门|练熟了|使得有模有样|摸到了门径"),
 )
 MASTERY = re.compile("|".join(rx for _, rx in MASTERY_LEVELS))
+GATEWAY = re.compile(r"的?(?:法门|之法|门径|之道|的路子|之门)")  # 「入门法门」「入门的门径」说的是门，不是入了门(v14)
 PRACTICE = re.compile(r"练|演|参研|参悟|参详|钻研|研习|研读|修习|习练|运功|拆解|揣摩|照着.{0,6}(?:图|谱|卷|书)|比划|修炼|吐纳|打坐|依法|按图|"
                       r"摸索.{0,4}(?:心法|内功|功夫|步法|招式|口诀)")
-YET = re.compile(r"尚未|还未|未曾|不曾|远未|仍未|未能|没能|不能|难以|无法|何时才能|若能|但愿|盼着|梦想")
+YET = re.compile(r"尚未|还未|未曾|不曾|远未|仍未|未能|没能|不能|难以|无法|何时才能|若能|但愿|盼着|梦想"
+                 r"|摸不着|摸不到|找不着|找不到|不得其门|不得要领|难入|难窥|未入|未得|没摸到|无从|门径也无")  # v14「全然摸不着入门的门径」不是入了门
 # 器物入戏(v8 场景清单)：有人拿出、取来、递上一件东西——动词后紧跟的器物名词由 ware() 摘出，那东西须是世上有的(调用方对账)
 PRODUCE = re.compile(r"取出|掏出|摸出|拿出|翻出|捧出|端出|取来|拿来|捧来|端来|送来|递来|递上|递过|呈上|献上|奉上|送上|交给|递给|塞给|交与|递与|端上|斟上|摆上|沏上|盛上|"
                      r"拾起|捡起|拿起|抓起|抄起|捧起|去取|取下|取走|取过|取回|取得|取了|取(?!信于)")
@@ -219,7 +221,8 @@ def mastery(text: str, who=None) -> list[str]:
     out = []
     for clause in _clauses(text or ""):
         if ("你" in clause or who in (None, "player")) and not YET.search(clause) and not REMOTE.search(clause):
-            out += MASTERY.findall(clause)
+            out += [m.group(0) for m in MASTERY.finditer(clause)  # v14「仍难参透入门法门」：前头有难不未没无、后头是法门门径的，是在找门，不是入了门
+                    if not re.search(r"[难不未没无]", clause[max(0, m.start() - 6):m.start()]) and not GATEWAY.match(clause, m.end())]
     return list(dict.fromkeys(out))
 
 

@@ -86,6 +86,9 @@ REACH = re.compile(r"(?:到|至|进|入|上|抵|回|往|赴|奔|去|在|于)[了
 # ============================================================
 #  出闸：正文按段放行——对齐到时刻 → 听(报了姓名先入账，那一刻的听众听见) → 掩(按说话人) → 放行；放行的就是存下的
 # ============================================================
+MOOD = re.compile(r"〔[^〕\n]{0,10}〕|（此刻情绪：[^）\n]{0,10}）")
+
+
 class Gate:
     """正文出闸。一段齐了：先对齐到时刻(这一段写的是主角在哪一处、哪一拍的事)，在那一刻的听众里听这一段谁报了姓名
     (perspective.hear → effects)，再按每段台词的说话人过视角掩码，再放行。段与段之间的换行等下一段放行时才补上——
@@ -135,7 +138,7 @@ class Gate:
         return None if k is None else self._at(k)
 
     def _let(self, chunk: str, listen: bool = True) -> str:
-        out, lines = [], chunk.split("\n")
+        out, lines = [], MOOD.sub("", chunk).split("\n")  # v14 拍上的情绪标注只作渲染，编剧照抄进正文的剥掉(run1 第 17 回「你〔狂喜〕难抑」)
         for i, line in enumerate(lines):
             if line.strip():
                 lead = ("\n\n" if len(self._gap) > 1 else self._gap) if (self.parts or out) else ""
@@ -352,6 +355,19 @@ def admit(world, op) -> str | None:
     return None
 
 
+def _benign(world, op) -> bool:
+    """读者已读到的主角平常之举(v14)：拿起无主之物(此地、近旁，够不够得着交 effects 照常裁决)。取人之物、偷夺、伤人杀人、花钱写信仍须授意。"""
+    g = world.graph
+    if acts.is_act(op):
+        a = acts.normalize(world, op)
+        item = a.get("物")
+        return a.get("做") == "拿取" and a.get("谁", "player") == "player" and g.kind(item) == "item" and not g.get(item, "holder") \
+            and not stock.is_cash(g, item)
+    item = op.get("value") if op.get("key") == "inventory" else op.get("id") if op.get("key") == "holder" else None
+    return op.get("op") in ("push", "set") and isinstance(item, str) and g.kind(item) == "item" and not g.get(item, "holder") \
+        and not stock.is_cash(g, item)
+
+
 def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = None) -> tuple[list, list[str]]:
     """账房的结算单 {changes:[{据, 谁, ops}], rifts:[{据, 账上}]} 落账。据须是正文原句(去掉标点空白后是正文的一段，至少 BASIS 字)——
     对不上的是账房自己编的，不收；规则之事与落不了的变化记作分歧。主角之举(谁=主角)须在玩家所指之内(adjudicate.unbidden)：
@@ -378,6 +394,9 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
                 keep.append(op)
         for op, act, _ in adjudicate.unbidden(world, keep if mine else [o for o in keep if acts.is_act(o)],
                                               set(aim) | {adjudicate.SELF}):  # 事码写明了谁做：谁的单子都查；正文里主角已经开口报了名，读者读到的就是定本，照记（v13 授意管的是导演替主角报名）
+            if _benign(world, op):  # v14 读者读到的平常之举照记：拿起近旁无主之物，正文是定本，不改写历史(run1 第 16 回文里帛卷在手、账上仍在蒲团)
+                log.info("正文里主角%s，玩家并未起意；平常之举，照正文记账：%s", act, basis)
+                continue
             rifts.append(f"正文「{basis}」：主角{act}——玩家并未起意，不入账")
             keep = [o for o in keep if o is not op]
         with perspective.moment(world, *((gate.at(basis) if gate else None) or ())):  # 这句话是在哪一刻说的：那一刻在场的人听见
@@ -578,15 +597,21 @@ def delta(world, before: dict) -> list[dict]:
     for s in sorted(set(now["secrets"]) - set(before["secrets"])):
         src, dst, rel = s.split("|")
         if rel == ROAD:  # 暗路是地图上的一条路，不是人与人的关系（补记曾把内部字段 road 露给读者）
-            add(f"secret:{s}", f"你发现了{src.split('·')[-1]}与{dst.split('·')[-1]}之间的一条暗路", "暗路")
+            close, known = situation.near(world, now["here"]), lambda loc: loc in world.knowledge.beliefs
+            ends = [loc for loc in (src, dst) if loc not in close]  # v14 脚下这一头不必报，只报通往哪里；主角没到过、没听说过的地名不报
+            if len(ends) == 1:
+                add(f"secret:{s}", f"你发现了一条{'通往' + ends[0].split('·')[-1] + '的' if known(ends[0]) else ''}暗路", *PASSAGE)
+            else:
+                add(f"secret:{s}", f"你发现了{src.split('·')[-1]}与{dst.split('·')[-1]}之间的一条暗路" if known(src) and known(dst) else "你发现了一条暗路", *PASSAGE)
         else:
             add(f"secret:{s}", f"你得知{face(src)}是{face(dst)}的{rel}", rel)
     for art, stage in now["arts"].items():
-        if before["arts"].get(art) != stage and now["arts"].get(art) and stage:
+        if before["arts"].get(art) != stage and now["arts"].get(art) and stage and "未" not in stage:  # v14 「已到未入门」不是一阶进境
             add(f"art:{art}:{stage}", f"你的{art}已到{stage}", art)
     return out
 
 
+PASSAGE = ("暗路", "暗门", "石门", "密道", "暗道", "通道", "洞口", "石隙", "门户", "石级", "石阶", "入口", "出口", "门缝")  # v14 正文写到推开了门、钻进了洞，就是写到了这条暗路
 EXACT = ("here:", "got:", "lost:", "name:", "secret:", "art:")  # 字眼确凿的变化(地名、物名、人名、隐情、功夫)：正文里一字未见即没写到
 
 

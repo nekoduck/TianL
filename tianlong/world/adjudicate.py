@@ -54,9 +54,9 @@ log = logging.getLogger("tianlong")
 
 SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押解→ 被擒者(situation.CUSTODY 之一)
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar", "stay"}
+        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar", "stay", "overreach"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure", "stay"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure", "stay", "overreach"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
 
 
 @dataclass
@@ -161,6 +161,7 @@ def targets(world, deed: str, given=()) -> set[str]:
 TO_YOU = re.compile(r"(?:给|与|到|进|入)你|(?:向|朝)你(?:抛|掷|扔|递)")  # 你是收受的一方：东西是别人给的
 WRITE = "@书写"   # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
 TRADE = "@交易"   # 玩家原话里起意买卖、吃喝、住店、请医、打听(v11)：花的是主角的钱，以此为记
+SEARCHING = re.compile(r"找|寻|搜|翻|掏|摸索|拆开|撕开|挖|撬")  # 玩家原话是在搜寻(v14)：搜出来的无主之物顺手拿起不算越权
 STUDY = "@研习"   # 玩家原话里起意研习、练功(v13 授意是义务)：这一回合主角留在原处习练，导演不得带他走开(本幕有来源地被打断除外)，漏写研习由系统补一拍
 SELF = "@自报"    # 玩家原话里起意搭话、自报家门(v13)：主角的姓名只有玩家起意才由导演宣告
 VOW = "@立志"     # 玩家原话里起意立志发愿(v13)：主角的所求只有玩家立志、或主角线已了结时才改
@@ -204,8 +205,20 @@ def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]
     stay = bool((getattr(world, "turn", None) or {}).get("stay"))
     allowed = allowed | {effects.resolve(world, a) for a in allowed}  # 玩家所指的叫法(蒲团里的帛卷)落回实体
 
-    def ok(item):
-        return item in allowed or g.get(item, "holder") in allowed or item in world.player["inventory"]
+    turn = getattr(world, "turn", None) or {}
+    veiled = turn.get("veiled") or set()
+    unveil = {effects.resolve(world, op.get("id")) for op in ops if isinstance(op, dict) and op.get("op") == "set"
+              and op.get("key") == "hidden" and op.get("value") is False}  # 这一批里揭开的暗藏
+
+    def found(item) -> bool:  # v14 顺手之物：回合开始时暗藏在近旁的无主之物，本回合被揭了出来，而玩家此举就指着那一处(对象在那里)或是在搜寻
+        if item not in veiled or g.get(item, "holder") or (g.get(item, "hidden") and item not in unveil):
+            return False
+        spot = g.get(item, "location")
+        return bool(SEARCHING.search(turn.get("deed") or "")) or any(
+            a == spot or (g.kind(a) in ("item", "feature") and g.get(a, "location") == spot) for a in allowed if isinstance(a, str))
+
+    def ok(item):  # run1 第 16 回磕首千遍、蒲团破裂，帛卷就在脚边——拿起它是这一举的自然收尾；不相干的举动里顺手揣走暗藏之物仍是越权(第 72 回顺手夺草)
+        return item in allowed or g.get(item, "holder") in allowed or item in world.player["inventory"] or found(item)
     taught = {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []}  # 指着某人，即可向他求教
     arts = {k for x in allowed if g.kind(x) in ("item", "skill") for k in growth.arts_of(g, x)}  # 指着秘籍，即指着它所载的武学
 
@@ -360,6 +373,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     hp0 = world.player["hp"]
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
+    world.turn["veiled"] = {i for loc in situation.near(world) for i in g.where(type="item", location=loc)
+                            if g.get(i, "hidden") and not g.get(i, "holder")}  # v14 回合开始时暗藏在近旁的无主之物：本回合找出来，顺手拿起不算越权(unbidden)
     money0 = stock.funds(world, "player")
     funds0 = {p: stock.funds(world, p) for p in around0 | {"player"} if p == "player" or g.kind(p) == "person"}  # v10 谁都对银两账
     flock0 = {s: crowd.standing(g, s) for s in crowd.squads(world)}  # 人群(v9)：回合开始时站着几人
@@ -408,9 +423,12 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
                         allowed)  # 事码写明了谁做(v9)：谁的拍都查；研习的回合里，谁的拍都不得带主角走开(v13)
         if over:  # 系统不替玩家做主：只剥掉越权的那几条，这一拍其余照演；越权之举留作下回合的选项，并明告编剧它没有发生
             deeds = [act for _, act, _ in over]
-            r.candidates += [a for a in deeds if a not in r.candidates]
+            r.candidates += [act for _, act, ent in over if ent not in (SELF, VOW) and act not in r.candidates]  # v14 候选只收看得见的举动：所求、报名不强插成选项(run1 第 3、4 回「改写你的所求」「报上姓名」)
             r.void += [f"{a}——主角并未起意，未曾发生" for a in deeds]
             r.soft.append(lexicon.Finding("agency", i, "、".join(deeds), f"第{i}拍替主角{'、'.join(deeds)}，玩家并未授意"))
+            acted = [act for _, act, ent in over if ent not in (SELF, VOW)]
+            if acted:  # v14 越权的物理之举先交返工：拍文写着做了、账上却没做，编剧会照拍文写(run1 第 16 回)；返工仍写才剥掉
+                r.hard.append(lexicon.Finding("overreach", i, "、".join(acted), f"第{i}拍替主角{'、'.join(acted)}，玩家并未授意"))
             stripped |= {ent for _, _, ent in over}
             raw = [op for op in raw if all(op is not o for o, _, _ in over)]
             if not raw:  # 这一拍只做了越权之事：整拍不演
@@ -820,10 +838,17 @@ def brief(world, ruling: Ruling) -> list[str]:
                 line += "；只是远远望见就写 望见；主角走到别处才望见的，望见写在走到之后"
         elif f.kind == "afar":
             line += "（远远望见的人说什么主角听不到：删去他的台词，或写他赶来、主角走过去）"
+        elif f.kind == "overreach":  # v14 主角只做玩家所选之事：写到那件东西露出来、到了眼前为止，做不做留给玩家
+            line += "——主角只做玩家所选之事：这一拍写到它露出来、摆在眼前为止，拿不拿、做不做留给玩家下回合选；拍文与事码都不写他做了"
         elif f.kind == "move":  # 体检只陈述事实，怎么改是给导演的话：不随作废缘由流到编剧那里
             line += "（主角真要去留就写 前往；没走成就改写成正要前往或止步）"
         lines.append(line)
     return lines
+
+
+def _subseq(short: str, name: str) -> bool:
+    it = iter(name)
+    return all(ch in it for ch in short)
 
 
 def forged(world, noun: str) -> bool:
@@ -845,6 +870,8 @@ def forged(world, noun: str) -> bool:
             continue
         reach.append(n)
         if n.endswith(noun) or (len(noun) > 1 and (noun in n or n in noun or head in n)):
+            return False
+        if 2 <= len(noun) <= 4 and n.endswith(noun[-1]) and _subseq(noun, n):  # v14 简称不必连着：「剑图」就是手里的玉壁剑影图(run2 第 11 回白返工一次)
             return False
         desc = node.get("desc") or ""
         if (noun in desc) if len(noun) > 1 else re.search(re.escape(noun) + r"(?=[，。；！？、]|$)", desc):  # 「一叠发黄的纸，」说的是纸；「信笺」不是信

@@ -30,6 +30,8 @@ TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|冒充|假冒|借|以)$"), 
 
 
 SIMILAR = 0.6  # 两项物理对象相同、去标点后的二字组重合(Jaccard)过此，才算同一件事(v12)
+FRESH = 3  # 「继续：某事」兜底只给近三回合推进过的事(v14)，或那件事的对象此刻够得着
+KINDRED = (re.compile(r"歇|调息|养伤|静坐|打坐|休憩|睡|调匀|闭目"), re.compile(r"察看|查探|细看|打量|环顾|搜寻|搜检|查看|细查|摸索"))  # 兜底与已有选项是同一件事(v14)：已有歇息就不再兜「歇息」
 
 
 def _grams(text: str) -> set[str]:
@@ -101,6 +103,8 @@ def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
             return True
         return (bool(world.knowledge.view(nid).get("location")) or nid in situation.sighted(world)) and \
             (bool(SEEK.search(text)) or any(world.graph.kind(i) == "location" for i in ids))  # v12 本回合望见的人：与知其所在同等对待
+    if kind == "feature":  # 景物(v14)：书架、水晶窗、石床、藤蔓——在近旁即够得着(run1 第 11、13、18 回编剧的这类选项成批落选，换上了「歇息」)
+        return not g.get(nid, "hidden") and g.get(nid, "location") in situation.near(world)
     if kind == "item":
         if nid in world.player["inventory"]:
             return True
@@ -123,8 +127,9 @@ def _fallbacks(world, pack_options, danger=None, said=None) -> list[tuple[str, l
     elif me.get("en_route"):
         out.append((f"继续赶往{me['en_route']['to']}", [me["en_route"]["to"]]))
     for goal, meta in situation.quests(world).items():
-        if goal in me["threads"]:
-            out.append((f"继续：{goal}"[:20], [a for a in meta.get("about", []) if _reachable(world, a, "寻")]))
+        about = [a for a in meta.get("about", []) if _reachable(world, a, "寻")]
+        if goal in me["threads"] and (about or me.get("turn", 0) - meta.get("touched", 0) <= FRESH):  # v14 久未推进、又够不着的事不再当兜底(52 回局「继续：探明神农帮虚实回报」出现在困于谷底的十几回里)
+            out.append((f"继续：{goal}"[:20], about))
     g = world.graph  # 攀谈先找与主角有过交集的人、再找叫得出名字的人——不按字码挑人
     salient = sorted(situation.around(world), key=lambda p: (-len((g.get(p, "bond") or {}).get("log", [])),
                                                           not perspective.knows(world, "player", p), p))
@@ -170,9 +175,13 @@ def _stale(world, body, danger=None) -> bool:
     return seen >= (1 if danger else STALE)
 
 
+RESTED = "@歇息"  # v14 入选选项里有歇息养伤：记进 offered，此后槽近两回合给过就不再喂(52 回局「寻个僻静处歇息养伤」给了三十几回)
+
+
 def offer(world, picked) -> None:
-    """记下本回合入选选项的对象(v12 P2-2)：引擎在验收之后调，黑板 offered 只留近 OFFERED_TURNS 回合。check 本身不写黑板(验收可反复调)。"""
-    objs = sorted({i for _, ids in picked for i in ids if isinstance(i, str)})
+    """记下本回合入选选项的对象(v12 P2-2)：引擎在验收之后调，黑板 offered 只留近 OFFERED_TURNS 回合。check 本身不写黑板(验收可反复调)。
+    v14 另记一个标记 RESTED：这一回合的选项里有歇息养伤。"""
+    objs = sorted({i for _, ids in picked for i in ids if isinstance(i, str)} | ({RESTED} if any(KINDRED[0].search(t) for t, _ in picked) else set()))
     world.player.set("offered", ((world.player.get("offered") or []) + [objs])[-OFFERED_TURNS:])
 
 
@@ -279,6 +288,8 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
     for text, ids in _fallbacks(world, fallback, danger, said):
         if len(picked) >= SIZE:
             break
+        if any(k.search(text) and any(k.search(t) for t, _ in picked) for k in KINDRED):  # v14 兜底不重样(run1 第 13 回「静坐歇息」与「歇息」并列)
+            continue
         ids, body = take(text, ids)
         if fine(text, ids, body):
             picked.append((text, ids))

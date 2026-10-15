@@ -112,6 +112,32 @@ def rooms(world) -> list[str]:
     return out
 
 
+def ahead(world, locs) -> list[str]:
+    """去处一瞥(v14)：玩家此举要去、却不在近旁的地方(隔着机关暗门、险径，或零日而有里数)——那里连同那里的近旁摆着、藏着什么，
+    有谁在，从那里还有哪几道暗门(找法)。导演写主角到了那里，照此写；没列出的东西不在那里。
+    run1 第 11 回：主角刚走进琅嬛福地的入口厅，导演后台只有谷底的陈设，便凭原著记忆把玉像、蒲团写在入口厅——真玉像在玉像石室。"""
+    from . import access  # 迟引：access 不依赖 scenery
+    g, close, out = world.graph, situation.near(world), []
+    for dest in dict.fromkeys(locs):
+        if dest in close or g.kind(dest) != "location":
+            continue
+        cluster = situation.near(world, dest)
+        for loc in sorted(cluster, key=lambda x: (x != dest, x)):
+            feats = [f for f in g.where(type="feature", location=loc) if not g.get(f, "hidden")]
+            items = [i for i in g.where(type="item", location=loc) if usable(world, i)]
+            people = [p for p in g.where(type="person", location=loc) if g.get(p, "status") != "dead" and not g.get(p, "dormant")]
+            cells = [f"{loc}（{'去处' if loc == dest else '去处近旁'}）" + (f"：{g.get(loc, 'desc')}" if g.get(loc, "desc") else "")]
+            cells += ["景物：" + "、".join(feats)] if feats else []
+            shown = [i for i in items if not g.get(i, "hidden")]
+            cells += ["器物：" + "、".join(_short(world, i) for i in shown)] if shown else []
+            veiled = [i for i in items if g.get(i, "hidden")]
+            cells += ["暗藏：" + "；".join(f"{i}（{g.get(i, 'hint') or g.get(i, 'spot') or '藏而未露'}）" for i in veiled)] if veiled else []
+            cells += ["有人：" + "、".join(people)] if people else []
+            out.append("｜".join(cells))
+        out += [f"暗门·{x}" for x in access.secret_ways(world, cluster)]
+    return out
+
+
 def dossiers(world) -> list[str]:
     """要物的内容与底细(只给导演)：主角身上的、此地与近旁摆着或藏着的、身边之人手里的——拍里有人翻看它就照此写，不另编内容。"""
     g, close, around, out = world.graph, situation.near(world), situation.around(world), []

@@ -101,12 +101,6 @@
         "id": "段誉",
         "key": "location",
         "value": "剑湖宫·练武厅"
-      },
-      {
-        "op": "set",
-        "id": "段誉",
-        "key": "status",
-        "value": "wounded"
       }
     ],
     "src": "第1回",

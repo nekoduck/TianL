@@ -40,6 +40,13 @@ def _root(loc: str) -> str:
     return loc.split("·")[0]
 
 
+def _home(g, loc: str) -> str:
+    """同根(v14)：id 不带「·」而父地点带「·」的(无量玉壁之父为无量山·谷底)，按父地点的根算——谷底里的一处石壁与谷底同是一处所。
+    52 回实录：玉壁与谷底不算近旁，站在玉壁揭不开谷底的暗路，导演连驳三次后在玉壁原地编出一座石室。"""
+    parent = g.get(loc, "parent") if "·" not in loc and g.has(loc) else None
+    return _root(parent) if parent and "·" in parent else _root(loc)
+
+
 # ============================================================
 #  近旁：同一处所(名号同根)之内、零日路程、没有拦人之关的子地点——喊一声就到的距离
 #  「万劫谷」与「万劫谷·药室」是近旁；「无量山·山崖」与「无量山·谷底」中间隔着悬崖，不是——路上有关口(悬崖、暗门、险径)就不算近旁
@@ -61,7 +68,7 @@ def _volatile(edge: dict) -> bool:
 
 
 def near(world, loc: str | None = None) -> set[str]:
-    """近旁：同根、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。
+    """近旁：同根(v14 另认父地点之根，见 _home)、零日、没有拦人之关、也没有隔开人的关口(v5：悬崖、险径、机关暗门、秘道)。
     v11 零日而有里数(li)的路不算近旁：同城的另一坊、街对面的客栈当日走得到，却不是喊一声就到；结果按图的戳记缓存。"""
     g, loc = world.graph, loc or world.here
     hit = g.memo.get(("near", loc))
@@ -71,7 +78,7 @@ def near(world, loc: str | None = None) -> set[str]:
     while todo:
         a = todo.pop()
         for b, e in g.ways(a):
-            if b not in seen and e["days"] == 0 and not e.get("li") and _root(b) == _root(loc) and not _apart(e) \
+            if b not in seen and e["days"] == 0 and not e.get("li") and (_root(b) == _root(loc) or _home(g, b) == _home(g, loc)) and not _apart(e) \
                     and access.barrier(world, a, b, e, player=False) is None:
                 seen.add(b)
                 todo.append(b)

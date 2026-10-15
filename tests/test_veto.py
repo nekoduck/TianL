@@ -375,7 +375,8 @@ class ObligationTest(unittest.TestCase):
         r = judge(w, p, self.aim)
         self.assertTrue(w.player["study"], "研习账里应有这一回")                         # 研习落账
         self.assertTrue(any(b["text"].startswith("你依先前所定，留在原处习练") for b in r.beats))
-        self.assertEqual([f.kind for f in r.hard], [])                                # 系统补的拍不是导演写的，不交返工
+        self.assertEqual([f.kind for f in r.hard], ["overreach"])                     # 系统补的拍不交返工；导演带主角走开的那一拍先交返工(v14)
+        self.assertEqual(adjudicate.doomed(r), {})
         again = self.urging()
         adjudicate.imply(w, again, self.aim)
         self.assertEqual(adjudicate.imply(w, again, self.aim), None)                  # 补过一回不再补
@@ -435,7 +436,8 @@ class ObligationTest(unittest.TestCase):
             w = World.create("王天龙")
             r = judge(w, talk, adjudicate.targets(w, deed))
             self.assertEqual(perspective.knows(w, "左子穆", "player"), said, deed)
-            self.assertEqual(any("报上姓名" in c for c in r.candidates), not said, deed)
+            self.assertEqual(any("报上姓名" in v for v in r.void), not said, deed)
+            self.assertFalse(any("报上姓名" in c for c in r.candidates), deed)       # v14 报名不强插成选项
 
     def test_a_name_the_text_alone_gives_is_not_recorded_either(self):
         w = self.w
@@ -465,7 +467,8 @@ class ObligationTest(unittest.TestCase):
         goal = w.player["goal"]
         r = judge(w, vow(), adjudicate.targets(w, "劝说段誉同行"))
         self.assertEqual(w.player["goal"], goal)                                      # 第 9 回：玩家只是劝段誉同行，所求不被改写
-        self.assertTrue(any("改写你的所求" in c for c in r.candidates))
+        self.assertTrue(any("改写你的所求" in v for v in r.void))
+        self.assertFalse(r.candidates)                                                # v14 所求不强插成选项(run1 第 3 回)
         w = World.create("王天龙")
         judge(w, vow(), adjudicate.targets(w, "立誓要救回钟灵"))
         self.assertEqual(w.player["goal"], "助段誉脱险并求取解药救回钟灵")                  # 玩家立了志
@@ -1025,7 +1028,7 @@ class P2Test(unittest.TestCase):
         before = settle.glance(w)
         w.knowledge.secrets.append(("万劫谷·谷外树林", "万劫谷·谷口", graph.ROAD))
         text = "；".join(c["text"] for c in settle.delta(w, before))
-        self.assertEqual(text, "你发现了谷外树林与谷口之间的一条暗路")                          # 补记不再露出内部字段 road
+        self.assertEqual(text, "你发现了一条暗路")                                      # 补记不再露出内部字段 road；v14 主角没到过、没听说过的地名不报
         stakes.plant(w, {"what": "七日内不见解药，钟灵性命难保", "in": "七日", "then": [{"做": "杀死", "谁": "司空玄", "对": "钟灵"}]})
         stakes.plant(w, {"what": "云中鹤的耐心只到天明", "in": "半日"})
         shown = Game(w, None).debug()["clocks"]

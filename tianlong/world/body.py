@@ -297,7 +297,7 @@ def hurt_word(loss, max_hp) -> str:
 
 # 气血不报数字，只报身况：(气血比例下限, 措辞, 语气)；语气 plain/warn/alert 交由表现层决定着色
 WELL, GRAVE = 0.8, 0.5   # v12：五成以下即重伤(33/100 不再报轻伤，五成半仍是轻伤)；不超过 situation.PERIL 即命悬一线——与兜底、后台、危局同一口径，NPC 同此比例
-WOUNDS = ((WELL, "安然无恙", "plain"), (GRAVE, "轻伤", "warn"), (0.0, "重伤", "warn"))
+WOUNDS = ((1.0, "安然无恙", "plain"), (WELL, "皮肉之伤", "plain"), (GRAVE, "轻伤", "warn"), (0.0, "重伤", "warn"))  # v14 掉了血就不是安然无恙(run2 第 7 回肩头皮肉翻卷、身况却写安然无恙)
 
 
 def wound(world, who: str = "player") -> tuple[str, str]:
@@ -309,9 +309,9 @@ def wound(world, who: str = "player") -> tuple[str, str]:
     if ratio <= situation.PERIL:
         return "命悬一线", "alert"
     text, tone = next((t, tone) for floor, t, tone in WOUNDS if ratio >= floor)
-    if level >= 2 and text in ("安然无恙", "轻伤"):
+    if level >= 2 and text in ("安然无恙", "皮肉之伤", "轻伤"):
         return "重伤", "warn"
-    if level == 1 and text == "安然无恙":
+    if level == 1 and text in ("安然无恙", "皮肉之伤"):
         return "轻伤", "warn"
     return text, tone
 

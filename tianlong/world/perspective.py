@@ -542,13 +542,29 @@ def _who(pid: str) -> str:
 # ============================================================
 #  交编剧之前：不给即不泄露
 # ============================================================
+def _hereabouts(world) -> frozenset:
+    """一日路程之内的人(v14)：两字人名只在这些人里才当名字掩——按图的戳记与主角所在缓存。"""
+    g = world.graph
+    key = ("hereabouts", world.here)
+    hit = g.memo.get(key)
+    if hit and hit[0] == g.stamp:
+        return hit[1]
+    dist = g.distances(world.here)
+    out = frozenset(p for p in g.of("person") if dist.get(g.get(p, "location"), 99) <= 1)
+    g.memo[key] = (g.stamp, out)
+    return out
+
+
 def mask(world, text: str, speaker: str | None = None) -> str:
     """主角不识名之人：旁白里换成叫法，台词里换成当面的称呼；说话者不知主角姓名，他口中的主角名号与「王兄」换成泛称。"""
     if not text:
         return text
     seen = situation.seen(world) | set(situation.sighted(world))  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他；v12 远远望见的也一样(名号显赫的司空玄亦然)
+    met = seen | set(world.player.get("met") or {}) | situation.cast(world)
     tab = lexicon.table({s: p for s, p in _surfaces(world).items()  # 当面不识其人，或连其名都未曾听过——久仰的不在眼前，照叫其名
-                         if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))})
+                         if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))
+                         and (len(s) >= 3 or p in met or p in _hereabouts(world))})  # v14 两字人名撞上寻常字眼(「石室里」的「室里」是一位远在辽国的武将、「知道清楚」里有「道清」)：只掩见过的与一日路程之内的
+
     me = world.player["name"]
     speaker = "player" if speaker in ("player", "主角", me) else speaker
 
@@ -585,6 +601,9 @@ def thing(world, name: str) -> str:
         return (f"{who(doc['author'])}写给{who(doc['to'])}的{doc['form']}" if doc.get("to") else f"{who(doc['author'])}写的{doc['form']}") \
             if mine and doc.get("author") else f"一{'封' if doc['form'] == '书信' else '张'}{doc['form']}"
     name = re.sub(r"·\d+$", "", name)  # 分出来的那一份(v9 玉壁剑影图·1)：叫的还是那件东西，几张另写在数量里
+    head, _, tail = name.rpartition("·")
+    if head and tail and world.graph.has(head) and world.graph.kind(head) == "location":  # v14 场景清单的器物 id 带着所在地(琅嬛福地·铜镜后室·石桌铜镜)：主角眼中只叫那件东西
+        name = tail
     tab = lexicon.table({s: p for s, p in _surfaces(world).items() if not knows(world, "player", p)})
     out = name
     for _, a, b in reversed(lexicon.find(out, tab)):

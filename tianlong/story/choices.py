@@ -13,7 +13,7 @@
        v13：此后槽的研习项点名下一门该练的功夫(growth.next_art：先接着练已起头的，练到顶的不再给)，耗时按那一门的阶算
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from ..world import access, body, growth, pacing, perspective, situation
+from ..world import access, body, growth, menu, pacing, perspective, situation
 from ..world.clock import span
 from . import stakes, timing
 
@@ -35,7 +35,8 @@ def later(world, danger=None) -> list[tuple[str, list[str]]]:
     for src in [b for b in growth.studiable(world) if world.graph.kind(b) == "item" and growth.next_art(world, b)][:1]:  # 手边的秘籍；求教要对人开口，是此刻之举
         art = growth.next_art(world, src)  # v13 账按武学记：点名这回练哪一门，练到顶的不再给
         out.append((f"静心研习{art}（约{span(timing.study_minutes(world, src, art))}）", [src, art]))  # 耗时与规则主张同一张表
-    if body.severity(world) or me["hp"] < me["max_hp"] * 0.8:
+    rested = any(menu.RESTED in objs for objs in (me.get("offered") or [])[-2:])  # v14 近两回合给过歇息：不再喂，编剧要写自己写
+    if (body.severity(world) or me["hp"] < me["max_hp"] * 0.8) and not rested:
         out.append((f"寻个僻静处歇息养伤（{span(body.REST)}）", []))
     for e in access.exits(world):
         if e["days"] >= 1 and not e["back"]:
@@ -61,7 +62,7 @@ def slots(world, addressed=(), danger=None, seek=()) -> list[str]:
         return [a, b, c]
     lost = [perspective.handle(world, p) for p in seek if p not in situation.around(world) and world.graph.get(p, "status") != "dead"]
     hunt = "".join(f"；你此行要找的{h}尚未寻到：可写继续循迹寻他，对象写{h}" for h in lost)  # v12 续线：寻人还没着落，A 槽接着找
-    a = f"A 此刻：用一种还没试过的路数(力、智、情、术、退)推进本场之问「{sc.get('ask') or '眼前之事'}」{tried}{reply}{hunt}"
+    a = f"A 此刻：换一种还没试过的路数(动手、计谋、动之以情、手边的器物、抽身)推进本场之问「{sc.get('ask') or '眼前之事'}」{tried}{reply}{hunt}"
     stuff = [t for t, ids in later(world, danger) if not (lost and any(world.graph.kind(i) == "location" for i in ids))]  # 寻人未果：B 槽不拿远路顶替
     b = "B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、去找某人)，写出代价或耗时" + (f"；可用：{'、'.join(stuff)}" if stuff else "")
     c = "C 机缘：一个两难或一个机会" + (f"（可从{'；'.join(hooks)}里找）" if hooks else "；没有时，换一种与 A 迥异的路数")

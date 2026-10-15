@@ -69,7 +69,7 @@ class PacingTest(unittest.TestCase):
         self.assertEqual(r.applied, [])
         game = Game(World.create("测"), StubLLM(director(beats=[{"who": "段誉", "text": "段誉连连摇手", "mood": "惶急"}])))
         game.act("看")
-        self.assertIn("连连摇手〔惶急〕", game.llm.writer_prompts[-1])
+        self.assertIn("连连摇手（此刻情绪：惶急）", game.llm.writer_prompts[-1])       # v14 不用〔〕：编剧曾照抄进正文
 
     def test_hooks_are_scarce_and_never_about_the_body(self):
         w = World.create("测")

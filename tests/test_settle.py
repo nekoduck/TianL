@@ -117,7 +117,7 @@ class SettleTest(unittest.TestCase):
         self.assertNotIn("段誉", situation.around(w))
         self.assertEqual(w.graph.get("剑湖宫·练武厅", "state"), "厅门紧闭，弟子把守")  # 现状
         self.assertIn("替马五德照看厅外", w.player["threads"])                       # 应承之事
-        self.assertIn(SWORD, "".join(t["text"] for t in turn["status"]))            # 界面的身况与账本同一口径
+        self.assertIn("持有青钢剑", "".join(t["text"] for t in turn["status"]))     # 界面的身况与账本同一口径；v14 主角眼中的叫法(不识褚师弟之名)
         game.act("看看四周")
         prompt = llm.director_prompts[-1]
         self.assertIn("此刻神色：铁青", people_line(prompt, "左子穆"))                # 下一回合导演看见的就是玩家读到的

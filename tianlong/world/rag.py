@@ -45,7 +45,7 @@ def condition(world) -> list[dict]:
     tags += [{"text": c, "tone": "warn"} for c in me["conditions"]]
     tags += [{"text": f"被{crowd.handle(world.graph, s)}围住", "tone": "warn"} for s in crowd.besiegers(world)]  # 人群(v9)
     tags += [{"text": f"被{crowd.handle(world.graph, s)}押着", "tone": "warn"} for s, rel in crowd.holders(world) if rel != crowd.BESIEGE]  # v12
-    tags += [{"text": f"持有{i}" + (f"（{stock.measure(world.graph, i)}）" if stock.measure(world.graph, i) else ""), "tone": "plain"}
+    tags += [{"text": f"持有{perspective.thing(world, i)}" + (f"（{stock.measure(world.graph, i)}）" if stock.measure(world.graph, i) else ""), "tone": "plain"}
              for i in me["carrying"]]
     if me["money"] > stock.EPS:  # 银两(v9)：是数不是器物
         tags.append({"text": f"银两{stock.say(me['money'])}", "tone": "plain"})
@@ -326,12 +326,14 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "arts": _arts(world, ["player", *s["people"]]),
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
+        "mechanism": mechanism(world),  # v14 机关实情：此处与近旁真有的暗门暗道与暗藏之物，此外搜不出别的(52 回局玉壁原地编出整座石室)
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
                    if loc != here and loc not in situation.near(world)][:PLACES_SHOWN],  # 近旁的房间不占名额(v11)：它们在【近旁】里
         "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带" + _ties(world, p)  # 有过交集的、怀有图谋的在前；v12 附同行、押着
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
         "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置
+        "ahead": scenery.ahead(world, [a for a in aim if isinstance(a, str) and g.kind(a) == "location" and a != here]),  # v14 去处一瞥：玩家此举要去的地方有什么
         "dossiers": scenery.dossiers(world),  # 要物的内容与底细：有人翻看就照此写
         "shop": locale.shop(world),           # 铺子底细(v11)：当值的伙计、货架存货、能办的事、招工
         "asks": locale.asks(world),           # 此处打听得到的消息(v11)：向谁、怎么问、赏钱多少，假的附真相
@@ -339,6 +341,24 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "season": locale.season(world),       # 天时：四季气候、节令集期、此地的险(v11)
         "traits": locale.traits(world),       # 在场有名之人的底子(v11)：名声、好恶软肋、手段底线、能替人做的事
     }
+
+
+def mechanism(world) -> str:
+    """机关实情(v14)：此处与近旁真有的暗门暗道(找到的与没找到的)、暗藏之物——此外没有任何机关；主角在此搜寻，搜不出别的就写一无所获。
+    52 回实录：站在玉壁揭不开谷底的暗路，导演便在玉壁原地接连编出石隙、石阶、石门、石室、地底深潭，三十五回底层一步未动。"""
+    g, close = world.graph, situation.near(world)
+    ways, seen = [], set()
+    for a in sorted(close):
+        for b, e in g.ways(a):
+            gate = (e.get("gates") or {}).get(b) or {}
+            if gate.get("kind") in ("机关", "秘道", "阵法") and (a, b) not in seen:
+                seen.add((a, b))
+                found = access.barrier(world, a, b, e) != access.LOST
+                ways.append(f"{a}→{b}（{'已找到' if found else '未找到·找法：' + str(gate.get('how') or '')}）")
+    items = [f"{i}（{g.get(i, 'hint') or '藏而未露'}）" for loc in sorted(close) for i in g.where(type="item", location=loc)
+             if g.get(i, "hidden") and not g.get(i, "holder")]
+    return (f"此处与近旁的暗门暗道：{'；'.join(ways) or '没有'}｜暗藏之物：{'；'.join(items) or '没有'}"
+            "——此外没有别的机关、暗门、密道、暗格、地洞；主角在此搜寻、敲击、推按，搜不出别的就写一无所获，不得编造新的机关通道与石室")
 
 
 def _money(world, people) -> list[str]:

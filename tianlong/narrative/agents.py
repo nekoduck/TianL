@@ -155,9 +155,18 @@ SCALE = re.compile(r"[｜|]\s*尺度\s*[:：]\s*(此刻|此后|机缘)[^｜|]*")
 COST = re.compile(r"[｜|]\s*(?:代价|耗时)\s*[:：]\s*([^｜|]*)")
 LABEL = 26  # 选项连同代价的字数上限
 COST_LEN = 8  # 代价至多八字
+HARD = 32  # 没有标点的长选项宽限到这么多字才硬截(v14：「…奔向练武厅辛双清处求」截掉了「援」)
 PAREN = re.compile(r"[（(]([^（）()]*)[）)]\s*$")
 TIMEISH = re.compile(r"日|时辰|顿饭|一夜|片刻|路程|里路|天|刻|更|宿|盏茶|炷香")  # 括号里说的是耗时路程，才是代价；否则多半是对象
 DUE = re.compile(r"[｜|]\s*期限\s*[:：]\s*(\d+)")
+
+
+def _clip(text: str, n: int) -> str:
+    """选项文字的上限(v14)：不截在词中间——超了先在最后一个标点处截(截下的至少过半)；没有标点的长句宽限到 HARD 字才硬截。"""
+    if len(text) <= n:
+        return text
+    cut = max(text.rfind(c, 0, n) for c in "，、；,;")
+    return text[:cut] if cut >= n // 2 else text if len(text) <= HARD else text[:HARD]
 
 
 def _page(raw: str) -> dict:
@@ -179,6 +188,9 @@ def _page(raw: str) -> dict:
             t = TARGETS.search(body)
             label = (body[:t.start()] if t else body).strip().strip("*").strip()
             aims = t.group(1).strip() if t else ""
+            if not t and re.search(r"[｜|]", label):  # v14 对象栏漏写「对象：」(「撬开抽屉｜内堂书案」)：竖线后的就是对象，不混进选项文字
+                head, rest = re.split(r"\s*[｜|]\s*", label, maxsplit=1)
+                label, aims = head.strip(), re.split(r"\s*[｜|]\s*", rest, maxsplit=1)[0].strip()
             price, more = cost.group(1).strip().strip("（）()") if cost else "", []
             for part in ("label", "aims"):  # 括号写在文字末尾或对象之后都认(v5)：说耗时路程的是代价，其余是对象
                 m = PAREN.search(label if part == "label" else aims)
@@ -193,8 +205,9 @@ def _page(raw: str) -> dict:
                     price = price or inner
                 elif inner:
                     more.append(inner)
-            keep = bool(price) and len(price) <= COST_LEN  # 代价太长就不写，宁缺不截半句；不写代价就不为它让出字数
-            label = label[:LABEL - COST_LEN - 2] + f"（{price}）" if keep else label[:LABEL]
+            label = _clip(label, LABEL - 2)  # v14 不截在词中间：太长先在标点处截(run1 第 2 回「弯腰拾起地上碎（耗时片刻）」)
+            if price and len(price) <= COST_LEN and len(label) + len(price) + 2 <= LABEL + COST_LEN:  # 代价太长或放不下就不写，宁缺不截半句
+                label += f"（{price}）"
             if label.strip("（）"):
                 options.append({"text": label, "targets": [x.strip() for x in SPLIT.split(aims) if x.strip()] + more,
                                 "scale": scale.group(1) if scale else None})

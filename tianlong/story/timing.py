@@ -25,6 +25,8 @@ LATER = 45                                               # 选了「此后」之
 STUDY_NEXT = 2 * PER_SHICHEN                             # 已入门的秘籍，每回研习主张两个时辰
 HOURS = {name: i * PER_SHICHEN for name, i in (("入夜", 9), ("天明", 3), ("正午", 6))}  # 酉时入夜、卯时天明、午时
 MAX_CUT = 2 * PER_DAY                                    # 幕间省略至多跳两日：再远就是赶路，归道路结算
+UNTIL_WORDS = {"入夜": ("入夜", "月出", "月上", "天黑", "夜里", "黄昏", "日落"), "天明": ("天明", "天亮", "日出", "拂晓"), "正午": ("正午", "晌午", "中午")}
+UNTIL_SAID = re.compile(r"(?:至|到|等到|挨到|待到|直到|候到|守到|捱到)(" + "|".join(w for ws in UNTIL_WORDS.values() for w in ws) + ")")  # v14 玩家话里写明等到哪一刻
 
 
 def _beats(plan, drop=()):
@@ -64,6 +66,10 @@ def claim(world, plan: dict, deed: str = "", scale: str | None = None, allowed=N
     safe = not pacing.danger(world, beats)  # v12 危局的单一口径：被围、受制、命悬一线、同伴受制、有人拦阻追杀主角，都不是歇息的时候
     if safe and any(REST_WORDS.search(t) and not SHORT.search(t) for t in texts):
         floors.append((body.REST, "歇息养伤"))
+    said = UNTIL_SAID.search(deed or "")  # v14 玩家说「苦挨至月出」「等到天明」：等到的那一刻也是写明的契约(run2 第 11 回正文写月出，时钟停在申时)
+    if said and safe:
+        word = next(k for k, ws in UNTIL_WORDS.items() if said.group(1) in ws)
+        floors.append(((HOURS[word] - world.clock.tick % PER_DAY) % PER_DAY or PER_DAY, f"等到{word}"))
     if scale == "此后":
         floors.append((LATER, "一件持续之事"))
     return max(floors, default=(0, ""))[0], [why for _, why in floors]
