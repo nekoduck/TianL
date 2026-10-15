@@ -6,7 +6,7 @@
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
-          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -265,6 +265,51 @@ class OptionChainTest(unittest.TestCase):
         texts = [t for t, _ in menu.check(w, [{"text": "向店小二打听近来江湖上的新鲜事", "targets": []}])]
         self.assertIn("向店小二打听近来江湖上的新鲜事", texts)                          # 进了客栈：打听照收
         self.assertIn("向店小二买一壶黄酒", [t for t, _ in menu.check(w, [{"text": "向店小二买一壶黄酒", "targets": []}])])
+
+
+def cliff(w=None):
+    """日志第 12–15 回的崖上场面：主角在澜沧江边高崖被神农攻山帮众围住，段誉在眼前，手里有剑架青钢剑，马五德留在剑湖宫。"""
+    from tianlong.world import crowd, effects
+    w = w or World.create("测")
+    w.player.set("location", "澜沧江边高崖")
+    crowd.relocate(w, "神农攻山帮众", "澜沧江边高崖")
+    w.graph.link("神农攻山帮众", "player", "围攻")
+    w.graph.set("段誉", "location", "澜沧江边高崖")
+    effects._hand(w, "剑架青钢剑", holder="player")
+    return w
+
+
+class TopicTest(unittest.TestCase):
+    """A2：只对物理对象验可达，话题放行；眼前的遗体够得着；对象栏的叫法先查名表。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def texts(self, *opts):
+        return [t for t, _ in menu.check(self.w, [{"text": t, "targets": list(o)} for t, *o in opts])]
+
+    def test_a_name_in_talk_is_not_a_touch(self):
+        self.w.graph.set("马五德", "location", "大理城")
+        self.assertIn("报马五德之名求饶", self.texts(("报马五德之名求饶",)))               # 第 13 回：报他的名头，不是要碰到他
+        self.assertNotIn("报马五德之名求饶", self.texts(("报马五德之名求饶", "马五德")))  # 对象栏写了他：他就是物理对象
+        self.assertNotIn("向乔峰讨教降龙掌", self.texts(("向乔峰讨教降龙掌", "乔峰")))
+        self.assertNotIn("向乔峰讨教降龙掌", self.texts(("向乔峰讨教降龙掌", "降龙十八掌")))  # 讨教要人在跟前，对象写武学也一样
+
+    def test_a_body_in_front_can_be_searched(self):
+        from tianlong.world import effects
+        w = self.w
+        w.graph.set("容子矩", "location", "剑湖宫·练武厅")
+        effects.apply(w, [{"op": "set", "id": "容子矩", "key": "status", "value": "dead"}], "director")
+        self.assertIn("搜检容子矩的遗体", self.texts(("搜检容子矩的遗体",)))              # 第 7 回：遗体就在厅上
+        w.graph.set("容子矩", "location", "无量山")
+        self.assertNotIn("搜检容子矩的遗体", self.texts(("搜检容子矩的遗体",)))
+
+    def test_the_target_column_knows_a_crowds_handle(self):
+        w = cliff(self.w)
+        self.assertIn("神农攻山帮众", adjudicate.targets(w, "挥剑虚晃抢步贴近段誉身旁", ["段誉", "神农帮众"]))
+        texts = self.texts(("报马五德之名求饶", "神农帮众"), ("挥剑拼死劈开缺口", "神农帮众", "剑架青钢剑"),
+                           ("佯称深谷藏有灵药", "神农帮众", "段誉"))
+        self.assertEqual(texts, ["报马五德之名求饶", "挥剑拼死劈开缺口", "佯称深谷藏有灵药"])  # 日志第 13 回：三项全部入选
 
 
 class ReplayBaselineTest(unittest.TestCase):
