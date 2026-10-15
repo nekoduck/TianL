@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 world/trade 的 shop（v12 此处的铺子）、world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked / pick（v12 授意标记不是实体、对象栏的名字）、world/scenery 的 TRIFLE 与 world/stock 的 is_cash（v12 让位先挑只指着琐物碎银的），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
-[OUTPUT]: 对外提供 FORCED / ANSWER（v12 强插至多几项、回应的措辞）、SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
+[OUTPUT]: 对外提供 SEEK_PERSON / seeking()（v12 玩家要找的人）、FORCED / ANSWER（v12 强插至多几项、回应的措辞）、SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
        三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
@@ -20,6 +20,7 @@ SIZE = 3
 FORCED = 2  # 强插(让位)至多几项(v12)：编剧原拟至少留一项
 ANSWER = (("盘问", "答{}所问"), ("拦阻", "与{}理论去留"), ("催促", "依{}所言"), ("赔罪", "受{}这一礼"))  # 回应的措辞按那一句的主题(v12)
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
+SEEK_PERSON = re.compile(r"寻|找|访|打听|探听|求见")  # 玩家要找某人(v12)：须与人名或叫法在同一分句——「往后山去，避开段誉」不是寻他
 SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
 TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|冒充|假冒|借|以)$"),                    # 话题里的人(v12)：名字前是说起、冒充、借、以
          re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇)"))  # 名字后是之名、的下落、报仇——说的是他，不是要碰到他
@@ -42,6 +43,16 @@ def alike(a: str, b: str) -> bool:
 def _things(world, text: str, given=()) -> list[str]:
     """选项所指的实体(v12)：授意标记(@书写、@交易)不是实体——可达与去重只看实体，交还引擎的对象也不带标记(下回合从原话重算)。"""
     return sorted(i for i in adjudicate.targets(world, text, given) if not adjudicate.marked(i))
+
+
+def seeking(world, text: str, aim=()) -> list[str]:
+    """玩家原话里要找的人(v12)：所指之人里，名字或叫法与寻、找、访、打听、求见同在一个分句的——引擎记作 rules["seek"]，小片区里寻人而至即遇。"""
+    tab, kinds = adjudicate.names(world)
+    out = []
+    for clause in lexicon.CLAUSE.split(text or ""):
+        if SEEK_PERSON.search(clause):
+            out += [n for n, _, _ in lexicon.find(clause, tab) if kinds.get(n) == "person" and n in aim and n not in out]
+    return out
 
 
 def _topic(text: str, a: int, b: int) -> bool:

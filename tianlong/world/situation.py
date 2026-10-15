@@ -7,7 +7,7 @@
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前；v12 不在路上的同伴了断随行、不再瞬移，同伴带着的人一并跟来）、
-          meet() / MET_KEEP（v12 回合末记下见过的人）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
+          meet() / MET_KEEP（v12 回合末记下见过的人）、BIG_FORMS / small_area()（v12 小片区：寻人而至即遇、原著相关者在这一片即算到位）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
@@ -82,6 +82,15 @@ def near(world, loc: str | None = None) -> set[str]:
 
 def area(world, loc) -> bool:
     return bool(world.graph.get(loc, "area"))
+
+
+BIG_FORMS = {"区域", "都城", "大城", "州城", "县城", "市镇", "水域", "部落", "洲岛"}  # 大地方(v12)：中原、江南、大理城——同在一片也未必碰得上
+
+
+def small_area(world, loc) -> bool:
+    """小片区(v12)：片区之中形制不大的(山岭、峡谷、庄院、寺观、坊市……)——在这里寻人而至即遇，原著相关者在这一片即算到位；
+    中原、江南、大理城这种大地方不算。adjudicate 的寻人与 story/canon 的原著窗口共用这一个口径。"""
+    return bool(loc) and area(world, loc) and world.graph.get(loc, "form") not in BIG_FORMS
 
 
 def cast(world) -> set[str]:

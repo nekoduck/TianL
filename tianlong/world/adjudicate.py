@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 judge(seek=…)（v12 小片区里寻人而至即遇：_found）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -281,9 +281,10 @@ def _drawn(world, beats: list) -> list[str]:
 
 
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
-          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None) -> Ruling:
+          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None, seek=()) -> Ruling:
     """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力(门派级：只管补一队)；cast：此地原著的相关者（可作打断的来源）；
     reserved(v12 lod.reserved)：原著近事要用的人马 {人群: 事件}——写进 world.turn["reserved"]，effects 拦赶来、crowd 拦分人(试演与定稿各写一次，结算同样被拦)；
+    seek(v12 menu.seeking)：玩家要找的人——诸拍与此地原著落定之后，他若同在主角近旁的小片区里而不在眼前，即上名册(连同同行者与扣着他的人)，寻到了；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
     then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
     一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
@@ -380,6 +381,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         effects._note(world, situation.follow(world, route))
     if then:
         then()
+    _found(world, seek)
     if not moments or moments[-1]["here"] != world.here:  # 主角最后到了哪里：那一刻的听众到成文时再看
         moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
@@ -389,6 +391,16 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     _question(world, r, cast, no_interrupt and 0 not in drop)
     r.notes = list(world.turn.get("notes", []))
     return r
+
+
+def _found(world, seek):
+    """小片区里寻人而至即遇(v12)：玩家要找的人同在主角近旁的小片区里(situation.elsewhere 且 small_area)，到了这一片就寻到了——
+    此人、他的同行者与扣着他的人一并上名册；只写名册不挪人，纯规则，试演与定稿一致。中原、大理城这种大地方不算。"""
+    g, hidden = world.graph, set(situation.elsewhere(world))
+    for p in seek or ():
+        if p in hidden and situation.small_area(world, g.get(p, "location")):
+            situation.enlist(world, [p, *situation.company(world, p), *situation.captors(world, p)])
+            effects._note(world, f"你在这一带寻到了{p}")
 
 
 HANGING = 2  # 须回应只认本回合最后两拍里对主角开口的人(v12)：那句话之后又过了三四拍(有人毙命、放貂、求情)，早已过时

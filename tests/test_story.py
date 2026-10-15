@@ -77,12 +77,31 @@ class CanonWindowTest(unittest.TestCase):
         w.clock.tick = 1832 * PER_DAY + 4 * PER_SHICHEN
         w.player.set("location", VALLEY)
         w.graph.set("段誉", "location", VALLEY)
-        situation.enlist(w, ["段誉"])                                                 # 谷底是一片地方：两人碰上了，他才在跟前
+        situation.enlist(w, ["段誉"])                                                 # 谷底是小片区(v12)：他在这一片即算到位，先上了名册也一样拉得起
         w.graph.set("段誉", "status", "wounded")
         ev = canon.pull(w)
         self.assertEqual(ev and ev["id"], "段誉坠入无量山谷")                              # 两日后的原著，相关者到位即可上演
         w.graph.set("段誉", "location", "无量后山")
         self.assertIsNone(canon.pull(w))                                               # 相关者不在身边：不拉
+
+    def test_in_a_small_area_the_actors_need_not_be_listed_first(self):
+        w = self.w                                                                     # v12 P1-4：日志第 9 回末，三名相关者都在无量山，原著却拉不起来
+        w.done += ["无量剑第四场比剑", "龚光杰掌掴段誉", "容子矩毒伤毙命", "钟灵以闪电貂御敌"]
+        w.player.set("location", "无量山")
+        for p in ("司空玄", "钟灵", "段誉"):
+            w.graph.set(p, "location", "无量山")                                       # 在这一片，不在名册上
+        self.assertNotIn("段誉", situation.around(w))
+        self.assertIn("神农帮留钟灵下毒逼援", [ev["id"] for ev in canon.ready(w)])
+        w2 = World.create("测")                                                         # 反例：大地方(中原)里同样设置不拉
+        w2.done += ["无量剑第四场比剑", "龚光杰掌掴段誉", "容子矩毒伤毙命", "钟灵以闪电貂御敌"]
+        ev = next(e for e in w2.canon if e["id"] == "神农帮留钟灵下毒逼援")
+        copy = {**ev, "id": "神农帮留钟灵下毒逼援·中原", "where": "中原"}
+        w2.canon.insert(w2.canon.index(ev), copy)
+        w2.done.append(ev["id"])                                                        # 原件了掉：免得同一批相关者被原件占住
+        w2.player.set("location", "中原")
+        for p in ("司空玄", "钟灵", "段誉"):
+            w2.graph.set(p, "location", "中原")
+        self.assertNotIn(copy["id"], [e["id"] for e in canon.ready(w2)])
 
     def test_a_variant_played_by_the_director_is_fulfilled(self):
         w = self.w
@@ -104,6 +123,48 @@ class CanonWindowTest(unittest.TestCase):
         Game(w, llm).act("看")
         self.assertIn("原著「段誉逃离干葛追赶，失足落入崖下谷地。」在主角眼前上演", llm.director_prompts[-1])
         self.assertIn("段誉坠入无量山谷", w.done)
+
+
+class SeekTest(unittest.TestCase):
+    """v12 P1-4 小片区里寻人而至即遇：日志第 9 回主角跑到无量山寻段誉，二人就在这一片，到了却看不见人。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+        self.w.done += ["无量剑第四场比剑", "龚光杰掌掴段誉", "容子矩毒伤毙命", "钟灵以闪电貂御敌"]  # 厅上的原著已了：不来搅局
+        for p in ("段誉", "钟灵"):
+            self.w.graph.set(p, "location", "无量山")
+        self.w.graph.link("段誉", "钟灵", "随行")
+
+    def run_turn(self, deed):
+        llm = StubLLM({"说书人与导演": {"beats": [{"who": "player", "text": "你趁乱溜出大厅，奔上无量山", "ops": [{"做": "前往", "到": "无量山"}]}],
+                                       "pace": "片刻"}})
+        Game(self.w, llm).act(deed)
+        return llm.writer_prompts[-1]
+
+    def test_seeking_in_a_small_area_finds_them(self):
+        prompt = self.run_turn("趁乱开溜，寻段誉二人")
+        w = self.w
+        self.assertEqual(w.here, "无量山")
+        self.assertTrue({"段誉", "钟灵"} <= set(situation.cast(w)))                   # 都在名册上
+        self.assertTrue({"段誉", "钟灵"} <= situation.around(w))                       # 都在眼前(钟灵与他同行)
+        self.assertIn("你在这一带寻到了", prompt)                                       # 连带里有寻到的说明
+
+    def test_avoiding_is_not_seeking(self):
+        self.run_turn("往后山去，避开段誉")
+        self.assertNotIn("段誉", situation.around(self.w))
+
+    def test_a_big_place_is_not_searched_at_a_glance(self):
+        from tests.test_adjudicate import judge, plan
+        from tianlong.world import menu, rag
+        w = self.w
+        w.player.set("location", "大理城")
+        for p in ("段誉", "钟灵"):
+            w.graph.set(p, "location", "大理城")
+        aim = {"段誉"}
+        judge(w, plan(("player", "你在城里四处打听", [])), aim, seek=menu.seeking(w, "寻段誉二人", aim))
+        self.assertNotIn("段誉", situation.around(w))                                  # 大理城是大地方：同在城里未必碰得上
+        self.assertIn("你此行要找的青衫少年尚未寻到", choices.slots(w, seek=["段誉"])[0])  # 续线：A 槽接着找
+        self.assertIn("主角正在寻他", rag.focus(w, {"段誉"})[0])
 
 
 class StakesAndSceneTest(unittest.TestCase):
