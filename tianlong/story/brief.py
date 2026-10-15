@@ -66,7 +66,17 @@ def _due(due: list[dict]) -> str:
 TRAVEL = re.compile(r"赶往|奔赴|前往|赶去|奔往|同奔|直奔|投奔|返回|回到|去往|上路|启程|动身|路程|兼程|星夜")  # 上回合所选是赶路(v14)
 
 
-def compose(world, staged: dict | None, due: list[dict], scale: str | None = None, deed: str = "") -> dict:
+def _locked(world, ask: str, held: dict) -> str:
+    """本场之问说到的、原著近事要用而此刻来不了的人马(lod.reserved)：按人群的叫法或门派名认。"""
+    g = world.graph
+    for s in held:
+        names = {crowd.handle(g, s), g.get(s, "faction") or ""} - {""}
+        if any(n in ask for n in names):
+            return crowd.handle(g, s)
+    return ""
+
+
+def compose(world, staged: dict | None, due: list[dict], scale: str | None = None, deed: str = "", held: dict | None = None) -> dict:
     """本回合的场记 {text, spine}。due：本回合到期的时限(stakes.due 已除去)；scale：玩家上回合所选之举的尺度。
     主干(v5)：此地原著 > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(没有人、或主角线刚有了进展，就是主角线) > 顺着举动推进；
     一场之内主干不换题，换题看哪条线有了进展，不看上一回合用过谁。场记是「至少要处理什么」，不是「只处理什么」。"""
@@ -118,6 +128,10 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     if scale == "此后":  # v14 写明是哪件事；赶路就真走：run4 第 17 回「随段誉同奔大理王府（一日路程）」只走出了大厅
         lines.append(f"主角上回合选的是一件持续之事{f'「{deed}」' if deed else ''}：本回合略写那段光阴，pace 取那件事实际耗时，写到它有了结果或被打断"
                      + ("；要去的地方就写 前往 那里(远路由系统按路程结算，一回合走不完即在途中歇脚)，别只走出门口" if TRAVEL.search(deed or "") else ""))
+    locked = _locked(world, sc.get("ask") or "", held or {})
+    if locked:  # v14 本场之问系在一群此刻来不了的人马身上(run5 第 9–11 回「抵御神农帮」只好演了三回合毒雾)
+        lines.append(f"本场之问所系的{locked}要先在原著近事里登场，此刻来不了：别让主角干等一个不会出现的敌人——"
+                     "让光阴过去(守到入夜、对方退走)、让本场另有结果，或换一个主角够得着的问题")
     if scene.over(sc):
         lines.append(f"这一场已演{sc['turns']}回合：本回合必须有个结果（scene.state 写 合 或 断）")
     if sc.get("stall", 0) >= pacing.STALL_WARN:  # 危局僵持(v12)：与场的上限并存——上限管一场演多久，僵持管危局里有没有动

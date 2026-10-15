@@ -11,6 +11,8 @@
        v13 毒是规则态(P1-1)：_cure 先看对症不对症(body.antidote：对症的毒解去，对不上的写明「X于Y无效」)，再落药力；毒药服下即登记一条毒(body.envenom)，往后随光阴发作
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import re
+
 from . import actor, body, effects, lore, perspective, situation, stock, venue
 
 RATIO = 0.4                                              # 收购、典当按估值的几成(4.2：当价三到五成)
@@ -296,6 +298,9 @@ def serve(world, a, who, heading):
 # ============================================================
 #  打探：向眼前的人打听——伙计按职名知道的那几条、有名之人肯说的；赏钱付给他本人
 # ============================================================
+VAGUE_TOPIC = re.compile(r"传闻|消息|新鲜|近况|风声|江湖|掌故|见闻|动静|闲话|旧事")  # 泛泛一问：他知道什么就说什么
+
+
 def _tell(world, person: str, topic=None, free=False) -> tuple[list, str | None]:
     table = lore.entries(world)
     mine = [s for s in lore.sources(world, [person]) if s["by"] == person]
@@ -307,11 +312,13 @@ def _tell(world, person: str, topic=None, free=False) -> tuple[list, str | None]
         key = str(topic)
         hit = [m for m in mine if key in m["id"] or key in (table[m["id"]].get("text") or "")
                or any(key in str(x) for x in table[m["id"]].get("about") or [])]
+        if not hit and mine and not VAGUE_TOPIC.search(key):  # v14 问的是具体的事(后山退路)而他知道的消息都不相干：不硬塞一条答非所问的掌故(run5 第 15 回)
+            return [], f"{person}的消息里没有「{key}」这件事：他照自己知道的随口答，打听不到什么"
         mine = hit or mine
     if not mine:
         return [], f"{person}不知道什么新鲜事"
     pick = mine[0]
-    price = 0 if free else round(pick.get("price") or 0, 3)
+    price = 0 if free or not world.graph.get(person, "staff") else round(pick.get("price") or 0, 3)  # v14 赏钱只给吃这碗饭的伙计：向同门、熟人打听不掏钱
     if price > stock.EPS:
         if not stock.pay(world, "player", price):
             return [], f"打听这件事要{stock.say(price)}赏钱，身上不够"

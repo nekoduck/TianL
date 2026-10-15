@@ -10,7 +10,8 @@
           run3(人物戏多的一局)：PeopleTest(手边的毒药即是那一味毒、走开而去处说不出从眼前划掉、同一屋里才听得见、登门见得着主人、放下缺省为持有者)、
           LedgerTest(账房看得见伤势、伤势与查无此人的说法不作数、伙计领路不是江湖事、挣名字五桩才了结)、OptionMoreTest(为救某人是话题、四字概括写明对谁、报名作废只去名字)；
           run4(验收局)：ForgedMoreTest(拍文的「石上药瓶」就是同一拍事码里的断肠散、刚服下的仍说得出名字也仍在返工清单、不在眼前的人手里的不算)、
-          QuestTest(换个说法的同一件事只记一条、撂狠话不必硬塞回应而问句仍要、服下的毒够得着)、GuideTest(引路的人随主角进了片区仍在眼前、选项不报节点全名)、JourneyTest(场记写明上回合选的赶路、要去的地方写 前往)、MaidTest(婢女的外号不用胡须秃顶)
+          QuestTest(换个说法的同一件事只记一条、撂狠话不必硬塞回应而问句仍要、服下的毒够得着)、GuideTest(引路的人随主角进了片区仍在眼前、选项不报节点全名)、JourneyTest(场记写明上回合选的赶路、要去的地方写 前往)、MaidTest(婢女的外号不用胡须秃顶)；
+          run5(验收局)：RunFiveTest(「御敌」的赞许不是怨、主人名下的器物只叫那件东西、正文里的节点全名换成叫法、本场之问系在来不了的人马身上即写明、替师父探路不是向他求教、随人学会了不再报尚未入门、向同门打听不掏钱也不答非所问、泛称不认千里之外生人名下的器物)
 [POS]: tests 的 v14 验收——导演对着真图写戏，驳回给正解，被否决的事不以文字活下来，读者读到的平常之举照记
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -399,6 +400,67 @@ class MaidTest(unittest.TestCase):
         maids = [op["value"] for op in ops if "婢女" in op["value"]]
         self.assertTrue(maids)
         self.assertFalse([m for m in maids if any(t in m for t in ("须", "秃", "络腮"))])  # run4 第 20 回「短须婢女」「秃顶婢女」
+
+
+class RunFiveTest(unittest.TestCase):
+    def test_praise_for_holding_the_line_is_not_a_grudge(self):
+        from tianlong.world import bond
+        w = at("剑湖宫·练武厅")
+        bond.attitude(w, {"op": "link", "src": "左子穆", "dst": "player", "rel": "赞许", "note": "横剑挡阻退缩弟子并呼应御敌"})
+        self.assertGreater(w.graph.nodes["左子穆"]["bond"]["log"][-1]["w"], 0)       # run5 第 5 回：「御敌」的敌字把赞许记成了 -3
+        bond.attitude(w, {"op": "link", "src": "辛双清", "dst": "player", "rel": "看法", "note": "恨他坏了西宗的事"})
+        self.assertLess(w.graph.nodes["辛双清"]["bond"]["log"][-1]["w"], 0)          # 只说「看法」才看缘由
+
+    def test_a_scene_does_not_wait_on_an_enemy_who_cannot_come(self):
+        from tianlong.story import brief, scene
+        from tianlong.world import lod
+        w = at("剑湖宫·练武厅")
+        held = lod.reserved(w, lod.upcoming(w, set()))
+        scene.begin(w)
+        w.player["scene"]["ask"] = "韩铁衣能否在抵御神农帮中立功换得全套剑法"
+        self.assertIn("此刻来不了", brief.compose(w, None, [], None, "", held)["text"])  # run5 第 9–11 回演了三回合毒雾
+        w.player["scene"]["ask"] = "韩铁衣能否拜入东宗"
+        self.assertNotIn("此刻来不了", brief.compose(w, None, [], None, "", held)["text"])
+
+    def test_scouting_for_a_master_is_not_studying_under_him(self):
+        w = at("剑湖宫·练武厅")
+        aim = adjudicate.targets(w, "提剑潜入侧道密林查探", ["左子穆"])
+        w.turn = {"deed": "提剑潜入侧道密林查探"}
+        self.assertTrue(adjudicate.unbidden(w, [{"op": "study", "id": "player", "value": "无量剑法"}], aim))  # run5 第 14 回
+        w.turn = {"deed": "请左子穆当场点拨两招无量剑防身招式"}
+        self.assertFalse(adjudicate.unbidden(w, [{"op": "study", "id": "player", "value": "无量剑法"}], aim))
+        deed = "弃龚光杰不管，立时回剑湖宫向左子穆领受全套剑招"
+        w.turn = {"deed": deed}
+        aim = adjudicate.targets(w, deed, ["剑湖宫", "左子穆", "龚光杰"])
+        skill = next(k for k in w.graph.get("龚光杰", "skills") or [] if "剑" not in k)
+        self.assertTrue(adjudicate.unbidden(w, [{"op": "study", "id": "player", "value": skill}], aim))  # run5 第 16 回看人打滚学了跌扑步
+        self.assertFalse(adjudicate.unbidden(w, [{"op": "study", "id": "player", "value": "无量剑法"}], aim))
+
+    def test_a_taught_art_once_learned_is_not_unlearned(self):
+        from tianlong.world import growth
+        w = at("剑湖宫·练武厅")
+        w.player.set("study", {"无量剑法": {"src": "无量剑法", "minutes": 120, "credit": 180, "stage": 1, "since": 1830}})
+        self.assertNotIn("尚未入门", growth._gain(w, "无量剑法", w.player["study"]["无量剑法"], "无量剑法"))  # run5 第 14 回
+
+    def test_asking_a_comrade_costs_nothing_and_stays_on_topic(self):
+        from tianlong.world import stock, trade
+        w = at("剑湖宫·练武厅")
+        money = stock.funds(w, "player")
+        done, why = trade._tell(w, "龚光杰", "后山退路")
+        self.assertFalse(done)                                                          # run5 第 15 回：问退路答了一句剑会掌故
+        done, why = trade._tell(w, "龚光杰", "江湖传闻")
+        self.assertTrue(done and not why)
+        self.assertEqual(stock.funds(w, "player"), money)                              # 向同门打听不掏赏钱
+
+    def test_a_whisk_here_is_not_a_whisk_far_away(self):
+        w = at("剑湖宫·练武厅")
+        self.assertEqual(effects.resolve(w, "拂尘"), "拂尘")                          # run5 第 20 回：落到了大理玉虚观刀白凤手里那柄
+        self.assertEqual(effects.resolve(w, "刀白凤拂尘"), "刀白凤·拂尘")               # 说全了照认
+
+    def test_an_owner_s_sword_goes_by_its_own_name(self):
+        w = at("剑湖宫·练武厅")
+        self.assertEqual(perspective.thing(w, "辛双清·长剑"), "长剑")
+        self.assertEqual(perspective.plain(w, "辛双清按着辛双清·长剑冷眼旁观"), "辛双清按着长剑冷眼旁观")  # run5 第 5 回正文
 
 
 class QuestTest(unittest.TestCase):

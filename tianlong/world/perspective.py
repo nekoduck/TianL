@@ -559,6 +559,25 @@ def _hereabouts(world) -> frozenset:
     return out
 
 
+def plain(world, text: str) -> str:
+    """节点全名换成主角眼中的叫法(v14)：「万劫谷·大厅」写作「大厅」、「辛双清·长剑」写作「长剑」、「万劫谷·管家」写作「管家」——
+    编剧照抄了清单里的 id(run4 第 14 回选项、run5 第 5 回正文)。选项验收与正文出闸共用。"""
+    g, out, i = world.graph, text or "", 0
+    while (i := out.find("·", i)) > 0:
+        hit = next((out[i - a:i + 1 + b] for a in range(min(i, 10), 0, -1) for b in range(min(len(out) - i - 1, 10), 0, -1)
+                    if g.has(out[i - a:i + 1 + b])), None)
+        if not hit:
+            i += 1
+            continue
+        kind = g.kind(hit)
+        short = (hit.rpartition("·")[2] if kind == "location" else handle(world, hit) if kind == "person"
+                 else thing(world, hit) if kind == "item" else hit)
+        start = out.index(hit, max(0, i - 10))
+        out = out[:start] + short + out[start + len(hit):]
+        i = start + len(short)
+    return out
+
+
 def mask(world, text: str, speaker: str | None = None) -> str:
     """主角不识名之人：旁白里换成叫法，台词里换成当面的称呼；说话者不知主角姓名，他口中的主角名号与「王兄」换成泛称。"""
     if not text:
@@ -606,7 +625,7 @@ def thing(world, name: str) -> str:
             if mine and doc.get("author") else f"一{'封' if doc['form'] == '书信' else '张'}{doc['form']}"
     name = re.sub(r"·\d+$", "", name)  # 分出来的那一份(v9 玉壁剑影图·1)：叫的还是那件东西，几张另写在数量里
     head, _, tail = name.rpartition("·")
-    if head and tail and world.graph.has(head) and world.graph.kind(head) == "location":  # v14 场景清单的器物 id 带着所在地(琅嬛福地·铜镜后室·石桌铜镜)：主角眼中只叫那件东西
+    if head and tail and world.graph.has(head) and world.graph.kind(head) in ("location", "person", "group"):  # v14 器物 id 带着所在地或主人(琅嬛福地·铜镜后室·石桌铜镜、辛双清·长剑)：主角眼中只叫那件东西
         name = tail
     tab = lexicon.table({s: p for s, p in _surfaces(world).items() if not knows(world, "player", p)})
     out = name

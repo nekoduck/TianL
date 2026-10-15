@@ -188,21 +188,8 @@ def offer(world, picked) -> None:
 
 
 def _plain(world, text: str) -> str:
-    """选项不报节点全名(v14)：编剧照抄了【近旁】里的「万劫谷·大厅」，写作「大厅」；伙计写职名、器物写它本身(run4 第 14 回)。"""
-    g, out, i = world.graph, text, 0
-    while (i := out.find("·", i)) > 0:
-        hit = next((out[i - a:i + 1 + b] for a in range(min(i, 10), 0, -1) for b in range(min(len(out) - i - 1, 10), 0, -1)
-                    if g.has(out[i - a:i + 1 + b])), None)
-        if not hit:
-            i += 1
-            continue
-        kind = g.kind(hit)
-        short = (hit.rpartition("·")[2] if kind == "location" else perspective.handle(world, hit) if kind == "person"
-                 else perspective.thing(world, hit) if kind == "item" else hit)
-        start = out.index(hit, max(0, i - 10))
-        out = out[:start] + short + out[start + len(hit):]
-        i = start + len(short)
-    return out
+    """选项不报节点全名(v14)：编剧照抄了【近旁】里的「万劫谷·大厅」，写作「大厅」(run4 第 14 回)——与正文出闸同一口径(perspective.plain)。"""
+    return perspective.plain(world, text)
 
 
 def _demands(line: str) -> bool:

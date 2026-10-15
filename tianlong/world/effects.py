@@ -167,6 +167,8 @@ def _akin(world, name: str, scene_only: bool = False) -> str | None:
 
     def rank(n):
         t = tier(n)
+        if t == 2 and "·" in n and name in n.rpartition("·")[2]:  # v14 远处生人名下的器物不凭一个泛称认：「辛双清手中拂尘」不是千里之外刀白凤的拂尘(run5 第 20 回)
+            return None
         if name in n or n in name or (set(name) <= set(n) and len(n) - len(name) <= 2):
             return (0, abs(len(n) - len(name)), t, 0)
         common = _common(name, n)

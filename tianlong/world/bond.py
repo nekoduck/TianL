@@ -23,10 +23,10 @@ WHY_LEN = 24
 LEVELS = ((8, "托付"), (4, "信任"), (1.5, "友善"), (-1.5, "相识"), (-4, "戒备"), (-8, "嫌恶"), (float("-inf"), "仇视"))
 MIXED = 2.5                                 # 恩怨都过此数：两样心思并存
 # 态度措辞的轻重：强 ±3、弱 ±1.5、相识 +0.5
-STRONG_BAD = re.compile(r"仇|恨|杀|敌|怒不可遏|切齿|誓报")
+STRONG_BAD = re.compile(r"仇|恨|杀心|杀意|敌视|敌意|为敌|怒不可遏|切齿|誓报")  # v14 「御敌」「杀退强敌」说的是事，不是对你的看法(run5 第 5 回「赞许」记成了 -3)
 MILD_BAD = re.compile(r"疑|忌|戒|厌|恼|轻视|鄙|不满|提防|不悦|冷淡|怀疑|嫌|怒|恶")
 STRONG_GOOD = re.compile(r"恩|感激|救命|敬重|敬服|信任|托付|倾慕|爱|钦佩|折服|生死|知交|知己")
-MILD_GOOD = re.compile(r"好感|欣赏|关切|亲近|友|赏识|佩服|感谢|谢|好奇|投缘|留意|看重|喜|结交|投契")
+MILD_GOOD = re.compile(r"好感|欣赏|关切|亲近|友|赏识|佩服|感谢|谢|好奇|投缘|留意|看重|喜|结交|投契|赞|嘉许|称许|器重|认可|满意")
 ACQUAINT = re.compile(r"相识|结识|认得|认识|初识")
 THANKS = re.compile(r"多谢|谢过|谢谢|感激|恩公|大恩")      # NPC 对主角说的话里：道谢
 SCORN = re.compile(r"住口|放肆|大胆|找死|滚|无耻|狂妄|小贼|好大的胆")  # NPC 对主角说的话里：呵斥
@@ -79,12 +79,16 @@ def weigh(text: str) -> float:
     return 0.5 if ACQUAINT.search(text) else 0
 
 
+VAGUE = re.compile(r"^(?:看法|印象|态度|观感|心思|评价|眼光)$")  # 只说「看法」不说好坏的关系名：分量看缘由
+
+
 def attitude(world, op: dict) -> bool:
     """导演写的「某人→主角」的非结构性关系(疑忌、感激、敬佩……)：不立边，记一笔事件，note 即缘由。返回是否已化作事件。"""
     if op.get("dst") != "player" or op.get("src") == "player" or structural(op.get("rel", "")) or op.get("secret"):
         return False
     rel, note = op.get("rel", ""), op.get("note") or ""
-    event(world, op["src"], weigh(rel) or weigh(note) or 0.5, note or rel)
+    vague = not rel or bool(VAGUE.search(rel))  # v14 关系名本身说得出好坏就不看缘由：缘由说的是事(「横剑呼应御敌」)，不是看法
+    event(world, op["src"], weigh(rel) or (weigh(note) if vague else 0) or 0.5, note or rel)
     return True
 
 

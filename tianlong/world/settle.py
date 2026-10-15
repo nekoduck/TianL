@@ -138,7 +138,7 @@ class Gate:
         return None if k is None else self._at(k)
 
     def _let(self, chunk: str, listen: bool = True) -> str:
-        out, lines = [], MOOD.sub("", chunk).split("\n")  # v14 拍上的情绪标注只作渲染，编剧照抄进正文的剥掉(run1 第 17 回「你〔狂喜〕难抑」)
+        out, lines = [], perspective.plain(self.world, MOOD.sub("", chunk)).split("\n")  # v14 拍上的情绪标注只作渲染，编剧照抄进正文的剥掉(run1 第 17 回「你〔狂喜〕难抑」)；节点全名换成叫法(run5 第 5 回「辛双清·长剑」)
         for i, line in enumerate(lines):
             if line.strip():
                 lead = ("\n\n" if len(self._gap) > 1 else self._gap) if (self.parts or out) else ""

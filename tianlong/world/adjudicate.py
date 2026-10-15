@@ -196,6 +196,10 @@ def _arc_done(world) -> bool:
     return (world.player.get("arc") or {}).get("stage") == ARC_DONE
 
 
+LEARN = re.compile(r"求教|请教|讨教|学|传|指点|点拨|拜师|习|练|教|招式|剑式|剑招")  # 话里要学东西(v14)
+ART_KINDS = re.compile(r"[剑刀掌拳步指腿鞭棍枪]")  # 话里说的是哪一路功夫(v14)
+
+
 def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]:
     """越权之举：(那条指令, 一句人话, 所涉实体)。
     授意有两半(v13 授意是义务)：不做没选的(取走、杀人、吸功、毁物、提笔、花钱……)，也不替主角做主——
@@ -219,7 +223,11 @@ def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]
 
     def ok(item):  # run1 第 16 回磕首千遍、蒲团破裂，帛卷就在脚边——拿起它是这一举的自然收尾；不相干的举动里顺手揣走暗藏之物仍是越权(第 72 回顺手夺草)
         return item in allowed or g.get(item, "holder") in allowed or item in world.player["inventory"] or found(item)
-    taught = {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []}  # 指着某人，即可向他求教
+    asking = "deed" not in turn or bool(LEARN.search(turn.get("deed") or ""))  # v14 指着某人且话里要学，才是向他求教(run5 第 14 回替左子穆探路，导演顺手让他传了三招)
+    taught = {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []} if asking else set()  # 指着某人，即可向他求教
+    kinds = set(ART_KINDS.findall(turn.get("deed") or ""))
+    if kinds:  # v14 话里说了学哪一路(剑招、掌法、步法)，只认这一路：「向左子穆领受剑招」不是向地上打滚的龚光杰学跌扑步(run5 第 16 回)
+        taught = {k for k in taught if kinds & set(k)}
     arts = {k for x in allowed if g.kind(x) in ("item", "skill") for k in growth.arts_of(g, x)}  # 指着秘籍，即指着它所载的武学
 
     for op in ops:

@@ -174,10 +174,10 @@ class Game:
         stakes.enforce(w, due)                        # v13 带后果的时限到期：后果由规则在回合开头兑现，结果交场记
         scene.begin(w)                                # 续场或开新场
         arc.track(w)
-        story = brief.compose(w, staged, due, scale, deed)
         skip = {ev["id"] for ev, _ in offstage} | ({staged["id"]} if staged else set())
         soon = lod.upcoming(w, skip)
         held = lod.reserved(w, soon)                  # v12 原著近事要用的人马(带队之人是近事相关者)：事前叫不来、分不出人；拉上台的那一桩不在 soon 里
+        story = brief.compose(w, staged, due, scale, deed, held)
         gm = rag.backstage(w, stage=staged, upcoming=soon, tempo=self.tempo, aim=aim,
                            ready={ev["id"] for ev in canon.ready(w, skip)}, reserved=held)
         gm["brief"] = story["text"]

@@ -92,7 +92,8 @@ def study(world, source: str, minutes: int, art: str | None = None) -> str:
         said += "；" + body.injure(world, "真气走岔")
     if not stall:
         return said + "：" + _gain(world, source, rec, art, top)
-    held = f"你随人习练{art}，尚未入门（已{rec['minutes']}分钟）" if g.kind(source) == "skill" else progress(world, source, art)
+    held = ((f"你随人熟习{art}的招式（已{rec['minutes']}分钟）" if rec["stage"] else f"你随人习练{art}，尚未入门（已{rec['minutes']}分钟）")
+            if g.kind(source) == "skill" else progress(world, source, art))
     return said + "：" + held
 
 
@@ -114,6 +115,8 @@ def _gain(world, source: str, rec: dict, art: str, top: int = len(STAGES)) -> st
             me.push("skills", source)
             world.turn.setdefault("advanced", set()).add(source)
             return f"你学会了{source}的入门功夫"
+        if rec["stage"] >= 1:  # v14 已入门：随人再练只是熟习招式，求教到此为止(run5 第 14 回已入门了又报「尚未入门」)
+            return f"你随人熟习{source}的招式（已{rec['minutes']}分钟）：求教只到入门，再进一层须得剑谱秘籍"
         return f"你随人习练{source}，尚未入门（已{rec['minutes']}分钟）"
     grant = _grant(g, source, art)
     told = []
