@@ -482,7 +482,7 @@ class StudyStallTest(unittest.TestCase):
         w = World.create("测")
         w.turn = {}
         real = body.forecast
-        body.forecast = lambda world, src: {"tier": "受阻", "factor": 0.5, "strain": False, "why": ""}
+        body.forecast = lambda world, src, art=None: {"tier": "受阻", "factor": 0.5, "strain": False, "why": ""}
         try:
             said = growth.study(w, "北冥神功卷轴", 600)
         finally:

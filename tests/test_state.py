@@ -121,11 +121,14 @@ class MasteryTest(unittest.TestCase):
     def test_practice_in_progress_is_visible_everywhere(self):
         w = self.w
         w.turn = {}
-        growth.study(w, BOOK, 20)
-        self.assertIn("习练凌波微步中", [t["text"] for t in rag.condition(w)])               # 界面
+        growth.study(w, BOOK, 20, "凌波微步")                                               # v13 账按武学记：练的是凌波微步，就只是凌波微步
+        tags = [t["text"] for t in rag.condition(w)]
+        self.assertIn("习练凌波微步中", tags)                                                 # 界面
+        self.assertNotIn("习练北冥神功中", tags)                                              # 同一部书上的另一门功夫不连带
         arts = rag.build(w)["player"]["arts"]
         self.assertTrue(any(a.startswith("凌波微步：未入门") for a in arts), arts)            # 编剧与导演
-        growth.study(w, BOOK, 120)
+        w.turn = {}
+        growth.study(w, BOOK, 120, "凌波微步")
         self.assertIn("身负凌波微步·初窥门径", [t["text"] for t in rag.condition(w)])
 
     def test_claimed_mastery_without_a_stage_is_a_violation(self):
@@ -150,7 +153,7 @@ class MasteryTest(unittest.TestCase):
         self.assertEqual(adjudicate_imply(w, p, {BOOK}), BOOK)
         r = judge(w, p, {BOOK})
         self.assertTrue(any(op["op"] == "study" for op in r.applied))
-        self.assertIn(BOOK, w.player["study"])
+        self.assertEqual(w.player["study"]["北冥神功"]["src"], BOOK)                      # v13 账键是武学，来源是这部书
         self.assertIsNone(adjudicate_imply(w, plan(("player", "你照着图谱演练步法", [])), set()))  # 玩家没指着它：不追认
 
     def test_writer_drift_reaches_the_next_director(self):

@@ -64,7 +64,8 @@ class TimingTest(unittest.TestCase):
         t0 = w.clock.tick
         Game(w, llm).act(f"研习{BOOK}")
         self.assertGreaterEqual(w.clock.tick - t0, 60)
-        self.assertIn("凌波微步", w.player["skills"])                                    # 一回合入门：不再要连练四十回
+        self.assertIn("北冥神功", w.player["skills"])                                    # 一回合入门：不再要连练四十回；v13 练的是书上的第一门，不连带凌波微步
+        self.assertNotIn("凌波微步", w.player["skills"])
 
 
 class CanonWindowTest(unittest.TestCase):

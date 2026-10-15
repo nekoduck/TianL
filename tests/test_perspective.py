@@ -13,7 +13,7 @@ import unittest
 from tests.test_adjudicate import judge, plan
 from tests.test_engine import StubLLM, WRITER, director
 from tianlong.engine import Game
-from tianlong.world import effects, perspective, rag
+from tianlong.world import adjudicate, effects, perspective, rag
 from tianlong.world.world import World
 
 
@@ -44,7 +44,7 @@ class PerspectiveTest(unittest.TestCase):
     def test_names_are_heard_when_given(self):
         w = self.w
         r = judge(w, plan(("钟灵", "钟灵笑道：「我叫钟灵，你呢？」", [], "player"),
-                          ("player", "你拱手道：「在下王侠墨，钟姑娘好。」", [])))
+                          ("player", "你拱手道：「在下王侠墨，钟姑娘好。」", [])), {adjudicate.SELF})   # v13 主角的姓名只有玩家起意自报才入账
         self.assertEqual(kinds(r), [])                                               # 先听她自报，再叫她钟姑娘
         self.assertTrue(perspective.knows(w, "player", "钟灵") and perspective.knows(w, "钟灵", "player"))
         w.graph.link("段誉", "左子穆", "相识")

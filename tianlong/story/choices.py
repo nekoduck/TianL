@@ -30,8 +30,9 @@ def later(world, danger=None) -> list[tuple[str, list[str]]]:
     me, out = world.player, []
     if me.get("en_route"):
         out.append((f"继续赶往{me['en_route']['to']}（余{me['en_route']['left']}日）", [me["en_route"]["to"]]))
-    for src in [b for b in growth.studiable(world) if world.graph.kind(b) == "item"][:1]:  # 手边的秘籍；求教要对人开口，是此刻之举
-        out.append((f"静心研习{src}（约{span(timing.study_minutes(world, src))}）", [src]))  # 耗时与规则主张同一张表
+    for src in [b for b in growth.studiable(world) if world.graph.kind(b) == "item" and growth.next_art(world, b)][:1]:  # 手边的秘籍；求教要对人开口，是此刻之举
+        art = growth.next_art(world, src)  # v13 账按武学记：点名这回练哪一门，练到顶的不再给
+        out.append((f"静心研习{art}（约{span(timing.study_minutes(world, src, art))}）", [src, art]))  # 耗时与规则主张同一张表
     if body.severity(world) or me["hp"] < me["max_hp"] * 0.8:
         out.append((f"寻个僻静处歇息养伤（{span(body.REST)}）", []))
     for e in access.exits(world):

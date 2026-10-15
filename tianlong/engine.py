@@ -357,6 +357,7 @@ class Game:
     def _enact(world, plan, aim, staged, day0, rules, drop=None, deed="", scale=None):
         """一份提议在一个世界上演出：先逐拍落账导演的后果，再落此地原著——照常(且前提未破)则系统落账、盖今日之戳，
         被主角扰动则作罢；导演已挪动的人原著挪不动，同一个人不会被两处同时调遣。最后体检拍文。"""
+        world.turn["aim"] = set(aim)                    # 玩家所指(含授意标记)：研习练的是哪一门武学、主角是否留在原处，都以它为准(v13)
         adjudicate.imply(world, plan, aim)              # 拍里在习练玩家所指的秘籍、导演却没写 study：系统追认这一回研习
         origin = world.here                             # 回合开始时主角所在：此地原著是在主角走开之前演完的
         floor, why = timing.claim(world, plan, deed, scale, aim, drop or ())  # 时间是后果：研习、求教、养伤、此后之举由规则主张下限(只看会成立的)

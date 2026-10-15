@@ -203,10 +203,11 @@ def _arts(world, source: str) -> list[str]:
     return [s for s in [grants.get("skill")] + [x.get("skill") for x in g.get(source, "grants_extra") or []] if s]
 
 
-def forecast(world, source: str) -> dict:
-    """主角此刻研习 source 的结局：{tier, factor, strain, why}。strain 为真即岔气——只在骰值极低且武学有凶险或带伤强练时出现。"""
+def forecast(world, source: str, art: str | None = None) -> dict:
+    """主角此刻研习 source 的结局：{tier, factor, strain, why}。strain 为真即岔气——只在骰值极低且武学有凶险或带伤强练时出现。
+    v13 给了 art 只看这一门功夫(会这门的人指点、这门的凶险)，不然看这部书载着的全部。"""
     g, me = world.graph, world.player
-    arts, roll = _arts(world, source), fate(world)
+    arts, roll = ([art] if art else _arts(world, source)), fate(world)
     score, why, factor = roll, [], 1.0
     people = situation.around(world)
     mentor = next((p for p in sorted(people) if set(arts) & set(g.get(p, "skills") or [])), None)

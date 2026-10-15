@@ -13,7 +13,7 @@
 import re
 
 from ..world import acts, body, effects, growth, pacing
-from ..world.clock import PER_DAY, PER_SHICHEN
+from ..world.clock import PER_DAY, PER_SHICHEN, stated
 from ..world.pacing import CUTS, UNTIL
 
 REST_WORDS = re.compile(r"歇息|休息|歇宿|养伤|疗伤|睡下|睡了|安歇|过夜|将养|运功疗|静养|歇一夜|歇上")  # 调息、打坐是练功的字眼，不是歇息
@@ -29,11 +29,12 @@ def _beats(plan, drop=()):
     return [b for i, b in enumerate(plan.get("beats") or [], 1) if i not in drop]
 
 
-def study_minutes(world, src: str) -> int:
-    """研习一回的规则时长：求教一门武学 TEACH_MINUTES，秘籍初窥 STAGES[0]，此后每回 STUDY_NEXT——选项上写的耗时也读这里。"""
+def study_minutes(world, src: str, art: str | None = None) -> int:
+    """研习一回的规则时长：求教一门武学 TEACH_MINUTES，秘籍初窥 STAGES[0]，此后每回 STUDY_NEXT——选项上写的耗时也读这里。
+    v13 账按武学记：art 是练的那一门，不给即玩家所指的或这部书的第一门。"""
     if world.graph.kind(src) == "skill":
         return growth.TEACH_MINUTES
-    return growth.STAGES[0][1] if growth.stage_of(world, src) == 0 else STUDY_NEXT
+    return growth.STAGES[0][1] if growth.stage_of(world, src, art) == 0 else STUDY_NEXT
 
 
 def claim(world, plan: dict, deed: str = "", scale: str | None = None, allowed=None, drop=()) -> tuple[int, list[str]]:
@@ -43,14 +44,19 @@ def claim(world, plan: dict, deed: str = "", scale: str | None = None, allowed=N
     if allowed is not None:  # 与授意同一口径：指着某人即可向他求教，指着秘籍即指着它所载的武学
         allowed = set(allowed) | {k for p in allowed if g.kind(p) == "person" for k in g.get(p, "skills") or []} \
             | {k for x in allowed if g.kind(x) in ("item", "skill") for k in growth.arts_of(g, x)}
+    promised = stated(deed)  # 玩家的话里写明了耗时（选项括号里的「耗时半个时辰」）：写明的是契约，规则只补没写明的下限(v13，第 53 回要半个时辰、世界过了四小时)
+    seen = set()
     for op in (op for b in beats for op in acts.expand(world, b.get("ops") or []) if isinstance(op, dict)):  # 事码(v9)先化为指令
         if op.get("op") != "study":
             continue
-        src = effects.resolve(world, op.get("value"))
-        if allowed is not None and src not in allowed and not set(growth.arts_of(g, src)) & set(allowed):
+        asked = effects.resolve(world, op.get("value"))
+        src = growth.source_of(world, asked)
+        if allowed is not None and src not in allowed and asked not in allowed and not set(growth.arts_of(g, src)) & set(allowed):
             continue
-        if g.kind(src) in ("skill", "item"):
-            floors.append((study_minutes(world, src), f"{'求教' if g.kind(src) == 'skill' else '研习'}{src}"))
+        art = growth.art_of(world, src, asked if g.kind(asked) == "skill" else None)
+        if g.kind(src) in ("skill", "item") and art not in seen:  # 一回合同一门武学只主张一次(v13：两拍各写一条研习，60 分钟记成了 240)
+            seen.add(art)
+            floors.append((min(promised, PER_DAY) if promised else study_minutes(world, src, art), f"{'求教' if g.kind(src) == 'skill' else '研习'}{src}"))
     texts = [deed or ""] + [b.get("text") or "" for b in beats if b.get("who") in (None, "player")]
     safe = not pacing.danger(world, beats)  # v12 危局的单一口径：被围、受制、命悬一线、同伴受制、有人拦阻追杀主角，都不是歇息的时候
     if safe and any(REST_WORDS.search(t) and not SHORT.search(t) for t in texts):

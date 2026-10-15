@@ -130,7 +130,9 @@ def targets(world, deed: str, given=()) -> set[str]:
         hit = effects.resolve(world, word)
         if world.graph.kind(hit) == "item":
             out.add(hit)
-    if lexicon.PRACTICE.search(deed or "") and not any(world.graph.get(t, "grants") or world.graph.kind(t) == "skill" for t in out):
+    bare = lexicon.bare(deed or "", ents)  # 挖去实体名再看：「练武厅」不是练功
+    practising = bool(lexicon.PRACTICE.search(bare))
+    if practising and not any(world.graph.get(t, "grants") or world.graph.kind(t) == "skill" for t in out):
         out |= {s for s in growth.studiable(world) if world.graph.kind(s) == "item"}  # 「练功」而不说练哪部：手边的秘籍都算所指
     if lexicon.MONEYISH.search(lexicon.bare(deed or "", ents)):  # 「捡起那点银子」「拿他的钱」(v9)：够得着的碎银与钱袋都算所指
         g, close, around = world.graph, situation.near(world), situation.around(world) | {"player"}
@@ -138,7 +140,12 @@ def targets(world, deed: str, given=()) -> set[str]:
                 and (g.get(i, "holder") in around or (g.get(i, "holder") is None and g.get(i, "location") in close))}
     out = {t for t in out if isinstance(t, str) and world.graph.has(t)}
     deal = lexicon.TRADE_NOT.sub("", deed or "")  # 大喝、吃惊、点头不是吃喝买卖(v12)：先剔除再看，只为授意的精度
-    return out | ({WRITE} if lexicon.WRITING.search(deed or "") else set()) | ({TRADE} if lexicon.TRADING.search(deal) else set())  # 起意提笔、花钱：没有实体可指，以标记为记
+    taught = {k for p in out if world.graph.kind(p) == "person" for k in world.graph.get(p, "skills") or []}  # 指着某人，即可向他求教
+    marks = {WRITE: lexicon.WRITING.search(deed or ""), TRADE: lexicon.TRADING.search(deal),
+             STUDY: practising and growth.studiable(world, out | taught),  # v13 授意是义务：起意研习，这一回合主角就留在原处习练
+             SELF: INTRO.search(deed or "") or (world.player["name"] and world.player["name"] in (deed or "")),
+             VOW: VOWS.search(deed or "")}
+    return out | {m for m, hit in marks.items() if hit}  # 起意提笔、花钱、研习、自报家门、立志：没有实体可指，以标记为记
 
 
 # ============================================================
@@ -147,7 +154,14 @@ def targets(world, deed: str, given=()) -> set[str]:
 TO_YOU = re.compile(r"(?:给|与|到|进|入)你|(?:向|朝)你(?:抛|掷|扔|递)")  # 你是收受的一方：东西是别人给的
 WRITE = "@书写"   # 玩家原话里起意提笔(写信、写下、留书)：授意里没有实体可指，以此为记(v9)
 TRADE = "@交易"   # 玩家原话里起意买卖、吃喝、住店、请医、打听(v11)：花的是主角的钱，以此为记
-MARKS = frozenset({WRITE, TRADE})  # 授意标记(v12)：不是实体——选项验收的可达与去重只看实体，标记由引擎下回合从原话重算
+STUDY = "@研习"   # 玩家原话里起意研习、练功(v13 授意是义务)：这一回合主角留在原处习练，导演不得带他走开(本幕有来源地被打断除外)，漏写研习由系统补一拍
+SELF = "@自报"    # 玩家原话里起意搭话、自报家门(v13)：主角的姓名只有玩家起意才由导演宣告
+VOW = "@立志"     # 玩家原话里起意立志发愿(v13)：主角的所求只有玩家立志、或主角线已了结时才改
+MARKS = frozenset({WRITE, TRADE, STUDY, SELF, VOW})  # 授意标记(v12)：不是实体——选项验收的可达与去重只看实体，标记由引擎下回合从原话重算
+INTRO = re.compile(r"自报|报上|报出|报(?:个|出)?(?:名|姓名|名号|名字|家门)|通名|通报|自我介绍|介绍(?:一下)?自己|在下|我是|我叫|鄙人|小可|小生|"
+                   r"搭话|攀谈|寒暄|招呼|拜见|拜会|拜访|求见|行礼|拱手|作揖|相认|结识|结交|攀交")  # 自报家门，与寻常的上前结交——后者自然要通名
+VOWS = re.compile(r"立志|发誓|立誓|誓要|誓必|立下[^，。；！？]{0,4}[誓志]|立愿|发愿|宣誓|矢志|志向|所求")
+ARC_DONE = 4      # story.arc.STAGES 里的「了结」：主角线已了，场记请导演提一条新的所求——这时导演写所求是系统请的
 SERVED = re.compile(r"[壶碗杯盏碟盘酒茶菜饭面馍药丸散膏包]")  # 店里端上来的多半是这些：凭空出现时提示写买下(v11)
 
 
@@ -163,9 +177,24 @@ def _by_player(beat: dict) -> bool:
     return who == "player" or (who is None and "你" in text and not TO_YOU.search(text))
 
 
+def _hero_named(world, op) -> bool:
+    """这条指令在宣告主角的姓名为人所知(自报家门)。"""
+    named = effects.naming(world, op)
+    return bool(named) and named.get("id") == "player"
+
+
+def _arc_done(world) -> bool:
+    """主角线已了结(v13)：场记请导演从最深的关系或最急的时限里提一条新的所求——这时导演写所求是系统请的，不算替主角做主。"""
+    return (world.player.get("arc") or {}).get("stage") == ARC_DONE
+
+
 def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]:
-    """越权之举：(那条指令, 一句人话, 所涉实体)。"""
+    """越权之举：(那条指令, 一句人话, 所涉实体)。
+    授意有两半(v13 授意是义务)：不做没选的(取走、杀人、吸功、毁物、提笔、花钱……)，也不替主角做主——
+    研习这一回合主角留在原处(world.turn["stay"]：玩家起意研习而本幕未被有来源地打断)，导演带他走开即越权；
+    主角的姓名与所求只有玩家自报、立志才由导演宣告(主角线了结时场记请导演写新的所求，不在此列)。"""
     g, out = world.graph, []
+    stay = bool((getattr(world, "turn", None) or {}).get("stay"))
     allowed = allowed | {effects.resolve(world, a) for a in allowed}  # 玩家所指的叫法(蒲团里的帛卷)落回实体
 
     def ok(item):
@@ -177,12 +206,21 @@ def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]
         if not isinstance(op, dict):
             continue
         if acts.is_act(op):  # 事码(v9)：主角拿、偷、夺、毁、撕、写、对人群下手，都须在玩家所指之内
-            hit = _overreach(world, acts.normalize(world, op), allowed, ok)
+            hit = _overreach(world, acts.normalize(world, op), allowed, ok, stay)
             if hit:
                 out.append((op, *hit))
             continue
         kind, key = op.get("op"), op.get("key")
         nid, value = effects.resolve(world, op.get("id")), effects.resolve(world, op.get("value"))
+        if stay and effects._moves_player(world, op):  # 玩家选了研习：导演不得带主角走开
+            out.append((op, _leaving(effects.destination(op)), "player"))
+            continue
+        if SELF not in allowed and kind == "reveal" and _hero_named(world, op):  # 替主角自报家门
+            out.append((op, "报上姓名", SELF))
+            continue
+        if VOW not in allowed and kind == "set" and nid == "player" and effects.PLAYER_ALIASES.get(key, key) == "goal" and not _arc_done(world):
+            out.append((op, "改写你的所求", VOW))
+            continue
         if kind == "push" and nid == "player" and key in ("inventory", "随身", "物品") and g.kind(value) == "item" and not ok(value):
             out.append((op, f"取走{value}", value))
         elif kind == "set" and key == "holder" and value == "player" and g.kind(nid) == "item" and not ok(nid):
@@ -202,11 +240,17 @@ def unbidden(world, ops: list, allowed: set[str]) -> list[tuple[dict, str, str]]
     return out
 
 
-def _overreach(world, a: dict, allowed: set, ok) -> tuple[str, str] | None:
+def _leaving(dest) -> str:
+    return f"离开此处前往{dest}" if isinstance(dest, str) and dest else "离开此处"
+
+
+def _overreach(world, a: dict, allowed: set, ok, stay: bool = False) -> tuple[str, str] | None:
     """主角做的一件规则之事越不越权：(一句人话, 所涉实体)；不越权为 None。不是主角做的不归授意管。"""
     g, v = world.graph, a.get("做")
     if a.get("谁", "player") != "player":
         return None
+    if stay and v == "脱身":  # 脱身也是走开(v13)
+        return _leaving(a.get("到")), "player"
     item, src, to = a.get("物"), a.get("自"), a.get("对")
     if v == "拿取" and g.kind(item) == "item" and not ok(item):
         return f"取走{item}", item
@@ -304,6 +348,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     world.turn["reserved"] = dict(reserved or {})  # v12：带队之人级的禁令，物理(赶来、分人)与结算读它
     world.turn["sighted"] = []                     # v12：本回合望见的人(望见事码记下)，试演与定稿各从空起
     world.turn["hurt"] = 0                         # v13：主角这一回合真落了多少伤——收尾时连带写给编剧，免得账上有伤、正文没写
+    world.turn["aim"] = set(allowed)               # v13：玩家所指(含授意标记)——研习练的是哪一门武学，growth 读它
+    world.turn["stay"] = STUDY in allowed and not _interrupted(r.question)  # v13 授意是义务：玩家起意研习而本幕没有被有来源地打断，主角这一回合留在原处
     hp0 = world.player["hp"]
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
@@ -331,8 +377,16 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     moments = world.turn["moments"] = []  # 时间轴(v7)：主角这一回合待过的每一处与那里的听众——正文逐段对齐到这里
     world.turn["beats_at"] = []           # 每一拍发生在哪一刻：拍文与时刻，供正文对齐
 
+    hero = {"speaks": False, "intro": False}  # 这一拍是不是主角在做事：他自己报的姓名才归授意管，别人当面叫出他的名字不算；intro 记下这一拍替他报了名而被拦下
+
+    def vet(ops):  # 主角的姓名只有玩家起意自报才入账(v13)：拍文里替他报了的(导演宣告的与听写器听出的)，这一条不算，并明告编剧
+        if SELF in allowed or not hero["speaks"] or not any(_hero_named(world, op) for op in ops):
+            return ops
+        hero["intro"] = True
+        return [op for op in ops if not _hero_named(world, op)]
+
     def commit(ops):  # 听来的名字是识名指令(v6)：与一切后果同一条写入通道，成立的入本回合的账
-        r.applied.extend(effects.apply(world, ops, "director")[0])
+        r.applied.extend(effects.apply(world, vet(ops), "director")[0])
     aimed = {effects.resolve(world, effects.destination(op)) for b in beats for op in acts.expand(world, b.get("ops") or [])
              if effects._moves_player(world, op)}
     for i, beat in enumerate(beats, 1):
@@ -341,7 +395,10 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             shown.append({**beat, "text": ""})
             continue
         raw, aside = acts.expand(world, beat.get("ops") or []), ""  # 事码(v9)：平常之事先化为指令，授意与无据之检照旧
-        over = unbidden(world, raw if _by_player(beat) else [op for op in raw if acts.is_act(op)], allowed)  # 事码写明了谁做(v9)：谁的拍都查
+        hero["speaks"] = _by_player(beat)
+        stay = world.turn["stay"]
+        over = unbidden(world, raw if hero["speaks"] else [op for op in raw if acts.is_act(op) or (stay and effects._moves_player(world, op))],
+                        allowed)  # 事码写明了谁做(v9)：谁的拍都查；研习的回合里，谁的拍都不得带主角走开(v13)
         if over:  # 系统不替玩家做主：只剥掉越权的那几条，这一拍其余照演；越权之举留作下回合的选项，并明告编剧它没有发生
             deeds = [act for _, act, _ in over]
             r.candidates += [a for a in deeds if a not in r.candidates]
@@ -355,6 +412,8 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             aside = f"（其中{'、'.join(f'「{a}」' for a in deeds)}主角并未起意，未曾发生）"
         after = beats[i]["text"] if i < len(beats) and isinstance(beats[i].get("text"), str) else ""
         ops, dropped, odd = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"), beat.get("to"))
+        hero["intro"] = False
+        ops = vet(ops)  # 拍文里听出来的、替主角报了的姓名
         r.soft += [lexicon.Finding(kind, i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——{why}", hard=False)
                    for op, kind, why in dropped]
         r.soft += [lexicon.Finding("unwritten", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里没写伤，伤照规则落账，由连带交编剧补写", hard=False)
@@ -371,6 +430,10 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         dead |= situation.bodies(world) if world.here == at else set()            # 这一拍眼前的遗体，连同这一拍倒下的
         with perspective.moment(world, ears, dead):
             named += perspective.audit(world, [beat], ears, commit, start=i)  # 逐拍先听再查：主角走开之后说的话，厅上的人听不见
+        if hero["intro"] and "「报上姓名」" not in aside:  # 导演自己写了识名的，上面 unbidden 已经记过一回
+            r.void.append("报上姓名——主角并未起意，未曾发生")
+            r.soft.append(lexicon.Finding("agency", i, "报上姓名", f"第{i}拍替主角报上姓名，玩家并未授意"))
+            aside += "（其中「报上姓名」主角并未起意，未曾发生）"
         moments[-1]["ears"] |= ears
         moments[-1]["bodies"] |= dead
         world.turn["beats_at"].append((beat.get("text") or "", len(moments) - 1))
@@ -382,7 +445,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             line = f"{effects.describe(op)}——{why}"
             r.void.append(line)
             partial = effects._moves_player(world, op) and world.here != at  # 远行止步关前：前半程成立，交编剧写明，不必返工
-            hard = physical(op) and not partial and bool((beat.get("text") or "").strip())  # 无文字的拍(旧写法的顶层后果)没有拍文可违
+            hard = physical(op) and not partial and bool((beat.get("text") or "").strip()) and not beat.get("system")  # 无文字的拍(旧写法的顶层后果)没有拍文可违；系统补的拍不是导演写的，落不了只记缘由
             ent = _thing(world, op) or effects.describe(op)  # 落不了的是一件器物：返工清单写明它究竟在哪
             (r.hard if hard else r.soft).append(lexicon.Finding("void", i, ent, f"第{i}拍：{line}", hard=hard))
         r.beats.append({**{k: beat.get(k) for k in ("who", "to", "text", "mood")}, "text": (beat.get("text") or "") + aside})
@@ -640,7 +703,9 @@ def _mastery(world, shown) -> list:
 
 def imply(world, plan: dict, allowed: set[str]) -> str | None:
     """追认一回研习：玩家所指的是够得着的秘籍或武学(或身边会它的人)，主角的拍里写着习练，导演却没写 study——
-    系统替它补上这条指令(追认，不新造物理：研习本就是玩家所选之事)。返回追认的研习对象，没有即 None。"""
+    系统替它补上这条指令(追认，不新造物理：研习本就是玩家所选之事)。返回追认的研习对象，没有即 None。
+    v13 授意是义务：玩家起意研习(STUDY)而本幕没有被有来源地打断，主角的拍里一拍习练也没有——系统补一拍(标 system)，
+    免得导演写段誉的催促、带主角走开，选了的研习却无声无息地没了(第 51 回)。"""
     beats = plan.get("beats") or []
     if any(isinstance(op, dict) and op.get("op") == "study" for b in beats for op in acts.expand(world, b.get("ops") or [])):
         return None  # 导演写了研习(指令或事码)
@@ -652,7 +717,16 @@ def imply(world, plan: dict, allowed: set[str]) -> str | None:
         if b.get("who") in (None, "player") and lexicon.PRACTICE.search(b.get("text") or ""):
             b["ops"] = list(b.get("ops") or []) + [{"op": "study", "id": "player", "value": sources[0]}]
             return sources[0]
+    if STUDY in allowed and not _interrupted(plan.get("question") or {}):
+        beats.append({"who": "player", "to": None, "mood": None, "system": True, "text": f"你依先前所定，留在原处习练{sources[0]}。",
+                      "ops": [{"op": "study", "id": "player", "value": sources[0]}]})
+        return sources[0]
     return None
+
+
+def _interrupted(q: dict) -> bool:
+    """本幕被打断(导演报 断 并写明了 by)：来源成不成立由 _question 查，这里只看导演有没有报——打断了，研习才可以中断、主角才可以被带走。"""
+    return q.get("state") == "interrupted" and bool(q.get("by"))
 
 
 def _ratify(world, f) -> bool:

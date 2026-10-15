@@ -438,11 +438,10 @@ def _growth(world, op) -> str | None:
         if not any(a in me["skills"] for a in growth.DRAINERS):
             return "主角不会吸人内力的武功"
         return None if g.kind(v) == "person" and g.get(v, "status") != "dead" else f"{v}无从吸取"
-    if g.kind(v) == "skill":  # 研习某门武学：手边有载此武学的秘籍，就改作研习那部秘籍
-        book = next((i for i in [*me["inventory"], *g.where(type="item", location=world.here)]
-                     if v in growth._skills_of(g, i)), None)
-        if book:
-            op["value"] = v = book
+    if g.kind(v) == "skill":  # 研习某门武学：手边有载此武学的秘籍，就改作研习那部秘籍(v13 记下练的是哪一门，账按武学记)
+        book = growth.source_of(world, v)
+        if book != v:
+            op["art"], op["value"], v = v, book, book
     if g.kind(v) == "item":
         if not g.get(v, "grants"):
             return f"{v}没有可研习的武学"
@@ -696,7 +695,7 @@ def _exec_one(world, op, origin):
             turn.setdefault("movers", {})[op["id"]] = "director"
             turn.setdefault("arrived", set()).add(op["id"])
     elif kind == "study":
-        _note(world, growth.study(world, op["value"], (turn or {}).get("minutes", 15)))
+        _note(world, growth.study(world, op["value"], (turn or {}).get("minutes", 15), op.get("art")))
     elif kind == "drain":
         art = next(a for a in growth.DRAINERS if a in world.player["skills"])
         _note(world, growth.drain(world, op["value"], art))

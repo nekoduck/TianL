@@ -371,7 +371,8 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
                 rifts.append(f"正文「{basis}」：{effects.describe(op)}——{why}")
             else:
                 keep.append(op)
-        for op, act, _ in adjudicate.unbidden(world, keep if mine else [o for o in keep if acts.is_act(o)], set(aim)):  # 事码写明了谁做：谁的单子都查
+        for op, act, _ in adjudicate.unbidden(world, keep if mine else [o for o in keep if acts.is_act(o)],
+                                              set(aim) | {adjudicate.SELF}):  # 事码写明了谁做：谁的单子都查；正文里主角已经开口报了名，读者读到的就是定本，照记（v13 授意管的是导演替主角报名）
             rifts.append(f"正文「{basis}」：主角{act}——玩家并未起意，不入账")
             keep = [o for o in keep if o is not op]
         with perspective.moment(world, *((gate.at(basis) if gate else None) or ())):  # 这句话是在哪一刻说的：那一刻在场的人听见

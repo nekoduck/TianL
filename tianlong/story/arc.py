@@ -42,7 +42,8 @@ def _reached(world, kind: str, arc: dict) -> int:
         books = [i for i in me["inventory"] if g.get(i, "grants")]
         if any(r["stage"] >= 2 for r in study.values()):
             return 4
-        if (study or books) and (body.severity(world) or any(i not in me["inventory"] and g.kind(i) == "item" for i in study)):
+        if (study or books) and (body.severity(world) or any(r.get("src", k) not in me["inventory"] and g.kind(r.get("src", k)) == "item"
+                                                              for k, r in study.items())):  # v13 研习账按武学记，来源在 src（旧档键就是秘籍）
             return 2
         return 1 if study or books or me["skills"] else 0
     if kind == "fame":

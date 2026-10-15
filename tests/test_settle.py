@@ -13,7 +13,7 @@ import unittest
 from tests.test_adjudicate import judge, plan
 from tests.test_engine import StreamLLM, StubLLM, director
 from tianlong.engine import Game
-from tianlong.world import effects, perspective, settle, situation
+from tianlong.world import adjudicate, effects, perspective, settle, situation
 from tianlong.world.world import World
 
 SWORD = "褚师弟青钢剑"
@@ -76,11 +76,11 @@ class UserReportTest(unittest.TestCase):
 
     def test_whispered_names_reach_only_the_one_spoken_to(self):
         w = self.w
-        judge(w, plan(("player", "你凑近段誉，压低嗓子道：「在下郑大风。」", [], "段誉")))
+        judge(w, plan(("player", "你凑近段誉，压低嗓子道：「在下郑大风。」", [], "段誉")), {adjudicate.SELF})
         self.assertTrue(perspective.knows(w, "段誉", "player"))
         self.assertFalse(perspective.knows(w, "左子穆", "player"))                   # 满厅的人听不见主角低声报的名
         self.assertFalse(perspective.knows(w, "钟灵", "player"))
-        judge(w, plan(("player", "你朗声道：「在下郑大风，见过诸位。」", [])))
+        judge(w, plan(("player", "你朗声道：「在下郑大风，见过诸位。」", [])), {adjudicate.SELF})
         self.assertTrue(perspective.knows(w, "左子穆", "player"))                    # 当众说的，满厅皆闻
 
 

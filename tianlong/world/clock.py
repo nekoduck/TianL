@@ -1,7 +1,7 @@
 """
 [INPUT]: 无外部依赖
 [OUTPUT]: 对外提供 Clock（分钟计数 / 跨日跨月检测 / 年号·时辰·刻历法渲染：parts 分段、label 成句 / minutes 时长措辞换算）、
-          day_of()（"元祐六年二月"→日序）、PACES（唯一的时长措辞表，v5 增半个时辰/一个时辰/两个时辰）、span()（分钟→措辞）、PER_DAY、PER_SHICHEN
+          day_of()（"元祐六年二月"→日序）、PACES（唯一的时长措辞表，v5 增半个时辰/一个时辰/两个时辰）、span()（分钟→措辞）、stated()（v13 文字里写明的耗时→分钟）、PER_DAY、PER_SHICHEN
 [POS]: world 层的全局时钟，唯一的时间真相；被 World.advance 驱动，被 lod 用来判定刷新节拍，被 genesis 用来排定原著日程
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -26,6 +26,22 @@ MORNING = 4 * PER_SHICHEN  # 辰时：「一夜」歇到次日清晨
 # 这是全项目唯一的一张时长表(v5)：导演的措辞、规则的主张、选项上写的耗时都从这里读，不再各说各的
 PACES = {"瞬息": 1, "片刻": 15, "一顿饭": 45, "半个时辰": PER_SHICHEN // 2, "一个时辰": PER_SHICHEN, "两个时辰": 2 * PER_SHICHEN,
          "半日": 3 * PER_SHICHEN, "一夜": None, "一日": PER_DAY}
+
+
+NUMS = {"一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+STATED = re.compile(r"半个时辰|半日|一顿饭|半刻|(?<!第)([一二两三四五六七八九])(个?时辰|日|刻)")  # 「第二个时辰的更声」是序数，不是耗时
+
+
+def stated(text: str) -> int | None:
+    """文字里写明的耗时(v13：选项括号里的「耗时半个时辰」、原话里的「约两个时辰」)，换成分钟；没写明为 None。
+    写明的耗时是契约：规则只补没写明的下限，不盖过写明的。同一张时长表(PACES)：半个时辰 60、两个时辰 240、半日 360、一日 1440，一刻 15。"""
+    m = STATED.search(text or "")
+    if not m:
+        return None
+    if not m.group(1):
+        return {"半个时辰": PER_SHICHEN // 2, "半日": PACES["半日"], "一顿饭": PACES["一顿饭"], "半刻": PER_KE}[m.group(0)]
+    n, unit = NUMS[m.group(1)], m.group(2)
+    return n * (PER_DAY if unit == "日" else PER_KE if unit == "刻" else PER_SHICHEN)
 
 
 def span(minutes: int) -> str:
