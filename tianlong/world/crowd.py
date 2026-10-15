@@ -6,7 +6,7 @@
           forecast()（群战预裁：硬拼胜不胜、冲不冲得出去、偷不偷得到、败了失多少气血）、lines()（后台的群战预裁）、card()（视锥里的一群人）、
           kit()（一群人身上的东西；名字宽松认——去掉这一群的名目再看包含与末一字：佩剑、青钢剑都是长剑，长衫、衣服都是衣衫）、CLOTH、
           v10：active()（出没时段 since/until）、present()（与人同一口径的眼前）、recover()（打晕的两个时辰醒转归队、捡回东西）、escort() / relocate()（随首领、换地方即解围）、
-          afar()（近处不在跟前的人群）、template() / split() / rejoin() / muster()（spawn 的一队人马：重组或补充，离远并回）、RECOVER / SUPPLY / DEFAULT_KIT、steal() / rob() / strike() / escape()（偷取、夺取、杀伤打晕、脱身——规则之事，不成即返回缘由）
+          afar()（近处不在跟前的人群；v12 不列原著近事要用的人马）、reserved_lines()（v12 原著近事要用的人马：要在哪一桩里登场）、template() / split() / rejoin() / muster()（spawn 的一队人马：重组或补充，离远并回）、RECOVER / SUPPLY / DEFAULT_KIT、steal() / rob() / strike() / escape()（偷取、夺取、杀伤打晕、脱身——规则之事，不成即返回缘由）
 [POS]: world 层的人群规则——原著里有名有姓的人是一个个节点；同门的无名之众(东西宗各十五名弟子)是一群：十五人一体，各有一点零钱、一件衣衫、一柄剑。
        对其中一人动手就是对整群动手(同仇敌忾)：
        夺物、杀伤、打晕须一方之力过整群——武力按功力取指数(档位本是对数尺度：每高九点功力，力气约翻一倍)，整群之力是站着的人数乘每人之力；
@@ -16,6 +16,7 @@
        is_squad 只认场景清单布下的人群：剧情临时立的一队人马(ephemeral)只活在叙事里；一群人只在近旁走动(effects 拦远行)
        v10 人群随剧情驱动底层：一群人远行、赶来(按道路里程)、随行、随首领(原著挪走带队之人)、按出没时段在场；打晕的人倒下满两个时辰醒转归队(纯规则)；
        剧情临时立的一队人马是既有人群的重组(从同门人群里分出几人，身上之物按人头带走，离远即并回)，附近没有同门人群或人数不够才按门下模板补一队纯 NPC——人头、零钱、兵刃、衣衫，绝不立有名有姓的人
+       v12：原著近事要用的人马(world.turn["reserved"]，lod 算好交来；本模块不 import lod)事前分不出人
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import body, bond, situation, stock
@@ -171,14 +172,25 @@ def lines(world) -> list[str]:
     return out
 
 
-def afar(world, days: int = 1) -> list[str]:
-    """不在跟前、而在 days 日路程之内的人群(v10，供导演)：剧情要他们来就写 赶来，要几人就从中分出(spawn 的 from)。"""
+def afar(world, days: int = 1, held=None) -> list[str]:
+    """不在跟前、而在 days 日路程之内的人群(v10，供导演)：剧情要他们来就写 赶来，要几人就从中分出(spawn 的 from)。
+    held(v12 lod.reserved)：原著近事要用的人马不在此列——它们另起一节(reserved_lines)，事前不得登场。"""
     g, dist = world.graph, world.graph.distances(world.here)
     out = []
     for s in sorted(g.where(type=GROUP)):
         if is_squad(g, s) and active(world, s) and not present(world, s) and standing(g, s) > 0 \
-                and dist.get(g.get(s, "location"), 99) <= days:
+                and dist.get(g.get(s, "location"), 99) <= days and s not in (held or {}):
             out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{g.get(s, 'location')}（距此{dist[g.get(s, 'location')]}日）")
+    return out
+
+
+def reserved_lines(world, held: dict) -> list[str]:
+    """原著近事要用的人马(v12，供导演)：在哪、几人、要在哪一桩近事里登场——事前叫不来、分不出人，远远望见可以。"""
+    g, dist = world.graph, world.graph.distances(world.here)
+    out = []
+    for s, ev in sorted((held or {}).items()):
+        at = g.get(s, "location")
+        out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{at}（距此{dist.get(at, '?')}日）：要在原著近事「{ev}」里登场")
     return out
 
 
@@ -472,6 +484,9 @@ def muster(world, spec: dict, name: str, embargo=frozenset(), rooted=None) -> tu
         src = min(pool, key=lambda s: (not present(world, s), dist.get(g.get(s, "location"), 99), s)) if pool else None
         if src is not None and n and n > standing(g, src):  # 附近那一群人数不够：这是另一队增援，按补充算
             src = None
+    held = (getattr(world, "turn", None) or {}).get("reserved") or {}
+    if src is not None and src in held and not present(world, src):  # 原著近事要用的人马(v12)：事前分不出人
+        return None, f"{handle(g, src)}要在原著近事「{held[src]}」里登场，此时分不出人来"
     if src is not None:
         if faction and g.get(src, "faction") != faction:
             return None, f"{handle(g, src)}是{g.get(src, 'faction')}的人，分不出{faction}的人马"

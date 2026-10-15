@@ -42,7 +42,7 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
-       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -582,6 +582,9 @@ def _arrival(world, pid: str) -> str | None:
         return f"{pid}不在当下的江湖中"
     if crowd.is_squad(g, pid) and crowd.standing(g, pid) <= 0:
         return f"{crowd.handle(g, pid)}已无人站着"
+    held = (getattr(world, "turn", None) or {}).get("reserved") or {}
+    if pid in held:  # 原著近事要用的人马(v12)：带队之人是近事的相关者，事前不得先行登场(远远望见可以)
+        return f"{crowd.handle(g, pid)}要在原著近事「{held[pid]}」里登场，此时不得先行赶来"
     if situation.routed(world, pid):
         return f"{pid}新败而逃，不会这么快卷土重来"
     if situation.captors(world, pid):

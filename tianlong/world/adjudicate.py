@@ -281,14 +281,16 @@ def _drawn(world, beats: list) -> list[str]:
 
 
 def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=frozenset(),
-          no_interrupt: bool = False, drop: dict | None = None, then=None) -> Ruling:
-    """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力；cast：此地原著的相关者（可作打断的来源）；
+          no_interrupt: bool = False, drop: dict | None = None, then=None, reserved=None) -> Ruling:
+    """逐拍裁决并落账到 world。allowed：玩家所指；embargo：原著近事里尚未到场的势力(门派级：只管补一队)；cast：此地原著的相关者（可作打断的来源）；
+    reserved(v12 lod.reserved)：原著近事要用的人马 {人群: 事件}——写进 world.turn["reserved"]，effects 拦赶来、crowd 拦分人(试演与定稿各写一次，结算同样被拦)；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
     then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
     一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
     同伴随行等诸拍落定才结算：拍中途解除了随行、被人擒住的，不会被主角先走一步带走。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
+    world.turn["reserved"] = dict(reserved or {})  # v12：带队之人级的禁令，物理(赶来、分人)与结算读它
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     money0 = stock.funds(world, "player")

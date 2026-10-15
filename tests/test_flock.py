@@ -7,7 +7,7 @@
           醒转(打晕的人过两个时辰醒转归队，落在原地的东西还在就捡回去，被人拿走的捡不回)；
           NPC 银两(段誉给马五德三两即段誉少三两马五德多三两、不够即给不出、正文写了易手而两人的银两没动即漏记、账房开的单子入账)；
           创世(门下模板 kits、人物零钱 money、原著器物补注 canon_items、不识字 illiterate、人群的 leader/since/until 校验，错一处拒绝开局)；
-          真模型实测抓到的(一记耳光也是伤)
+          真模型实测抓到的(一记耳光也是伤)；v12 B2 原著近事要用的人群事前叫不来、分不出人，后台单列(ReservedTest)
 [POS]: tests 的 v10 验证——「弟子群是纯 NPC 资源：人头、零钱、兵刃衣衫都有账，随剧情驱动底层」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -231,6 +231,48 @@ class MoneyTest(unittest.TestCase):
                                                          "ops": [{"做": "交给", "谁": "段誉", "物": "银两", "量": "三两", "与": "马五德"}]}]}, text)
         self.assertEqual((rifts, stock.funds(w, "段誉")), ([], 2.0))
         self.assertIn("银两：二两", next(p for p in settle.books(w, text)["people"] if p.startswith("段誉")))
+
+
+class ReservedTest(unittest.TestCase):
+    """v12 B2：原著近事要用的人群——带队之人是近事的相关者，事前叫不来、分不出人，后台单列一节(远远望见可以)。
+    日志第 11 回：后台一边写「其相关者与其门派人马不得提前登场」，一边写「近处的人群……剧情要他们来写 赶来」，导演照后一句赶来了神农帮众。"""
+    EVENT = "神农帮留钟灵下毒逼援"
+
+    def setUp(self):
+        from tianlong.world import lod
+        self.w = World.create("测")
+        self.w.done += ["无量剑第四场比剑", "龚光杰掌掴段誉", "容子矩毒伤毙命"]  # lod.upcoming 至多列三桩：先了掉厅上那三桩
+        self.w.player.set("location", "澜沧江边高崖")
+        self.soon = lod.upcoming(self.w)
+        self.held = lod.reserved(self.w, self.soon)
+
+    def test_the_leaders_crowd_is_held_for_the_canon(self):
+        from tianlong.world import lod
+        w, g = self.w, self.w.graph
+        self.assertEqual(self.held, {"神农攻山帮众": self.EVENT})                       # 首领司空玄是这桩近事的相关者
+        self.assertNotIn(EAST, self.held)                                              # 东宗弟子众没有首领：不受影响
+        r = judge(w, plan((None, "林莽间钻出一群黄衫汉子", [{"做": "赶来", "谁": "神农帮众"}])), reserved=self.held)
+        self.assertEqual(g.get("神农攻山帮众", "location"), "无量山")
+        self.assertTrue(any("原著近事" in f.message for f in r.hard))                  # 赶来被驳回：整拍交返工
+        r = judge(w, plan(spawn=[{"kind": "group", "name": "围山的帮众", "faction": "神农帮", "count": 5}]), reserved=self.held)
+        self.assertTrue(any(f.kind == "spawn" and "原著近事" in f.message for f in r.hard))  # 分人也被驳回
+        self.assertEqual(crowd.standing(g, "神农攻山帮众"), 28)
+        r = judge(w, plan((None, "东宗弟子赶到崖上", [{"做": "赶来", "谁": EAST}])), reserved=self.held)
+        self.assertEqual(g.get(EAST, "location"), "澜沧江边高崖")
+        self.assertEqual(lod.reserved(w, lod.upcoming(w, {self.EVENT})), {})          # 那一桩被拉上台作主干：它的人马就能用了
+        w.done.append(self.EVENT)
+        held = lod.reserved(w, lod.upcoming(w))
+        self.assertEqual(held, {})                                                     # 那一桩了了：可以赶来
+        judge(w, plan((None, "林莽间钻出一群黄衫汉子", [{"做": "赶来", "谁": "神农帮众"}])), reserved=held)
+        self.assertEqual(g.get("神农攻山帮众", "location"), "澜沧江边高崖")
+
+    def test_the_backstage_lists_them_apart(self):
+        from tianlong.narrative import prompts
+        gm = rag.backstage(self.w, upcoming=self.soon, reserved=self.held)
+        self.assertFalse(any("神农攻山帮众" in x for x in gm["flocks"]))               # 【近处的人群】里没有它
+        self.assertTrue(any("神农攻山帮众" in x and self.EVENT in x for x in gm["reserved"]))
+        text = prompts.render_backstage({**gm, "upcoming": []})
+        self.assertIn("【原著近事要用的人马·事前不得登场（远远望见可以）", text)
 
 
 class LiveTest(unittest.TestCase):

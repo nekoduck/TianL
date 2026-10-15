@@ -3,8 +3,8 @@
          world/effects 的 apply / describe / resolve / _note（场外后果的试演与落账、只记成立之事时的代笔、名字归一、原著挪人的连带）、
          world/access 的 reach（场外人物可走的里程：衍生事件的人赶不赶得到）、
          world/adjudicate 的 names / spoilers（实体名表、剧透）、world/lexicon 的 unbacked（场外说法对账）、world/perspective 的 knows（谁叫得出主角名号），
-         World 门面（graph / clock / canon / done / taint / turn / player / here / apply / record）
-[OUTPUT]: 对外提供 entangled()、tiers()、claimed()、held()、split_due()、coming()、onstage()、upcoming()、verdict()、dirt()、broken()、intact()、settle()、unbacked()、stray()、NEAR、HORIZON、LATE
+         world/crowd 的 GROUP / is_squad / present（v12 原著近事要用的人马），World 门面（graph / clock / canon / done / taint / turn / player / here / apply / record）
+[OUTPUT]: 对外提供 reserved()（v12 原著近事要用的人马：带队之人是近事相关者的人群 → 事件）、entangled()、tiers()、claimed()、held()、split_due()、coming()、onstage()、upcoming()、verdict()、dirt()、broken()、intact()、settle()、unbacked()、stray()、NEAR、HORIZON、LATE
 [POS]: world 层的叙事 LOD 调度器——只做确定性判定（谁在哪一层、谁归谁调遣、何事到期、前提破没破），
        把需要 LLM 的工作以"任务"形式交给 engine：远方到期之事场外结算，主角眼前(onstage)到期的一桩一回合交导演作主干；
        日程里有原著，也有场外编剧写的衍生事件(v11，与原著同一格式、带 derived)，到期一样按 order 结算、一样过前提——另有一条隐含前提：人赶得到(「赶不到」：
@@ -26,7 +26,7 @@
 """
 import copy
 
-from . import access, adjudicate, effects, lexicon, perspective, situation
+from . import access, adjudicate, crowd, effects, lexicon, perspective, situation
 from .effects import describe
 from .graph import holds
 
@@ -153,6 +153,26 @@ def upcoming(world, skip: set[str] = frozenset(), within: int = 7, limit: int = 
 
 
 entangled = situation.entangled  # 与主角故事纠缠之人：定义归情境层，effects 也据此拦场外调遣
+
+
+def reserved(world, upcoming) -> dict[str, str]:
+    """原著近事要用的人马(v12)：带队之人(leader)是某桩近事的相关者(在 upcoming 里、尚未结算、前提未破)，且这一群此刻不在主角跟前——
+    事前叫不来、分不出人(effects 拦赶来、crowd 拦分人，都只读 world.turn["reserved"])，远远望见可以。返回 {人群 id: 事件 id}。
+    同一群对上几桩：记事发之地就是这一群所在(或同属一处)的那一桩，否则记最早的一桩。门派级的禁令另管「补一队」，不在此列；
+    有名有姓的相关者不拦——主角要寻得到他们。upcoming 由调用方给出(已除去本回合拉上台的那一桩：上了台的原著用得着它的人马)。"""
+    g, done, out = world.graph, set(world.done), {}
+    events = [ev for ev, _ in upcoming if ev["id"] not in done and not broken(world, ev)]
+    for s in sorted(g.where(type=crowd.GROUP)):
+        leader = g.get(s, "leader")
+        if not leader or not crowd.is_squad(g, s) or crowd.present(world, s):
+            continue
+        mine = [ev for ev in events if leader in ev["actors"]]
+        at = g.get(s, "location")
+        local = [ev for ev in mine if at and (ev["where"] == at or ev["where"] in situation.near(world, at)
+                                              or ev["where"].split("·")[0] == at.split("·")[0])]
+        if mine:
+            out[s] = (local or mine)[0]["id"]
+    return out
 
 
 def _premises(world, ev: dict) -> list[tuple]:
