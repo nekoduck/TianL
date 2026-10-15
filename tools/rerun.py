@@ -6,6 +6,8 @@
           所盯人物的下落、亲见与传闻、场况，末尾附账本与原著结算；亦可 import：parse(text) → [{turn, deed, calls{角色: [输出…]}}]
 [POS]: 回放验收——不调用模型、不发网络请求：同一份真实模型输出交给新引擎，看裁决、在场、原著与账本还会不会打架。
        世界会与原局分叉(新引擎裁决不同)，越往后越只是「同样的模型话语落在新世界上」；它量的是新引擎能否接住真模型的写法，而不是复刻原局
+       v13：parse 直接认导出的 game.md(「导演初稿 · trace 第 N 行」与「模型输出（原文）」)；replay 返回 (Game, 每回合记录)，report 出报告，check 逐回合断言不变量(--check)，summary 给 P0 之后的目标一览；
+       --dump 把日志存成固定样本 tests/fixtures/replay60.json(只留举动与各角色原始输出)，load 也认它
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse

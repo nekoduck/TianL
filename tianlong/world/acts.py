@@ -16,6 +16,7 @@
        v12：望见——隔着关口远远看见某人或一群人(situation.sightable)，记进本回合望见的人，不挪人不上名册；识名事码另可写「知」:「身份」——连来历一并说破，主角听见即识底；
        P1-7 脱身认围攻与押解(crowd.holders)：一样须过整群一半之力，冲得出去即了断那一条拘押；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
+       v13：伤人带出手者(by)，落多少血由 body.blow 按攻守档位封顶；拿取/夺取认 player 为一方(导演写 自=player 不再驳回)，自己手里的东西夺不得、已在他手里的不是一件事
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import access, body, crowd, effects, scribe, situation, stock, trade

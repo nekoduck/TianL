@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 story/stakes（时限）、story/timing 的 study_minutes 与 world/clock 的 span（选项上写的耗时与规则主张同一张表）、world/growth 的 studiable / progress（研习对象与进度）、world/access 的 exits（出路与日程）、world/situation 的 imperiled / captors / quests、
          world/body 的 severity，world/perspective 的 handle（v12 C 槽的叫法照主角眼中的）；World 门面的 player / graph（鸭子类型）
+         v13 另依赖 world/growth 的 next_art（点名下一门该练的功夫）
 [OUTPUT]: 对外提供 doings()（v12 眼前之人的眼下之事：C 槽从看得见的东西里找机会）、slots()（给编剧的三个槽位：此刻 / 此后 / 机缘，各写明它要回答什么与可用的素材；v12 收尾时仍悬着话的人平常写进 A 槽、险境写进 B 槽：在举动里顺带回应他）、later()（此后槽的兜底项 [(文字, 对象)]，供 menu.check 补位）、
           SCALES、peril()
 [POS]: story 层的选项编排——选项从「正文的附录」变成「先定槽位、再让编剧措辞」：
@@ -9,6 +10,7 @@
        危局(world/pacing.danger)只有一个口径：危局里没有此后，三槽改为 A 刚/奇、B 智/言、C 势/变；要找的人还没寻到，A 槽续线、B 槽不拿远路顶替
        槽位只规定每项回答什么，不规定措辞；险境里 B 槽改为脱身一类的此刻之举。编剧在每项后写「｜尺度：此刻/此后/机缘」，
        引擎记下玩家所选之举的尺度：选了此后，下一回合的场记要求略写、时长按那件事的规则结算——选项与时间从此互相咬合
+       v13：此后槽的研习项点名下一门该练的功夫(growth.next_art：先接着练已起头的，练到顶的不再给)，耗时按那一门的阶算
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from ..world import access, body, growth, pacing, perspective, situation

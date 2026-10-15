@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 world/trade 的 shop（v12 此处的铺子）、world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
          world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked / pick（v12 授意标记不是实体、对象栏的名字）、world/scenery 的 TRIFLE 与 world/stock 的 is_cash（v12 让位先挑只指着琐物碎银的），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
+         v13 另依赖 world/growth 的 ceiling（选项许的进境账上够不着即不入选）
 [OUTPUT]: 对外提供 SEEK_PERSON / seeking()（v12 玩家要找的人）、FORCED / ANSWER（v12 强插至多几项、回应的措辞）、SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）、OFFERED_TURNS / STALE / offer()（v12 P2-2 琐物衰减：记下入选选项的对象）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
        三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
@@ -9,6 +10,7 @@
        只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路；
        按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题；危局里(pacing.danger)兜底由状态生成，不给出路、歇息、四下察看；本回合望见的人与知其所在同等对待；
        P2-2 琐物衰减：只指着寻常之物或碎银的选项，这几样近三回合已入选两回(危局里一回)即不再入选(_stale 读黑板 offered，引擎验收之后经 offer 记下)
+       v13 _unattainable(P2-3)：选项许了研习账上够不着的进境(「练至大成」而下一阶还须再隔几日，growth.ceiling)不入选
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging

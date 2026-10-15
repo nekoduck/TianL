@@ -5,6 +5,7 @@
          world/growth 的 unearned / mastery、world/lexicon 的 scan / mastery / SENTENCE / DEPART / NEGATE / REMOTE / YET（词表：结算的第二双眼睛，也判主角是否真动了身）、
          world/scenery 的 nicknames（v8 器物的简称）、world/adjudicate 的 forged（v8 世上没有的器物）、world/acts 的 expand / normalize / is_act / verb（v9 账房也说事码）、
          world/crowd 的 squads / standing / handle / besiegers / is_squad、world/stock 的 funds / say / measure / cn（银两、人群、数量的账）
+         v13 另依赖 world/access 的 exits（地理之句体检）、world/graph 的 ROAD（暗路的补记）、world/body 的 wound（正文写你负了伤而账上无伤）、world/lexicon 的 hero_hurt
 [OUTPUT]: 对外提供 Gate（正文出闸：逐段逐句对齐到时刻 → 听 → 掩 → 放行，放行即存档；note 把补记接在正文之后(同过掩码与存档，但戏里没有人听见)；at 给一句话所在那一刻的听众与遗体）、partners()、
           books()（账房看的账本：定本正文、叫法对照、此刻账上、本回合已落账、本回合账上的变化、近处地点）、
           commit()（账房的结算单落账：据须是正文原句、规则之事正文改不了、主角之举须经授意，按据所在时刻的听众经 effects 裁决 → (成立的指令, 分歧)）、
@@ -27,6 +28,9 @@
        事码写明主角做的，不论单子署谁都过授意；账本给账房看主角的银两、地上器物的数量与在场人群，回合首末两份账另记银两、人群人数与围攻——银两多了少了、人群倒下几人、被围与脱围，正文没写到即补记。
        纯规则、不调 LLM(账房在 narrative)、不新造实体
        v10：账本里每个人写上身上的银两(NPC 之间给钱也有账可依)
+       v13 分歧不改写历史、账房不再误报(P0-2/3)：技术性的驳回(id 写歪、格式不可解，TECHNICAL)只记日志不算账文分歧，规则性的分歧交导演至多 DRIFT_TURNS(两)回——age 数交代的回数、
+       addressed 认导演的后果碰到了点名的人或物即算圆回；单子写明了是谁做的，事码没写「谁」就是他(第 7 回「段誉服毒」不再记成主角服用)；正文里主角已经开口报了名，读者读到的就是定本，照记；
+       ruled 另认正文写你负了伤而账上气血未减(hero_hurt)、地理之句(geography：说天堑过不去而图上是零日明路，软分歧)；补记不再露出内部字段 road(写「暗路」)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging

@@ -3,6 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
+         v13 另依赖 world/body 的 blow / mend_cap / hurt_word / SCRATCH / wound（伤疗归规则）、world/growth 的 studiable（授意标记 STUDY）、world/lexicon 的 STAY / NOT_STAY（留人）
 [OUTPUT]: 对外提供 HARD / UNSURE 另有 afar（v12 望见之人开口）、judge(seek=…)（v12 小片区里寻人而至即遇：_found）、judge(stall=…) / SEIZED（v12 僵持到期押走：_seize）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
@@ -11,7 +12,8 @@
        再落账，再以词表体检「写了变化却没有指令」的影子状态；随行、获救、败走这三种写漏了的连带由系统追认，其余硬违例交导演修复一次，
        仍不成立的拍整拍作废，化作一句失败的事实交编剧。
        一拍一事务(v3)：拍里改变物理状态的指令(去留、得失、生死、随行与拘押、赶来、研习、吸功、揭示)落不了，整拍即交返工；
-       指令在拍文里无据即丢(无伤扣血、被荡开的一击、研习之拍扣主角气血)，主角自己的拍里无人出手又不涉险地，一拍至多伤 SCRATCH 点；
+       指令在拍文里无据即丢(无人说出口的识名、同拍写明被荡开的一击、研习之拍扣主角气血)；v13 起伤疗的数量不因拍文没写伤字眼而丢，封顶后落账、连带交编剧补写；
+       主角自己的拍里无人出手又不涉险地，一拍至多伤 SCRATCH 点；
        台词的事实出处：尚未发生的原著(某人将被擒、将死)不得从任何人嘴里当作已知(foretold，返工不作废)；拍上的 mood 原样带给编剧、不入账；
        词表不再替导演挪人：只追认获救(解押)，随行、离去、叫错名字交返工但不作废；
        名册由事件写入(v5)：同在这一片的人被导演写进拍里(开口、下指令)即走到了主角跟前(_drawn)；
@@ -33,6 +35,11 @@
        v12 P1-7 僵持到期(_seize)：场的僵持计数不小于 pacing.STALL_SEIZE、本回合导演仍没写结构性变化，围困主角的人群照它写下的打算(crowd.seizure)擒人押走——
        了断围攻、结下押解、那一群与被擒者前往去处，来源 RULED_BY(也是一处调遣)；先在副本上试，有一条落不了整桩不做、只记软违例；押的是主角即连那一群与在去处的首领上名册、
        时间轴补上去处那一刻；连带写明谁照其所图把谁擒下押往哪里(或就地扣下)、turn["seized"] 记下；体检在此之前，看的是导演的拍。_custody 对人群押着主角而两端异地，提示同一拍里写那一群与主角都前往同一处
+       v13 否决即事件、授意是义务(P0-1/2/4、P1-5)：伤疗的数量归规则——_grounded 不再因拍文里没写伤字眼丢掉气血增减，落多少由 body.blow 封顶(导演报的血只是轻重)，同拍明写被避开的才不扣，
+       落了账而拍文没写伤的记软违例 unwritten、连带交编剧补写(turn["hurt"])；conjure 降为 UNSURE(返工不作废，真碰了指令的指令自己落不了才作废)，泛称(灵草，GENERIC 首字+KINDS 末字)认回手边同类唯一之物(forged)；
+       targets 另给授意标记 STUDY(起意研习)/SELF(起意自报家门、搭话)/VOW(起意立志)：玩家起意研习而本幕未被有来源地打断(_interrupted)，谁的拍都不得带主角走开(前往、脱身越权，turn["stay"])，
+       漏写研习由 imply 补一拍(标 system，落不了只记缘由不交返工)；主角的姓名只有玩家自报才由导演宣告(识名 player 与拍文里听出来的都拦下，别人当面叫出他的名字不算)，主角的所求只有玩家立志或主角线了结(ARC_DONE)时才改；
+       turn["aim"] 供 growth 认玩家所指的武学；主角吩咐同行者「在此藏好」(lexicon.STAY)而动身时没写了断随行：stay 交返工一次(UNSURE)，仍没写由系统替他了断、连带写明他留在原处(_stayers)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy

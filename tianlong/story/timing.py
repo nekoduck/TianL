@@ -1,6 +1,7 @@
 """
 [INPUT]: 依赖 world/growth 的 stage_of / SITTING / STAGES / TEACH_MINUTES（研习的规则时长）、world/body 的 REST（养伤半日）、
          world/pacing 的 danger（v12 危局的单一口径：险境不许歇）与 CUTS / UNTIL（幕间省略的措辞）、world/effects 的 resolve、world/acts 的 expand（v9 事码的研习也主张时长）；World 门面的 clock / player / graph
+         v13 另依赖 world/clock 的 stated（玩家话里写明的耗时）、world/growth 的 source_of / art_of（按武学算阶）
 [OUTPUT]: 对外提供 claim()（规则主张的戏内光阴下限与缘由，只看真会成立的拍）、study_minutes()（研习一回的规则时长）、cut_minutes()（幕间省略换算成分钟：一段长度或「到某一刻」）、LATER（选了「此后」之举的下限）、REST_WORDS
 [POS]: story 层的时间结算——「时间是后果」(宪法第 10 条 v4)：导演只选措辞(pace/cut)，戏内光阴取措辞与规则主张的较大者：
        研习一部秘籍主张到下一阶的合理时长(初窥半个时辰、此后每回两个时辰)，求教主张一个时辰，歇息养伤主张两个时辰——
@@ -8,6 +9,8 @@
        玩家上回合选的是「此后」尺度的一件事(赶路、等人、找人)，无规则可依时也至少一顿饭。
        幕间省略可以是一段长度(一顿饭/半日/一夜/一日)，也可以是「到某一刻」(入夜/天明/正午，或场记里列出的某个时限)——
        「等钟万仇夫妇明日启程」不必再猜是半日还是一日。导演写片刻而拍里在练功，系统按规则补足，不算违例
+       v13 写明的耗时是契约(P0-5)：玩家的话里写明了耗时(clock.stated：「耗时半个时辰」「约两个时辰」)就取它，规则只补没写明的下限(第 53 回要半个时辰、世界过了四小时)；
+       一回合同一门武学只主张一次；study_minutes 按这回练的那一门的阶算
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re

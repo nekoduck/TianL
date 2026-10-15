@@ -1,12 +1,14 @@
 """
 [INPUT]: 依赖 world/stock（银两与数量）、world/venue（场所、货架、伙计当值）、world/lore（消息）、world/effects 的 apply / usable / resolve（唯一写入通道）、
          world/situation 的 around、world/actor 的 conditions；World 门面(graph / atlas / player / here / turn，鸭子类型)
+         v13 另依赖 world/body 的 antidote / envenom / protected（毒是规则态：对症才解、毒药服下即登记）
 [OUTPUT]: 对外提供 买卖与服务的执行(v11 世界底座，事码 买下 / 卖出 / 办事 / 服用 / 打探 交这里)——buy()、sell()、serve()、consume()、inquire()，
           shop()（此处的铺子）、clerks()（此刻当值、在眼前的伙计）、ware_of()（认货：目录 id、货名、货架上的 id）、services_here()、RATIO、LODGING、MEALS、TREAT
 [POS]: world 层的买卖与服务——底座里有的才买得到、办得成：货架上的货有价有存货(买走即少、每日补回)，服务由当值的那个职名办、价钱照价目，
        钱从主角身上付到柜上(柜银是一堆碎银，总数守恒)；收购与典当按估值的几成、柜上的银两不够即不收；
        药与毒接身体规则(一服回几点气血、内伤降几级、治什么解什么，毒发添上症状)；打探从消息表里取——此处向当值的哪个职名、要多少赏钱，
        听来的照原样记(可以是假的)，原话进连带交编剧照它写；没写问谁先问办打探的伙计，想打听的事是偏好、不是筛子。一件事一个事务：前提不成整条不成并给出人话缘由，什么也不动；记录写成下游认得的形状(money 与 inventory 照旧，另有 trade/service/lore)。
+       v13 毒是规则态(P1-1)：_cure 先看对症不对症(body.antidote：对症的毒解去，对不上的写明「X于Y无效」)，再落药力；毒药服下即登记一条毒(body.envenom)，往后随光阴发作
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import actor, body, effects, lore, perspective, situation, stock, venue

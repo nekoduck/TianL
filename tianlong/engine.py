@@ -2,6 +2,7 @@
 [INPUT]: 依赖 world/（World、adjudicate(含 imply 追认研习)、menu、lod、plot(v11 场外编剧的规则层：awaken / idle / rewrite / sequel / brief / vet / render / adopt / postpone / origin)、rag、situation、perspective(编剧视角)、settle(v6/v7 结算：正文出闸 Gate(逐段逐句对齐到时刻、note 补记)、账本快照 books、结算单落账 commit、复核 disputes / waive、规则之事 ruled、首末两份账 glance / delta / unwritten)、
          body.recover(歇息养伤)、pacing.record / calm(节奏账、幕间省略的闸门)、growth.SITTING(研习至少一顿饭)、adjudicate.physical、access.distances、effects.describe、clock.PER_DAY）、
          story/（timing 规则主张时长与 cut 换算、canon 原著窗口的拉与消费、stakes 时限、scene 场、brief 场记与主干调度、arc 主角线、choices 选项槽位）与 narrative/agents；llm 可为 None（离线兜底）
+         v13 另依赖 story/stakes 的 enforce / consequence（到期的时限后果由规则兑现）、world/body 的 poison_tick / poison_lines（毒发与毒程）、world/settle 的 age / addressed（分歧的交代回数）
 [OUTPUT]: 对外提供 Game（open / act(原话照收，选项编号的快捷写法归终端) / flush(汇合后台折叠的梗概与场外编剧写好的剧情线) / debug(另列场外剧情线) / menu(选项→对象)），每回合返回一个纯 dict 的 Turn：
           time/clock(历法分段)/place/region/text/options/news(亲见与传闻)/status(身况标签)/void；
           可选监听 on(kind, data) 逐步报告：stage(direct→settle→write) → head(除正文与选项外的整回合) → text(正文增量)
@@ -31,6 +32,8 @@
        附近的、分量重的原著另交场外编剧改写；回合收尾先查谁的心愿了了(plot.awaken)，跨过了日子再续写该有下一步的人(plot.idle)——
        创作家写、规则审(world/plot.vet)、审稿，在后台对着世界的快照跑(_compose)，下一回合开始前(flush)对着真世界再过一遍规则审才排进日程(_adopt)；离线不写新剧情、作罢即止
        v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码；回合收尾了断两端异地的同行(situation.sunder)；原著近事要用的人马(lod.reserved)交后台与裁决；危局算两次(槽位用成文前的，此后槽、菜单与合场用结算之后的)，合场与僵持计数交 scene；回合收尾记下见过的人(situation.meet)；玩家要找的人(menu.seeking)交裁决，小片区里寻而至即遇；场的僵持计数(stall)交裁决：僵持满四回合仍无结构性变化，规则照围困人群的打算押走；验收之后记下入选选项的对象(menu.offer，P2-2 琐物衰减)
+       v13：回合开头到期的带后果的时限由规则兑现(stakes.due → enforce，结果交场记)；carried = settle.age 分歧交导演至多两回，导演的后果碰到点名之人即算圆回；光阴推进之后 body.poison_tick(毒发)；
+       结构性变化按净变化；debug 视图另有时限的到期与后果、身上的毒
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy

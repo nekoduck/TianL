@@ -7,6 +7,7 @@
        quests/study/hooks/turn/acquaintances/cast/pacing/came_from/en_route/drift 由系统(situation、growth、engine、perspective、pacing)维护，scene/clocks/arc/spines/setups 由 story/ 维护；内伤是境况里的分级词，由 body 升降，导演写不动。
        气血无论 set 还是 add 都夹在 [1, max_hp]：主角不在规则层死亡。银两(v9)只经事码(拿取、交给、偷取、夺取)由 world/stock 记账，导演写不动。
        记忆分两层：journal 是近事(工作记忆)，满 JOURNAL_CAP 行即挤出最早 FOLD 行交上层折叠进 synopsis(情节梗概)，上下文有界而记忆无界
+       v13：poison(主角身上规则登记的毒，body)、drift_seen(分歧交给导演过几回)；study 的账键改为武学(src/minutes/credit/stage/since)；clocks 带 then(到期由规则兑现的事码)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy

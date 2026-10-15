@@ -3,6 +3,7 @@
 [OUTPUT]: unittest 用例——回合载荷形状、行动解析(选择/自由书写/过期/越界)、开卷与续读、忙碌互斥、错误载荷、静态前端托管、
           SSE 流式(事件次序、done 与非流式同体、开流前错误仍为 JSON、开流前读者离席不打断回合)、Gemini SSE 解析、自动存档与续卷(含终端存档互通、续卷记得上回合末段)、
           只收同源 JSON(跨站请求 403)、行动写明卷与回合(过期 409 stale_turn)、Content-Length 校验；v12 C1 网关解包单元素数组、重演同一口径(GatewayJsonTest)
+          v13：网关把一串带 text 的拍包成 {beats}（第 46 回返工回的是拍数组）
 [POS]: tests 的契约验证：web/PROTOCOL.md 的每一条，在 Python 实现上都有一个对应的断言
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
