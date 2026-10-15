@@ -1,12 +1,15 @@
 """
 [INPUT]: 依赖 world/situation 的 around（身边之人）、world/actor 的 vitals / mend / conditions / set_conditions（任何人的身体），World 门面的 graph / player / clock / seed / turn（鸭子类型）
 [OUTPUT]: 对外提供 fate()（本回合的命运骰）、INJURIES / severity() / injure() / relieve() / recover()（内伤分层与病程）、
-          risk() / forecast()（研习预裁）、wound() / WELL / GRAVE（伤势措辞；v12 五成以下重伤、命悬一线与 situation.PERIL 同一判定）、INNER（拍文与境况里说的内伤）
+          risk() / forecast()（研习预裁）、wound() / WELL / GRAVE（伤势措辞；v12 五成以下重伤、命悬一线与 situation.PERIL 同一判定）、INNER（拍文与境况里说的内伤）、
+          rule() / WIN（v13 较量预裁，自 rag 移来）、cap() / blow() / mend_cap() / hurt_word() / SCRATCH / HAZARD / HEAL_CAP（v13 一击的伤归规则）
 [POS]: world 层的身体规则——与 growth（进境与功力）互为表里：growth 算「学到多少」，body 算「学得顺不顺、伤得多重、好得多快」。
        研习预裁与较量预裁同构：命运骰 + 懂行之人 + 伤势 → 顺利 / 小有所得 / 受阻 / 岔气，导演只演出、不得自编反噬；
        内伤是境况里的一个分级词（内息紊乱 → 经脉受损 → 经脉重创），只由规则升降：强练岔气至多一回合升一级，歇息与疗伤降级。
        伤势措辞以气血与内伤共同定：重伤只给气血五成以下(v12，原为三成)或经脉受损以上——不再一掉血就重伤；命悬一线与 situation.imperiled 同一判定。
        主角与 NPC 同构(v4)：内伤升降、伤势措辞、歇息养伤对任何人成立(who 缺省为主角)，一回合各人至多升降一级；光阴流过，天下负伤之人一同将养
+       v13 否决即事件、数量归规则：伤人落多少血不再由拍文里有没有伤字眼（证据正则）决定——导演报的数只是轻重，规则封顶：攻守档位差×本回合命运骰查较量预裁表(rule)里失血区间的上限
+       （至少 SCRATCH），一群人按胜算比，无人出手或不涉险地 SCRATCH、涉险之地 HAZARD；疗伤一拍至多 HEAL_CAP（真正的复原归歇息养伤与药）。较量预裁与封顶读同一张表、同一颗骰
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
@@ -92,6 +95,67 @@ def recover(world, minutes: int) -> str:
         if who == "player" or who in near:
             told += [t for t in said if t]
     return "；".join(told)
+
+
+# ============================================================
+#  较量预裁与一击的伤(v13)：伤害的数量归规则——导演报的「血」只是轻重，落多少由规则封顶
+# ============================================================
+def rule(gap: int, fate: int) -> tuple[str, str]:
+    """较量预裁：档位差 × 命运骰 → (结局, 失血区间)。裁决在导演开口前由系统算定，导演只负责把它演出来。
+    gap 是对手的档位减去受击者的档位：后台给导演看的较量预裁与一击的封顶(cap)读的是同一张表、同一颗骰。"""
+    if gap >= 2:
+        return ("侥幸脱身，未能得手", "0") if fate >= 95 else ("大败，必受重创", "25~40")
+    if gap == 1:
+        return ("险胜", "5~10") if fate >= 85 else ("僵持不下", "0~10") if fate >= 55 else ("落败受伤", "15~25")
+    if gap == 0:
+        return ("小胜", "0~5") if fate >= 55 else ("僵持不下", "0~10") if fate >= 40 else ("小败", "10~20")
+    if gap == -1:
+        return ("得胜", "0") if fate >= 20 else ("一时失手，僵持", "0~5")
+    return ("大胜，手到擒来", "0") if fate >= 5 else ("轻敌失手，仍占上风", "0~5")
+
+
+WIN = {"险胜", "小胜", "得胜", "大胜，手到擒来", "轻敌失手，仍占上风"}  # 较量预裁里算赢的那几档：夺得下对方身上的东西(acts 夺取同用这一张表)
+SCRATCH = 5      # 无人出手、不涉险地：一拍至多伤几点（磕碰、擦破皮）
+HAZARD = 15      # 涉险之地（主角在路上）的坠跌磕碰：一击至多伤几点
+HEAL_CAP = 10    # 一拍的疗伤至多回几点：真正的复原归歇息养伤与药
+CROWD_TOP = ((4.0, 40), (2.0, 25), (0.0, 15))  # 一群人动手：胜算比 ≥4 / ≥2 / 其余的封顶，与 crowd.forecast 的失血区间同一口径
+
+
+def _power(world, who) -> int:
+    return world.player["power"] if who == "player" else (world.graph.get(who, "power") or 0)
+
+
+def cap(world, by, target, moving: bool = False) -> int:
+    """一击至多伤几点（v13）。by 是出手者（人、一群人、主角；空或就是受伤的人即无人出手），target 是受伤的人：
+    人对人——攻守档位差×本回合命运骰查 rule 里失血区间的上限，至少 SCRATCH（强者一击可重，弱者伤不了高手却也能擦伤）；
+    一群人——胜算比（整群之力比受击者一方之力）；无人出手或出手者不是人——SCRATCH，主角在路上（moving）则 HAZARD。"""
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    from .profile import tier_index
+    g = world.graph
+    if by in (None, "", target) or (by != "player" and g.kind(by) not in ("person", crowd.GROUP)):
+        return HAZARD if moving else SCRATCH
+    if crowd.is_squad(g, by):
+        mine = crowd.side(world, "player") if target == "player" else crowd.force(_power(world, target))
+        ratio = crowd.might(world, by) / max(mine, 1e-6)
+        return next(top for floor, top in CROWD_TOP if ratio >= floor)
+    gap = tier_index(_power(world, by)) - tier_index(_power(world, target))
+    return max(int(rule(gap, fate(world))[1].split("~")[-1]), SCRATCH)
+
+
+def blow(world, by, target, hint, moving: bool = False) -> int:
+    """一击落多少血（正数，至少一点）：导演报的数（hint）只是轻重，落多少由规则封顶（cap）。"""
+    return max(1, min(round(abs(hint or 0)) or 1, cap(world, by, target, moving)))
+
+
+def mend_cap(hint) -> int:
+    """一拍的疗伤至多回几点（HEAL_CAP）；调息包扎只是缓一缓，复原要歇息或服药。"""
+    return max(1, min(round(abs(hint or 0)) or 1, HEAL_CAP))
+
+
+def hurt_word(loss, max_hp) -> str:
+    """一击的轻重（交编剧，不报数字）：失血占上限的比例。"""
+    r = loss / max(max_hp, 1)
+    return "皮肉之伤" if r <= 0.05 else "轻伤" if r <= 0.15 else "不轻的伤" if r <= 0.3 else "重创"
 
 
 # 气血不报数字，只报身况：(气血比例下限, 措辞, 语气)；语气 plain/warn/alert 交由表现层决定着色

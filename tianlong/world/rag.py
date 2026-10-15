@@ -199,17 +199,7 @@ def vista(world, reserved=None) -> list[str]:
 # ============================================================
 #  导演后台：玩家看不见、但剧情必须依据的一切
 # ============================================================
-def rule(gap: int, fate: int) -> tuple[str, str]:
-    """较量预裁：档位差 × 命运骰 → (结局, 主角失血区间)。裁决在导演开口前由系统算定，导演只负责把它演出来。"""
-    if gap >= 2:
-        return ("侥幸脱身，未能得手", "0") if fate >= 95 else ("大败，必受重创", "25~40")
-    if gap == 1:
-        return ("险胜", "5~10") if fate >= 85 else ("僵持不下", "0~10") if fate >= 55 else ("落败受伤", "15~25")
-    if gap == 0:
-        return ("小胜", "0~5") if fate >= 55 else ("僵持不下", "0~10") if fate >= 40 else ("小败", "10~20")
-    if gap == -1:
-        return ("得胜", "0") if fate >= 20 else ("一时失手，僵持", "0~5")
-    return ("大胜，手到擒来", "0") if fate >= 5 else ("轻敌失手，仍占上风", "0~5")
+rule, WIN = body.rule, body.WIN  # 较量预裁(v13 起定义在 body：伤人的封顶与后台给导演看的是同一张表、同一颗命运骰)；WIN 是算赢的那几档，acts 夺取同用
 
 
 def _secret_open(world, edge: dict, canon_by_id: dict) -> bool:
@@ -347,9 +337,6 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "season": locale.season(world),       # 天时：四季气候、节令集期、此地的险(v11)
         "traits": locale.traits(world),       # 在场有名之人的底子(v11)：名声、好恶软肋、手段底线、能替人做的事
     }
-
-
-WIN = {"险胜", "小胜", "得胜", "大胜，手到擒来", "轻敌失手，仍占上风"}  # 较量预裁里算赢的那几档：夺得下对方身上的东西(acts 夺取同用这一张表)
 
 
 def _money(world, people) -> list[str]:

@@ -40,7 +40,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from . import acts, actor, bond, crowd, effects, growth, lexicon, pacing, perspective, scenery, situation, stock, trade, venue
+from . import acts, actor, body, bond, crowd, effects, growth, lexicon, pacing, perspective, scenery, situation, stock, trade, venue
 from .graph import holds
 
 log = logging.getLogger("tianlong")
@@ -49,7 +49,7 @@ SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
         "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
 
 
 @dataclass
@@ -297,12 +297,14 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     stall(v12 场的僵持计数，旧场没有按 0)：不小于 pacing.STALL_SEIZE 而本回合没有结构性变化，规则照围困人群写下的打算擒人押走(_seize)；
     drop：上一轮裁决仍不成立、此番整拍作废的拍号 → 缘由（0 号指 spawn 与本幕之问）；
     then：诸拍落账之后、体检之前要发生的事（此地上演的原著）——导演挪动过的人，原著再挪不动；原著挪走的人，拍文写他离去也不算漏记。
-    一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；指令在拍文里无据（无伤而扣血），丢掉指令。
+    一拍是一个事务：拍里改变物理状态的指令有一条落不了，整拍交返工、仍不成立即作废；伤疗的数量归规则（v13 _grounded：导演报的血只是轻重，规则封顶），不再因拍文里没写伤字眼而丢掉。
     同伴随行等诸拍落定才结算：拍中途解除了随行、被人擒住的，不会被主角先走一步带走。"""
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
     world.turn["reserved"] = dict(reserved or {})  # v12：带队之人级的禁令，物理(赶来、分人)与结算读它
     world.turn["sighted"] = []                     # v12：本回合望见的人(望见事码记下)，试演与定稿各从空起
+    world.turn["hurt"] = 0                         # v13：主角这一回合真落了多少伤——收尾时连带写给编剧，免得账上有伤、正文没写
+    hp0 = world.player["hp"]
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     money0 = stock.funds(world, "player")
@@ -352,14 +354,18 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
                 continue
             aside = f"（其中{'、'.join(f'「{a}」' for a in deeds)}主角并未起意，未曾发生）"
         after = beats[i]["text"] if i < len(beats) and isinstance(beats[i].get("text"), str) else ""
-        ops, baseless = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"), beat.get("to"))
-        r.soft += [lexicon.Finding("baseless", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里无据，不入账", hard=False)
-                   for op in baseless]
+        ops, dropped, odd = _grounded(world, copy.deepcopy(raw), beat.get("text") or "", after, beat.get("who"), beat.get("to"))
+        r.soft += [lexicon.Finding(kind, i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——{why}", hard=False)
+                   for op, kind, why in dropped]
+        r.soft += [lexicon.Finding("unwritten", i, effects.describe(op), f"第{i}拍：{effects.describe(op)}——拍文里没写伤，伤照规则落账，由连带交编剧补写", hard=False)
+                   for op in odd]
         at, ears, dead = world.here, perspective.audience(world), situation.bodies(world)
         if not moments or moments[-1]["here"] != at:
             moments.append({"here": at, "ears": set(), "bodies": set()})
         snap = bond.before(world, ops)
+        hp_before = world.player["hp"]
         applied, rejected = effects.apply(world, ops, "director")  # 落账会就地规整指令：提议本身留给返工与定稿
+        world.turn["hurt"] = world.turn.get("hurt", 0) + max(0, hp_before - world.player["hp"])  # 主角这一回合真落了多少伤（v13：交编剧补写进正文）
         r.applied += applied
         ears |= perspective.audience(world) & set(world.turn.get("arrived", ()))  # 这一拍说话时在场的，连同这一拍赶来的
         dead |= situation.bodies(world) if world.here == at else set()            # 这一拍眼前的遗体，连同这一拍倒下的
@@ -397,7 +403,9 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
         moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
     world.turn["start"] = {"here": here0, "inventory": inv0, "around": around0, "route": route, "aimed": aimed,
-                           "money": money0, "flock": flock0, "funds": funds0}  # 编剧成文之后的对账也以此为准
+                           "money": money0, "flock": flock0, "funds": funds0, "hp": hp0}  # 编剧成文之后的对账也以此为准
+    if world.turn["hurt"] > 0:  # v13 账上落了伤，正文就得写：连带交编剧（不报数字，只说轻重），拍文没写伤的由它补写
+        effects._note(world, f"你受了{body.hurt_word(world.turn['hurt'], world.player['max_hp'])}：这一下确实落在你身上，须写进正文")
     _examine(world, r, shown, power0, stripped, named)
     _question(world, r, cast, no_interrupt and 0 not in drop)
     _seize(world, r, stall, world.here != here0)
@@ -469,9 +477,8 @@ def lines_to_player(world, r: Ruling) -> dict[str, str]:
 #  一拍一事务：哪些指令是这一拍的筋骨，落不了整拍便不成立；哪些指令在拍文里无据
 # ============================================================
 WOUND = re.compile(r"伤|血|痛|跌|摔|撞|刺中|刺入|刺伤|砍中|劈中|击中|打中|拍中|掌中|中掌|中剑|中毒|毒发|擦破|咳|呕|吐出|昏|晕|反噬|岔气|走火|灼|烫|咬|抓破|划破|骨折|断了|掴|耳光|巴掌")  # 一记耳光也是伤(v10 实测)
-PARRY = re.compile(r"荡开|架开|格开|挡开|拦开|拨开.{0,2}(?:剑|刀|掌|招)|避开|闪开|躲开|让开|落空|扑空|险险避过|堪堪避过|毫发无伤|毫发未伤")
-SCRATCH = 5                                      # 非较量场合一拍至多伤几点
-HEAL = re.compile(r"药|丹|丸|调息|运功|歇|养|疗|敷|包扎|吐纳|平复|好转|缓过|回复|恢复|止血|顺气|气色")
+PARRY = re.compile(r"荡开|荡了开|架开|格开|挡开|拦开|拨开.{0,2}(?:剑|刀|掌|招)|拨了开|避开|闪开|躲开|让开|落空|扑空|险险避过|堪堪避过|毫发无伤|毫发未伤")
+SCRATCH = body.SCRATCH                           # 非较量场合一拍至多伤几点(v13 定义在 body)
 
 
 def physical(op) -> bool:
@@ -490,14 +497,23 @@ def physical(op) -> bool:
     return key not in ("threads", "未了之事", "state", "note", "epithet", "mood", "spot", "intent", "agenda", "goal")  # 器物挪个方位(v8)不是得失；打算志向(v12)不是物理
 
 
-def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tuple[list, list]:
-    """反向证据：增减气血须拍文里有伤或疗的字眼；伤人的一击若在本拍或下一拍被荡开避过，那一下便没有伤。
-    无据的数值变更直接丢弃——不让导演拿气血当佐料，一回合掉几点血却一字未写。
-    研习之拍不扣主角气血(预裁已定顺逆)；主角自己的拍里既无人出手也不涉险地远行，一拍至多伤 SCRATCH 点。
-    识名同理(v6)：导演宣告某人的姓名为人所知，拍文里须真有人说出它(自报家门、互通姓名、认得的人当面叫出)——
+def _doer(world, name) -> str | None:
+    """出手者的 id（v13）：主角、人、一群人的叫法都落得回实体；认不出为 None。"""
+    if not isinstance(name, str) or not name.strip():
+        return None
+    who = pick(world, name)
+    return who if who == "player" or world.graph.has(who) else None
+
+
+def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tuple[list, list, list]:
+    """落账之前对一拍的指令再核一遍，返回 (照落的指令, 丢掉的 [(指令, 种类, 缘由)], 落了账而拍文没写伤的指令)。
+    气血（v13 否决即事件）：伤人落多少血不再看拍文里有没有伤的字眼——导演报的数只是轻重，规则封顶（body.blow：攻守档位差×命运骰，
+    一群人看胜算比，无人出手 SCRATCH、涉险 HAZARD），疗伤一拍至多 HEAL_CAP；落了账而拍文没写伤的，记一条软违例，由连带交编剧补写。
+    只剩两种有因的不扣：同拍（或下一拍）明写那一击被避开了而没有一个伤字（拍文与指令相悖，以拍文为准），与研习之拍（顺逆归研习预裁）。
+    识名（v6）：导演宣告某人的姓名为人所知，拍文里须真有人说出它(自报家门、互通姓名、认得的人当面叫出)——
     宣告换成拍文听出来的那几条(谁听见由文字定：低声说给一人的只那人知道)；没人说出口的名字，不因导演想在旁白里用它就算人人知道。"""
     moving = any(effects._moves_player(world, op) for op in ops)
-    keep, drop, heard = [], [], None
+    keep, drop, odd, heard = [], [], [], None
     studying = any(isinstance(op, dict) and op.get("op") == "study" for op in ops)
     for op in ops:
         if effects.naming(world, op):
@@ -505,21 +521,28 @@ def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tup
             said = [h for h in heard if h["id"] == effects.naming(world, op)["id"]]
             keep += [h for h in said if h not in keep]
             if not said:
-                drop.append(op)
+                drop.append((op, "baseless", "拍文里无据，不入账"))
             continue
         if isinstance(op, dict) and op.get("op") == "add" and op.get("key") in ("hp", "气血") \
                 and isinstance(op.get("value"), (int, float)):
-            mine = op.get("id") in ("player", "主角", world.player["name"])
-            if op["value"] < 0 and (not WOUND.search(text) or PARRY.search(text + after) or (mine and studying)):
-                drop.append(op)  # 研习的顺逆由预裁定，岔气的内伤系统已落：导演不另扣血
-                continue
-            if op["value"] < 0 and mine and who in (None, "player") and not moving:
-                op["value"] = max(op["value"], -SCRATCH)  # 无人出手、不涉险地：自己磕碰，一拍至多伤五点
-            if op["value"] > 0 and not HEAL.search(text):
-                drop.append(op)
-                continue
+            target = effects.resolve(world, op.get("id"))
+            if op["value"] < 0:
+                if target == "player" and studying:
+                    drop.append((op, "study_hurt", "研习的顺逆归研习预裁，不另扣血"))
+                    continue
+                if PARRY.search(text + after) and not WOUND.search(text):
+                    drop.append((op, "parried", "同拍写明那一击被避开了"))
+                    continue
+                by = _doer(world, op.get("by")) or _doer(world, who)
+                if by in (None, target) and who not in (None, "player") and _doer(world, who) != target:
+                    by = _doer(world, who)  # 伤人没写谁出手（缺省是主角），而这是别人的拍：出手的是他
+                op["value"] = -body.blow(world, by, target, op["value"], moving and target == "player")
+                if not WOUND.search(text):
+                    odd.append(op)
+            else:
+                op["value"] = body.mend_cap(op["value"])
         keep.append(op)
-    return keep, drop
+    return keep, drop, odd
 
 
 def _custody(world, r: Ruling, touched: dict[str, int]):
@@ -705,17 +728,21 @@ def forged(world, noun: str) -> bool:
     spots = situation.near(world) | situation.near(world, start.get("here") or world.here) | set(start.get("route") or ())
     people = situation.around(world) | set(start.get("around") or ()) | {"player"}
     head = noun[-2:]
+    reach = []
     for n, node in g.nodes.items():
         if node["type"] not in ("item", "feature") or not effects.usable(world, n):
             continue
         holder = node.get("holder")
         if not (holder in people or (holder is None and effects.place(world, n) in spots)):
             continue
+        reach.append(n)
         if n.endswith(noun) or (len(noun) > 1 and (noun in n or n in noun or head in n)):
             return False
         desc = node.get("desc") or ""
         if (noun in desc) if len(noun) > 1 else re.search(re.escape(noun) + r"(?=[，。；！？、]|$)", desc):  # 「一叠发黄的纸，」说的是纸；「信笺」不是信
             return False
+    if len(noun) == 2 and noun[0] in lexicon.GENERIC and noun[-1] in lexicon.KINDS:  # v13 「灵草」「宝剑」这样的泛称：手边同类的只有一件，说的就是它（第 8 回的「灵草」就是手里的通天草）；「断肠草」「密图」「金创药」这样有名有姓的不算
+        return len([n for n in reach if g.kind(n) == "item" and n.endswith(noun[-1])]) != 1
     return True
 
 

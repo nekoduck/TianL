@@ -138,7 +138,7 @@ class SettleTest(unittest.TestCase):
         self.assertEqual(self.w.graph.get("左子穆", "status"), "alive")             # 生死归规则：正文改不了账
         self.assertTrue(any("气绝身亡" in d for d in self.w.player["drift"]))         # 记作分歧
         game.act("看看四周")
-        self.assertIn("上回合正文与账本的分歧", llm.director_prompts[-1])            # 下回合导演由剧情圆回
+        self.assertIn("账文分歧·这几句玩家已经读到", llm.director_prompts[-1])      # 下回合导演由剧情圆回(v13：读过的不可推翻)
 
     def test_the_heros_unchosen_deeds_stay_unwritten(self):
         prose = "你趁乱将地上的青钢剑揣入怀中。"

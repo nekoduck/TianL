@@ -174,7 +174,7 @@ class Game:
         gm = rag.backstage(w, stage=staged, upcoming=soon, tempo=self.tempo, aim=aim,
                            ready={ev["id"] for ev in canon.ready(w, skip)}, reserved=held)
         gm["brief"] = story["text"]
-        w.player.set("drift", [])                     # 上回合正文的偏差已交导演后台：交代一次即清
+        carried = settle.age(w)                       # 上回合正文的偏差已交导演后台一回：交代满两回的清走，其余留到下回合再提（v13）
         pack = rag.build(w)
         witnesses = len(rag.scene(w)["people"])
         emit("stage", "direct")
@@ -269,8 +269,9 @@ class Game:
                 emit("text", extra)
             page["text"] = turn["text"] = gate.text
             log.info("补记：%s", "；".join(notes))
+        carried = [d for d in carried if not settle.addressed(w, d, applied)]  # 导演这一回合碰到了点名的人或物：算圆回了
+        w.player.set("drift", settle.rifts(rifts, carried))
         if rifts:
-            w.player.set("drift", rifts)
             log.info("账文分歧：%s", rifts)
         turn["status"] = rag.condition(w)  # 结算之后的身况：得失随正文入了账，界面与账本同一口径
         danger = pacing.danger(w, ruling.beats)       # v12 结算之后再算一次：账房可能新添了拘押，此后槽、菜单与合场以它为准

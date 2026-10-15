@@ -33,6 +33,7 @@ import logging
 import re
 
 from . import acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock, venue
+from . import body
 from .body import INNER
 from .profile import profile
 
@@ -40,6 +41,8 @@ RULED = {"status": "生死伤病", "hp": "气血", "max_hp": "气血", "power": 
          "age": "年岁", "grants": "秘籍所载"}           # 归规则或归定义：正文写了，账房也改不了
 BASIS = 4                                              # 据至少几个字：一个「你」字不算出处
 RIFTS = 6                                              # 分歧至多交导演几条：多了便成了催债
+DRIFT_TURNS = 2                                        # 规则性的分歧交导演几回：交代满了仍没圆回的作罢（v13；从前交一回即清，导演漏看了便再无下文）
+TECHNICAL = re.compile(r"格式不可解|未知指令|不识的事码|缺少|缺字段|端点不在世界中|不是在场之人|不在世界中|不可写成复合值|须为文字|不是数值|不是清单|只可 set 或 add")  # 账房自己写歪了的（id、格式、形状）：是它的错，不是正文与账本的分歧
 ALIGN = 0.4                                            # 一段正文与一拍拍文的字对(二字组)重合过此即算写的是那一拍
 DOUBT = {"acquire", "give", "bind", "free", "follow", "leave", "move"}  # 词表查出而账房可复核的(叙述成立得了的)；生死吸功归规则
 MARK = re.compile(r"[\s「」“”『』\"'‘’…—]")
@@ -354,7 +357,12 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
         basis = str(ch.get("据") or "").strip()
         if len(_plain(basis)) < BASIS or _plain(basis) not in plain:
             continue
-        ops = [op for op in acts.expand(world, [op for op in ch.get("ops") or [] if isinstance(op, dict) and _known(world, op)])
+        mine = ch.get("谁") in ("player", "主角", me)
+        actor = str(ch.get("谁") or "").strip()
+        raw = [op for op in ch.get("ops") or [] if isinstance(op, dict)]
+        if actor and not mine:  # v13 单子写明了是谁做的，事码里没写「谁」：缺省会被当成主角（第 7 回「段誉服毒」成了「主角服用断肠散」），谁的单子就是谁做的
+            raw = [{**op, "谁": actor} if acts.is_act(op) and "谁" not in op else op for op in raw]
+        ops = [op for op in acts.expand(world, [op for op in raw if _known(world, op)])
                if isinstance(op, dict) and not _repeat(world, op)]  # 写错了 id 是账房的错，不是账文分歧；事码(v9)先化为指令，规则之事留作一件事
         keep = []
         for op in ops:
@@ -363,14 +371,18 @@ def commit(world, bill: dict, text: str, aim=frozenset(), gate: Gate | None = No
                 rifts.append(f"正文「{basis}」：{effects.describe(op)}——{why}")
             else:
                 keep.append(op)
-        mine = ch.get("谁") in ("player", "主角", me)
         for op, act, _ in adjudicate.unbidden(world, keep if mine else [o for o in keep if acts.is_act(o)], set(aim)):  # 事码写明了谁做：谁的单子都查
             rifts.append(f"正文「{basis}」：主角{act}——玩家并未起意，不入账")
             keep = [o for o in keep if o is not op]
         with perspective.moment(world, *((gate.at(basis) if gate else None) or ())):  # 这句话是在哪一刻说的：那一刻在场的人听见
             ok, bad = effects.apply(world, keep, "director")
         applied += ok
-        rifts += [f"正文「{basis}」：{effects.describe(op)}——{why}" for op, why in bad]
+        for op, why in bad:
+            line = f"正文「{basis}」：{effects.describe(op)}——{why}"
+            if TECHNICAL.search(why):  # v13 技术性的失败只记日志：第 8 回「从谁身上夺取？player 不是在场之人」曾交导演「圆回」，导演便把读者读过的「夺过」演成了「冷笑不接」
+                log.info("账房的单子落不了(技术性，不算账文分歧)：%s", line)
+            else:
+                rifts.append(line)
     for r in bill.get("rifts") or []:
         basis, truth = str(r.get("据") or "").strip(), str(r.get("账上") or "").strip()
         if len(_plain(basis)) >= BASIS and _plain(basis) in plain and truth:
@@ -408,6 +420,11 @@ def ruled(world, text: str) -> list[str]:
     if words:
         arts = "；".join(a["detail"] for a in growth.mastery(world)) or "主角尚无武学"
         out.append(f"正文写主角「{'、'.join(words)}」，账上：{arts}")
+    turn = getattr(world, "turn", None) or {}  # v13 正文写你负了伤，账上你气血未减、身上也并无伤势：伤归规则，正文改不了账，记作分歧
+    hurt = lexicon.hero_hurt(text, *adjudicate.names(world)) if v and text else []
+    if hurt and not turn.get("hurt") and body.wound(world)[0] == "安然无恙" \
+            and world.player["hp"] >= (turn.get("start") or {}).get("hp", world.player["hp"]):
+        out.append(f"正文写你负了伤「{hurt[0]}」，账上你气血未减、并无伤势")
     return out
 
 
@@ -419,6 +436,28 @@ def audit(world, text: str) -> list[str]:
 def rifts(*groups) -> list[str]:
     """几处查出的分歧并作一份交导演：去重，至多 RIFTS 条。"""
     return list(dict.fromkeys(r for g in groups for r in g))[:RIFTS]
+
+
+def age(world) -> list[str]:
+    """上回合留下的分歧已交导演过目(v13)：交代满 DRIFT_TURNS 回的清走，其余留到下回合再提。返回留下的。引擎在导演后台拿到分歧之后调。"""
+    me = world.player
+    seen = dict(me.get("drift_seen") or {})
+    keep = []
+    for d in me.get("drift") or []:
+        n = seen.get(d, 0) + 1
+        if n < DRIFT_TURNS:
+            seen[d] = n
+            keep.append(d)
+    me.set("drift", keep)
+    me.set("drift_seen", {d: seen[d] for d in keep})
+    return keep
+
+
+def addressed(world, entry: str, applied) -> bool:
+    """导演这一回合的后果碰到了分歧里点名的人或物（v13）：碰了就算圆回了，不必再提。分歧只点了主角自己的，只靠 DRIFT_TURNS 回的期限作罢。"""
+    named = {n for n, _, _ in lexicon.find(entry, adjudicate.names(world)[0])} - {"player"}
+    touched = {i for op in applied if isinstance(op, dict) for i in (op.get("id"), op.get("src"), op.get("dst"), op.get("value")) if isinstance(i, str)}
+    return bool(named & touched)
 
 
 # ============================================================

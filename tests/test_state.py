@@ -160,7 +160,7 @@ class MasteryTest(unittest.TestCase):
         game.act("看看四周")
         self.assertTrue(w.player["drift"])
         game.act("看看四周")
-        self.assertIn("上回合正文与账本的分歧", llm.director_prompts[-1])  # v6：正文是定本，进境归规则——写了账上没有的进境只能是分歧
+        self.assertIn("账文分歧·这几句玩家已经读到", llm.director_prompts[-1])  # v6：正文是定本，进境归规则——写了账上没有的进境只能是分歧(v13 措辞：读过的不可推翻)
         self.assertIn("身如游龙", llm.director_prompts[-1])
 
 

@@ -83,6 +83,10 @@ TRADING = re.compile(r"买|购|卖|典当|当掉|住店|投宿|住下|住宿|开
 TRADE_NOT = re.compile(r"吃了一惊|点了点头|卖个破绽|大喝|怒喝|断喝|暴喝|厉喝|喝道|喝止|喝问|喝令|呼喝|吆喝|喝彩|吃惊|吃亏|吃力|吃紧|吃痛|"
                        r"讨好|买好|卖弄|卖力|点头|点穴|点倒|再来一|饮恨|饮泣")  # 带着吃喝买卖字眼、却不是吃喝买卖(v12)：判起意花钱之前先剔除
 ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|丸|散|膏|秘籍|秘笈|卷轴|帛卷|经书|剑谱|刀谱|图谱|珠|钏|镯|盒|匣|瓶|信|令牌|钥匙|锦囊|宝剑|宝刀|草)")
+# 主角负伤的措辞(v13)：只认紧跟在「你」之后的强字眼——「你后背中了一刀」「你受了伤」「你被砍中」；你与伤字之间夹着别的人（「你见他受伤」）说的是别人
+YOU_HURT = (re.compile(r"你[^。！？；「」]{0,16}?(?:受了?伤|负了?伤|挂了?彩|吐了?血|呕了?血|咯了?血|连?中了?[一二两三数几]*[记下处道]*[短长大小]?[刀剑掌拳箭镖针]|伤口|剧痛钻心|血溅|血流)"),
+            re.compile(r"你[^，。；！？「」]{0,3}?被[^，。；！？「」]{0,6}?(?:砍中|刺中|劈中|击中|打中|划伤|刺伤|砍伤|打伤|击伤|划出|划破|划开|刮破|擦破|磕破)"))
+NOT_HURT = re.compile(r"并未|并没|未曾|不曾|没有|没受|未受|毫发无伤|毫发未伤|无恙|幸而|幸好|险些|差点|未伤")  # 否认负伤的说法
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
 GROUP = re.compile(r"二女|二人|两人|三人|众人|诸人|她们|他们|一行人|一众")
@@ -213,9 +217,35 @@ def mastery(text: str, who=None) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+KINDS = set("草药丹丸散膏卷册谱书经信图剑刀枪棍鞭杖钩爪斧锤戟弓箭镖针珠钏镯佩簪镜盒匣瓶罐壶囊袋碗杯盏")  # 器物的泛称（末字）
+GENERIC = set("灵宝神仙良名奇异妙圣珍")  # 泛称的首字：「灵草」「宝剑」「神药」说的可能是手边同类唯一的那件；「密图」「火折」是另一件东西，不在此列
+SCATTER = re.compile(r"散[落开去乱发漫了]")   # 「散落的帛卷」「散开」里的散是动词，不是散剂
+VERBISH = "落开去乱发漫围扎裹住对证"            # 单字器物名后紧跟这些字，多半是另一个词（散落、包围、包扎、针对）
+
+
 def itemish(text: str) -> str | None:
-    m = ITEMISH.search(text)
-    return m.group(0) if m else None
+    """取得之后紧跟着的像是器物的字眼（v13：单字不算——「散落的白绸帛卷」里的散是动词，不是一味药）。"""
+    for m in ITEMISH.finditer(text):
+        word = m.group(0)
+        if len(word) >= 2 and not (word.endswith("散") and SCATTER.match(text[m.end() - 1:])):
+            return word
+    return None
+
+
+def hero_hurt(text: str, tab, kinds: dict[str, str]) -> list[str]:
+    """正文里写主角负了伤的句子(v13)：台词、否定、回忆、未然不算；「你见他受伤」这类夹着别的人的不算。账上没伤时，结算据此记分歧。
+    按句看（「你避无可避，后背与肩臂登时连中数记短刀」伤字常在后一分句，主语承上）。"""
+    out = []
+    for sent in (s for s in SENTENCE.split(QUOTED.sub("", text or "")) if s.strip()):
+        if NEGATE.search(sent) or YET.search(sent) or REMOTE.search(sent) or NOT_HURT.search(sent):
+            continue
+        plain, attacked = YOU_HURT
+        hit = next((m for m in plain.finditer(sent)
+                    if not any(kinds.get(n) == "person" and n != "player" for n, _, _ in find(m.group(0)[1:], tab))), None) \
+            or attacked.search(sent)
+        if hit:
+            out.append(sent.strip())
+    return out
 
 
 def ware(text: str) -> str | None:
@@ -245,6 +275,7 @@ def scan(beats: list[dict], view: View, tab, kinds: dict[str, str], dedupe: bool
                 found, prev = _sentence(i, sent, who, view, tab, kinds, prev)
                 out += found
         out += _moves(i, text, who, view, tab, kinds)
+        out += _conjures(i, text, tab)
     return _dedupe(out) if dedupe else out  # 结算的复核要逐句定位：同一件事写在两句里，两句都要认出来
 
 
@@ -299,12 +330,6 @@ def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -
         noun = None if things or any(kinds.get(n) == "person" for n, _, _ in ents) else itemish(clause[m.end():][:10])
         if noun:
             out.append(Finding("unnamed", i, noun, f"第{i}拍写你取得「{noun}」，世上却没有这件器物：器物不得新造，只能用此地与身边清单里既有之物"))
-    for pm in PRODUCE.finditer(clause):  # 谁都一样(v8)：拿出、取来、递上的东西若不是账上任何一件，便是凭空造了一件器物
-        w = WARE_NOUN.match(clause[pm.end():][:10])
-        lo, hi = (pm.end() + w.start(1), pm.end() + w.end(1)) if w else (0, 0)
-        if w and not any(a < hi and b > lo for _, a, b in ents):  # 那个名词本身就是(或压着)名表里的某件东西：不是凭空造的
-            out.append(Finding("conjure", i, w.group(1), f"第{i}拍写到「{w.group(1)}」，世上却没有这件器物：器物不得新造——改用此地与身边清单里的，或删去"))
-            break
     if mine and GIVE.search(clause):
         out += [Finding("give", i, t, f"第{i}拍写你交出{t}，它却仍在你身上", hard=kinds.get(t) != "trifle")
                 for t in things if t in view.inventory_start and t in view.inventory_end]
@@ -317,6 +342,26 @@ def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -
                     out.append(Finding("afar", i, nid, f"第{i}拍让{nid}开口，{nid}只在远处望得见、听不见"))
                 continue
             out.append(Finding("absent", i, nid, f"第{i}拍让{nid}现身言行，{nid}此刻却不在你身边"))
+    return out
+
+
+def _conjures(i, text, tab) -> list[Finding]:
+    """谁都一样(v8)：拿出、取来、递上的东西若不是账上任何一件，便是凭空造了一件器物。
+    v13 只查旁白、不查台词——「在下奉上此灵草」「去内堂取密图」是人说的话，不是现了身的东西（第 8 回因台词里的「灵草」作废整拍、通天草在账上多活了三十八回）；
+    台词挖成空白再看，句读与旁白里的一样。"""
+    out = []
+    for clause in _clauses(QUOTED.sub("　", text or "")):
+        if NEGATE.search(clause) or REMOTE.search(clause):
+            continue
+        ents = find(clause, tab)
+        for pm in PRODUCE.finditer(clause):
+            w = WARE_NOUN.match(clause[pm.end():][:10])
+            lo, hi = (pm.end() + w.start(1), pm.end() + w.end(1)) if w else (0, 0)
+            if w and len(w.group(1)) == 1 and clause[hi:hi + 1] and clause[hi:hi + 1] in VERBISH:
+                continue  # 「拾起散落的帛卷」的散、「取包围之势」的包是动词，不是一件东西
+            if w and not any(a < hi and b > lo for _, a, b in ents):  # 那个名词本身就是(或压着)名表里的某件东西：不是凭空造的
+                out.append(Finding("conjure", i, w.group(1), f"第{i}拍写到「{w.group(1)}」，世上却没有这件器物：器物不得新造——改用此地与身边清单里的，或删去"))
+                break
     return out
 
 

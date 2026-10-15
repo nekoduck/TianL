@@ -28,13 +28,22 @@ class TransactionTest(unittest.TestCase):
 
     def test_a_wound_that_was_parried_costs_no_blood(self):
         hp = self.w.player["hp"]
-        judge(self.w, plan(("干光豪", "干光豪横剑直刺你肩头", [{"op": "add", "id": "player", "key": "hp", "value": -18}]),
-                           ("马五德", "马五德挥袖将那一剑荡了开去", [])))
-        self.assertEqual(self.w.player["hp"], hp)                                   # 下一拍荡开了：那一剑没有伤到你
-        judge(self.w, plan(("player", "你环顾四周", [{"op": "add", "id": "player", "key": "hp", "value": -5}])))
-        self.assertEqual(self.w.player["hp"], hp)                                   # 一字未写伤，不扣血
-        judge(self.w, plan(("干光豪", "干光豪一剑刺中你肩头，鲜血直流", [{"op": "add", "id": "player", "key": "hp", "value": -10}])))
-        self.assertEqual(self.w.player["hp"], hp - 10)
+        r = judge(self.w, plan(("干光豪", "干光豪横剑直刺你肩头", [{"op": "add", "id": "player", "key": "hp", "value": -18}]),
+                               ("马五德", "马五德挥袖将那一剑荡了开去", [])))
+        self.assertEqual(self.w.player["hp"], hp)                                   # 下一拍荡开了：那一剑没有伤到你——拍文与指令相悖，以拍文为准
+        self.assertIn("parried", [f.kind for f in r.soft])                          # v13 不是悄悄丢掉：记一条软违例
+        self.assertEqual(self.w.turn["hurt"], 0)
+
+    def test_a_wound_lands_by_rule_even_when_the_beat_never_says_wound(self):
+        """v13 否决即事件：导演宣告的伤不再因拍文里没有伤字眼而被悄悄丢掉；落多少归规则封顶，编剧得到连带去补写。"""
+        hp = self.w.player["hp"]
+        r = judge(self.w, plan(("player", "你环顾四周", [{"op": "add", "id": "player", "key": "hp", "value": -5}])))
+        self.assertEqual(self.w.player["hp"], hp - 5)                               # 无人出手、不涉险地：磕碰，封顶 SCRATCH，这五点照落
+        self.assertIn("unwritten", [f.kind for f in r.soft])                        # 拍文没写伤：软违例，交编剧补写
+        self.assertTrue(any("你受了" in n for n in r.notes))                        # 连带：账上有伤，正文就得写
+        r = judge(self.w, plan(("干光豪", "干光豪一剑刺中你肩头，鲜血直流", [{"op": "add", "id": "player", "key": "hp", "value": -10}])))
+        self.assertEqual(self.w.player["hp"], hp - 5 - 10)
+        self.assertNotIn("unwritten", [f.kind for f in r.soft])                     # 写了伤，不记
 
     def test_the_lexicon_never_moves_people(self):
         g = self.w.graph

@@ -130,8 +130,8 @@ def lower(world, a: dict) -> list[dict] | None:
         return [{"op": "set", "id": who, "key": "location", "value": a.get("到")}]
     if v == "赶来":
         return [{"op": "arrive", "id": who}]
-    if v == "伤人":
-        return [{"op": "add", "id": to, "key": "hp", "value": -abs(a.get("血") or 10)}]
+    if v == "伤人":  # v13 带上出手者(by)：落多少血由规则按攻守档位封顶（body.cap），「血」只是轻重
+        return [{"op": "add", "id": to, "key": "hp", "value": -abs(a.get("血") or 10), **({"by": who} if who and who != to else {})}]
     if v == "疗伤":
         return [{"op": "add", "id": to or who, "key": "hp", "value": abs(a.get("血") or 10)}]
     if v == "境况":
@@ -395,21 +395,22 @@ def _give(world, a, who, heading):
 def _grab(world, a, who, by: str):
     """偷取或夺取一个人身上的东西(人群另有规则)：偷看身法、夺看较量预裁；成了才动，东西交到 who 手里。"""
     g, src, item, n = world.graph, a.get("自"), a.get("物"), a.get("量")
-    if g.kind(src) != "person":
+    if src != "player" and g.kind(src) != "person":  # v13 主角也是被夺被偷的一方：司空玄从主角手里夺过通天草（第 8 回账房写的 自=player 曾被驳回为「不是在场之人」）
         return [], f"从谁身上{by}？「{src}」不是在场之人"
+    if src == who:
+        return [], None  # 自己拿自己的东西：不是一件事
     if not _present(world, src) or (who != "player" and not _present(world, who)):
         return [], f"{src}不在跟前"
+    power = lambda x: world.player["power"] if x == "player" else g.get(x, "power")
     if by == "偷取":
-        gap = crowd.agility(world, who) - crowd._tier(g.get(src, "power"))
+        gap = crowd.agility(world, who) - crowd._tier(power(src))
         if not (gap >= 1 or (gap == 0 and body.fate(world) >= crowd.STEAL_ROLL)):
             return [], f"身法不及{src}：一伸手便被察觉——照预裁写成失手"
         done, why = _seize(world, a, who, src)
         return [{**r, "stealth": True} for r in done], why  # 偷得无人察觉：恩怨账上不记这一笔
     else:
-        from .rag import WIN, rule  # 较量预裁：与后台给导演看的同一张表、同一颗命运骰(rag 引 effects，effects 引本模块：用时才引)
-        mine = world.player["power"] if who == "player" else g.get(who, "power")
-        outcome, _ = rule(crowd._tier(g.get(src, "power")) - crowd._tier(mine), body.fate(world))
-        if outcome not in WIN:
+        outcome, _ = body.rule(crowd._tier(power(src)) - crowd._tier(power(who)), body.fate(world))  # 较量预裁：与后台给导演看的同一张表、同一颗命运骰
+        if outcome not in body.WIN:
             return [], f"夺不下来：与{src}交手的结局是「{outcome}」——照较量预裁演出"
     return _seize(world, a, who, src)
 
@@ -429,6 +430,8 @@ def _seize(world, a, who, src):
     why = _item(world, item)
     if why:
         return [], why
+    if g.get(item, "holder") == who:
+        return [], None  # 本就在他手里（这一回合导演已交过手）：不是一件事，也不是分歧
     if g.get(item, "holder") != src:
         return [], f"{item}不在{src}身上"
     if n is not None and n < stock.qty(g, item) - stock.EPS and stock.divisible(g, item):
