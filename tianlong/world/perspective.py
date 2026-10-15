@@ -27,7 +27,7 @@
        (手里有兵刃的叫持剑的，否则按 id 的稳定散列取一个外貌字眼，同组不重样)，立下不改，人散了也不改回；「容师叔」「钟姑娘」也是叫法，calls 让它落得回原人；
        名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
        称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
-       v12：veil 对人群的首领与眼下之事过掩码；识名不等于识底——识名而未识底的人头衔门派不露、关系行只留两端都识底的，hear 在报名那一句里认出头衔即带 know:身份；
+       v12：mask 把本回合望见的人当作见过(只叫外貌)，veil 另过远处可见；veil 对人群的首领与眼下之事过掩码；识名不等于识底——识名而未识底的人头衔门派不露、关系行只留两端都识底的，hear 在报名那一句里认出头衔即带 know:身份；
        v9：thing 让分出来的那一份(玉壁剑影图·1)叫回那件东西、剧中人写下的文书叫作「你写给某人的书信」(主角经手、读过或是收信人才知道谁写给谁，收信人照旧只叫外貌)；veil 另过人群的描述
        v10：handle 让一群人叫他们的叫法(东宗弟子)，随行的人群在编剧那里也是叫法
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -546,7 +546,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     """主角不识名之人：旁白里换成叫法，台词里换成当面的称呼；说话者不知主角姓名，他口中的主角名号与「王兄」换成泛称。"""
     if not text:
         return text
-    seen = situation.seen(world)  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他
+    seen = situation.seen(world) | set(situation.sighted(world))  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他；v12 远远望见的也一样(名号显赫的司空玄亦然)
     tab = lexicon.table({s: p for s, p in _surfaces(world).items()  # 当面不识其人，或连其名都未曾听过——久仰的不在眼前，照叫其名
                          if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))})
     me = world.player["name"]
@@ -623,6 +623,8 @@ def veil(world, pack: dict) -> dict:
     out["nearby"] = [f"{handle(world, p)}" + (f"（{g.get(p, 'title')}）" if identified(world, p) and knows(world, "player", p) else "") + f"在{g.get(p, 'location')}"
                      for p in sorted(situation.around(world) - shown)]
     out["dead"] = [handle(world, p) for p in out.get("dead", [])]
+    out["afar"] = [{**a, "name": handle(world, a["name"]) if a.get("kind") != "group" else a["name"],
+                    "appearance": mask(world, a.get("appearance") or "")} for a in out.get("afar", [])]  # v12 远处可见：生人只叫外貌
     out["journal"] = [mask(world, j) for j in out["journal"]]
     out["news"] = [mask(world, n) for n in out.get("news", [])]  # 传闻也从主角的视角说：不识的人只剩叫法
     out["items"] = [_card(world, i) for i in out.get("items", [])]

@@ -7,7 +7,7 @@
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前；v12 不在路上的同伴了断随行、不再瞬移，同伴带着的人一并跟来）、
-          meet() / MET_KEEP（v12 回合末记下见过的人）、BIG_FORMS / small_area()（v12 小片区：寻人而至即遇、原著相关者在这一片即算到位）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
+          SIGHT / vista() / sightable() / sighted()（v12 望见：隔着悬崖险径水路望得见、听不见、够不着）、meet() / MET_KEEP（v12 回合末记下见过的人）、BIG_FORMS / small_area()（v12 小片区：寻人而至即遇、原著相关者在这一片即算到位）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
@@ -171,6 +171,42 @@ def inhabited(world) -> bool:
     """这一片有没有人(不论在不在跟前)：传闻要有传话的人——独处石洞，江湖上的事传不进来。"""
     g, spots = world.graph, near(world)
     return bool(party(world)) or any(_alive(g, p) for s in spots for p in g.where(type="person", location=s))  # 歇着的伙计也传得了话
+
+
+SIGHT = {"悬崖", "险径", "水路"}  # 望得见、够不着的关口(v12)：崖顶望得见谷底、隔着深涧望得见对崖；暗门秘道、机关阵法、上锁的门后看不见
+
+
+def _vistas(world) -> dict[str, set[str]]:
+    """近旁之外一步、零日、有关口且关口全在 SIGHT 里(不暗不锁)的地点 → 隔着的关口种类。没有关口的路不算：宫门—无量山走得到，不是望得见够不着。"""
+    g, close, out = world.graph, near(world), {}
+    for a in close:
+        for b, e in g.ways(a):
+            gates = list((e.get("gates") or {}).values())
+            if b not in close and e["days"] == 0 and gates \
+                    and all(x.get("kind") in SIGHT and not x.get("hidden") and not x.get("key") for x in gates):
+                out.setdefault(b, set()).update(x["kind"] for x in gates)
+    return out
+
+
+def vista(world) -> set[str]:
+    """隔着关口望得见的地方(v12)：主角在澜沧江边高崖，望得见无量山；在无量山·山崖，望得见谷底。"""
+    return set(_vistas(world))
+
+
+def sightable(world) -> set[str]:
+    """此刻望得见的人与人群(v12)：vista 里活着、已露面、当值的人；vista 里的人群，与近旁片区里未到跟前的人群(有人站着、未藏、正当出没)；
+    连同同在一片而未到跟前(elsewhere)、当值的人。望得见不等于在眼前：不进 around、seen、audience，导演够不着。"""
+    from . import crowd  # crowd 引本模块：用时才引，不成环
+    g, spots, close = world.graph, vista(world), near(world)
+    people = {p for s in spots for p in g.where(type="person", location=s) if _alive(g, p) and debuted(world, p) and venue.on_duty(world, p)}
+    groups = {s for s in g.where(type=GROUP) if crowd.is_squad(g, s) and not g.get(s, "hidden") and crowd.active(world, s)
+              and crowd.standing(g, s) > 0 and (g.get(s, "location") in spots or (g.get(s, "location") in close and not crowd.present(world, s)))}
+    return people | groups | {p for p in elsewhere(world) if venue.on_duty(world, p)}
+
+
+def sighted(world) -> list[str]:
+    """本回合望见的人与人群(v12 turn["sighted"]，按先后)：望见不是见过——不上名册、不进眼前、不记进 met。"""
+    return list((getattr(world, "turn", None) or {}).get("sighted") or [])
 
 
 def debuted(world, pid: str) -> bool:

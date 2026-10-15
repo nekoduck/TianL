@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/ 下 genesis(原著硬知识)、graph、clock、blackboard、ledger、effects、rag、perspective(开局相识) 全部基础设施
-[OUTPUT]: 对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
+[OUTPUT]: v12 _observe 对望见之人只校正已有信念的所在、不新立信念；对外提供 World 门面（create 创世(含出身、道路挂上有向关口) / 写入 / 记事(可盖指定日戳) / 推进时间 / 同步认知 / 原子存档与读档 /
           remap 以当前舆图重绘地理 / witness 导演后果当场入认知），持有 aliases 别名表、lines 场外剧情线与 plotted 上回写某人的日子(v11，入存档)、
           turn（本回合的瞬时账：谁被哪处调遣过、谁赶来、回合开始时身边有谁、连带说明——不入存档）、atlas（v11 世界底座的静态表：场所的近景、货品、国法、消息、风物、剧情线——只读，不入存档，副本共用一份）
 [POS]: world 层的聚合根——上层（engine）只与 World 对话；它把"变更→记账→传闻→观察"串成唯一的状态流水线。v11 道路带里数(零日之路的步行里数)铺上图；创世时外人不知的处所器物不入常识(lore.hide)、近处的场所布好(venue.settle)，读档接回已布置场所的房间之路(venue.relay)；深拷贝(试演、场外编剧的快照)逐项拷贝现状、atlas 共用。
@@ -122,6 +122,10 @@ class World:
                     and self.graph.get(nid, "location") != self.here:
                 belief["location"] = None
         self.knowledge.observe(self.graph, seen, self.clock.day)
+        for nid in situation.sighted(self):  # 远远望见的人(v12)：只校正已有信念的所在，不新立信念——生人的真名不因望见一眼而漏出来
+            if nid in self.knowledge.beliefs and self.graph.kind(nid) == "person":
+                self.knowledge.beliefs[nid]["location"] = self.graph.get(nid, "location")
+                self.knowledge.asof[nid] = max(self.knowledge.asof.get(nid, self.clock.day), self.clock.day)
 
     # ------------------------------------------------------------
     #  存读档：整个世界就是一份 JSON

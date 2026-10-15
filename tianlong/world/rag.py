@@ -3,7 +3,7 @@
          world/pacing 的 advise / calm（阻尼、幕间省略的闸门），world/body 的 fate / forecast / wound（命运骰、研习预裁、伤势措辞），依赖 world/lod 的 dirt / NEAR（原著前提核对、近处半径）、world/access（主角眼中的出路与里程、关口、暗路、场外人物可去之地）、
          world/situation（近旁、同行、受制、命悬一线、久悬之事）、world/growth 的 progress / mastery / studiable（研习进度、进境投影、研习对象）
          与 world/ledger 的 NEWS_SPEED、world/scenery 的 card / feature / rooms / dossiers（v8 场景清单）、world/crowd 的 squads / card / lines / agility / besiegers / handle / STEAL_ROLL（v9 人群）、world/stock 的 funds / say / measure / purses / purse（v9 银两），依赖 World 门面的 graph / knowledge / player / clock / truth / canon / done / seed
-[OUTPUT]: 对外提供 scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
+[OUTPUT]: 对外提供 vista()（v12 隔着关口望得见的人与人群，给导演）、scene()（此刻可见之物，人以「眼前」为准）、build()（玩家视锥上下文包）、backstage()（导演后台包）、focus()（举动所指之物的真相）、rule()（较量预裁）、acquainted()（近处的熟人）、
           heard()（已传到某处的江湖近闻）、dossier()、power_tier()、condition()（主角身况标签）
 [POS]: v11 世界底座：视锥另有此处铺面(shop：招牌、货与价目、能办的事)与主角听来的消息(heard)；后台另有铺子底细、此处打听得到(假的附真相)、国法与规矩、风物天时、人物底子(取自 world/locale)；近处去向不列近旁的房间。
         world 层朝向 narrative 层的只读出口，也是基础设施"服务 LLM"的主要形态：
@@ -18,7 +18,7 @@
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
        v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
-       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁；焦点里同在这一片而不在眼前的人写明主角正在寻他
+       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁；焦点里同在这一片而不在眼前的人写明主角正在寻他；视锥另有远处可见(afar)，后台另有隔着关口望得见(vista)
        v11：近事里场外编剧排进日程的衍生事件标作「场外剧情」，与原著一样只可借风声伏笔；dossier 是场外编剧任务书里一个人的底子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -161,9 +161,38 @@ def build(world) -> dict:
         "exits": access.exits(world),
         "news": news,
         "journal": me["journal"],
+        "afar": _afar(world),                     # 远处可见(v12)：本回合望见的人与人群——隔着关口望得见、听不见、够不着
         "shop": locale.shop(world, writer=True),  # 此处的铺面(v11)：招牌、货与价目、能办的事——进了店都看得见
         "heard": locale.heard(world),             # 主角听来的消息(v11)：照原样，未必是真
     }
+
+
+def _afar(world) -> list[dict]:
+    """远处可见(v12，给编剧)：本回合望见的人(叫法由 veil 换、外貌、所在)与人群(叫法、约多少人、所在)。"""
+    g, out = world.graph, []
+    for x in situation.sighted(world):
+        if crowd.is_squad(g, x):
+            out.append({"kind": "group", "name": crowd.handle(g, x), "count": crowd.standing(g, x), "where": g.get(x, "location")})
+        elif g.kind(x) == "person":
+            out.append({"kind": "person", "name": x, "appearance": g.get(x, "appearance"), "where": g.get(x, "location")})
+    return out
+
+
+def vista(world, reserved=None) -> list[str]:
+    """隔着关口望得见的人与人群(v12，给导演)：带关口种类——「段誉（镇南王世子）在无量山（隔着险径）」；原著近事要用的人马也列，注明只可望见。"""
+    g, gates, out = world.graph, situation._vistas(world), []
+    able = situation.sightable(world)
+    for loc in sorted(gates):
+        across = "、".join(sorted(gates[loc]))
+        for x in sorted(able):
+            if g.get(x, "location") != loc:
+                continue
+            if crowd.is_squad(g, x):
+                out.append(f"{x}（{crowd.handle(g, x)}，站着{stock.cn(crowd.standing(g, x))}人）在{loc}（隔着{across}）"
+                           + ("：原著近事要用的人马，只可望见" if x in (reserved or {}) else ""))
+            else:
+                out.append(f"{x}（{g.get(x, 'title') or '无名'}）在{loc}（隔着{across}）")
+    return out
 
 
 # ============================================================
@@ -276,6 +305,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "crowd": crowd.lines(world),  # 群战预裁(v9)：整群之力、脱身、偷取
         "flocks": crowd.afar(world, held=reserved),  # 近处不在跟前的人群(v10)：要他们来写赶来，要几人从中分出
         "reserved": crowd.reserved_lines(world, reserved or {}),  # 原著近事要用的人马(v12 lod.reserved)：事前不得登场，远远望见可以
+        "vista": vista(world, reserved),     # 隔着关口望得见的人与人群(v12)：远远看见写 望见，要他到跟前写 赶来
         "money": _money(world, s["people"]),  # 各人身上的银两(v9)：掏得出多少由账定
         "tempo": _tempo(world, tempo),
         "fatigue": pacing.advise(world),

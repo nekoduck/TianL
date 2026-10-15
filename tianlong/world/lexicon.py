@@ -17,7 +17,7 @@
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
        不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
        主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
-       离去(v12)认动词前最近的主语(连同并列在前的)，「离去的方向」是定语——「你借着马五德遮掩，朝段誉二人离去的方向奔去」不是马五德离去；
+       望见(v12 View.sighted)：远远望见的人做出看得见的动作不算现身，开口(SPEAK)才记 afar；离去(v12)认动词前最近的主语(连同并列在前的)，「离去的方向」是定语——「你借着马五德遮掩，朝段誉二人离去的方向奔去」不是马五德离去；
        场景清单(v8)：寻常之物(trifle：茶碗、瓜子)的取用与交出只记软违例；谁都一样，拿出、取来、递上的东西若不是名表里的任何一件，即 conjure(世上有没有由调用方对账)；
        DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
        物量(v9)：MONEYISH 说到了钱(查前先挖去实体名：钱光胜不是钱)、COIN 名词就是钱、WRITING 起意提笔、FELL 一群人里有人倒下；
@@ -86,6 +86,7 @@ ITEMISH = re.compile(r"[^，。；！？的了在入下起走]{0,4}(?:药|丹|�
 CLAUSE = re.compile(r"[，。；！？：\n]|——")
 SENTENCE = re.compile(r"[。；！？\n]")
 GROUP = re.compile(r"二女|二人|两人|三人|众人|诸人|她们|他们|一行人|一众")
+SPEAK = re.compile(r"^[^，。；！？：]*?(?:说|喊|叫|问|答|嚷|骂)(?:道|了|着|[:：「“『])")  # 开口(v12)：叫道、喊了一声、问道：——单个「道」(山道)、挥手、招呼不算
 PLAYER = ("你",)
 
 
@@ -109,6 +110,7 @@ class View:
     money_start: float = 0.0                              # 主角回合开始与结束时身上的银两(v9)
     money_end: float = 0.0
     funds: dict = field(default_factory=dict)             # 主角与回合开始时眼前之人身上的银两 {谁: (起, 止)}(v10：NPC 之间给钱也对账)
+    sighted: set[str] = field(default_factory=set)        # 本回合望见的人(v12)：远远看得见他举动，不算现身；开口才是违例(afar)
 
 
 @dataclass
@@ -238,7 +240,7 @@ def scan(beats: list[dict], view: View, tab, kinds: dict[str, str], dedupe: bool
             far = bool(REMOTE.search(sent))  # 「远处传来钟万仇的呼喝」：整句都不算他现身
             for clause in _clauses(sent):
                 if not NEGATE.search(clause) and not REMOTE.search(clause):
-                    out += _clause(i, clause, who, view, tab, kinds, far)
+                    out += _clause(i, clause, who, view, tab, kinds, far, bool(QUOTED.search(text)))
             if not NEGATE.search(sent) and not far:
                 found, prev = _sentence(i, sent, who, view, tab, kinds, prev)
                 out += found
@@ -274,7 +276,7 @@ def bare(text: str, ents) -> str:
     return text
 
 
-def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
+def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -> list[Finding]:
     """分句内：你取得了什么、交出了什么，谁开口动手。v9：拿了一部分(原物仍在原处)、交出一部分(仍在身上)的不算漏记；
     说你得了钱、交了钱，你的银两却分文未动，即为漏记；v10 谁都一样：「段誉把三两银子递给马五德」而两人的银两都没动，也是漏记。"""
     out, ents = [], find(clause, tab)
@@ -310,6 +312,10 @@ def _clause(i, clause, who, view, tab, kinds, far: bool) -> list[Finding]:
         if far or kinds.get(nid) != "person" or nid == "player" or nid in view.dead:
             continue
         if (who == nid or ACT.match(clause[end:])) and nid not in view.here_start | view.here_end | view.arrived:
+            if nid in view.sighted:  # 远远望见的人(v12)：举动看得见，话听不见——开口才是违例
+                if SPEAK.match(clause[end:]) or (who == nid and quoted):
+                    out.append(Finding("afar", i, nid, f"第{i}拍让{nid}开口，{nid}只在远处望得见、听不见"))
+                continue
             out.append(Finding("absent", i, nid, f"第{i}拍让{nid}现身言行，{nid}此刻却不在你身边"))
     return out
 

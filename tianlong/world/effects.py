@@ -42,7 +42,7 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
-       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过的人即可落账，不看回合末所在
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人；原著近事要用的人马(turn["reserved"])事前不得先行赶来；软状态(SOFT_KEYS：打算、神色、外号、志向)本回合见过(或望见)的人即可落账，不看回合末所在；同批的望见排在主角移动之后
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -474,7 +474,12 @@ def _travel(world, op, origin) -> str | None:
 # ------------------------------------------------------------
 #  在场性：谁能碰到谁
 # ------------------------------------------------------------
-def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
+def _far_sight(world, nid, glimpse=frozenset()) -> bool:
+    """本回合望见了此人(或同批望见、望得见)(v12)：对他写神色、打算、外号够得着——远远看见他的神情举止，不是碰到他。"""
+    return nid in situation.sighted(world) or (nid in glimpse and nid in situation.sightable(world))
+
+
+def _reach(world, op, origin, scope, heading=frozenset(), glimpse=frozenset()) -> str | None:
     if named(op):  # 名字是谁的要看得见(活人或眼前的遗体)，谁听见要在耳边(v7)：对着遗体叫出「容师叔」，满厅的人都知道了死者是谁
         if origin in OFFSCREEN:
             return "主角不在场，无从听见"
@@ -516,12 +521,15 @@ def _reach(world, op, origin, scope, heading=frozenset()) -> str | None:
         if op.get("key") == "power":
             return "功力由系统结算：研习写 研习，吸功写 吸功，不得直接增减"
         close = situation.near(world)
+        soft = op["op"] == "set" and op.get("key") in SOFT_KEYS
         if g.kind(nid) == "person":  # 人在不在眼前只有一个口径：片区里没被带到跟前的人，导演够不着(要他来写 arrive)
-            if nid not in situation.seen(world):
+            if nid not in situation.seen(world) and not (soft and _far_sight(world, nid, glimpse)):
                 return f"{nid}不在你身边，主角够不着"
-            if op["op"] == "set" and op.get("key") in SOFT_KEYS:
-                return None  # 软状态(v12)：本回合见过的人即可落账，不看回合末所在——主角溜出了厅，厅上的人照样拔剑追出、照样打算
+            if soft:
+                return None  # 软状态(v12)：本回合见过(或望见)的人即可落账，不看回合末所在——主角溜出了厅，厅上的人照样拔剑追出、照样打算
         if crowd.is_squad(g, nid) and not crowd.present(world, nid) and nid not in set(getattr(world, "turn", {}).get("flock0", ())):
+            if soft and _far_sight(world, nid, glimpse):
+                return None  # 远远望见的一群人：他们的打算、神色照样落账
             return f"{crowd.handle(g, nid)}不在你跟前，要他们来写 赶来(系统按路程裁定)"
         if op.get("key") == "holder" and op.get("value") not in (None, "player") \
                 and place(world, op["value"]) not in close:
@@ -833,7 +841,9 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
     applied, rejected = [], []
     ops = ops if isinstance(ops, list) else []  # 偶有把一条指令写成单值的：整批作废，不让世界崩
     ops = acts.expand(world, ops)  # 事码(v9)：平常之事化为指令，规则之事留作一件事交 acts 执行；旧写法的指令原样照收
-    ops = [op for op in ops if not _moves_player(world, op)] + [op for op in ops if _moves_player(world, op)]
+    sights = [op for op in ops if acts.verb(op) == "望见"]  # 望见(v12)排在最后：「你来到无量山，抬头见高崖上段誉挥手」望的是到了之后的景
+    ops = [op for op in ops if not _moves_player(world, op) and acts.verb(op) != "望见"] + [op for op in ops if _moves_player(world, op)] + sights
+    glimpse = {op.get("对") for op in sights}  # 同批望见的人：对他写的神色、打算、外号算够得着(B3)
     heading = {v for op in ops if _moves_player(world, op) and isinstance(v := resolve(world, destination(op)), str)}  # 本批里主角要去的地方：先取物、后动身，取的是那里的东西
     for op in ops:
         if acts.is_act(op):  # 规则之事：前提、规则、执行都在 acts；不成即整条不成，什么也不动
@@ -860,7 +870,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             _summon(world, op, origin)
             if _noop(world, op):
                 continue  # 本就如此：既非成立也非驳回
-            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading) or _travel(world, op, origin)
+            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading, glimpse) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩
             reason = "格式不可解"
         if reason:

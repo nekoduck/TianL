@@ -13,7 +13,7 @@
        偷得无人察觉的记录带 stealth(恩怨账不记)；夺取一个人身上的东西看较量预裁(rag.WIN 那几档才夺得下)，偷取看身法；书写用过的纸笔、拿过一部分的原物记作经手(turn["traded"])，
        主角这一拍正要走进去的那一间，那里的纸笔也够得着(与取物同一口径)
        v11 世界底座：市——买下、卖出、服用、打探、办事(服务名即事码：住宿、打尖、诊治……)交 world/trade 执行，花主角的钱须是玩家起意(MARKET)；
-       v12：识名事码另可写「知」:「身份」——连来历一并说破，主角听见即识底；
+       v12：望见——隔着关口远远看见某人或一群人(situation.sightable)，记进本回合望见的人，不挪人不上名册；识名事码另可写「知」:「身份」——连来历一并说破，主角听见即识底；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -32,7 +32,8 @@ VERBS = {
     "前往": ("去", "走", "到", "移动"), "赶来": ("来", "到来", "赶到"), "脱身": ("逃", "突围", "逃脱", "冲出"),
     "伤人": ("伤", "打伤", "刺伤"), "疗伤": ("疗", "医", "治伤"), "杀死": ("杀", "击杀", "杀了"), "打晕": ("晕", "点倒", "打昏", "击晕"),
     "境况": ("境",), "结下": ("结", "立"), "了断": ("断", "解除"), "看法": ("看", "态度"),
-    # 心：认知与软状态
+    # 心：认知与软状态(v12 望见：隔着关口远远看见)
+    "望见": ("望", "远望", "遥望", "瞥见"),
     "识名": ("名", "报名", "道名", "姓名"), "神色": ("色", "情绪"), "打算": ("意", "意图"), "外号": ("号", "叫法"),
     "揭开": ("揭", "找出", "发现"), "现状": ("景", "状态"), "应承": ("诺", "答应", "承诺"), "了结": ("了", "完结"),
     "所求": ("立志", "志向"),
@@ -45,10 +46,10 @@ VERBS = {
 }
 ALIAS = {a: v for v, aliases in VERBS.items() for a in (v, *aliases)}
 RULE = {"拿取", "放下", "交给", "偷取", "夺取", "毁去", "撕开", "拼合", "书写", "封缄", "拆封", "阅读", "脱身",
-        "买下", "卖出", "服用", "打探", "办事"}  # 在这里执行的规则之事(v11 市：交 trade)
+        "买下", "卖出", "服用", "打探", "办事", "望见"}  # 在这里执行的规则之事(v11 市：交 trade；v12 望见)
 MARKET = {"买下", "卖出", "服用", "打探", "办事"}  # 花主角的钱、用主角的东西：须是玩家起意(授意)
 RULED = {"伤人", "疗伤", "杀死", "打晕", "研习", "吸功"}  # 伤病生死、功力进境归规则：正文写了也改不了账(结算只记分歧)
-SOFT = {"神色", "打算", "外号", "现状", "看法", "应承", "了结", "识名", "所求"}  # 不是物理：落不了只丢这一条，拍照常成立
+SOFT = {"神色", "打算", "外号", "现状", "看法", "应承", "了结", "识名", "所求", "望见"}  # 不是物理：落不了只丢这一条，拍照常成立
 MONEY = "银两"
 FIELDS = ("谁", "物", "量", "与", "自", "对", "数", "到", "为", "文", "致", "处", "因", "添", "消", "听", "秘", "路", "血", "份", "直到", "事", "知")
 ENTITY = ("谁", "与", "自", "对", "到", "致", "听")
@@ -90,6 +91,8 @@ def normalize(world, act: dict) -> dict:
         out[k] = _resolve(world, out[k]) if k in out else out.get(k)
         if out.get(k) is None:
             out.pop(k, None)
+    if v == "望见" and "对" not in out and out.get("谁") not in (None, "player"):  # 望见写在「谁」上(v12)：望见的是他，望的人是主角
+        out["对"], out["谁"] = out.pop("谁"), "player"
     out.setdefault("谁", "player")
     raw = out.get("物")
     if isinstance(raw, str):
@@ -493,6 +496,19 @@ def _flee(world, a, who, heading):
     return [{"op": "unlink", "src": src, "dst": who, "rel": crowd.BESIEGE}, *done], None
 
 
+def _glimpse(world, a, who, heading):
+    """望见(v12)：隔着悬崖、险径、水路远远看见某人或一群人(situation.sightable)——记进本回合望见的人(turn["sighted"]，按先后、不重复)；
+    不挪人、不改名册、不产生指令记录、不算因果污染。就在眼前的原样不动；望不见的驳回(软的：只丢这一条)。"""
+    g, x = world.graph, a.get("对")
+    if x in situation.around(world) or (crowd.is_squad(g, x) and crowd.present(world, x)):
+        return [], None
+    if x not in situation.sightable(world):
+        return [], f"{crowd.handle(g, x) if crowd.is_squad(g, x) else x}不在望得见的地方"
+    if getattr(world, "turn", None) is not None and x not in world.turn.setdefault("sighted", []):
+        world.turn["sighted"].append(x)
+    return [], None
+
+
 def _write(world, a, who, heading):
     kind = a.get("物") if a.get("物") in ("书信", "字条", "手书", "便笺") else "书信"
     to = a.get("致")
@@ -517,7 +533,7 @@ HANDLERS = {
     "封缄": lambda w, a, who, h: scribe.seal(w, who, a.get("物")),
     "拆封": lambda w, a, who, h: scribe.unseal(w, who, a.get("物")),
     "阅读": lambda w, a, who, h: scribe.read(w, who, a.get("物")),
-    "脱身": _flee, "杀死": _strike, "打晕": _strike,
+    "脱身": _flee, "杀死": _strike, "打晕": _strike, "望见": _glimpse,
     "买下": trade.buy, "卖出": trade.sell, "服用": trade.consume, "打探": trade.inquire, "办事": trade.serve,
 }
 

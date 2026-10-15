@@ -3,7 +3,7 @@
          world/effects 的 apply / describe / resolve（逐条落账）、world/lexicon 的 scan / table / find / secret_hits（拍文与账本的一致性体检）、
          world/situation 的 around / elsewhere / enlist / spawn / follow / join / free / rout / captive（情境层与连带）、world/perspective 的 audit / audience / hear / moment / calls（逐拍听写与称谓体检、那一拍的听众与遗体、导演宣告的识名须有拍文为据、「姓+称谓」的叫法），
          world/effects 的 unearth（场景物件认回现场的原著器物）、world/scenery 的 nicknames / TRIFLE（器物的简称、寻常之物），World 门面（graph / player / knowledge / here / turn / aliases）
-[OUTPUT]: 对外提供 judge(seek=…)（v12 小片区里寻人而至即遇：_found）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
+[OUTPUT]: 对外提供 HARD / UNSURE 另有 afar（v12 望见之人开口）、judge(seek=…)（v12 小片区里寻人而至即遇：_found）、physical()（v12 打算志向不算物理）、HANGING / hanging() / lines_to_player()（v12 须回应只认最后两拍里开口、回合末仍在眼前的人；各人对主角说的那一句）、pick()（v12 对象栏的一个名字：先在名表里整词认，人群叫法、眼前之人的叫法，落不到再交 effects.resolve）、MARKS / marked()（v12 授意标记 @书写 @交易 不是实体：选项验收只看实体；targets 判 @交易 之前先剔除 lexicon.TRADE_NOT，大喝、吃惊、点头不是吃喝买卖）、SERVED(v11 凭空端上桌的多半是店里的货：返工清单提示写买下)、TRADE(v11 玩家原话里起意买卖、吃喝、住店、请医、打听：主角的市井事码以此为授意)、names()（v11 名表里不随回合变的一大半——原著实体、别名、去「·」写法与类别——按图的结构版本缓存在 graph.memo，每回合只现算人群叫法、近处短名、见过之人的叫法与器物简称）、spoilers()（v11 一段要传开的话里的剧透：未揭隐情、尚未发生的擒与死、后台术语——场外剧情的说法用它；这桩事自己揭开的隐情(revealed)不算说破）、judge()（逐拍裁决导演的提议 → Ruling）、imply()（追认一回研习：玩家所指的秘籍在拍里被习练而导演漏写 study）、Ruling、doomed()（仍不成立须整拍作废的拍）、brief()（把硬违例译成给导演的修复清单：体检只陈述事实，怎么改(写 赶来、写 前往)与那件东西究竟在哪(暗藏在隔壁石室的，主角要先走过去)只写在这里，不随作废缘由流到编剧）、
           forged()（拍文或正文里拿出、递上的东西世上没有：v8 器物不得新造）、afterword()（编剧成文之后再对一次账：正文写了账上没有的得失去留生死擒放——v6 由 world/settle 在结算之后调用，记作分歧交下回合导演）、unbidden()（越权之举：主角做了玩家没指着的事，拍与结算单共用）、view()（回合起止两个切面）、names()（实体名表，含近处子地点的短名、本回合见过之人在主角眼中的叫法与「姓+称谓」——v7「容师叔毙命」死的是容子矩）、targets()（举动所指的实体）、physical()（改变物理状态的指令，节奏账据此判局面动没动）、HARD / RATIFY / UNSURE、WOUND / PARRY / HEAL / SCRATCH
 [POS]: world 层的裁决器——「LLM 提议，世界裁决」的执行者。effects 只看一条指令成不成立；裁决器看拍与拍、拍与文字、拍与玩家之间：
        每一拍的后果挂在这一拍上，先授意（主角做的事——主角的拍、或写「你」而非别人给你的旁白——里取物、杀人、吸功、研习须是玩家所指：
@@ -40,9 +40,9 @@ from . import acts, actor, bond, crowd, effects, growth, lexicon, perspective, s
 from .graph import holds
 
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell"}
+        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar"}  # 词表推断的去留、叫错的名字：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉
 
 
 @dataclass
@@ -96,7 +96,7 @@ def names(world) -> tuple[list, dict]:
     surface.update(squads)
     surface.update({n.replace("·", ""): n for n in squads.values() if "·" in n})
     surface.update({short: loc for short, loc in situation.shortnames(world).items() if short not in surface})  # 「石级隧道」即琅嬛福地·石级隧道
-    seen = {p for p in situation.seen(world) if world.graph.kind(p) == "person"}
+    seen = {p for p in situation.seen(world) | set(situation.sighted(world)) if world.graph.kind(p) == "person"}  # v12 望见之人的叫法也认得
     surface.update({perspective.handle(world, p): p for p in seen
                     if not perspective.knows(world, "player", p)})  # 主角眼中的叫法：「大眼圆脸的少女」即钟灵——本回合见过的都算(v7：正文写到被甩在身后的人也认得)
     surface.update({c: p for c, p in perspective.calls(world, seen).items() if c not in surface})  # 「容师叔毙命」死的是容子矩，不是叫他的持剑少年(v7)
@@ -271,11 +271,13 @@ def _drawn(world, beats: list) -> list[str]:
     """名册由事件写入(v5)：同在这一片、已露面而尚未到跟前的人(situation.elsewhere)，导演让他开口、对他下指令，
     就是写他走到了主角跟前——不必另写 arrive，也不因「不在你身边」整拍作废。远处的人照旧要 arrive、照旧核路程。"""
     near, out = set(situation.elsewhere(world)), []
+    glimpsed = {acts.normalize(world, op).get("对") for b in beats for op in b.get("ops") or []
+                if acts.is_act(op) and acts.normalize(world, op).get("做") == "望见"}  # 本回合望见的人(v12)：署名、写进事码也不拉上名册
     for b in beats:
         ops = [op for op in b.get("ops") or [] if isinstance(op, dict)]
         for x in [b.get("who"), b.get("to")] + [op.get(k) for op in ops for k in ("id", "src", "dst", "谁", "对", "自", "与")]:
             x = effects.resolve(world, x)
-            if x in near and x not in out:
+            if x in near and x not in out and x not in glimpsed:
                 out.append(x)
     return out
 
@@ -292,6 +294,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     drop = drop or {}
     g, r = world.graph, Ruling(question=dict(plan.get("question") or {}))
     world.turn["reserved"] = dict(reserved or {})  # v12：带队之人级的禁令，物理(赶来、分人)与结算读它
+    world.turn["sighted"] = []                     # v12：本回合望见的人(望见事码记下)，试演与定稿各从空起
     situation.enlist(world, _drawn(world, plan["beats"]))  # 被导演写进拍里的同片之人：就当他走到了主角跟前
     here0, inv0, around0 = world.here, set(world.player["inventory"]), situation.around(world)
     money0 = stock.funds(world, "player")
@@ -501,7 +504,8 @@ def _view(world, start: dict, power0=None) -> lexicon.View:
                         traded=set(world.turn.get("traded", ())), money_start=start.get("money", 0.0),
                         money_end=stock.funds(world, "player"),
                         funds={p: (v, stock.funds(world, p)) for p, v in (start.get("funds") or {}).items()},
-                        felled={s for s, n in (start.get("flock") or {}).items() if not crowd.is_squad(g, s) or crowd.standing(g, s) < n})
+                        felled={s for s, n in (start.get("flock") or {}).items() if not crowd.is_squad(g, s) or crowd.standing(g, s) < n},
+                        sighted=set(situation.sighted(world)))
 
 
 def _examine(world, r: Ruling, shown, power0, stripped=frozenset(), named=()):
@@ -631,6 +635,10 @@ def brief(world, ruling: Ruling) -> list[str]:
                 line += f"（此地与身边可及之物：{'、'.join(near) or '无'}）"
         elif f.kind == "absent":
             line += f"（{f.entity}现在{g.get(f.entity, 'location')}；要他来，写 赶来，系统按路程裁定赶不赶得到）"
+            if f.entity in situation.sightable(world):  # v12：他在望得见的地方
+                line += "；只是远远望见就写 望见；主角走到别处才望见的，望见写在走到之后"
+        elif f.kind == "afar":
+            line += "（远远望见的人说什么主角听不到：删去他的台词，或写他赶来、主角走过去）"
         elif f.kind == "move":  # 体检只陈述事实，怎么改是给导演的话：不随作废缘由流到编剧那里
             line += "（主角真要去留就写 前往；没走成就改写成正要前往或止步）"
         lines.append(line)

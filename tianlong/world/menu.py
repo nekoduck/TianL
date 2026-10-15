@@ -7,7 +7,7 @@
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
        v12 选项链路：授意标记(@书写、@交易)不是实体，可达与去重只看实体、交还的对象不带标记(下回合引擎从原话重算)；买卖住店雇人此处没有铺子也没有当值伙计即办不成；
        只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路；
-       按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题；危局里(pacing.danger)兜底由状态生成，不给出路、歇息、四下察看
+       按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题；危局里(pacing.danger)兜底由状态生成，不给出路、歇息、四下察看；本回合望见的人与知其所在同等对待
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
@@ -96,8 +96,8 @@ def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
             return nid in situation.bodies(world)  # 眼前的遗体(v12)：搜检、抬走都够得着
         if nid in situation.around(world) or nid in situation.party(world):
             return True
-        return bool(world.knowledge.view(nid).get("location")) and \
-            (bool(SEEK.search(text)) or any(world.graph.kind(i) == "location" for i in ids))
+        return (bool(world.knowledge.view(nid).get("location")) or nid in situation.sighted(world)) and \
+            (bool(SEEK.search(text)) or any(world.graph.kind(i) == "location" for i in ids))  # v12 本回合望见的人：与知其所在同等对待
     if kind == "item":
         if nid in world.player["inventory"]:
             return True
