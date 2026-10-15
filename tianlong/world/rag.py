@@ -308,6 +308,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "secrets": secrets,
         "agendas": [f"{p}：{g.get(p, 'agenda')}" for p in s["people"] if g.get(p, "agenda")],
         "odds": odds,
+        "poisons": body.poison_lines(world),  # 主角与身边之人身上规则登记的毒(v13)：发作与消退由系统按光阴代算
         "grants": [f"{growth.progress(world, i)}（可得{'、'.join(f'「{a}」' for a in growth.arts_of(g, i))}；功力由系统分阶兑现，写 研习 即可，练哪一门以玩家所指为准）"
                    + (f"｜研习预裁：{_luck(world, i)}" if i in study else "")
                    for i in [*me["inventory"], *s["items"], *(h for h in hidden if g.kind(h) == "item")]

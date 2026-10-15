@@ -155,6 +155,7 @@ class Game:
         venue.settle(w)                               # 近大远小(v11)：主角所在与一步之遥的场所布好近景——伙计、陈设、货架
         self._distinguish(w)                          # 叫法即主键(v7)：撞名的人在任何人落笔之前分到稳定的外号
         glance0 = settle.glance(w)                    # 两相对账(v7)：回合开始时主角看得见的账，回合末与之求差
+
         aim = adjudicate.targets(w, deed, self.menu.get(deed, ()))  # 玩家所指：选项自带的对象 + 原话里认得出的名字
         scale = self.scales.get(deed)                 # 玩家所选之举的尺度：此后即一件持续之事
         offstage, staged = lod.split_due(w)
@@ -164,7 +165,8 @@ class Game:
             staged = canon.pull(w)
         if staged:                                    # 要在主角眼前上演的原著：相关者若就在这一片，便已在跟前(片区里也一样)
             situation.enlist(w, [a for a in staged["actors"] if w.graph.get(a, "location") in situation.near(w)])
-        due = stakes.due(w)                           # 到期的时限：交场记作主干，交代一次即除
+        due = stakes.due(w)                           # 到期的时限：交场记作主干，交代一次即除（只是伏笔的悄悄作罢）
+        stakes.enforce(w, due)                        # v13 带后果的时限到期：后果由规则在回合开头兑现，结果交场记
         scene.begin(w)                                # 续场或开新场
         arc.track(w)
         story = brief.compose(w, staged, due, scale)
@@ -216,7 +218,7 @@ class Game:
         w.turn["days"] = days
         venue.restock(w, days)                        # 跨了日子(v11)：店里每日补货的货补回原数
         mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
-        mend = "；".join(x for x in [mend, *crowd.recover(w)] if x)  # 打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
+        mend = "；".join(x for x in [mend, body.poison_tick(w), *crowd.recover(w)] if x)  # 毒随光阴发作、退去(v13)；打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
         arrived = w.sync()
         void = ruling.void
         for v in void:

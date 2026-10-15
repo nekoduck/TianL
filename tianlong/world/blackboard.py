@@ -27,6 +27,7 @@ DEFAULTS = {
     "threads": [],       # 未了之事：导演埋下的线头，须续写或收束
     "quests": {},        # 未了之事的元数据（对象、了结谓词、最近推进的回合）：由 situation 维护，threads 是它给人读的一面
     "study": {},         # 研习进度（武学 → 来源 src、真实光阴 minutes、功候 credit、所至之阶 stage、since；v13 账键是武学，旧档按秘籍记的读到时并入第一门）：由 growth 维护
+    "poison": {},        # 主角身上规则登记的毒（毒名 → 发作的节奏与解法，v13 world/body）：导演写不动，只有对症的药或医治解得了
     "hooks": [],         # 编剧埋下、尚未兑现的伏笔（至多两条）
     "acquaintances": [], # 主角识得其名的人：出身带来的、戏里自报家门或被人当面叫出的（由 perspective 维护）
     "tags": [],          # 主角干哪一行(v11)：消息与知者的行当标签(江湖、行情、官府…)，出身带来
@@ -39,7 +40,7 @@ DEFAULTS = {
     "en_route": None,    # 途中：{to 去向, left 余程日数}，光阴走满在途中歇脚时记下，到达或改道即清
     "pacing": [],        # 节奏账：最近几回合的主题、谁对主角说了什么、局面动没动（由 pacing 维护）
     "scene": None,       # 此场：{id, where 地点簇, ask 问题, state 开/转/合/断, turns, tried 试过的路数, since}（story/scene 维护）
-    "clocks": [],        # 时限：[{id, what, due, turn}]，至多三个（story/stakes 维护）
+    "clocks": [],        # 时限：[{id, what, due, turn, then}]，带后果的至多三个、只是伏笔的至多两个（story/stakes 维护；v13 then 是到期由规则兑现的事码）
     "arc": None,         # 主角线：{goal, stage 起意→了结, since}（story/arc 维护）
     "spines": [],        # 近几回合场记主干的来源（story/brief 轮转用）
     "setups": {},        # 系统伏笔提过几回（story/setups 维护）

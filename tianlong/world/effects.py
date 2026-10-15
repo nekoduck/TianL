@@ -65,7 +65,7 @@ from .graph import PLIGHT, ROAD
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
 FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route", "money",
-                      "drift", "drift_seen", "scene", "clocks", "arc", "spines", "setups", "met", "identified", "offered"}
+                      "drift", "drift_seen", "scene", "clocks", "arc", "spines", "setups", "met", "identified", "offered", "poison"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -797,6 +797,21 @@ def _progress(world, route: list[str]) -> bool:
     return sum((world.graph.road(a, b) or {}).get("days", 0) for a, b in zip(route, route[1:])) >= 1
 
 
+def _ruled(world, op, origin) -> str | None:
+    """规则登记的毒不由剧情消去(v13)：写 消 中毒（或整体改写境况把毒的标记丢了）不作数，要服对症的解药或请人医治（药力与医治的来源是 RULED_BY，不在此列）；
+    发作与消退由系统按光阴结算。拒绝是明告：整拍交导演返工，账房的单子则记作分歧。"""
+    nid, key = op.get("id"), op.get("key")
+    if origin == RULED_BY or key != "conditions" or not isinstance(nid, str) or not _bodily(world, nid) or not body.poisons(world, nid):
+        return None
+    val = op.get("value")
+    gone = [val] if op.get("op") == "pull" else [c for c in actor.conditions(world, nid) if c not in val] if op.get("op") == "set" and isinstance(val, list) else []
+    name = next((body.protected(world, nid, c) for c in gone if body.protected(world, nid, c)), None)
+    if not name:
+        return None
+    return (f"{'你' if nid == 'player' else nid}身上的{name}是规则登记的毒，不能直接消去：要服对症的解药或请人医治（写 服用、办事），"
+            "发作与消退由系统按光阴结算；服了对不上的药，毒仍在")
+
+
 def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
     「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
@@ -808,6 +823,9 @@ def _noop(world, op) -> bool:
         has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
         return has if kind == "link" else not has
     nid, key = op.get("id"), op.get("key")
+    if kind == "push" and key == "conditions" and isinstance(op.get("value"), str) and not body.INNER.search(op["value"]) \
+            and isinstance(nid, str) and _bodily(world, nid) and op["value"] in actor.conditions(world, nid):
+        return True  # 身上本就如此（再添一回「中毒」「被点穴」）：不是一件事，不入账(v13 第 51 回导演把还没解的毒重添了一回)；内伤是升一级，不在此列
     if nid == "player":  # 主角「去」他已经站着的地方：不是一程路(路线只有起点，记不出来路)
         return kind == "set" and key == "location" and op.get("value") == world.here
     if kind != "set" or not isinstance(nid, str) or not g.has(nid):
@@ -882,7 +900,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             _summon(world, op, origin)
             if _noop(world, op):
                 continue  # 本就如此：既非成立也非驳回
-            reason = _physics(world, op, heading) or _reach(world, op, origin, scope, heading, glimpse) or _travel(world, op, origin)
+            reason = _ruled(world, op, origin) or _physics(world, op, heading) or _reach(world, op, origin, scope, heading, glimpse) or _travel(world, op, origin)
         except (TypeError, AttributeError, KeyError):  # 畸形值（如列表当 id）：单条不成立，游戏不崩
             reason = "格式不可解"
         if reason:

@@ -115,13 +115,17 @@ class OneMasterTest(unittest.TestCase):
         _, problems = plot.vet(w, plot.sequel(w, "秦红棉"), {"events": [{"day": 0, "where": "剑湖宫·练武厅", "actors": ["秦红棉"], "summary": "秦红棉拂袖而去"}]})
         self.assertTrue(any("主角身边" in p for p in problems))
 
-    def test_people_who_met_the_player_wait_for_the_story(self):
+    def test_people_who_met_the_player_are_not_frozen_but_the_ones_his_story_hangs_on_are(self):
         w = self.w
         freed(w, "秦红棉")
         w.graph.nodes["秦红棉"]["adrift"] = True
         self.assertIn("秦红棉", plot.idle(w))
         bond.event(w, "秦红棉", 1.5, "你替她挡过一箭")
-        self.assertNotIn("秦红棉", plot.idle(w))                          # 一日之内与主角有过交集：等着主角的故事
+        self.assertIn("秦红棉", plot.idle(w))                             # v13 一日之内与主角有过交集不等于等着主角：不再冻住他（司空玄 held 了 60 回，从未进过 idle）
+        w.graph.set("秦红棉", "location", "剑湖宫·练武厅")
+        w.player.push("threads", "寻回秦红棉")
+        situation.track(w, "寻回秦红棉", ["秦红棉"], [])
+        self.assertNotIn("秦红棉", plot.idle(w))                          # 主角未了之事所系的人，才是等着主角的故事
 
     def test_the_creator_cannot_beat_the_canon_to_its_cast(self):
         w = self.w

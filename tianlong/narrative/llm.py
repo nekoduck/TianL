@@ -136,6 +136,9 @@ def _object(raw: str) -> dict:
     if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict):
         log.info("模型回了单元素数组，取其中的对象")
         data = data[0]
+    elif isinstance(data, list) and data and all(isinstance(x, dict) and "text" in x for x in data):
+        log.info("模型回了一串拍，包成 {beats: […]}")  # v13 第 46 回返工回的是四元素的拍数组，被当作格式错误放弃，服用那一拍就此作废
+        data = {"beats": data}
     if not isinstance(data, dict):
         raise LLMError("期望 JSON 对象")
     return data

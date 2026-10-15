@@ -9,7 +9,7 @@
        听来的照原样记(可以是假的)，原话进连带交编剧照它写；没写问谁先问办打探的伙计，想打听的事是偏好、不是筛子。一件事一个事务：前提不成整条不成并给出人话缘由，什么也不动；记录写成下游认得的形状(money 与 inventory 照旧，另有 trade/service/lore)。
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from . import actor, effects, lore, perspective, situation, stock, venue
+from . import actor, body, effects, lore, perspective, situation, stock, venue
 
 RATIO = 0.4                                              # 收购、典当按估值的几成(4.2：当价三到五成)
 LODGING = {"住宿", "借宿"}                               # 住下：主角进那一间(住满两个时辰即算歇息养伤，归 body)
@@ -196,9 +196,15 @@ def _effect(world, item: str) -> dict:
     return eff if isinstance(eff, dict) else {}
 
 
-def _cure(world, target: str, eff: dict, why: str) -> list:
-    """一服药(或一回医治)的效用落到 target 身上：回气血、降内伤、治与解去掉相应的境况、毒发添上症状、扣气血。"""
-    ops, conds = [], actor.conditions(world, target)
+def _cure(world, target: str, eff: dict, why: str, item: str | None = None) -> list:
+    """一服药(或一回医治)的效用落到 target 身上：回气血、降内伤、治与解去掉相应的境况、毒发添上症状、扣气血。
+    v13 毒是规则态：先看对症不对症（body.antidote，对症的毒解去、对不上的写明「X于Y无效」），再落药力；毒药服下即登记一条毒（body.envenom）。"""
+    cured, miss = body.antidote(world, target, item or why, eff)
+    if cured:
+        _note(world, f"{why}：{'你' if target == 'player' else target}所中的{'、'.join(cured)}解去了")
+    if miss:
+        _note(world, miss)
+    ops, conds = [], [c for c in actor.conditions(world, target) if not body.protected(world, target, c)]  # 没解去的毒，标记还在，药力碰不得它
     hp = eff.get("气血")
     if isinstance(hp, (int, float)) and hp:
         ops.append({"op": "add", "id": target, "key": "hp", "value": hp})
@@ -215,6 +221,8 @@ def _cure(world, target: str, eff: dict, why: str) -> list:
     done, bad = effects.apply(world, ops, RULE) if ops else ([], [])  # 药力归规则：不是导演写的疗伤，不顺带降内伤(降不降看效用里的「内伤」)
     if bad:
         _note(world, f"{why}：{'；'.join(r for _, r in bad)}")
+    if eff.get("症") and eff.get("发") and item:  # 毒药：服下即中了毒，往后随光阴发作
+        body.envenom(world, target, item, eff, src=item)
     return done
 
 
@@ -234,7 +242,7 @@ def consume(world, a, who, heading):
     else:
         stock.retire(world, item)
     _traded(world, item)
-    done = _cure(world, target, eff, f"服用{item}")
+    done = _cure(world, target, eff, f"服用{item}", item)
     return [{"op": "trade", "id": item, "key": "used", "value": 1, "to": target}, *done], None
 
 
@@ -272,7 +280,7 @@ def serve(world, a, who, heading):
         done, _ = effects.apply(world, [{"op": "set", "id": "player", "key": "location", "value": pick["room"]}], "director")
         out += done
     if name in TREAT and isinstance(pick.get("effect"), dict):
-        out += _cure(world, a.get("对") or "player", pick["effect"], name)
+        out += _cure(world, a.get("对") or "player", pick["effect"], name, name)
     if name == "打探":
         told, why = _tell(world, hands[0], a.get("物"), free=True)
         if told:

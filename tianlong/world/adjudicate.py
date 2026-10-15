@@ -47,9 +47,9 @@ log = logging.getLogger("tianlong")
 
 SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押解→ 被擒者(situation.CUSTODY 之一)
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
-        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar"}
+        "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar", "stay"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure", "stay"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
 
 
 @dataclass
@@ -456,6 +456,10 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
             r.said[speaker] = len(r.beats) - 1
     route = world.turn.pop("route")
     if len(route) > 1:
+        for pid, i in _stayers(world, shown):  # 主角吩咐留下的同行者(v13)：说了「在此藏好」而没写了断随行，交返工一次，仍没写即由系统替他了断、写明他留在原处
+            r.hard.append(lexicon.Finding("stay", i, pid, f"第{i}拍你吩咐{pid}留在此处，却没有了断他的随行：他会跟着你走——要他留下就写 了断 {pid}→player 随行"))
+            situation.part(world, pid)
+            effects._note(world, f"{pid}留在了原处，没有跟你走")
         for pid in situation.party(world):
             touched.setdefault(pid, touched.get("player", 0))
         effects._note(world, situation.follow(world, route))
@@ -606,6 +610,29 @@ def _grounded(world, ops: list, text: str, after: str, who=None, to=None) -> tup
                 op["value"] = body.mend_cap(op["value"])
         keep.append(op)
     return keep, drop, odd
+
+
+def _stayers(world, shown: list) -> list[tuple[str, int]]:
+    """主角这一回合吩咐留下、却仍与他同行的人(v13)：主角的拍里有一句「你在此藏好」「留在原处等我」「别跟来」，对象是同行者——点了名(或拍的 to)的那一位，
+    没点名而恰有一位同行者的就是他。主角没走远则无从谈起（调用方只在主角动身时问）。返回 [(同行者, 第几拍)]。"""
+    party, out = set(situation.party(world)), []
+    if not party:
+        return out
+    tab = names(world)[0]
+    for i, beat in enumerate(shown, 1):
+        text = beat.get("text") or ""
+        if not _by_player(beat) or not lexicon.STAY.search(text):
+            continue
+        for clause in lexicon._clauses(text):
+            if not lexicon.STAY.search(clause) or lexicon.NEGATE.search(clause) or lexicon.NOT_STAY.search(clause):
+                continue
+            named = {n for n, _, _ in lexicon.find(clause, tab)} & party
+            named |= {effects.resolve(world, beat.get("to"))} & party if beat.get("to") else set()
+            hit = lexicon.STAY.search(clause)
+            if not named and len(party) == 1 and "你" in clause[max(0, hit.start() - 4):hit.end()]:  # 没点名而恰有一位同行者：「你在此藏好」是对他说的，「你把通天草藏好」不是
+                named = set(party)
+            out += [(p, i) for p in sorted(named) if p in party and all(p != q for q, _ in out)]
+    return out
 
 
 def _custody(world, r: Ruling, touched: dict[str, int]):

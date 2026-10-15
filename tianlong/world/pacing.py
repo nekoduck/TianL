@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 re，world/situation 的 captors / imperiled / around / party / FOLLOW / CUSTODY、world/crowd 的 besiegers / squads / handle（v12 危局的单一口径）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
-[OUTPUT]: 对外提供 danger()（v12 危局的单一口径）、structural()（v12 结构性变化）、STALL_WARN、STALL_SEIZE（v12 僵持满几回合即由规则照围困人群的打算押走）、THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
+[OUTPUT]: 对外提供 danger()（v12 危局的单一口径）、structural()（v12 结构性变化；v13 随行与拘押按净变化算，同回合结下又了断不算）、STALL_WARN、STALL_SEIZE（v12 僵持满几回合即由规则照围困人群的打算押走）、THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
           advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：无人相逼、本幕未被打断才许光阴跳过——v5 悬而未决的一幕也可隔夜）、CUTS、STREAK / WINDOW / LOG
 [POS]: world 层的阻尼器——慢变量之外，剧情还会在「快变量」上打转：连着几回合都是被拦、赔罪、催促，同一个人反复同一句诉求，
        主角在一处僵持多回合而局面纹丝不动（43 回与 25 回两份实录里都见过）。这里只做确定性统计：按词表给每回合打主题标签、
@@ -82,16 +82,20 @@ def danger(world, beats=None) -> list[str]:
 
 def structural(applied: list, moved: bool = False) -> bool:
     """结构性变化(v12)：主角挪了步，或有人去留(前往、赶来)、易手(持有、随身、银两、买卖)、身死、随行与拘押的结下或了断、人群有人倒下。
-    扣血、打算、神色、看法不算——危局里只有这些，局面便没有动。放在 world 层：story 的合场与 adjudicate 的僵持押走都用它。"""
+    扣血、打算、神色、看法不算——危局里只有这些，局面便没有动。放在 world 层：story 的合场与 adjudicate 的僵持押走都用它。
+    v13 随行与拘押按净变化算：同一回合里结下围攻又了断围攻、结下押解又了断押解，两头抵消，不算动了（第 60 回曾因此把一场硬算成「合」、僵持归零）。"""
     if moved:
         return True
+    ties = {}  # (src, dst, rel) → 本回合的净变化：+1 结下、-1 了断，抵消即 0
     for op in applied:
         kind, key = op.get("op"), op.get("key")
-        if kind in ("arrive", "money", "trade", "squad") or (kind == "set" and key in ("location", "holder")) \
-                or (kind in ("push", "pull") and key == "inventory") or (kind == "set" and key == "status" and op.get("value") == "dead") \
-                or (kind in ("link", "unlink") and (op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY)):
+        if kind in ("link", "unlink") and (op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY):
+            edge = (op.get("src"), op.get("dst"), op.get("rel"))
+            ties[edge] = ties.get(edge, 0) + (1 if kind == "link" else -1)
+        elif kind in ("arrive", "money", "trade", "squad") or (kind == "set" and key in ("location", "holder")) \
+                or (kind in ("push", "pull") and key == "inventory") or (kind == "set" and key == "status" and op.get("value") == "dead"):
             return True
-    return False
+    return any(ties.values())
 
 
 def calm(world, state: str, beats=None) -> str | None:

@@ -59,12 +59,15 @@ def claimed(world, within: int = HORIZON) -> set[str]:
 
 
 def held(world) -> set[str]:
-    """主角的故事认领之人：身边与近旁之人、纠缠者，以及一日路程之内与主角有过交集的人(恩怨账上记过事、或叫得出主角名号)——
-    他们等着主角的故事：场外编剧只可写他们来到主角跟前(交导演当面演出)，不得把人带走、伤了、杀了。"""
-    g, dist = world.graph, world.graph.distances(world.here)
-    met = {p for p in g.where(type="person") if dist.get(g.get(p, "location"), NEAR + 1) <= NEAR
-           and ((g.get(p, "bond") or {}).get("log") or perspective.knows(world, p, "player"))}
-    return situation.around(world) | situation.entangled(world) | met
+    """主角的故事认领之人：身边与近旁之人、纠缠者（同行者、未了之事所系者），与扣着他们的人、被他们扣着的人——
+    他们的去留生死牵着主角的故事：场外编剧只可写他们来到主角跟前(交导演当面演出)，不得把人带走、伤了、杀了。
+    v13 不再算上「一日路程之内与主角有过交集的人」（恩怨账上记过事、叫得出主角名号）：认得主角不等于等着主角——那条口径把方圆一日内认得主角的人冻了 60 回
+    （司空玄 held、推力 4、从未进过 plot.idle）；他们的承诺另有时限带后果（story/stakes），由规则兑现。"""
+    tied = situation.around(world) | situation.entangled(world)
+    cast = set(tied)
+    for p in tied:
+        cast |= set(situation.captors(world, p)) | set(situation.hostages(world, p))
+    return cast - {"player"}
 
 
 MATERIAL = {"status", "location", "holder", "faction", "title"}  # 江湖传得开的变化：生死、去留、易手、改换门庭

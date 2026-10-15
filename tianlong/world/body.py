@@ -2,7 +2,8 @@
 [INPUT]: 依赖 world/situation 的 around（身边之人）、world/actor 的 vitals / mend / conditions / set_conditions（任何人的身体），World 门面的 graph / player / clock / seed / turn（鸭子类型）
 [OUTPUT]: 对外提供 fate()（本回合的命运骰）、INJURIES / severity() / injure() / relieve() / recover()（内伤分层与病程）、
           risk() / forecast()（研习预裁）、wound() / WELL / GRAVE（伤势措辞；v12 五成以下重伤、命悬一线与 situation.PERIL 同一判定）、INNER（拍文与境况里说的内伤）、
-          rule() / WIN（v13 较量预裁，自 rag 移来）、cap() / blow() / mend_cap() / hurt_word() / SCRATCH / HAZARD / HEAL_CAP（v13 一击的伤归规则）
+          rule() / WIN（v13 较量预裁，自 rag 移来）、cap() / blow() / mend_cap() / hurt_word() / SCRATCH / HAZARD / HEAL_CAP（v13 一击的伤归规则）、
+          poisons() / envenom() / antidote() / protected() / poison_tick() / poison_lines() / DOSE（v13 毒是规则态的境况：登记、按光阴发作、对症才解）
 [POS]: world 层的身体规则——与 growth（进境与功力）互为表里：growth 算「学到多少」，body 算「学得顺不顺、伤得多重、好得多快」。
        研习预裁与较量预裁同构：命运骰 + 懂行之人 + 伤势 → 顺利 / 小有所得 / 受阻 / 岔气，导演只演出、不得自编反噬；
        内伤是境况里的一个分级词（内息紊乱 → 经脉受损 → 经脉重创），只由规则升降：强练岔气至多一回合升一级，歇息与疗伤降级。
@@ -10,6 +11,7 @@
        主角与 NPC 同构(v4)：内伤升降、伤势措辞、歇息养伤对任何人成立(who 缺省为主角)，一回合各人至多升降一级；光阴流过，天下负伤之人一同将养
        v13 否决即事件、数量归规则：伤人落多少血不再由拍文里有没有伤字眼（证据正则）决定——导演报的数只是轻重，规则封顶：攻守档位差×本回合命运骰查较量预裁表(rule)里失血区间的上限
        （至少 SCRATCH），一群人按胜算比，无人出手或不涉险地 SCRATCH、涉险之地 HAZARD；疗伤一拍至多 HEAL_CAP（真正的复原归歇息养伤与药）。较量预裁与封顶读同一张表、同一颗骰
+       v13 毒（P1-1）：21_goods 效用里的毒服下即登记（每「发」气血又减、症状复发、满 DOSE 次自行退去），写 消 中毒 的指令与账房单子不作数、只有对症的药或医治解得了；致死归剧情，毒自己不杀人
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import random
@@ -95,6 +97,141 @@ def recover(world, minutes: int) -> str:
         if who == "player" or who in near:
             told += [t for t in said if t]
     return "；".join(told)
+
+
+# ============================================================
+#  毒(v13)：规则态的境况——登记、发作、解法
+#  21_goods 的效用 {气血, 症, 发, 解, 命} 是毒的本体：服下（被咬、中针）即登记一条毒，每跨一个「发」气血又减、症状复发，发作满 DOSE 次自行退去；
+#  「中毒」是规则态——导演与账房写 消 中毒 不作数（第 48 回账房据一句「紫胀之色退去」消了断肠散的毒，第 51 回导演又重添）：
+#  只有对症的药或医治（效用里的 治 / 解 对得上毒名、症状或所列解药）解得了，服了对不上的药连带写明「X于Y无效」。
+#  致死与否是剧情的事（命：「致死期限依剧情剂量，不写成固定七日」）：毒自己不杀人，lethal 由剧情另立；主角更不在规则层死亡。
+#  无数据的毒（导演随手写的「中毒」）仍是软态，没有解法可依，禁消只会困死剧情
+# ============================================================
+DOSE = 7                       # 一份毒发作几次便自行退去
+DAY = 1440
+POISON = re.compile(r"毒")     # 境况里带「毒」字的，是毒的标记
+DEADLY = re.compile(r"生命|致死|必死|毙命")  # 效用的「命」里说到会死：只作提示——致死期限依剧情另立，毒自己不杀人
+MAX_ONSETS = 30                # 一次结算至多补发几次（读档隔了很久也不至于卡住）
+
+
+def _every(text) -> int:
+    """效用里的「发」→ 分钟：一日、一个时辰、片刻……与全项目同一张时长表。"""
+    from .clock import PACES, stated
+    text = str(text or "").strip()
+    return stated(text) or PACES.get(text) or DAY
+
+
+def poisons(world, who: str) -> dict:
+    """任何人身上规则登记的毒（只读）：{毒名: {tag, symptom, hit, every, next, since, onsets, cure, words, src, lethal}}。"""
+    book = world.player.get("poison") if who == "player" else world.graph.nodes.get(who, {}).get("poison")
+    return book or {}
+
+
+def _shelf(world, who: str) -> dict:
+    if who == "player":
+        return world.player.data.setdefault("poison", {})
+    return world.graph.nodes[who].setdefault("poison", {})
+
+
+def envenom(world, who: str, name: str, eff: dict, src: str | None = None, lethal: int | None = None) -> bool:
+    """登记一条毒（首次发作的气血与症状由调用方落账）：效用 eff 是 21_goods 的 {气血, 症, 发, 解, 治, 命}；lethal 是剧情另立的致命期限（分钟，自此刻起）。
+    已中着同名的毒：只重置下次发作，不叠加。返回是否新中。"""
+    book, now = _shelf(world, who), world.clock.tick
+    hit = eff.get("气血")
+    every = _every(eff.get("发"))
+    rec = {"tag": "中毒", "symptom": str(eff.get("症") or "")[:10], "hit": abs(hit) if isinstance(hit, (int, float)) and hit < 0 else 0,
+           "every": every, "since": now, "next": now + every, "onsets": 1,
+           "cure": [str(x) for x in eff.get("解") or []], "words": [str(x) for x in [*(eff.get("治") or []), *(eff.get("解") or [])] if x],
+           "src": src or name, "lethal": now + lethal if lethal else None, "deadly": bool(DEADLY.search(str(eff.get("命") or "")))}
+    fresh = name not in book
+    if fresh:
+        book[name] = rec
+    else:
+        book[name]["next"] = rec["next"]
+    conds = actor.conditions(world, who)
+    if rec["tag"] not in conds:
+        actor.set_conditions(world, who, conds + [rec["tag"]])
+    return fresh
+
+
+def protected(world, who: str, cond) -> str | None:
+    """境况 cond 是不是规则登记的毒的标记（带「毒」字）：是则返回毒名——导演与账房消不掉它，只有对症的药或医治（RULED_BY 来源）。"""
+    book = poisons(world, who)
+    return next(iter(book)) if book and isinstance(cond, str) and POISON.search(cond) else None
+
+
+def antidote(world, who: str, item: str, eff: dict) -> tuple[list[str], str]:
+    """一服药（或一回医治）对 who 身上的毒：对症的解去（连同标记与症状），其余不动。返回 (解去的毒, 无效的说明)。"""
+    book = poisons(world, who)
+    words = [str(x) for x in [*(eff.get("治") or []), *(eff.get("解") or [])] if x]
+    cured = [n for n, rec in book.items()
+             if item in rec["cure"] or any(w in n or n in w or w in rec["symptom"] or w in rec["tag"] for w in words)]
+    for name in cured:
+        _clear(world, who, name)
+    miss = ""
+    if book and words and not cured:
+        miss = f"{item}于{'你' if who == 'player' else who}所中的{'、'.join(book)}无效，毒仍在"
+    return cured, miss
+
+
+def _clear(world, who: str, name: str):
+    """一条毒了结（解去或发作殆尽）：登记注销，标记与症状从境况里去掉（别的毒还在则标记留着）。"""
+    book = _shelf(world, who)
+    rec = book.pop(name, None)
+    if rec is None:
+        return
+    gone = {rec["symptom"]} | ({rec["tag"]} if not book else set())
+    actor.set_conditions(world, who, [c for c in actor.conditions(world, who) if c not in gone])
+    if not book and who != "player":
+        world.graph.nodes[who].pop("poison", None)
+
+
+def poison_tick(world) -> str:
+    """毒程随光阴推进：每跨一个「发」，气血又减、症状复发；发作满 DOSE 次毒性退去；剧情另立的致命期限一到，NPC 毙命，主角则命悬一线。
+    返回说明（主角与身边之人，写给编剧）。纯规则，与 LLM 无关。"""
+    now, near, told = world.clock.tick, situation.around(world) | {"player"}, []
+    people = ["player"] + [p for p, n in world.graph.nodes.items() if n.get("type") == "person" and n.get("poison") and n.get("status") != "dead"]
+    for who in people:
+        for name, rec in list(poisons(world, who).items()):
+            hits = 0
+            while rec["next"] <= now and rec["onsets"] < DOSE and hits < MAX_ONSETS:
+                hits, rec["onsets"], rec["next"] = hits + 1, rec["onsets"] + 1, rec["next"] + rec["every"]
+                if rec["hit"]:
+                    actor.hurt(world, who, -rec["hit"])
+            said = []
+            if hits:
+                conds = actor.conditions(world, who)
+                if rec["symptom"] and rec["symptom"] not in conds:
+                    actor.set_conditions(world, who, conds + [rec["symptom"]])
+                said.append(f"{'你' if who == 'player' else who}体内的{name}发作" + (f"，{rec['symptom']}" if rec["symptom"] else "") + ("，气血又减" if rec["hit"] else ""))
+            if rec.get("lethal") is not None and now >= rec["lethal"]:
+                if who == "player":
+                    said.append(f"{name}的毒入了膏肓，你只剩一口气吊着")
+                else:
+                    actor.declare(world, who, "dead")
+                    world.graph.nodes[who]["died"] = world.clock.day
+                    said.append(f"{who}毒发身亡")
+                _clear(world, who, name)
+            elif rec["onsets"] >= DOSE and rec.get("lethal") is None:  # 剧情另立了致命期限的毒不自行退去：要么解了，要么到期毙命
+                _clear(world, who, name)
+                said.append(f"{'你' if who == 'player' else who}体内的{name}发作殆尽，渐渐退去")
+            if who in near:
+                told += said
+    return "；".join(told)
+
+
+def poison_lines(world) -> list[str]:
+    """导演后台：主角与身边之人身上的毒——系统按光阴代算，导演不必也不能代写发作与消退。"""
+    from .clock import span
+    out = []
+    for who in ["player", *sorted(situation.around(world))]:
+        for name, rec in poisons(world, who).items():
+            wait = max(0, rec["next"] - world.clock.tick)
+            fix = "、".join(rec["cure"]) or "、".join(rec["words"]) or "眼下无解"
+            out.append(f"{'主角' if who == 'player' else who}：{name}（{rec['symptom'] or '中毒'}），每{span(rec['every'])}发作"
+                       + (f"、气血-{rec['hit']}" if rec["hit"] else "") + f"，已发作{rec['onsets']}次，约{span(wait)}后再发，满{DOSE}次自行退去｜解法：{fix}"
+                       + ("｜致命期限由剧情另立" if rec.get("deadly") and not rec.get("lethal") else ""))
+    return out
 
 
 # ============================================================

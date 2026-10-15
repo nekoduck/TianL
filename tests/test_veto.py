@@ -11,13 +11,21 @@
           主角的姓名与所求只有玩家自报、立志才由导演宣告(第 4 回「在下王天龙」、第 9 回改所求)，别人当面叫出他的名字不算，主角线了结时场记请导演写新的所求，账房记下正文里已读到的自报
           StudyLedgerTest(P0-5)：研习账按武学记(练凌波微步不连带北冥的阶与功力，第 41、50 回)、一回合同一门只计一次、minutes 与 credit 分开、旧档按秘籍记的并入第一门武学；
           写明的耗时是契约(第 53 回要半个时辰、世界过了四小时)：玩家话里的「耗时半个时辰」替代规则的下限，没写明的才用规则
+          PoisonTest(P1-1)：毒是规则态的境况——服下毒药即登记（首发即刻、此后每「发」气血又减、满七次自行退去，致死归剧情另立），写 消 中毒（导演的指令、账房的单子）不作数，
+          对症的药才解、对不上的写明「X于Y无效」（第 48 回通天草、第 51 回重添）；无数据的「中毒」仍是软态；毒程进导演后台，读档接得上
+          ClockTest(P1-2)：时限带后果——写了 then 的是承诺，到期由规则在回合开头兑现（司空玄「七日不见解药即杀钟灵」，主角远在琅嬛福地也照样落账、记进江湖账本随传闻抵达）、
+          前提不成写明缘由、不碰主角与同行者；没写 then 的只是伏笔（不占 CAP、不写赌注、到期悄悄作罢）；同一件事重立只能提前；「八个半时辰」「三日半」读得出
+          StructuralTest(P1-3、P1-4)：结构性变化里随行与拘押按净变化算（第 60 回同回合结下围攻又了断围攻，场作了「合」、僵持归零）；
+          一人一主不冻结（lod.held 只拦主角身边的、同行的、未了之事所系者，与扣着他们的人和被他们扣着的人，不再按「叫得出主角名号」冻人）
+          StayTest(P1-5)：主角吩咐同行者「在此藏好」「别跟来」而动身时没写了断随行（第 57 回段誉被带到了无量后山，编剧只好写他「强撑跟至」）——交导演返工一次，仍没写即由系统替他了断、写明他留在原处
 [POS]: tests 的 v13 验证——「被否决的事要么成立、要么返工、要么明告读者，没有第四种」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import unittest
 
 from tests.test_adjudicate import judge, plan
-from tianlong.world import adjudicate, body, clock, effects, growth, lexicon, perspective, rag, settle
+from tianlong.story import brief, scene, stakes
+from tianlong.world import adjudicate, body, clock, effects, growth, lexicon, perspective, rag, settle, situation
 from tianlong.world.world import World
 
 HURT = lambda who, to, n: {"做": "伤人", "谁": who, "对": to, "血": n}
@@ -615,6 +623,348 @@ class StudyLedgerTest(unittest.TestCase):
         t0 = w.clock.tick
         Game(w, llm).act("静心参研北冥神功卷轴（耗时半个时辰）")
         self.assertEqual(w.clock.tick - t0, 60)
+
+
+class PoisonTest(unittest.TestCase):
+    """第 48 回账房据「紫胀之色终于稍稍退去」消了段誉的中毒，第 51 回导演又重添；通天草的效用数据只解貂毒，断肠散一直没有发作过。"""
+
+    def setUp(self):
+        w = self.w = World.create("王天龙")
+        w.player.set("location", "无量山")
+        for p in ("司空玄", "段誉", "钟灵"):
+            w.graph.set(p, "location", "无量山")
+        situation.enlist(w, ["司空玄", "段誉", "钟灵"])
+        w.turn = {}
+
+    def dose(self, who="段誉"):
+        done, bad = effects.apply(self.w, [{"做": "服用", "谁": "司空玄", "物": "断肠散", "对": who}], "director")
+        self.assertEqual(bad, [])
+        return done
+
+    def advance(self, days):
+        self.w.clock.advance(int(days * clock.PER_DAY))
+        self.w.turn = {}
+        return body.poison_tick(self.w)
+
+    def test_a_poison_good_registers_a_poison_and_flares_by_the_day(self):
+        w = self.w
+        self.dose()
+        rec = body.poisons(w, "段誉")["断肠散"]
+        self.assertEqual((rec["hit"], rec["every"], rec["onsets"], rec["symptom"]), (15, clock.PER_DAY, 1, "腹内剧痛"))
+        self.assertIn("中毒", w.graph.get("段誉", "conditions"))
+        hp = lambda: w.graph.get("段誉", "hp")
+        self.assertEqual(hp(), 85)                                                       # 首发即刻：服下的那一下
+        self.assertEqual(self.advance(0.5), "")                                           # 半日：还没到下一发
+        self.assertEqual(hp(), 85)
+        told = self.advance(0.6)
+        self.assertEqual(hp(), 70)                                                       # 满一日：气血又减一回
+        self.assertIn("段誉体内的断肠散发作", told)
+        for day in range(5):
+            self.advance(1)
+        self.assertEqual(body.poisons(w, "段誉"), {})                                      # 满七次：毒性退去
+        self.assertNotIn("中毒", w.graph.get("段誉", "conditions"))
+        self.assertGreaterEqual(hp(), 1)                                                 # 毒不杀人
+        self.assertNotEqual(w.graph.get("段誉", "status"), "dead")
+
+    def test_the_story_may_set_a_lethal_horizon_and_the_hero_never_dies_by_rule(self):
+        w = self.w
+        eff = {"气血": -15, "症": "腹内剧痛", "发": "一日", "解": [], "命": "致死期限依剧情剂量"}
+        body.envenom(w, "司空玄", "断肠散", eff, lethal=7 * clock.PER_DAY)
+        body.envenom(w, "player", "断肠散", eff, lethal=3 * clock.PER_DAY)
+        for _ in range(8):
+            told = self.advance(1)
+        self.assertEqual(w.graph.get("司空玄", "status"), "dead")                          # 剧情另立的期限一到，NPC 毙命
+        self.assertTrue(w.graph.get("司空玄", "died"))
+        self.assertGreaterEqual(w.player["hp"], 1)                                        # 主角不在规则层死亡：毒入膏肓也只是一口气吊着
+        self.assertEqual(body.poisons(w, "player"), {})
+
+    def test_neither_the_director_nor_the_accountant_can_wave_it_away(self):
+        w = self.w
+        self.dose()
+        r = judge(w, plan(("段誉", "紫胀之色终于稍稍退去，段誉长长吁了口气", [{"做": "境况", "对": "段誉", "消": "中毒"}])))
+        self.assertTrue(any("规则登记的毒" in f.message for f in r.hard))                  # 否决即事件：整拍交导演返工
+        self.assertIn("中毒", w.graph.get("段誉", "conditions"))
+        bill = {"changes": [{"据": "紫胀之色终于稍稍退去", "谁": "段誉", "ops": [{"做": "境况", "对": "段誉", "消": "中毒"}]}], "rifts": []}
+        applied, rifts = settle.commit(w, bill, "段誉脸上紫胀之色终于稍稍退去，长长吁了口气。")
+        self.assertEqual(applied, [])
+        self.assertTrue(rifts and "规则登记的毒" in rifts[0])                             # 账房的单子记作账文分歧，交导演
+        self.assertIn("中毒", w.graph.get("段誉", "conditions"))
+        r = judge(w, plan(("段誉", "段誉脸色又白了几分", [{"做": "境况", "对": "段誉", "添": "中毒"}])))
+        self.assertEqual(([f for f in r.hard], r.applied), ([], []))                     # 第 51 回：已中着毒，重添一回不是一件事
+
+
+    def test_a_poison_without_data_stays_soft(self):
+        w = self.w
+        r = judge(w, plan(("钟灵", "闪电貂一口咬在龚光杰腕上", [{"做": "境况", "对": "龚光杰", "添": "中毒"}])))
+        self.assertEqual(body.poisons(w, "龚光杰"), {})                                  # 无数据的毒只是一个字串：没有解法可依，禁消只会困死剧情
+        r = judge(w, plan(("钟灵", "钟灵喂龚光杰服下草汁，毒便退了", [{"做": "境况", "对": "龚光杰", "消": "中毒"}])))
+        self.assertNotIn("中毒", w.graph.get("龚光杰", "conditions") or [])
+
+    def test_a_wrong_medicine_says_so_and_the_right_one_cures(self):
+        w = self.w
+        self.dose()
+        w.graph.set("通天草", "holder", "司空玄")
+        w.graph.set("通天草", "location", None)
+        done, bad = effects.apply(w, [{"做": "服用", "谁": "司空玄", "物": "通天草", "对": "段誉"}], "director")
+        self.assertEqual(bad, [])
+        self.assertIn("断肠散", body.poisons(w, "段誉"))                                   # 通天草只解貂毒：断肠散仍在
+        self.assertTrue(any("通天草于段誉所中的断肠散无效" in n for n in w.turn.get("notes", [])), w.turn.get("notes"))
+        eff = {"气血": -8, "症": "貂毒发作", "发": "一个时辰", "解": ["闪电貂毒解药", "通天草"], "命": "不及时解毒有生命危险"}
+        body.envenom(w, "段誉", "闪电貂", eff, src="闪电貂")
+        self.assertEqual(sorted(body.poisons(w, "段誉")), ["断肠散", "闪电貂"])
+        cured, miss = body.antidote(w, "段誉", "通天草", {"解": ["闪电貂"], "治": ["貂毒", "生死符痛痒"]})
+        self.assertEqual((cured, miss), (["闪电貂"], ""))                                  # 对症的才解，另一条毒不受牵连
+        self.assertEqual(list(body.poisons(w, "段誉")), ["断肠散"])
+        self.assertIn("中毒", w.graph.get("段誉", "conditions"))                           # 标记还在：断肠散未解
+        self.assertNotIn("貂毒发作", w.graph.get("段誉", "conditions"))
+
+    def test_a_cure_by_service_follows_the_same_rule(self):
+        w = self.w
+        self.dose()
+        cured, miss = body.antidote(w, "段誉", "诊治", {"治": ["外伤"]})
+        self.assertEqual((cured, "断肠散" in miss), ([], True))
+        cured, _ = body.antidote(w, "段誉", "解毒丹", {"治": ["毒"]})
+        self.assertEqual(cured, ["断肠散"])                                               # 泛解百毒的丹药：「毒」对得上标记
+
+    def test_the_director_sees_the_poison_course_in_the_backstage(self):
+        w = self.w
+        self.dose()
+        lines = rag.backstage(w)["poisons"]
+        self.assertTrue(lines and "段誉：断肠散（腹内剧痛）" in lines[0], lines)
+        self.assertIn("满7次自行退去", lines[0])
+        self.assertIn("眼下无解", lines[0])
+        from tianlong.narrative import prompts
+        self.assertIn("毒程", prompts.render_backstage({**{k: [] for k in ("upcoming", "ruling", "odds", "arts", "grants", "passes", "secret_ways", "hidden", "secrets", "agendas", "places")},
+                                                          "fate": 50, "poisons": lines}))
+        self.assertIn("中毒是规则态", prompts.PLOT_GUIDE)
+
+    def test_the_poison_survives_a_save(self):
+        import json
+        w = self.w
+        self.dose()
+        body.envenom(w, "player", "断肠散", {"气血": -15, "症": "腹内剧痛", "发": "一日"})
+        again = World.from_dump(json.loads(json.dumps(w.dump())))
+        self.assertEqual(body.poisons(again, "段誉")["断肠散"]["onsets"], 1)
+        self.assertIn("断肠散", body.poisons(again, "player"))
+        self.assertIn("poison", effects.FROZEN_PLAYER_KEYS)                               # 导演写不动
+
+    def test_the_engine_ticks_the_poison_and_tells_the_writer(self):
+        from tests.test_engine import StubLLM, director
+        from tianlong.engine import Game
+        w = self.w
+        body.envenom(w, "player", "断肠散", {"气血": -15, "症": "腹内剧痛", "发": "一日", "解": []})
+        llm = StubLLM(director(beats=[{"who": "player", "text": "你守在原处，一夜无话", "ops": []}], pace="一夜"))
+        Game(w, llm).act("原地过夜")
+        self.assertEqual(w.player["hp"], 85)                                              # 一夜过去，毒又发作了
+        self.assertIn("你体内的断肠散发作，腹内剧痛，气血又减", llm.writer_prompts[-1])
+        self.assertIn("腹内剧痛", w.player["conditions"])
+
+
+class ClockTest(unittest.TestCase):
+    """第 8 回司空玄立下「七日内取解药来，方能换人」，从没进过任何账；这一局 8 次立限、7 次到期，导演交代的结果一律是「添岔气、同回合消」；
+    第 10→11→12 回同一件事三次重立，等于每回合把期限往后推。"""
+
+    THREAT = {"what": "七日内不见解药，钟灵性命难保", "in": "七日", "then": [{"做": "杀死", "谁": "司空玄", "对": "钟灵"}]}
+
+    def setUp(self):
+        w = self.w = World.create("王天龙")
+        w.player.set("location", "琅嬛福地")
+        for p in ("司空玄", "钟灵"):
+            w.graph.set(p, "location", "无量山")
+        w.turn = {}
+
+    def test_spans_are_read_with_halves(self):
+        w = self.w
+        for span, minutes in (("八个半时辰", 8.5 * clock.PER_SHICHEN), ("三日半", 3.5 * clock.PER_DAY), ("七日", 7 * clock.PER_DAY), ("十二个时辰", 12 * clock.PER_SHICHEN),
+                              ("半日", 3 * clock.PER_SHICHEN), ("二十日", 20 * clock.PER_DAY)):
+            self.assertEqual(stakes._minutes(w, span), round(minutes), span)
+        self.assertIsNone(stakes._minutes(w, "不知何时"))
+
+    def test_a_threat_with_a_consequence_is_a_promise_and_the_rest_is_foreshadowing(self):
+        w = self.w
+        stakes.plant(w, self.THREAT)
+        stakes.plant(w, {"what": "云中鹤的耐心只到天明", "in": "半日"})
+        self.assertEqual([bool(c.get("then")) for c in w.player["clocks"]], [False, True])
+        self.assertEqual(stakes.urgent(w)[0]["what"], self.THREAT["what"])                # 伏笔不写赌注
+        self.assertEqual(stakes.consequence(w, stakes.urgent(w)[0]), "司空玄杀死钟灵")
+        names = ("甘宝宝明日启程", "东宗弟子入夜围山", "马五德天明备车")
+        for name in names:                                                                # 伏笔不占承诺的名额
+            stakes.plant(w, {"what": name, "in": "一日", "then": [{"做": "打算", "谁": "司空玄", "为": f"{name}之前动手"}]})
+        self.assertEqual(len([c for c in w.player["clocks"] if c.get("then")]), stakes.CAP)
+        self.assertEqual(len([c for c in w.player["clocks"] if not c.get("then")]), 1)
+        w.clock.advance(clock.PER_DAY)
+        self.assertEqual(sorted(c["what"] for c in stakes.due(w)), sorted(names))         # 到期的伏笔悄悄作罢，不再回回「时限已到」
+        self.assertFalse([c for c in w.player["clocks"] if not c.get("then")])
+
+    def test_replanting_the_same_thing_can_only_bring_it_forward(self):
+        w = self.w
+        stakes.plant(w, {"what": "钟灵性命难保", "in": "半日"})
+        due = w.player["clocks"][0]["due"]
+        stakes.plant(w, {"what": "七日内不见解药，钟灵性命难保", "in": "两个时辰"})             # 同一件事换个说法重立：提前
+        self.assertEqual(len(w.player["clocks"]), 1)
+        self.assertLess(w.player["clocks"][0]["due"], due)
+        stakes.plant(w, self.THREAT)                                                       # 再立一回七日：不得延后，后果以新写的为准
+        c = w.player["clocks"][0]
+        self.assertEqual(c["due"], w.clock.tick + 2 * clock.PER_SHICHEN)
+        self.assertEqual(c["then"], self.THREAT["then"])
+
+    def test_the_consequence_lands_on_time_even_when_the_hero_is_far_away(self):
+        w = self.w
+        stakes.plant(w, self.THREAT)
+        w.clock.advance(6 * clock.PER_DAY)
+        self.assertEqual(stakes.due(w), [])                                               # 六日：还没到
+        w.clock.advance(clock.PER_DAY)
+        gone = stakes.due(w)
+        done = stakes.enforce(w, gone)
+        self.assertEqual(done, ["钟灵身亡"])
+        self.assertEqual(w.graph.get("钟灵", "status"), "dead")                            # 主角远在琅嬛福地：规则照办
+        self.assertTrue(gone[0]["result"].startswith("规则已照预设落账"))
+        self.assertNotIn("时限已到", " ".join(w.turn.get("notes", [])))                    # 事发在远处：不当作主角眼前的连带
+        ev = w.truth.events[-1]
+        self.assertEqual((ev["origin"], ev["where"], ev["weight"]), ("rule", "无量山", 2))   # 记进江湖账本，随传闻抵达
+        self.assertIn("期限已到", ev["summary"])
+        scene.begin(w)
+        text = brief.compose(w, None, gone)["text"]
+        self.assertIn("规则已照预设落账：钟灵身亡", text)
+        self.assertIn("不可更改", text)
+
+    def test_what_cannot_come_true_says_why(self):
+        w = self.w
+        w.graph.set("钟灵", "status", "dead")
+        gone = [{"what": "x", "then": self.THREAT["then"]}]
+        self.assertEqual(stakes.enforce(w, gone), [])
+        self.assertIn("钟灵已不在人世", gone[0]["result"])
+        w2 = World.create("王天龙")
+        w2.graph.set("钟灵", "location", "万劫谷")
+        w2.graph.set("司空玄", "location", "无量山")
+        gone = [{"what": "x", "then": self.THREAT["then"]}]
+        stakes.enforce(w2, gone)
+        self.assertIn("不在一处", gone[0]["result"])                                       # 动手的两人不在一处：够不着
+        self.assertEqual(w2.graph.get("钟灵", "status"), "alive")
+        for bad in ([{"做": "杀死", "对": "钟灵"}], [{"做": "杀死", "谁": "司空玄", "对": "player"}], [{"做": "拿取", "谁": "司空玄", "物": "通天草"}]):
+            self.assertTrue(not stakes._then(bad) or stakes._viable(w2, stakes._then(bad))[1], bad)   # 没写谁、碰主角、拿东西：规则不肯兑现
+
+    def test_the_hero_and_his_companions_are_never_touched(self):
+        w = self.w
+        w.graph.link("钟灵", "player", "随行")
+        ops, why = stakes._viable(w, self.THREAT["then"])
+        self.assertIn("同行者", why)
+        self.assertEqual(w.graph.get("钟灵", "status"), "alive")
+
+    def test_a_person_moving_by_rule_must_be_able_to_get_there(self):
+        w = self.w
+        ok, why = stakes._viable(w, [{"做": "前往", "谁": "司空玄", "到": "大理城"}])
+        self.assertIsNone(why)
+        ok, why = stakes._viable(w, [{"做": "前往", "谁": "司空玄", "到": "不存在的地方"}])
+        self.assertIn("去不了", why)
+
+    def test_the_engine_enforces_before_the_director_speaks(self):
+        from tests.test_engine import StubLLM, director
+        from tianlong.engine import Game
+        w = self.w
+        stakes.plant(w, {**self.THREAT, "in": "一日"})
+        w.clock.advance(clock.PER_DAY)
+        llm = StubLLM(director(beats=[{"who": "player", "text": "你在琅嬛福地中静坐", "ops": []}], pace="片刻"))
+        Game(w, llm).act("静坐")
+        self.assertEqual(w.graph.get("钟灵", "status"), "dead")
+        self.assertIn("规则已照预设落账：钟灵身亡", llm.director_prompts[-1])               # 场记把结果交给导演
+        self.assertFalse(w.player["clocks"])                                               # 交代一次即除
+
+    def test_the_prompts_teach_then(self):
+        from tianlong.narrative import prompts
+        self.assertIn('"then"', prompts.TIME_GUIDE)
+        self.assertIn("重立只能提前", prompts.TIME_GUIDE)
+
+
+class StructuralTest(unittest.TestCase):
+    """第 60 回导演同回合写了「结下围攻」又「了断围攻」，pacing.structural 见到 link/unlink 即算有变，场记作「合」、stall 归零，编剧随后给出的突围却已没有围攻可突。"""
+
+    def test_binding_and_unbinding_in_one_turn_nets_to_nothing(self):
+        from tianlong.world import pacing
+        bind = {"op": "link", "src": "神农攻山帮众", "dst": "player", "rel": "围攻"}
+        loose = {"op": "unlink", "src": "神农攻山帮众", "dst": "player", "rel": "围攻"}
+        self.assertTrue(pacing.structural([bind]))
+        self.assertTrue(pacing.structural([loose]))
+        self.assertFalse(pacing.structural([bind, loose]))                              # 结下又了断：净变化为零
+        self.assertFalse(pacing.structural([loose, bind]))
+        self.assertTrue(pacing.structural([bind, loose, {"op": "link", "src": "司空玄", "dst": "段誉", "rel": "扣为人质"}]))   # 另有一条拘押留了下来
+        self.assertTrue(pacing.structural([bind, loose, {"op": "set", "id": "段誉", "key": "location", "value": "无量山"}]))  # 别的结构变化照算
+        self.assertFalse(pacing.structural([bind, loose, {"op": "add", "id": "player", "key": "hp", "value": -10}]))        # 扣血不算
+        self.assertTrue(pacing.structural([], moved=True))
+
+    def test_the_engine_counts_the_stall_when_the_siege_is_made_and_unmade(self):
+        from tests.test_crisis import GANG, cliff
+        from tests.test_engine import StubLLM
+        from tianlong.engine import Game
+        w = cliff()
+        ops = [{"做": "了断", "谁": GANG, "对": "player", "为": "围攻"}, {"做": "结下", "谁": GANG, "对": "player", "为": "围攻"}]
+        game = Game(w, StubLLM({"说书人与导演": {"beats": [{"who": GANG, "text": "帮众退开半步，旋即又合拢上来", "ops": ops}],
+                                               "scene": {"state": "合", "ask": "能否脱身"}, "pace": "瞬息"}}))
+        game.act("挥剑抵挡")
+        self.assertEqual((w.player["scene"]["state"], w.player["scene"]["stall"]), ("转", 1))   # 局面没动：场不作合、僵持加一
+
+    def test_met_is_no_longer_held_but_the_captor_of_an_entangled_person_is(self):
+        w = World.create("王天龙")
+        w.player.set("location", "无量山")
+        for p in ("司空玄", "钟灵", "段誉", "左子穆"):
+            w.graph.set(p, "location", "无量山")
+        w.graph.link("司空玄", "钟灵", "扣为人质")
+        situation.enlist(w, ["段誉"])
+        situation.track(w, "救出钟灵", ["钟灵"], [["司空玄", "!扣为人质", "钟灵"]])
+        w.graph.link("左子穆", "player", "结怨")
+        from tianlong.world import bond, lod
+        bond.attitude(w, {"op": "link", "src": "左子穆", "dst": "player", "rel": "疑忌", "note": "见过一面"})
+        held = lod.held(w)
+        self.assertTrue({"段誉", "钟灵", "司空玄"} <= held)                               # 身边的、未了之事所系者、扣着他的人
+        self.assertNotIn("左子穆", held)                                                  # 一日之内见过主角、叫得出主角名号，不再冻住他
+
+
+class StayTest(unittest.TestCase):
+    """第 57 回主角对段誉说「在此藏好」，拍里没有 了断 随行，situation.follow 把他沿路线带到了无量后山。"""
+
+    def setUp(self):
+        w = self.w = World.create("王天龙")
+        w.player.set("location", "无量山")
+        w.graph.set("段誉", "location", "无量山")
+        w.graph.link("段誉", "player", "随行")
+        w.turn = {}
+
+    GO = {"做": "前往", "到": "无量后山"}
+    TALK = "你低声道：「兄台，你在此藏好，我去引开他们。」"
+
+    def test_telling_a_companion_to_stay_without_parting_is_sent_back_and_then_done_by_the_system(self):
+        w = self.w
+        r = judge(w, plan(("player", self.TALK, [self.GO], "段誉")))
+        self.assertIn("stay", [f.kind for f in r.hard])                                  # 交导演返工一次
+        self.assertEqual(adjudicate.doomed(r), {})                                       # 返工后仍没写也不作废整拍（词表推断的去留可能看错）
+        self.assertEqual((w.here, w.graph.get("段誉", "location")), ("无量后山", "无量山"))   # 系统替他了断：段誉留在原处
+        self.assertNotIn("段誉", situation.party(w))
+        self.assertTrue(any("段誉留在了原处" in n for n in r.notes))
+
+    def test_writing_the_parting_satisfies_it(self):
+        w = self.w
+        r = judge(w, plan(("player", self.TALK, [{"做": "了断", "谁": "段誉", "对": "player", "为": "随行"}, self.GO], "段誉")))
+        self.assertEqual([f.kind for f in r.hard], [])
+        self.assertEqual(w.graph.get("段誉", "location"), "无量山")
+
+    def test_it_only_matters_when_the_hero_moves_on(self):
+        w = self.w
+        r = judge(w, plan(("player", self.TALK, [], "段誉")))
+        self.assertEqual([f.kind for f in r.hard], [])
+        self.assertIn("段誉", situation.party(w))
+
+    def test_other_words_are_not_orders(self):
+        w = self.w
+        r = judge(w, plan(("player", "你把通天草藏好，快步奔向无量后山", [self.GO])))
+        self.assertEqual([f.kind for f in r.hard], [])
+        self.assertEqual(w.graph.get("段誉", "location"), "无量后山")                       # 段誉照旧随行
+        w2 = World.create("王天龙")
+        w2.player.set("location", "无量山")
+        w2.graph.set("段誉", "location", "无量山")
+        w2.graph.link("段誉", "player", "随行")
+        w2.turn = {}
+        r = judge(w2, plan(("player", "你拉住段誉，低声道：「莫要留在原处，随我来。」", [self.GO], "段誉")))
+        self.assertNotIn("stay", [f.kind for f in r.hard])                               # 「莫要留在原处」要他跟着走，不是叫他留下
 
 
 if __name__ == "__main__":

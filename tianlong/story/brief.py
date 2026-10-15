@@ -48,6 +48,18 @@ def _schemers(world) -> list[str]:
                   key=lambda p: (-len((g.get(p, "bond") or {}).get("log", [])), p))
 
 
+def _due(due: list[dict]) -> str:
+    """到期的时限（v13 带后果的）：规则已兑现的是成立的事实，不可更改——主角不在场只借风声传闻；没能兑现的写明缘由，由剧情圆回。"""
+    lines = []
+    for c in due:
+        res = c.get("result") or ""
+        if res.startswith("规则已照预设落账"):
+            lines.append(f"时限已到——{c['what']}：{res}。这已是成立的事实，不可更改：主角在场就演出来，不在场只借风声、传闻交代")
+        else:
+            lines.append(f"时限已到——{c['what']}" + (f"（{res}）" if res else "") + "：本回合让它有个结果")
+    return "；".join(lines)
+
+
 def compose(world, staged: dict | None, due: list[dict], scale: str | None = None) -> dict:
     """本回合的场记 {text, spine}。due：本回合到期的时限(stakes.due 已除去)；scale：玩家上回合所选之举的尺度。
     主干(v5)：此地原著 > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(没有人、或主角线刚有了进展，就是主角线) > 顺着举动推进；
@@ -56,7 +68,7 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     hurry = stakes.urgent(world)
     head = f"第{sc['id']}场·{sc['state']}（第{sc['turns'] + 1}回合）｜问：{sc['ask'] or '本回合由主角此举定下'}"
     if hurry:
-        head += f"｜赌注：{hurry[0]['what']}，{hurry[1]}"
+        head += f"｜赌注：{hurry[0]['what']}，{hurry[1]}" + (f"（到期规则照办：{stakes.consequence(world, hurry[0])}）" if hurry[0].get("then") else "")
     lines = [head]
     seed, back, plot = setups.plant(world), setups.payoff(world, staged), arc.line(world)
     schemers = _schemers(world)
@@ -65,7 +77,7 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     if staged:
         spine, trunk = "canon", f"{'场外剧情' if staged.get('derived') else '原著'}「{staged['summary']}」在主角眼前上演（见后台）"  # v11 场外编剧写到主角跟前的一桩，同原著一样作主干
     elif due:
-        spine, trunk = "clock", f"时限已到——{'；'.join(c['what'] for c in due)}：本回合让它有个结果"
+        spine, trunk = "clock", _due(due)
     elif danger and sc["state"] == "开" and sc["turns"] == 0:  # 危局里新开的场(v12)：主干是眼前的危局，不落回某人的图谋
         spine, trunk = "crisis", f"眼前的危局（{'；'.join(danger)}）：这一场问的就是怎么脱出这一局"
     elif seed:
@@ -89,7 +101,7 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     if others:
         lines.append(f"在场各怀打算：{'；'.join(others)}——不必人人开口，但他们照自己的打算行事，不得当他们不在")
     if due and spine != "clock":  # 原著占了主干，到期的时限也不能悄悄过去
-        lines.append(f"时限已到：{'；'.join(c['what'] for c in due)}——在本回合交代它的结果")
+        lines.append(_due(due))
     if back:
         lines.append(back)
     if sc["tried"] and sc["state"] != "开":

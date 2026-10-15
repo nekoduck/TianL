@@ -174,7 +174,7 @@ class StakesAndSceneTest(unittest.TestCase):
 
     def test_a_clock_falls_due_once(self):
         w = self.w
-        stakes.plant(w, {"what": "云中鹤的耐心", "in": "三个时辰"})
+        stakes.plant(w, {"what": "云中鹤的耐心", "in": "三个时辰", "then": [{"做": "打算", "谁": "云中鹤", "为": "出手夺人"}]})  # v13 带后果的才是承诺、才有赌注
         self.assertEqual(stakes.urgent(w)[1], "余3个时辰")
         w.advance(3 * PER_SHICHEN)
         self.assertEqual([c["what"] for c in stakes.due(w)], ["云中鹤的耐心"])
@@ -203,8 +203,8 @@ class StakesAndSceneTest(unittest.TestCase):
 
     def test_the_clock_reaches_the_director_and_cut_waits_for_nightfall(self):
         w = self.w
-        llm = StubLLM(director(clock={"what": "左子穆限你今夜离山", "in": "半日"}, scene={"state": "合", "ask": "去留"},
-                               cut={"until": "入夜"}))
+        llm = StubLLM(director(clock={"what": "左子穆限你今夜离山", "in": "半日", "then": [{"做": "打算", "谁": "左子穆", "为": "逐客"}]},
+                               scene={"state": "合", "ask": "去留"}, cut={"until": "入夜"}))
         game = Game(w, llm)
         game.act("向左子穆告辞")
         self.assertEqual(w.clock.parts()["hour"][:2], "酉时")                              # 一场合了：跳到入夜

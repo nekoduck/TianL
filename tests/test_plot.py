@@ -139,7 +139,9 @@ class DriveTest(_World):
         w.canon.pop()
         bond.event(w, "秦红棉", 1.5, "你替她挡过一箭")
         w.graph.set("秦红棉", "location", "剑湖宫")
-        self.assertNotIn("秦红棉", plot.idle(w, 10))                                 # 主角近旁、与主角有过交集：等着主角的故事
+        self.assertIn("秦红棉", plot.idle(w, 10))                                    # v13 与主角有过交集不等于等着主角：不再冻住她
+        situation.enlist(w, ["秦红棉"])
+        self.assertNotIn("秦红棉", plot.idle(w, 10))                                 # 站到了主角跟前：归近处导演
 
 
 # ============================================================
@@ -177,9 +179,13 @@ class RuleTest(_World):
         w.graph.unlink("木婉清", "player", "随行")
         w.graph.set("木婉清", "location", "无量山")
         bond.event(w, "木婉清", 1.5, "你救过她")
-        self.rejects("等着主角的故事", event(day=3, where="万劫谷", actors=["秦红棉", "木婉清"]))
+        plan, problems = self.vet(event(day=3, where="万劫谷", actors=["秦红棉", "木婉清"]))
+        self.assertFalse([p for p in problems if "等着主角的故事" in p], problems)        # v13 救过的人、认得主角的人不再被冻住：只要不在主角身边、不是同行者
         plan, _ = self.vet(event(day=3, where="剑湖宫", actors=["秦红棉", "木婉清"], summary="秦红棉与木婉清找上剑湖宫"))
         self.assertIsNotNone(plan)                                                   # 写她来到主角跟前另当别论：到时交近处导演当面演出
+        w.player.push("threads", "护送木婉清")
+        situation.track(w, "护送木婉清", ["木婉清"], [])
+        self.rejects("主角身边或与主角同行", event(day=3, where="万劫谷", actors=["秦红棉", "木婉清"]))   # 未了之事所系的人，才算等着主角的故事
         self.rejects("七日之内照原著", event(day=1, actors=["秦红棉", "司空玄"], where="无量山"))
 
     def test_martial_odds(self):

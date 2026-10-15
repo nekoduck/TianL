@@ -284,6 +284,10 @@ class GatewayJsonTest(unittest.TestCase):
 
     def test_a_single_element_array_is_its_object(self):
         self.assertEqual(_object('[{"beats":[]}]'), {"beats": []})                   # 日志第 5 回导演返工就是这样
+        beats = [{"who": "player", "text": "你喂段誉服下通天草", "ops": []}, {"who": "段誉", "text": "段誉咽下", "ops": []}]
+        self.assertEqual(_object(json.dumps(beats, ensure_ascii=False)), {"beats": beats})   # v13 第 46 回返工回的是拍数组：包成 {beats}
+        with self.assertRaises(LLMError):
+            _object('[{"who":"甲"},{"who":"乙"}]')                                       # 不带 text 的多元素数组仍是格式错误
         with self.assertRaises(LLMError):
             _object("[1,2]")
         with self.assertRaises(LLMError):
