@@ -99,6 +99,9 @@ def normalize(world, act: dict) -> dict:
             and world.graph.kind(holder := world.graph.get(out["物"], "holder")) == "person":
         out["谁"] = holder  # v14 没写谁放下的：是那件东西此刻的持有者(「放下 龚光杰长剑」两局都缺省成主角、白返工)
     out.setdefault("谁", "player")
+    if "自" not in out and v in ("夺取", "偷取") and isinstance(out.get("物"), str) and world.graph.has(out["物"]) \
+            and (holder := world.graph.get(out["物"], "holder")) and holder != out["谁"]:
+        out["自"] = holder  # v14 没写从谁手里夺的：就是那件东西此刻的持有者(run6 第 8 回「从None手里夺取通天草」整拍作废)
     raw = out.get("物")
     if isinstance(raw, str):
         raw = raw.strip()

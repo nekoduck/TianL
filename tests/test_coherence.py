@@ -575,7 +575,9 @@ class LeakTest(unittest.TestCase):
         w = self.w
         self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "钢爪")                    # 不识其人，只见其物
         perspective.learn(w, "player", "云中鹤")
-        self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "云中鹤钢爪")
+        self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "钢爪")                    # v14 在他自己手里：叫钢爪，免得写成「云中鹤挥动云中鹤钢爪」
+        w.graph.set("云中鹤钢爪", "holder", None)
+        self.assertEqual(perspective.thing(w, "云中鹤钢爪"), "云中鹤钢爪")              # 落在地上、识得其人：认得是谁的
 
     def test_the_vault_does_not_tell_where_the_scroll_is(self):
         w = self.w

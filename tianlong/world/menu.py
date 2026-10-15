@@ -26,7 +26,7 @@ SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求�
 SEEK_PERSON = re.compile(r"寻|找|访|打听|探听|求见")  # 玩家要找某人(v12)：须与人名或叫法在同一分句——「往后山去，避开段誉」不是寻他
 SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
 TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|提及|说到|谈到|讲起|论及|冒充|假冒|借|以|为|替|受|奉|救|托)$"),    # 话题里的人(v12)：名字前是说起、冒充、借、以；v14 为救、替、受托——为了他去做这件事，不是要碰到他
-         re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇|所托|之托|的嘱托|之事|的事)"))  # 名字后是之名、的下落、报仇、所托——说的是他，不是要碰到他
+         re.compile(r"^(?:之名|的名头|的名号|的名义|的下落|的来历|的往事|报仇|所托|之托|的嘱托|之事|的事|的?(?:脾性|性情|为人|喜好|底细|行踪|心思|来意|身份|好恶))"))  # 名字后是之名、的下落、报仇、所托——说的是他，不是要碰到他；v14 问他的脾性行踪(run6 第 17 回)
 
 
 SIMILAR = 0.6  # 两项物理对象相同、去标点后的二字组重合(Jaccard)过此，才算同一件事(v12)
@@ -101,8 +101,8 @@ def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
             return nid in situation.bodies(world)  # 眼前的遗体(v12)：搜检、抬走都够得着
         if nid in situation.around(world) or nid in situation.party(world):
             return True
-        return (bool(world.knowledge.view(nid).get("location")) or nid in situation.sighted(world)) and \
-            (bool(SEEK.search(text)) or any(world.graph.kind(i) == "location" for i in ids))  # v12 本回合望见的人：与知其所在同等对待
+        return (bool(world.knowledge.view(nid).get("location")) or nid in situation.sighted(world) or nid in situation.elsewhere(world)) and \
+            (bool(SEEK.search(text)) or any(world.graph.kind(i) == "location" for i in ids))  # v12 本回合望见的人：与知其所在同等对待；v14 同在这一片的人(登门拜见主人)也找得到(run6 第 16 回)
     if kind == "feature":  # 景物(v14)：书架、水晶窗、石床、藤蔓——在近旁即够得着(run1 第 11、13、18 回编剧的这类选项成批落选，换上了「歇息」)
         return not g.get(nid, "hidden") and g.get(nid, "location") in situation.near(world)
     if kind == "item":
@@ -192,14 +192,21 @@ def _plain(world, text: str) -> str:
     return perspective.plain(world, text)
 
 
+APOLOGY = re.compile(r"赔罪|赔礼|告罪|恕罪|得罪了|见谅|息怒")  # 真在赔罪(v14)：「哈腰赔笑」只是陪着笑脸，不必「受他这一礼」
+
+
+def _tags(line: str) -> list[str]:
+    return [t for t in pacing.tag(line) if t != "赔罪" or APOLOGY.search(line)]
+
+
 def _demands(line: str) -> bool:
     """这一句要主角答话(v14)：盘问、拦阻、催促、赔罪，或是问句；撂狠话、打发人走、自说自话不必强插一项回应。"""
-    return bool(re.search(r"[？?]", line)) or any(t in pacing.tag(line) for t, _ in ANSWER)
+    return bool(re.search(r"[？?]", line)) or any(t in _tags(line) for t, _ in ANSWER)
 
 
 def _answer(world, p: str, said=None) -> str:
     """须回应的措辞按此人对主角那一句的主题(v12)：盘问即答其所问、拦阻即理论去留、催促即依其所言、赔罪即受这一礼，其余回应他。"""
-    tags = pacing.tag((said or {}).get(p) or "")
+    tags = _tags((said or {}).get(p) or "")
     word = next((w for t, w in ANSWER if t in tags), "回应{}")
     return word.format(perspective.handle(world, p))
 

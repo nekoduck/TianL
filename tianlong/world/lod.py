@@ -355,6 +355,10 @@ def settle(world, ev: dict, outcome: dict, origin: str, day: int | None = None, 
         if ev["where"] in close:  # 主角已先走一步离开了事发之地：那里的人不跟着上他的名册
             situation.enlist(world, [a for a in ev["actors"] if world.graph.get(a, "location") in close])
         effects._note(world, _comings(world, before))
+        rest = [effects.describe(op) for op in applied if not (op.get("op") == "set" and op.get("key") == "location")
+                and op.get("op") != "arrive" and op.get("key") not in ("intent", "mood", "agenda")]
+        if rest:  # v14 导演没演到的那几样，原著照落了：告诉编剧它们是怎么来的(run4、run6 第 6 回补记只写「段誉受了伤」，读者不知何故)
+            effects._note(world, f"原著此刻照演「{ev['summary']}」，账上已成立：{'、'.join(dict.fromkeys(rest))}——正文要写出它们是怎么来的")
     summary = _told(world, outcome.get("summary") or ev["summary"], applied, rejected, verify=origin != "canon" or bool(ev.get("derived")))
     if summary is None:
         return None

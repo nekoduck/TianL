@@ -11,7 +11,7 @@
           LedgerTest(账房看得见伤势、伤势与查无此人的说法不作数、伙计领路不是江湖事、挣名字五桩才了结)、OptionMoreTest(为救某人是话题、四字概括写明对谁、报名作废只去名字)；
           run4(验收局)：ForgedMoreTest(拍文的「石上药瓶」就是同一拍事码里的断肠散、刚服下的仍说得出名字也仍在返工清单、不在眼前的人手里的不算)、
           QuestTest(换个说法的同一件事只记一条、撂狠话不必硬塞回应而问句仍要、服下的毒够得着)、GuideTest(引路的人随主角进了片区仍在眼前、选项不报节点全名)、JourneyTest(场记写明上回合选的赶路、要去的地方写 前往)、MaidTest(婢女的外号不用胡须秃顶)；
-          run5(验收局)：RunFiveTest(「御敌」的赞许不是怨、主人名下的器物只叫那件东西、正文里的节点全名换成叫法、本场之问系在来不了的人马身上即写明、替师父探路不是向他求教、随人学会了不再报尚未入门、向同门打听不掏钱也不答非所问、泛称不认千里之外生人名下的器物)
+          run5(验收局)：StagedCanonTest(导演没演到的原著后果告诉编剧怎么来的)、SnatchTest(没写从谁手里夺的即持有者)、CallTest(登门拜见同在一片的主人)、RunFiveTest(「御敌」的赞许不是怨、主人名下的器物只叫那件东西、正文里的节点全名换成叫法、本场之问系在来不了的人马身上即写明、替师父探路不是向他求教、随人学会了不再报尚未入门、向同门打听不掏钱也不答非所问、泛称不认千里之外生人名下的器物)
 [POS]: tests 的 v14 验收——导演对着真图写戏，驳回给正解，被否决的事不以文字活下来，读者读到的平常之举照记
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -460,7 +460,37 @@ class RunFiveTest(unittest.TestCase):
     def test_an_owner_s_sword_goes_by_its_own_name(self):
         w = at("剑湖宫·练武厅")
         self.assertEqual(perspective.thing(w, "辛双清·长剑"), "长剑")
+        self.assertEqual(perspective.thing(w, "段誉折扇"), "折扇")                     # run6 第 1 回「段誉手摇段誉折扇」
         self.assertEqual(perspective.plain(w, "辛双清按着辛双清·长剑冷眼旁观"), "辛双清按着长剑冷眼旁观")  # run5 第 5 回正文
+
+
+class StagedCanonTest(unittest.TestCase):
+    def test_what_the_canon_lays_down_is_told_to_the_writer(self):
+        from tianlong.world import lod
+        w = PeopleTest().mountain()
+        ev = next(e for e in w.canon if e["id"] == "神农帮留钟灵下毒逼援")
+        lod.settle(w, ev, ev, "canon", partial=True)
+        notes = "\n".join(w.turn.get("notes", []))
+        self.assertIn("原著此刻照演", notes)                                            # run6 第 6 回补记只写「段誉受了伤」，读者不知何故
+        self.assertIn("段誉负伤", notes)
+
+
+class SnatchTest(unittest.TestCase):
+    def test_a_snatch_comes_from_whoever_holds_it(self):
+        from tianlong.world import acts
+        w = PeopleTest().mountain()
+        effects.apply(w, [{"做": "拿取", "物": "通天草"}], "director")
+        self.assertEqual(acts.normalize(w, {"做": "夺取", "谁": "司空玄", "物": "通天草"}).get("自"), "player")  # run6 第 8 回「从None手里夺取」
+
+
+class CallTest(unittest.TestCase):
+    def test_a_guest_may_seek_the_mistress_of_the_house(self):
+        w = at("万劫谷·谷外树林")
+        w.player.set("location", "万劫谷")
+        self.assertIn("甘宝宝", situation.elsewhere(w))
+        self.assertTrue(menu._reachable(w, "甘宝宝", "随门丁前往大厅拜见钟夫人", ["甘宝宝"]))  # run6 第 16 回落选，换上了「与钟灵攀谈」
+        self.assertFalse(menu._demands("门丁哈腰赔笑：「客官且放宽心，谷主一早出门采药去了。」"))  # run6 第 17 回「受门丁这一礼」
+        self.assertTrue(menu._demands("门丁连连告罪：「小的有眼不识泰山。」"))
 
 
 class QuestTest(unittest.TestCase):

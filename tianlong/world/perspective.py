@@ -627,6 +627,9 @@ def thing(world, name: str) -> str:
     head, _, tail = name.rpartition("·")
     if head and tail and world.graph.has(head) and world.graph.kind(head) in ("location", "person", "group"):  # v14 器物 id 带着所在地或主人(琅嬛福地·铜镜后室·石桌铜镜、辛双清·长剑)：主角眼中只叫那件东西
         name = tail
+    holder = world.graph.get(name, "holder") if world.graph.has(name) else None
+    if holder and holder != "player" and world.graph.kind(holder) == "person" and name.startswith(holder) and len(name) > len(holder) + 1:
+        name = name[len(holder):]  # v14 名字里带着自己主人的器物(段誉折扇在段誉手里)：叫折扇，免得写成「段誉手摇段誉折扇」(run6 第 1 回)
     tab = lexicon.table({s: p for s, p in _surfaces(world).items() if not knows(world, "player", p)})
     out = name
     for _, a, b in reversed(lexicon.find(out, tab)):
