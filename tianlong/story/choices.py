@@ -11,6 +11,7 @@
        槽位只规定每项回答什么，不规定措辞；险境里 B 槽改为脱身一类的此刻之举。编剧在每项后写「｜尺度：此刻/此后/机缘」，
        引擎记下玩家所选之举的尺度：选了此后，下一回合的场记要求略写、时长按那件事的规则结算——选项与时间从此互相咬合
        v13：此后槽的研习项点名下一门该练的功夫(growth.next_art：先接着练已起头的，练到顶的不再给)，耗时按那一门的阶算
+       v14 近两回合给过歇息就不再兜歇息(menu.RESTED)；A 槽换一种还没试过的路数
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from ..world import access, body, growth, menu, pacing, perspective, situation

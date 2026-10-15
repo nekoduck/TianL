@@ -17,6 +17,7 @@
        P1-7 脱身认围攻与押解(crowd.holders)：一样须过整群一半之力，冲得出去即了断那一条拘押；
        v11：所求写到某人身上即他的志向(agenda)——眼前的剧情改了谁的志向，他的原著线就此变了，往后的路交场外编剧；场外剧情(衍生事件)不写事码
        v13：伤人带出手者(by)，落多少血由 body.blow 按攻守档位封顶；拿取/夺取认 player 为一方(导演写 自=player 不再驳回)，自己手里的东西夺不得、已在他手里的不是一件事
+       v14 where()：拿不到的东西说清在哪(谁手里、哪里暗藏着与找法)；放下、毁去、撕开没写谁即持有者，夺取、偷取没写从谁手里即持有者
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import access, body, crowd, effects, scribe, situation, stock, trade

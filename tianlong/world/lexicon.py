@@ -25,6 +25,7 @@
        v10：View.funds 记主角与回合开始时眼前之人的银两起止——「段誉取出三两银子递给马五德」而两人的银两都没动，也是漏记
        v13 词表降权(P0-1/2)：conjure 只查旁白、台词挖空再看(_conjures)，「换取、夺取」的取是求得(COMPOUND_QU)，单字名词后紧跟动词字的是另一个词(VERBISH、SCATTER)，泛称(GENERIC+KINDS)认回手边同类；
        YOU_HURT/NOT_HURT/hero_hurt 认正文里写主角负了伤的句子(整句否定、回忆、夹着别人的不算)；STAY/NOT_STAY 认主角吩咐同行者留下的说法(「莫要留在原处」是叫他跟着走)；进境措辞加「最高层」「大圆满」
+       v14 未入门的否定(摸不着、不得其门)与「…之法」不算进境；经手过的东西仍是说得出名字的器物(不报 unnamed)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re

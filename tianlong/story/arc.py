@@ -7,6 +7,7 @@
        了结之后场记请导演从主角最深的关系或最急的时限里提一条新的所求，写 所求(v9 事码；旧写法 set player goal 照收)——这是唯一交给 LLM 的一步；
        goal 一变，主角线即从起意重新开始。读者：场记的主干调度、选项的此后槽
        v13：研习账按武学记，来源在 src（旧档键就是秘籍）；主角线了结时导演写新的所求是场记请的，不算替主角做主(adjudicate.ARC_DONE 与 STAGES 的「了结」同一阶)
+       v14 挣名字这条线要 FAMED(五)桩众目之下的作为才了结
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from ..world import body, situation

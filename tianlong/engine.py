@@ -34,6 +34,7 @@
        v12：编剧的【须回应】、选项槽位与选项验收只认收尾时仍悬着的话(adjudicate.hanging)，回应的措辞按那一句的主题；选项槽位也过视角掩码；回合收尾了断两端异地的同行(situation.sunder)；原著近事要用的人马(lod.reserved)交后台与裁决；危局算两次(槽位用成文前的，此后槽、菜单与合场用结算之后的)，合场与僵持计数交 scene；回合收尾记下见过的人(situation.meet)；玩家要找的人(menu.seeking)交裁决，小片区里寻而至即遇；场的僵持计数(stall)交裁决：僵持满四回合仍无结构性变化，规则照围困人群的打算押走；验收之后记下入选选项的对象(menu.offer，P2-2 琐物衰减)
        v13：回合开头到期的带后果的时限由规则兑现(stakes.due → enforce，结果交场记)；carried = settle.age 分歧交导演至多两回，导演的后果碰到点名之人即算圆回；光阴推进之后 body.poison_tick(毒发)；
        结构性变化按净变化；debug 视图另有时限的到期与后果、身上的毒
+       v14 文与图同一份：拍上的情绪写成（此刻情绪：…）只作渲染；本回合举动记进 turn["deed"](求教、顺手之物据此判授意)；伙计领路不成江湖事件；赶路的光阴不算养伤(body.recover 的 walked)；场记拿到上回合所选之举与此刻来不了的人马(brief.compose 的 deed、held)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import copy
