@@ -5,7 +5,8 @@
           原著救人之事在人已获救时不再照演、一人一回合只听一处调遣(v11 导演与日程两处：原著与场外剧情同一条轨道)、纠缠之人的场外原著不照本宣科、
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
-          越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例
+          越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -233,6 +234,37 @@ class MenuTest(unittest.TestCase):
         game.act("与大眼圆脸的少女说话")
         self.assertIn("【焦点·主角此举所指之物的真相（主角未必知道）】\n- 钟灵", llm.director_prompts[-1])
         self.assertIn("【未兑现的伏笔】\n- 远处有女子娇叱", llm.director_prompts[-1])
+
+
+class OptionChainTest(unittest.TestCase):
+    """v12 选项链路：15 回实录里 8 回编剧原拟的一项被换掉——授意标记、话题里的人、对象相同即去重、过时的须回应。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def test_marks_are_not_option_targets(self):
+        w = self.w                                                                      # A1：大喝、打听、写信不是够不着的对象
+        picked = menu.check(w, [{"text": "大喝一声，喝止众人", "targets": []},
+                                {"text": "向段誉打听来历", "targets": ["段誉"]},
+                                {"text": "写一封信给左子穆", "targets": ["左子穆"]}])
+        self.assertEqual([t for t, _ in picked], ["大喝一声，喝止众人", "向段誉打听来历", "写一封信给左子穆"])
+        self.assertFalse(any(adjudicate.marked(i) for _, ids in picked for i in ids))   # 交还引擎的对象不带标记
+        self.assertNotIn(adjudicate.TRADE, adjudicate.targets(w, "大喝一声"))
+        self.assertNotIn(adjudicate.TRADE, adjudicate.targets(w, "顺段誉佛理大喝神农帮滥杀必遭天谴"))
+        self.assertIn(adjudicate.TRADE, adjudicate.targets(w, "向店小二要一壶黄酒"))     # 真要花钱的照旧是授意
+
+    def test_shopping_needs_a_shop(self):
+        from tests.test_founding import INN, STREET, at, go, shichen
+        w = self.w
+        texts = [t for t, _ in menu.check(w, [{"text": "向店小二买一壶黄酒", "targets": []}])]
+        self.assertNotIn("向店小二买一壶黄酒", texts)                                    # 练武厅里没有铺子
+        self.assertIn("卖个破绽诱敌", [t for t, _ in menu.check(w, [{"text": "卖个破绽诱敌", "targets": []}])])
+        w = at(World.create("测"), STREET)
+        go(w, INN)
+        shichen(w, "辰")
+        texts = [t for t, _ in menu.check(w, [{"text": "向店小二打听近来江湖上的新鲜事", "targets": []}])]
+        self.assertIn("向店小二打听近来江湖上的新鲜事", texts)                          # 进了客栈：打听照收
+        self.assertIn("向店小二买一壶黄酒", [t for t, _ in menu.check(w, [{"text": "向店小二买一壶黄酒", "targets": []}])])
 
 
 class ReplayBaselineTest(unittest.TestCase):

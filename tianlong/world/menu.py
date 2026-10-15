@@ -1,18 +1,32 @@
 """
-[INPUT]: 依赖 world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
-         world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets，world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
-[OUTPUT]: 对外提供 check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
+[INPUT]: 依赖 world/trade 的 shop（v12 此处的铺子）、world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
+         world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked（v12 授意标记不是实体），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
+[OUTPUT]: 对外提供 SHOPPING（v12 离不开铺子的事）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
        三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
+       v12 选项链路：授意标记(@书写、@交易)不是实体，可达与去重只看实体、交还的对象不带标记(下回合引擎从原话重算)；买卖住店雇人此处没有铺子也没有当值伙计即办不成
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
 
-from . import access, adjudicate, effects, lexicon, pacing, perspective, situation
+from . import access, adjudicate, effects, lexicon, pacing, perspective, situation, trade
 
 SIZE = 3
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
+SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
+
+
+def _things(world, text: str, given=()) -> list[str]:
+    """选项所指的实体(v12)：授意标记(@书写、@交易)不是实体——可达与去重只看实体，交还引擎的对象也不带标记(下回合从原话重算)。"""
+    return sorted(i for i in adjudicate.targets(world, text, given) if not adjudicate.marked(i))
+
+
+def _shopless(world, text: str) -> bool:
+    """选项要在铺子里才办得成(买卖、住店、雇人)，此处却没有铺子、眼前也没有当值的伙计(v12)。大喝、卖个破绽不算。"""
+    if not SHOPPING.search(lexicon.TRADE_NOT.sub("", text)):
+        return False
+    return not trade.shop(world) and not any(world.graph.get(p, "staff") for p in situation.around(world))
 
 
 def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
@@ -70,16 +84,16 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
 
     def fine(text, ids) -> bool:
         return bool(text) and not lexicon.leaks(text) and not lexicon.secret_hits(text, secrets, tab) \
-            and all(_reachable(world, i, text, ids) for i in ids) and text not in [t for t, _ in picked] \
+            and all(_reachable(world, i, text, ids) for i in ids) and not _shopless(world, text) and text not in [t for t, _ in picked] \
             and not (ids and any(set(ids) == set(o) for _, o in picked))  # 三项各有所指：同一对象只留一项
 
     for o in options:
         text = str(o.get("text") or "").strip()
-        ids = sorted(adjudicate.targets(world, text, o.get("targets") or []))
+        ids = _things(world, text, o.get("targets") or [])
         if fine(text, ids):
             picked.append((text, ids))
     for want in candidates:  # 上回合越权未演之举：玩家想做，自己选
-        ids = sorted(adjudicate.targets(world, want))
+        ids = _things(world, want)
         if not any(set(ids) & set(o) for _, o in picked) and fine(want, ids):
             picked = picked[:SIZE - 1] + [(want, ids)]
     nagging = {k.split("|")[0] for k in pacing.tired(world.player.get("pacing") or [], "pleas")}
@@ -90,14 +104,14 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
     tagged = any(scales.values())  # 编剧照槽位标了尺度才查覆盖：没标尺度的旧写法无从判断哪一项是此后
     if later and tagged and not any(scales.get(t) == "此后" for t, _ in picked):  # 槽位覆盖：至少一件持续之事，时间才往前走
         for text, ids in later:
-            ids = sorted(adjudicate.targets(world, text, ids))
+            ids = _things(world, text, ids)
             if fine(text, ids):
                 picked = picked[:SIZE - 1] + [(text, ids)]
                 break
     for text, ids in _fallbacks(world, fallback):
         if len(picked) >= SIZE:
             break
-        ids = sorted(adjudicate.targets(world, text, ids))
+        ids = _things(world, text, ids)
         if fine(text, ids):
             picked.append((text, ids))
     return picked[:SIZE]

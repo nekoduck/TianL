@@ -173,6 +173,7 @@ class ArcAndChoicesTest(unittest.TestCase):
                 {"text": "退开", "targets": [], "scale": "机缘"}]
         picked = [t for t, _ in menu.check(w, opts, later=later)]
         self.assertIn(later[0][0], picked)                                              # 没有此后之事：补一项，时间才往前走
+        self.assertIn("喝问", picked)                                                   # v12：「喝问」不是吃喝，不被授意标记砍掉
         w.player.set("hp", 5)
         self.assertEqual(choices.later(w), [])                                          # 命悬一线：没有此后
 
