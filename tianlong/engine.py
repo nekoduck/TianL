@@ -499,4 +499,7 @@ class Game:
                 "canon_done": w.done, "taint": sorted(w.taint), "secrets_known": w.knowledge.secrets,
                 "lines": {k: f"{v['goal']}（{'、'.join(v['owners'])}）" for k, v in w.lines.items()},
                 "recent_truth": [f"{e['origin']}·{e['where']}：{e['summary']}" for e in w.truth.events[-5:]],
+                "clocks": [f"{c['what']}｜{stakes.left(w, c)}（{w.clock.label(c['due'] // PER_DAY)}）" + (f"｜到期：{stakes.consequence(w, c)}" if c.get("then") else "｜伏笔")
+                           for c in w.player["clocks"]],  # v13 时限的到期与后果
+                "poisons": body.poison_lines(w),       # v13 主角与身边之人身上规则登记的毒
                 "belief_drift": drift}

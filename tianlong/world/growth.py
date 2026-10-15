@@ -206,6 +206,23 @@ def mastery(world) -> list[dict]:
     return out
 
 
+def ceiling(world, arts=()) -> int:
+    """再坐下来练一回，最高能到第几阶(v13)：研习账上各门的下一阶，若还要隔几日（STAGES 的间隔）就够不着；没练过的功夫入门是第一阶。
+    选项许的进境高过它，就是账上够不着的（第 52 回「继续练功至最高层」、第 54 回「练凌波微步至大成」，后台却写着距下一阶还须再隔 3 日）。"""
+    g, log, day = world.graph, _log(world), world.clock.day
+    names = list(arts) or sorted({a for s in studiable(world) for a in arts_of(g, s)} | set(log))
+    best = 0
+    for art in names:
+        rec = log.get(art)
+        stage = rec["stage"] if rec else 0
+        top = 1 if g.kind(rec["src"] if rec else art) == "skill" else len(STAGES)
+        if stage < top:
+            gap = STAGES[stage][2] if top == len(STAGES) else 0
+            stage += 0 if rec and stage and day - rec["since"] < gap else 1
+        best = max(best, stage)
+    return best or 1
+
+
 def unearned(world, words: list[str]) -> list[str]:
     """进境措辞里账上没有的：所需之阶高过研习账上最高的一阶(原本就会的武学算入门)，或说「功力大进」而本回合并无进境。"""
     from .lexicon import mastery_level  # 词表只在核对进境措辞时用到

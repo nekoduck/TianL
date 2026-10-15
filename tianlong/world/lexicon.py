@@ -60,7 +60,7 @@ NEGATE = re.compile(r"未能|未曾|不曾|没有|没能|险些|几乎|差点|�
 BACKSTAGE = re.compile(r"命运骰|骰子|骰点|预裁|较量预裁|档位|功力\s*\d|气血\s*\d|后台|LOD|原著结局|系统")
 MASTERY_LEVELS = (  # 进境措辞所需的阶：1 入门即可、2 小成、3 大成；0 是「此刻才长进」，须本回合真有一阶进境
     (0, r"功力大进|内力大增|内力大进|神功初成|脱胎换骨"),
-    (3, r"大成|登堂入室|融会贯通|炉火纯青|随心所欲|如臂使指|了然于胸"),
+    (3, r"大成|登堂入室|融会贯通|炉火纯青|随心所欲|如臂使指|了然于胸|最高层|最高境|大圆满|臻于化境"),
     (2, r"小成"),
     (1, r"练成|学会|学成|领悟了|运转如意|得心应手|身如游龙|已然入门|初窥门径|入门|练熟了|使得有模有样|摸到了门径"),
 )
@@ -223,6 +223,7 @@ def mastery(text: str, who=None) -> list[str]:
 
 KINDS = set("草药丹丸散膏卷册谱书经信图剑刀枪棍鞭杖钩爪斧锤戟弓箭镖针珠钏镯佩簪镜盒匣瓶罐壶囊袋碗杯盏")  # 器物的泛称（末字）
 GENERIC = set("灵宝神仙良名奇异妙圣珍")  # 泛称的首字：「灵草」「宝剑」「神药」说的可能是手边同类唯一的那件；「密图」「火折」是另一件东西，不在此列
+COMPOUND_QU = "换争夺获攫窃骗索求博谋掠抢采择选汲吸"  # 「取」前面是这些字，是「换取、夺取、获取」这样的复合动词
 SCATTER = re.compile(r"散[落开去乱发漫了]")   # 「散落的帛卷」「散开」里的散是动词，不是散剂
 VERBISH = "落开去乱发漫围扎裹住对证"            # 单字器物名后紧跟这些字，多半是另一个词（散落、包围、包扎、针对）
 
@@ -359,6 +360,8 @@ def _conjures(i, text, tab) -> list[Finding]:
             continue
         ents = find(clause, tab)
         for pm in PRODUCE.finditer(clause):
+            if pm.group(0) == "取" and clause[max(0, pm.start() - 1):pm.start()] in tuple(COMPOUND_QU):
+                continue  # 「换取解药」「夺取令牌」「获取」的取是求得，说的是图谋，不是眼前拿出一件东西（第 58 回「擒贼擒王，换取解药去救钟灵」）
             w = WARE_NOUN.match(clause[pm.end():][:10])
             lo, hi = (pm.end() + w.start(1), pm.end() + w.end(1)) if w else (0, 0)
             if w and len(w.group(1)) == 1 and clause[hi:hi + 1] and clause[hi:hi + 1] in VERBISH:

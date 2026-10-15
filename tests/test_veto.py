@@ -17,6 +17,7 @@
           前提不成写明缘由、不碰主角与同行者；没写 then 的只是伏笔（不占 CAP、不写赌注、到期悄悄作罢）；同一件事重立只能提前；「八个半时辰」「三日半」读得出
           StructuralTest(P1-3、P1-4)：结构性变化里随行与拘押按净变化算（第 60 回同回合结下围攻又了断围攻，场作了「合」、僵持归零）；
           一人一主不冻结（lod.held 只拦主角身边的、同行的、未了之事所系者，与扣着他们的人和被他们扣着的人，不再按「叫得出主角名号」冻人）
+          P2：地理之句体检（「澜沧江乃是天堑」而图上是零日明路，记软分歧）、出路写明路通、选项不许研习账上够不着的进境（「练至大成」而下一阶还须再隔 3 日，第 52、54 回）、导出的 game.md 直接重演
           StayTest(P1-5)：主角吩咐同行者「在此藏好」「别跟来」而动身时没写了断随行（第 57 回段誉被带到了无量后山，编剧只好写他「强撑跟至」）——交导演返工一次，仍没写即由系统替他了断、写明他留在原处
 [POS]: tests 的 v13 验证——「被否决的事要么成立、要么返工、要么明告读者，没有第四种」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -156,6 +157,7 @@ class ConjureTest(unittest.TestCase):
             g.set(p, "location", "无量山")
         self.w.player.set("cast", ["司空玄", "段誉", "钟灵"])
 
+
     def test_words_in_a_line_are_not_things_that_appeared(self):
         w = self.w
         tab = adjudicate.names(w)[0]
@@ -189,6 +191,11 @@ class ConjureTest(unittest.TestCase):
         self.assertEqual(adjudicate.doomed(r), {})                                   # 返工一次，仍不成立也不作废整拍
         r = judge(w, plan(("player", "你掏出火折晃亮", [{"做": "拿取", "物": "火折"}])))
         self.assertTrue(any("火折" in v for v in r.void))                            # 真碰了指令的，指令自己落不了，照样作废
+
+    def test_a_compound_verb_that_means_to_obtain_is_not_taking_something_out(self):
+        tab = adjudicate.names(self.w)[0]
+        self.assertEqual(lexicon._conjures(1, "你命段誉辨认管事之人，好擒贼擒王，换取解药去救钟灵", tab), [])   # 第 58 回：换取是图谋，不是拿出
+        self.assertEqual([f.entity for f in lexicon._conjures(1, "左子穆急召门人去取解药", tab)], ["解药"])       # 去取、取来才是拿出
 
     def test_a_scattered_scroll_is_not_a_powder(self):
         tab = adjudicate.names(self.w)[0]
@@ -965,6 +972,92 @@ class StayTest(unittest.TestCase):
         w2.turn = {}
         r = judge(w2, plan(("player", "你拉住段誉，低声道：「莫要留在原处，随我来。」", [self.GO], "段誉")))
         self.assertNotIn("stay", [f.kind for f in r.hard])                               # 「莫要留在原处」要他跟着走，不是叫他留下
+
+
+class P2Test(unittest.TestCase):
+    """第 55–56 回「隔着这道天堑」而沿岸走到了无量山；第 52、54 回的选项「练至大成」，后台却写着距下一阶尚需再隔三日。"""
+
+    def test_a_barrier_sentence_the_map_does_not_back_is_a_soft_rift(self):
+        w = World.create("王天龙")
+        w.player.set("location", "澜沧江")
+        w.turn = {}
+        judge(w, plan(("player", "你环顾", [])))
+        rifts = settle.geography(w, "你望着滔滔江水，澜沧江乃是天堑，无法渡过。")
+        self.assertEqual(len(rifts), 1)
+        self.assertIn("澜沧江往无量山是零日的明路", rifts[0])
+        self.assertEqual(settle.geography(w, "山间小路蜿蜒，你信步而行。"), [])
+        self.assertEqual(settle.geography(w, "「这江乃是天堑，过不去的。」你听见船夫说。"), [])           # 台词不查
+        self.assertIn(rifts[0], settle.ruled(w, "你望着滔滔江水，澜沧江乃是天堑，无法渡过。"))
+        from tianlong.narrative import prompts
+        from tianlong.world import rag
+        text = prompts.render(rag.build(w))
+        self.assertIn("往无量山→无量山（0日·路通，可径直走到）", text)
+
+    def test_options_promising_a_stage_the_ledger_cannot_reach_are_dropped(self):
+        from tianlong.world import menu
+        w = World.create("测")
+        w.player.set("location", VAULT)
+        w.graph.set(BOOK, "hidden", False)
+        w.graph.set(BOOK, "holder", "player")
+        w.player.push("inventory", BOOK)
+        w.turn = {}
+        growth.study(w, BOOK, 120, "凌波微步")                                              # 刚入门（小有所成要再隔一日）
+        self.assertEqual(growth.ceiling(w, {"凌波微步"}), 1)
+        self.assertEqual(growth.ceiling(w, {"北冥神功"}), 1)                                 # 没练过的，入门是第一阶
+        self.assertTrue(menu._unattainable(w, "练凌波微步至大成"))
+        self.assertTrue(menu._unattainable(w, "继续练功至最高层"))
+        self.assertFalse(menu._unattainable(w, "静心研习北冥神功卷轴"))
+        self.assertFalse(menu._unattainable(w, "练成北冥神功"))
+        w.clock.advance(clock.PER_DAY * 2)
+        self.assertEqual(growth.ceiling(w, {"凌波微步"}), 2)                                 # 隔了日子：小有所成够得着，大成仍不行
+        self.assertTrue(menu._unattainable(w, "练凌波微步至大成"))
+        self.assertFalse(menu._unattainable(w, "练凌波微步至小成"))
+        picked = menu.check(w, [{"text": "练凌波微步至大成", "targets": ["凌波微步"], "scale": "此后"},
+                                {"text": "静心研习北冥神功卷轴", "targets": [BOOK], "scale": "此后"},
+                                {"text": "四下察看", "targets": [], "scale": "此刻"}])
+        self.assertNotIn("练凌波微步至大成", [t for t, _ in picked])
+
+    def test_a_found_secret_road_is_told_in_plain_words_and_the_debug_view_shows_the_clocks(self):
+        from tianlong.engine import Game
+        from tianlong.world import graph
+        w = World.create("测")
+        w.turn = {}
+        before = settle.glance(w)
+        w.knowledge.secrets.append(("万劫谷·谷外树林", "万劫谷·谷口", graph.ROAD))
+        text = "；".join(c["text"] for c in settle.delta(w, before))
+        self.assertEqual(text, "你发现了谷外树林与谷口之间的一条暗路")                          # 补记不再露出内部字段 road
+        stakes.plant(w, {"what": "七日内不见解药，钟灵性命难保", "in": "七日", "then": [{"做": "杀死", "谁": "司空玄", "对": "钟灵"}]})
+        stakes.plant(w, {"what": "云中鹤的耐心只到天明", "in": "半日"})
+        shown = Game(w, None).debug()["clocks"]
+        self.assertTrue(any("到期：司空玄杀死钟灵" in c for c in shown) and any("伏笔" in c for c in shown), shown)
+
+    def test_the_exported_game_md_replays_as_it_is(self):
+        text = """## 第 1 回 · 初来乍到
+
+### 模型调用
+
+#### 导演初稿 · trace 第 1 行
+
+**系统提示词（原文）**
+```text
+你是说书人
+```
+
+**输入上下文（原文）**
+```text
+【主角】测｜普洱茶商马五德的随从，随他来无量山观五年一度的剑会｜所求：x
+【主角此刻】环顾四周
+```
+
+**模型输出（原文）**
+```text
+{"beats":[{"who":"player","text":"你环顾四周","ops":[]}]}
+```
+"""
+        from tools import rerun
+        turns = rerun.parse(text)
+        self.assertEqual((turns[0]["turn"], turns[0]["deed"], list(turns[0]["calls"])), (1, "环顾四周", ["draft"]))
+        self.assertEqual(rerun._hero(turns), ("测", "随从"))
 
 
 if __name__ == "__main__":

@@ -65,7 +65,7 @@ def _same(a: str, b: str) -> bool:
 def _then(raw) -> list[dict]:
     """到期的后果：事码的清单（单条也收），只留规则肯兑现的几种动词，至多两条。"""
     items = [raw] if isinstance(raw, dict) else raw if isinstance(raw, list) else []
-    return [dict(op) for op in items if isinstance(op, dict) and acts.verb(op) in THEN][:2]
+    return [dict(op) for op in items if isinstance(op, dict) and isinstance(op.get("做"), str) and acts.verb(op) in THEN][:2]
 
 
 def plant(world, spec) -> str | None:
@@ -161,7 +161,10 @@ def enforce(world, gone: list[dict]) -> list[str]:
     c["result"] 写明结果（交场记作主干）；成了的记进江湖账本（随传闻抵达），事发在主角眼前的写给编剧作连带。返回成了的人话。"""
     done = []
     for c in gone:
-        ops, why = _viable(world, c.get("then") or [])
+        try:
+            ops, why = _viable(world, c.get("then") or [])
+        except (TypeError, AttributeError, KeyError, ValueError):  # LLM 写歪的后果：不让回合崩，只记缘由交导演
+            ops, why = [], "后果的写法认不出"
         if why:
             c["result"] = f"原定的后果没能成真：{why}"
             continue

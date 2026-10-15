@@ -108,8 +108,8 @@ def render(pack: dict) -> str:
         _section("近旁·同一处所之内，喊一声就到", pack.get("nearby", [])),
         "【同行】" + "、".join(pack["party"]) if pack.get("party") else "",
         _section("关系网·在场之人明面上的关系（主角未必都知道，不得替他说破）", pack["relations"]),
-        "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else "")
-                              + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),
+        "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else ("·路通，可径直走到" if not e["days"] else ""))
+                              + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),  # v13 零日而无关口的路写明路通：不要写成天堑
         (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
         f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}"
         + (f"（{me['wound']}）" if me.get("wound") else "") + f"｜{me['tier']}｜姿态：{me['posture']}"

@@ -9,6 +9,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import argparse
+import json
 import logging
 import re
 import sys
@@ -16,12 +17,14 @@ from pathlib import Path
 
 from tianlong.engine import Game
 from tianlong.narrative.llm import LLMError, _object
-from tianlong.world import situation
+from tianlong.world import body, situation
+from tianlong.world.settle import TECHNICAL
 from tianlong.world.blackboard import ORIGINS
 from tianlong.world.world import World
 
 TURN = re.compile(r"^## 第 (\d+) 回 · ", re.M)
-CALL = re.compile(r"^#### ([^（\s]+)(?:（[^（）]*）)?（trace 第 \d+ 行", re.M)  # 「书记（后台）（trace…」也认
+CALL = re.compile(r"^#### ([^（\s·]+)(?:（[^（）]*）)?\s*(?:（|·\s*)trace 第 \d+ 行", re.M)  # 「书记（后台）（trace…」与导出的「导演初稿 · trace 第 N 行」都认(v13)
+OUTPUT = "**模型输出（原文）**"                                               # 导出的 game.md 里，系统提示词与输入上下文在前，这一行之后才是模型的原始输出
 BLOCK = re.compile(r"```(?:json|text)?\n(.*?)\n```", re.S)
 DEED = re.compile(r"【主角此刻】(.*)")
 ROLES = {"导演初稿": "draft", "导演返工": "repair", "编剧": "writer", "账房": "settle", "复核": "recheck", "场外编剧": "plot", "审稿": "review", "书记": "recap"}
@@ -43,7 +46,7 @@ def parse(text: str) -> list[dict]:
             if not role:
                 continue
             chunk = body[c.start():calls[j + 1].start() if j + 1 < len(calls) else len(body)]
-            inside, _, after = chunk.partition("</details>")
+            inside, _, after = chunk.partition(OUTPUT) if OUTPUT in chunk else chunk.partition("</details>")
             blocks = BLOCK.findall(after)
             if not blocks:
                 continue
@@ -125,8 +128,27 @@ class _Log(logging.Handler):
         self.lines.append(record.getMessage())
 
 
+def load(path: Path) -> list[dict]:
+    """对局日志(markdown)或固定样本(json，tests/fixtures/replay60.json)→ 回合清单 [{turn, deed, calls, context}]。"""
+    text = path.read_text("utf-8")
+    if path.suffix == ".json":
+        data = json.loads(text)
+        return [{**t, "context": "", "hero": data["hero"]} for t in data["turns"]]
+    return parse(text)
+
+
+def dump(turns: list[dict], path: Path):
+    """只留举动与各角色的原始输出（约 0.3 MB），存成固定样本：日志太大不进仓库，重演只需要这些。"""
+    name, origin = _hero(turns)
+    data = {"hero": {"name": name, "origin": origin},
+            "turns": [{"turn": t["turn"], "deed": t["deed"], "calls": t["calls"]} for t in turns]}
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=0), "utf-8")
+
+
 def _hero(turns: list[dict]) -> tuple[str | None, str | None]:
-    """主角名号与出身：从首回合导演上下文的【主角】一行读出。"""
+    """主角名号与出身：固定样本里直接写着；日志则从首回合导演上下文的【主角】一行读出。"""
+    if turns and turns[0].get("hero"):
+        return turns[0]["hero"]["name"], turns[0]["hero"]["origin"]
     m = re.search(r"【主角】([^｜\n]+)｜([^｜\n]+)", turns[0]["context"]) if turns else None
     if not m:
         return None, None
@@ -134,9 +156,11 @@ def _hero(turns: list[dict]) -> tuple[str | None, str | None]:
     return m.group(1).strip(), origin
 
 
-def rerun(turns: list[dict], limit: int | None = None, watch=("段誉",)) -> str:
+def replay(turns: list[dict], limit: int | None = None, watch=("段誉",)) -> tuple[Game, list[dict]]:
+    """逐回合重演，返回 (终局的 Game, 每回合的记录)：记录里有回合前后的所在、气血、时刻、时限，本回合的日志、未成立之事、账文分歧、亲见与传闻、选项；
+    作废的回合只有 {turn, deed, error}。报告与 --check 都读它。"""
     name, origin = _hero(turns)
-    llm, out = ReplayLLM(turns), []
+    llm, records = ReplayLLM(turns), []
     game = Game(World.create(name, origin=origin), llm)
     sink = _Log()
     logging.getLogger("tianlong").addHandler(sink)
@@ -145,41 +169,113 @@ def rerun(turns: list[dict], limit: int | None = None, watch=("段誉",)) -> str
         for i, t in enumerate(turns[:limit] if limit else turns):
             llm.at(i)
             w, sink.lines = game.world, []
-            before = w.here
+            rec = {"turn": t["turn"], "deed": t["deed"] or "开卷", "here0": w.here, "hp0": w.player["hp"], "tick0": w.clock.tick}
             try:
                 turn = game.open() if i == 0 else game.act(t["deed"] or "")
             except LLMError as e:
-                out.append(f"## 第 {t['turn']} 回 · {t['deed']}\n- 回合作废：{e}\n")
+                records.append({**rec, "error": str(e)})
                 continue
             w = game.world
-            out.append(f"## 第 {t['turn']} 回 · {t['deed'] or '开卷'}\n"
-                       f"- {turn['time']}｜{before} → {w.here}｜场：{(w.player['scene'] or {}).get('state')}「{(w.player['scene'] or {}).get('ask')}」\n"
-                       f"- 眼前：{'、'.join(sorted(situation.around(w))) or '无人'}｜名册：{'、'.join(sorted(situation.cast(w))) or '—'}\n"
-                       + "".join(f"- 盯着 {p}：{w.graph.get(p, 'location')}（{w.graph.get(p, 'status')}）\n" for p in watch)
-                       + "".join(f"- 未成立：{v}\n" for v in turn["void"])
-                       + "".join(f"- 日志：{line}\n" for line in sink.lines if line.startswith(("导演返工", "体检", "原著", "结算入账", "账文分歧", "补记", "立外号", "幕间省略")))
-                       + "".join(f"- {'亲见' if n['witnessed'] else '传闻'}：{n['text']}\n" for n in turn["news"])
-                       + f"- 选项：{' / '.join(turn['options'])}\n")
+            records.append({**rec, "time": turn["time"], "here": w.here, "hp": w.player["hp"], "tick": w.clock.tick, "log": list(sink.lines),
+                            "void": list(turn["void"]), "news": turn["news"], "options": turn["options"], "drift": list(w.player["drift"]),
+                            "scene": (w.player["scene"] or {}).get("state"), "ask": (w.player["scene"] or {}).get("ask"),
+                            "around": sorted(situation.around(w)), "cast": sorted(situation.cast(w)),
+                            "watch": {p: (w.graph.get(p, "location"), w.graph.get(p, "status")) for p in watch},
+                            "hurt": w.turn.get("hurt", 0), "study": {a: dict(r) for a, r in (w.player.get("study") or {}).items()},
+                            "poisoned": {p: sorted(body.poisons(w, p)) for p in ["player", *w.graph.where(type="person")] if body.poisons(w, p)},
+                            "clocks": [dict(c) for c in w.player["clocks"]], "conditions": list(w.player["conditions"])})
     finally:
         logging.getLogger("tianlong").removeHandler(sink)
+    return game, records
+
+
+def report(game: Game, records: list[dict]) -> str:
+    """重演报告（markdown）：逐回合去处、场况、眼前与名册、所盯人物的真实下落、未成立之事、返工/体检/原著日志、亲见与传闻、选项，末附账本与原著结算。"""
+    out = []
+    for r in records:
+        if r.get("error"):
+            out.append(f"## 第 {r['turn']} 回 · {r['deed']}\n- 回合作废：{r['error']}\n")
+            continue
+        out.append(f"## 第 {r['turn']} 回 · {r['deed']}\n"
+                   f"- {r['time']}｜{r['here0']} → {r['here']}｜场：{r['scene']}「{r['ask']}」\n"
+                   f"- 眼前：{'、'.join(r['around']) or '无人'}｜名册：{'、'.join(r['cast']) or '—'}\n"
+                   + "".join(f"- 盯着 {p}：{loc}（{st}）\n" for p, (loc, st) in r["watch"].items())
+                   + "".join(f"- 未成立：{v}\n" for v in r["void"])
+                   + "".join(f"- 日志：{line}\n" for line in r["log"] if line.startswith(("导演返工", "体检", "原著", "结算入账", "账文分歧", "补记", "立外号", "幕间省略")))
+                   + "".join(f"- {'亲见' if n['witnessed'] else '传闻'}：{n['text']}\n" for n in r["news"])
+                   + f"- 选项：{' / '.join(r['options'])}\n")
     w = game.world
     out.append("## 账本\n" + "".join(f"- [{e['origin']}·{e['day']}·{e['where']}] {e['summary']}\n" for e in w.truth.events))
     out.append(f"## 原著\n- 已结算 {len(w.done)} 桩：{'、'.join(w.done)}\n")
     return "\n".join(out)
 
 
+def rerun(turns: list[dict], limit: int | None = None, watch=("段誉",)) -> str:
+    return report(*replay(turns, limit, watch))
+
+
+# ============================================================
+#  --check：逐回合不变量（v13，60 回重演的验收）
+# ============================================================
+def check(game: Game, records: list[dict]) -> list[str]:
+    """逐回合断言账上的不变量，返回违例清单（空即全过）：
+    气血只因成立的伤、毒发而降；账文分歧里没有技术性条目；到期的时限回合开头就兑现或作罢（没有拖过一回合的）；
+    研习账各门武学的真实光阴之和不超过世界流过的光阴；中了毒的人境况里留着中毒的标记；没有因「拍文里无据」被丢掉的气血增减。"""
+    bad, start = [], records[0]["tick0"] if records else 0
+    for r in records[1:]:  # 开卷那一回没有玩家的举动，不查
+        if r.get("error"):
+            continue
+        n = r["turn"]
+        if r["hp"] < r["hp0"] and not r["hurt"] and "player" not in r["poisoned"]:
+            bad.append(f"第{n}回 气血无故下降：{r['hp0']} → {r['hp']}")
+        bad += [f"第{n}回 技术性条目进了账文分歧：{d}" for d in r["drift"] if TECHNICAL.search(d)]
+        bad += [f"第{n}回 时限「{c['what']}」到期（{c['due']}）而回合开头没有了断" for c in r["clocks"] if c["due"] <= r["tick0"]]
+        spent = sum(rec["minutes"] for rec in r["study"].values())
+        if spent > r["tick"] - start:
+            bad.append(f"第{n}回 研习账的光阴之和{spent}超过了世界流过的{r['tick'] - start}")
+        bad += [f"第{n}回 {p}中着{'、'.join(names)}而境况里没有中毒的标记" for p, names in r["poisoned"].items()
+                if p == "player" and "中毒" not in r["conditions"]]
+        bad += [f"第{n}回 {line}" for line in r["log"] if "拍文里无据" in line and ("hp" in line or "气血" in line)]
+    return bad
+
+
+def summary(game: Game, records: list[dict]) -> str:
+    """P0 之后的目标一览（review §七）：账文分歧的回合、无据丢弃、返工、作废拍、终局气血、通天草持有者、研习账。"""
+    live = [r for r in records if not r.get("error")]
+    w = game.world
+    drift = [r["turn"] for r in live if r["drift"]]
+    dropped = sum(1 for r in live for line in r["log"] if "拍文里无据" in line)
+    repair = sum(1 for r in live for line in r["log"] if line.startswith("导演返工"))
+    voided = sum(1 for r in live for v in r["void"] if "未曾发生" in v and "主角并未起意" not in v)
+    return (f"账文分歧 {len(drift)} 回{drift}；无据丢弃 {dropped} 条；导演返工 {repair} 次；作废的拍 {voided} 拍；整回合作废 {len(records) - len(live)}；"
+            f"终局气血 {w.player['hp']}；通天草在 {w.graph.get('通天草', 'holder') or w.graph.get('通天草', 'location')}；"
+            f"研习账 {sorted(w.player.get('study') or {})}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="用对局日志里的真实模型输出驱动当前引擎重演")
-    ap.add_argument("log", type=Path)
+    ap.add_argument("log", type=Path, help="对局日志(game.md)或固定样本(tests/fixtures/replay60.json)")
     ap.add_argument("--turns", type=int)
     ap.add_argument("--watch", default="段誉")
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--check", action="store_true", help="逐回合断言账上的不变量，有违例即退出码 1")
+    ap.add_argument("--dump", type=Path, help="把日志里的举动与各角色原始输出存成固定样本(json)")
     args = ap.parse_args(argv)
-    report = rerun(parse(args.log.read_text("utf-8")), args.turns, tuple(x for x in args.watch.split(",") if x))
+    turns = load(args.log)
+    if args.dump:
+        dump(turns, args.dump)
+        sys.stdout.write(f"已存 {len(turns)} 回 → {args.dump}\n")
+        return
+    game, records = replay(turns, args.turns, tuple(x for x in args.watch.split(",") if x))
+    text = report(game, records)
     if args.out:
-        args.out.write_text(report, "utf-8")
-    else:
-        sys.stdout.write(report)
+        args.out.write_text(text, "utf-8")
+    elif not args.check:
+        sys.stdout.write(text)
+    if args.check:
+        bad = check(game, records)
+        sys.stdout.write(summary(game, records) + "\n" + ("\n".join(bad) + "\n" if bad else "不变量全过\n"))
+        sys.exit(1 if bad else 0)
 
 
 if __name__ == "__main__":

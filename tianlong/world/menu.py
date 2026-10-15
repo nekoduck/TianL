@@ -14,7 +14,7 @@
 import logging
 import re
 
-from . import access, adjudicate, bond, crowd, effects, lexicon, pacing, perspective, scenery, situation, stock, trade
+from . import access, adjudicate, bond, crowd, effects, growth, lexicon, pacing, perspective, scenery, situation, stock, trade
 
 log = logging.getLogger("tianlong")
 SIZE = 3
@@ -181,6 +181,17 @@ def _answer(world, p: str, said=None) -> str:
     return word.format(perspective.handle(world, p))
 
 
+def _unattainable(world, text: str) -> bool:
+    """选项许了研习账上够不着的进境(v13)：「练至大成」而下一阶还差光阴、或还要再隔几日——不给练不动的选项（研习账说了算，growth.ceiling）。"""
+    levels = [lexicon.mastery_level(w) for w in lexicon.mastery(text, "player")]
+    levels = [lv for lv in levels if lv > 0]
+    if not levels:
+        return False
+    tab, _ = adjudicate.names(world)
+    arts = {n for n, _, _ in lexicon.find(text, tab) if world.graph.kind(n) == "skill"}
+    return max(levels) > growth.ceiling(world, arts)
+
+
 def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=(), said=None, danger=None) -> list[tuple[str, list[str]]]:
     """验收编剧拟的选项，返回恰好三项 (文字, 对象)。fallback：导演旧写法给的选项或离线说书人的朴素选项；
     later：此后槽的兜底项(story/choices 看局面给出)；addressed：收尾时仍悬着话的人(adjudicate.hanging)；said：各人对主角说的那一句(定回应的措辞)。
@@ -197,7 +208,7 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
         body = ids if body is None else body
         return bool(text) and not lexicon.leaks(text) and not lexicon.secret_hits(text, secrets, tab) \
             and all(_reachable(world, i, text, ids) for i in body) and not _shopless(world, text) and text not in [t for t, _ in picked] \
-            and not _stale(world, body, danger) \
+            and not _stale(world, body, danger) and not _unattainable(world, text) \
             and not (body and any(set(body) == set(bodies.get(t, o)) and alike(text, t) for t, o in picked))  # 对象相同且文字相近才是重复(v12)：同指段誉的挟持与劝和是两条路
 
     def take(text, given=()) -> tuple[list[str], list[str]]:

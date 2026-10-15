@@ -32,9 +32,10 @@
 import logging
 import re
 
-from . import acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock, venue
+from . import access, acts, adjudicate, crowd, effects, growth, lexicon, perspective, scenery, situation, stock, venue
 from . import body
 from .body import INNER
+from .graph import ROAD
 from .profile import profile
 
 RULED = {"status": "生死伤病", "hp": "气血", "max_hp": "气血", "power": "功力", "skills": "武学", "faction": "门派", "title": "名号头衔",
@@ -421,11 +422,31 @@ def ruled(world, text: str) -> list[str]:
     if words:
         arts = "；".join(a["detail"] for a in growth.mastery(world)) or "主角尚无武学"
         out.append(f"正文写主角「{'、'.join(words)}」，账上：{arts}")
+    out += geography(world, text)
     turn = getattr(world, "turn", None) or {}  # v13 正文写你负了伤，账上你气血未减、身上也并无伤势：伤归规则，正文改不了账，记作分歧
     hurt = lexicon.hero_hurt(text, *adjudicate.names(world)) if v and text else []
     if hurt and not turn.get("hurt") and body.wound(world)[0] == "安然无恙" \
             and world.player["hp"] >= (turn.get("start") or {}).get("hp", world.player["hp"]):
         out.append(f"正文写你负了伤「{hurt[0]}」，账上你气血未减、并无伤势")
+    return out
+
+
+IMPASSABLE = re.compile(r"天堑|无法渡过?|无从渡|渡不过|过不去|无路可通|无路可走|插翅难飞|难以逾越|无法逾越")
+
+
+def geography(world, text: str) -> list[str]:
+    """地理之句体检(v13)：正文说此处与某地之间是天堑、过不去，图上却是一条零日而无关口的明路——编剧能写出图上没有的地理（第 55 回「隔着这道天堑」，
+    第 56 回却沿岸走到了无量山）。只记软分歧交导演：读者读过的话不能当没说，导演在剧情里交代（沿岸绕行、另有渡口），不是改地图。"""
+    if not text:
+        return []
+    tab = adjudicate.names(world)[0]
+    plain = {e["name"] for e in access.exits(world) if not e["days"] and not e["kind"]}
+    out = []
+    for sent in (s for s in lexicon.SENTENCE.split(lexicon.QUOTED.sub("", text)) if IMPASSABLE.search(s) and not lexicon.NEGATE.search(s)):
+        named = {n for n, _, _ in lexicon.find(sent, tab)}
+        hit = sorted(named & plain) or (sorted(plain) if world.here in named and plain else [])
+        if hit:
+            out.append(f"正文写「{sent.strip()[:40]}」，图上{world.here.split('·')[-1]}往{'、'.join(h.split('·')[-1] for h in hit[:2])}是零日的明路、并无阻隔")
     return out
 
 
@@ -552,7 +573,10 @@ def delta(world, before: dict) -> list[dict]:
             add(f"name:{p}", f"{before['guise'].get(p) or now['guise'].get(p) or perspective.guise(world, p)}原来名叫{p}", p)
     for s in sorted(set(now["secrets"]) - set(before["secrets"])):
         src, dst, rel = s.split("|")
-        add(f"secret:{s}", f"你得知{face(src)}是{face(dst)}的{rel}", rel)
+        if rel == ROAD:  # 暗路是地图上的一条路，不是人与人的关系（补记曾把内部字段 road 露给读者）
+            add(f"secret:{s}", f"你发现了{src.split('·')[-1]}与{dst.split('·')[-1]}之间的一条暗路", "暗路")
+        else:
+            add(f"secret:{s}", f"你得知{face(src)}是{face(dst)}的{rel}", rel)
     for art, stage in now["arts"].items():
         if before["arts"].get(art) != stage and now["arts"].get(art) and stage:
             add(f"art:{art}:{stage}", f"你的{art}已到{stage}", art)
