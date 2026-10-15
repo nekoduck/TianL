@@ -3,7 +3,7 @@
          world/body 的 fate（命运骰：偷取时身法相当看它）、world/bond 的 event（杀伤夺物记在这一门的人账上）；功力档读 world/profile(用时才引)；World 门面（graph / player / clock / turn）
 [OUTPUT]: 对外提供 人群(v9 无名弟子)——GROUP / BESIEGE / FORCE / DISBAND / STEAL_ROLL、force()（功力 → 武力，指数尺度）、is_squad() / standing() / handle() / squads() / besiegers()、
           might()（整群之力：站着的人数 × 每人之力）、side()（一方之力：本人连同身边同行助阵者）、agility()（身法之档：功力之档与所会轻功的档取高）、
-          forecast()（群战预裁：硬拼胜不胜、冲不冲得出去、偷不偷得到、败了失多少气血）、lines()（后台的群战预裁）、card()（视锥里的一群人）、
+          forecast()（群战预裁：硬拼胜不胜、冲不冲得出去、偷不偷得到、败了失多少气血）、lines()（后台的群战预裁）、card()（视锥里的一群人；v12 另有首领与眼下之事）、tail()（v12 首领、所图、眼下）、
           kit()（一群人身上的东西；名字宽松认——去掉这一群的名目再看包含与末一字：佩剑、青钢剑都是长剑，长衫、衣服都是衣衫）、CLOTH、
           v10：active()（出没时段 since/until）、present()（与人同一口径的眼前）、recover()（打晕的两个时辰醒转归队、捡回东西）、escort() / relocate()（随首领、换地方即解围）、
           afar()（近处不在跟前的人群；v12 不列原著近事要用的人马）、reserved_lines()（v12 原著近事要用的人马：要在哪一桩里登场）、template() / split() / rejoin() / muster()（spawn 的一队人马：重组或补充，离远并回）、RECOVER / SUPPLY / DEFAULT_KIT、steal() / rob() / strike() / escape()（偷取、夺取、杀伤打晕、脱身——规则之事，不成即返回缘由）
@@ -16,7 +16,7 @@
        is_squad 只认场景清单布下的人群：剧情临时立的一队人马(ephemeral)只活在叙事里；一群人只在近旁走动(effects 拦远行)
        v10 人群随剧情驱动底层：一群人远行、赶来(按道路里程)、随行、随首领(原著挪走带队之人)、按出没时段在场；打晕的人倒下满两个时辰醒转归队(纯规则)；
        剧情临时立的一队人马是既有人群的重组(从同门人群里分出几人，身上之物按人头带走，离远即并回)，附近没有同门人群或人数不够才按门下模板补一队纯 NPC——人头、零钱、兵刃、衣衫，绝不立有名有姓的人
-       v12：原著近事要用的人马(world.turn["reserved"]，lod 算好交来；本模块不 import lod)事前分不出人
+       v12：原著近事要用的人马(world.turn["reserved"]，lod 算好交来；本模块不 import lod)事前分不出人；后台的每一群写明首领(不同处即注明在哪)、门派所图、眼下之事
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import body, bond, situation, stock
@@ -155,6 +155,22 @@ def forecast(world, who, s) -> dict:
             "loss": "25~40" if ratio >= 4 else "15~25" if ratio >= 2 else "5~15"}
 
 
+def tail(world, s) -> str:
+    """一群人的首领、所图、眼下之事(v12，供导演；有才写)：首领不与这一群同处时注明他在哪——「首领司空玄（在无量山）」。"""
+    g, parts = world.graph, []
+    leader = g.get(s, "leader")
+    if leader and g.has(leader):
+        at, here = g.get(leader, "location"), g.get(s, "location")
+        gone = "已故" if g.get(leader, "status") == "dead" else None if at and here and at in situation.near(world, here) else f"在{at}"
+        parts.append(f"首领{leader}" + (f"（{gone}）" if gone else ""))
+    goal = g.get(g.get(s, "faction"), "goal") if g.get(s, "faction") else None
+    if goal:
+        parts.append(f"所图：{goal}")
+    if g.get(s, "intent"):
+        parts.append(f"眼下：{g.get(s, 'intent')}")
+    return "｜".join(parts)
+
+
 def lines(world) -> list[str]:
     """后台的群战预裁：主角对眼前每一群人，硬拼、脱身、偷取各是什么结局——导演照此演出，节拍里不写「武力」「预裁」。"""
     g, out = world.graph, []
@@ -168,7 +184,8 @@ def lines(world) -> list[str]:
         flee = "被围也冲得出去(脱身)" if f["flee"] else "一旦被围便冲不出去：只有智取、求情或有人解围"
         steal = "单独偷取一人身上的东西可以得手" if f["steal"] else "单独偷取必被察觉：失手即遭围攻"
         wares = "、".join(t["name"] for t in kit(g, s))
-        out.append(f"{head}：{fight}；{flee}；{steal}" + (f"；身上的东西：{wares}、零钱(偷夺时物写其一)" if wares else ""))
+        out.append(f"{head}：{fight}；{flee}；{steal}" + (f"；身上的东西：{wares}、零钱(偷夺时物写其一)" if wares else "")
+                   + (f"｜{tail(world, s)}" if tail(world, s) else ""))
     return out
 
 
@@ -180,7 +197,8 @@ def afar(world, days: int = 1, held=None) -> list[str]:
     for s in sorted(g.where(type=GROUP)):
         if is_squad(g, s) and active(world, s) and not present(world, s) and standing(g, s) > 0 \
                 and dist.get(g.get(s, "location"), 99) <= days and s not in (held or {}):
-            out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{g.get(s, 'location')}（距此{dist[g.get(s, 'location')]}日）")
+            out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{g.get(s, 'location')}（距此{dist[g.get(s, 'location')]}日）"
+                       + (f"｜{tail(world, s)}" if tail(world, s) else ""))
     return out
 
 
@@ -190,14 +208,18 @@ def reserved_lines(world, held: dict) -> list[str]:
     out = []
     for s, ev in sorted((held or {}).items()):
         at = g.get(s, "location")
-        out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{at}（距此{dist.get(at, '?')}日）：要在原著近事「{ev}」里登场")
+        out.append(f"{s}（{handle(g, s)}，站着{stock.cn(standing(g, s))}人）在{at}（距此{dist.get(at, '?')}日）：要在原著近事「{ev}」里登场"
+                   + (f"｜{tail(world, s)}" if tail(world, s) else ""))
     return out
 
 
 def card(world, s) -> dict:
+    """视锥里的一群人(给编剧)。v12 另有首领(leader：只在他也在主角眼前时)与眼下之事(intent)——引擎交编剧前由 perspective.veil 过掩码。"""
     g = world.graph
+    leader = g.get(s, "leader")
     return {"name": s, "handle": handle(g, s), "count": standing(g, s), "down": g.get(s, "down") or 0, "dead": g.get(s, "dead") or 0,
-            "desc": g.get(s, "desc"), "kit": _kit_text(g, s), "hostile": s in besiegers(world)}
+            "desc": g.get(s, "desc"), "kit": _kit_text(g, s), "hostile": s in besiegers(world),
+            "leader": leader if leader in situation.around(world) else None, "intent": g.get(s, "intent")}
 
 
 # ============================================================

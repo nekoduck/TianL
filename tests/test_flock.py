@@ -7,7 +7,7 @@
           醒转(打晕的人过两个时辰醒转归队，落在原地的东西还在就捡回去，被人拿走的捡不回)；
           NPC 银两(段誉给马五德三两即段誉少三两马五德多三两、不够即给不出、正文写了易手而两人的银两没动即漏记、账房开的单子入账)；
           创世(门下模板 kits、人物零钱 money、原著器物补注 canon_items、不识字 illiterate、人群的 leader/since/until 校验，错一处拒绝开局)；
-          真模型实测抓到的(一记耳光也是伤)；v12 B2 原著近事要用的人群事前叫不来、分不出人，后台单列(ReservedTest)
+          真模型实测抓到的(一记耳光也是伤)；v12 B2 原著近事要用的人群事前叫不来、分不出人，后台单列(ReservedTest)；P1-2 首领所图眼下(LeaderTest)
 [POS]: tests 的 v10 验证——「弟子群是纯 NPC 资源：人头、零钱、兵刃衣衫都有账，随剧情驱动底层」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -273,6 +273,38 @@ class ReservedTest(unittest.TestCase):
         self.assertTrue(any("神农攻山帮众" in x and self.EVENT in x for x in gm["reserved"]))
         text = prompts.render_backstage({**gm, "upcoming": []})
         self.assertIn("【原著近事要用的人马·事前不得登场（远远望见可以）", text)
+
+
+class LeaderTest(unittest.TestCase):
+    """v12 P1-2：人群卡与群战预裁显示首领、门派所图、眼下之事——日志第 12–15 回人群卡只写「站着28人｜分工行事」，帮众四回只会合围砍杀。"""
+    GOAL = "所图：奉灵鹫宫令攻占无量山要地"
+
+    def test_the_backstage_shows_the_leader_and_the_aim(self):
+        from tests.test_adjudicate import cliff
+        w = cliff()
+        line = next(x for x in rag.backstage(w)["crowd"] if x.startswith("神农攻山帮众"))
+        self.assertIn("首领司空玄（在无量山）", line)                                  # 首领不在群里：注明他在哪
+        self.assertIn(self.GOAL, line)
+        w2 = World.create("测")
+        w2.player.set("location", "剑湖宫·宫门")
+        line = next(x for x in rag.backstage(w2)["flocks"] if x.startswith("神农攻山帮众"))
+        self.assertIn(f"首领司空玄｜{self.GOAL}", line)                                 # 近处的人群：首领与他们同处
+
+    def test_the_writer_sees_a_masked_leader_and_their_aim(self):
+        from tests.test_adjudicate import cliff
+        from tianlong.narrative import prompts
+        from tianlong.world import perspective
+        w = cliff()
+        w.graph.set("司空玄", "location", "澜沧江边高崖")                              # 首领在眼前，主角不识其名(帮主名号显赫，不在眼前时照叫其名)
+        do(w, {"做": "打算", "谁": "神农帮众", "为": "擒下司空玄要的人"})
+        self.assertEqual(w.graph.get("神农攻山帮众", "intent"), "擒下司空玄要的人")    # 导演可给一群人写打算
+        view = perspective.veil(w, rag.build(w))
+        q = view["squads"][0]
+        self.assertEqual(q["leader"], perspective.handle(w, "司空玄"))
+        self.assertNotIn("司空玄", q["intent"])
+        text = prompts.render(view)
+        self.assertIn(f"首领：{perspective.handle(w, '司空玄')}", text)
+        self.assertNotIn("司空玄", text)
 
 
 class LiveTest(unittest.TestCase):

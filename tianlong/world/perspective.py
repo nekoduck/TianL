@@ -27,6 +27,7 @@
        (手里有兵刃的叫持剑的，否则按 id 的稳定散列取一个外貌字眼，同组不重样)，立下不改，人散了也不改回；「容师叔」「钟姑娘」也是叫法，calls 让它落得回原人；
        名字是谁的(看得见)与谁听见(在耳边)是两个角色：对着遗体叫出的名字落在死者身上，听见的是耳边的活人——时间轴上的某一刻两样都记着(moment)；
        称谓添了师叔、师伯、师父、师傅、师娘(同门之间最常见的叫法)
+       v12：veil 对人群的首领与眼下之事过掩码；
        v9：thing 让分出来的那一份(玉壁剑影图·1)叫回那件东西、剧中人写下的文书叫作「你写给某人的书信」(主角经手、读过或是收信人才知道谁写给谁，收信人照旧只叫外貌)；veil 另过人群的描述
        v10：handle 让一群人叫他们的叫法(东宗弟子)，随行的人群在编剧那里也是叫法
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
@@ -582,7 +583,9 @@ def veil(world, pack: dict) -> dict:
         if p.get("intent"):
             p["intent"] = mask(world, p["intent"])
         p["seen_as"] = None
-    out["squads"] = [{**q, "desc": mask(world, q.get("desc") or "")} for q in out.get("squads", [])]  # 人群(v9)：叫法本就是外貌门派
+    out["squads"] = [{**q, "desc": mask(world, q.get("desc") or ""), "leader": handle(world, q["leader"]) if q.get("leader") else None,
+                      "intent": mask(world, q["intent"]) if q.get("intent") else q.get("intent")}
+                     for q in out.get("squads", [])]  # 人群(v9)：叫法本就是外貌门派；v12 首领与眼下之事也从主角的视角说
     out["relations"] = [r for r in out["relations"] if mask(world, r) == r]
     out["party"] = [handle(world, p) for p in out.get("party", [])]
     g, shown = world.graph, {p["name"] for p in pack["people"]}
