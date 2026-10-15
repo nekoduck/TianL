@@ -3,6 +3,7 @@
 [OUTPUT]: unittest 用例——43 回对局(王侠墨)暴露的「拍文与账本不同生共死」逐条转成离线验收：
           拍里改变物理状态的指令落不了即整拍交返工、仍不成立即作废(第16回)、受阻不倒退、无伤扣血不入账(第5回)、
           词表不再替导演挪人(第9回「拉着二人」把在场恶人记成随行)、同伴诸拍之后才随行(第11回人质被主角带下崖)、擒者与人质同处
+          (v12 B1：擒者走则人质随之由系统连带，不再交返工；擒者先了断拘押再走，人质留下)
 [POS]: tests 的一拍一事务验证——v3 方案 P0-1 的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -64,8 +65,20 @@ class TransactionTest(unittest.TestCase):
         g = self.w.graph
         g.set("云中鹤", "location", self.w.here)
         g.link("云中鹤", "钟灵", "扣为人质")
-        r = judge(self.w, plan(("云中鹤", "云中鹤长啸一声，飞身出了大厅", [{"op": "set", "id": "云中鹤", "key": "location", "value": "剑湖宫"}])))
-        self.assertIn("custody", [f.kind for f in r.hard])                           # 擒者走了，人质却留在原地
+        r = judge(self.w, plan(("云中鹤", "云中鹤长啸一声，押着钟灵飞身出了大厅", [{"op": "set", "id": "云中鹤", "key": "location", "value": "剑湖宫"}])))
+        self.assertEqual(g.get("钟灵", "location"), "剑湖宫")                        # v12 B1：擒者走则人质随之，由系统连带
+        self.assertIn("云中鹤", situation.captors(self.w, "钟灵"))                   # 仍受制
+        self.assertNotIn("custody", [f.kind for f in r.hard])                       # 不再交返工
+
+    def test_a_captor_who_lets_go_first_leaves_the_hostage(self):
+        g = self.w.graph
+        g.set("云中鹤", "location", self.w.here)
+        g.link("云中鹤", "钟灵", "扣为人质")
+        r = judge(self.w, plan(("云中鹤", "云中鹤一把推开钟灵，飞身出了大厅",
+                                [{"op": "unlink", "src": "云中鹤", "dst": "钟灵", "rel": "扣为人质"},
+                                 {"op": "set", "id": "云中鹤", "key": "location", "value": "剑湖宫"}])))
+        self.assertEqual(g.get("钟灵", "location"), "剑湖宫·练武厅")                 # 先了断拘押再走：人质留下
+        self.assertEqual([f.kind for f in r.hard], [])
 
 
 if __name__ == "__main__":

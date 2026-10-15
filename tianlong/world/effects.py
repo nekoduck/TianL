@@ -1,5 +1,5 @@
 """
-[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track（情境层与连带）、
+[INPUT]: 依赖 world/access 的 walk / learn / steps / hidden（通行裁判）、world/situation 的 near / around / seen / shortnames / party / join / part / follow / captors / track / carried / enlist（情境层与连带；v12 同行与押解随调遣）、
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
          world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
@@ -42,6 +42,7 @@
        场外剧情(v11)：衍生事件是场外编剧写的、过了 world/plot 的规则审才排进日程，到期与原著同一条轨道落账(合不合天龙世界的规矩归 plot，这里只管物理)；
        场外叫不来人(要谁来到主角跟前，归近处导演写赶来)、报不了姓名(主角不在场)；揭开的隐情只入真相，随传闻抵达；
        近处导演改了某人的志向(set agenda)，此人的原著线就此变了(adrift)，往后的路交场外编剧
+       v12 同行与押解随调遣：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处，每一次连带挪动都是一条成立的指令(带 by)——擒者走则人质随之由系统连带，不再交返工；原著与场外剧情挪人不带人
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
@@ -602,8 +603,10 @@ def _note(world, text: str | list):
         turn.setdefault("notes", []).extend([text] if isinstance(text, str) else text)
 
 
-def _exec(world, op, origin):
-    """一条指令落账。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；日程(原著与场外剧情)挪走带队之人，同在一处的这一门人群随他走。"""
+def _exec(world, op, origin) -> list[dict]:
+    """一条指令落账，返回随之连带落账的指令(v12)。人群(v10)：一群人换了地方(前往、赶来)即不再围着原先的人；日程(原著与场外剧情)挪走带队之人，同在一处的这一门人群随他走。
+    同行与押解随调遣(v12)：导演挪动一个人(前往、赶来)，他的同行者与人质(situation.carried)一并到同一处——每一次连带挪动都是一条成立的指令(带 by)；
+    原著与场外剧情挪人不带人(回合末 situation.sunder 了断异地的同行)；人群不在此列，沿用随首领的规矩。"""
     g, nid = world.graph, op.get("id")
     moving = op["op"] == "set" and op.get("key") == "location"
     if (moving or op["op"] == "arrive") and crowd.is_squad(g, nid):
@@ -612,11 +615,35 @@ def _exec(world, op, origin):
             situation.enlist(world, [nid])
             if getattr(world, "turn", None) is not None:
                 world.turn.setdefault("arrived", set()).add(nid)
-        return
+        return []
     old = g.get(nid, "location") if moving and g.kind(nid) == "person" else None
+    band = situation.carried(world, nid, g.get(nid, "location")) if origin == "director" and (moving or op["op"] == "arrive") else []
     _exec_one(world, op, origin)
     if old is not None and origin in ("canon", "derived"):
         crowd.escort(world, nid, old)
+    return _carry(world, op, nid, band)
+
+
+def _carry(world, op, pid: str, band: list[str]) -> list[dict]:
+    """同行者与人质随 pid 到同一处(v12)：记进本回合的调遣(movers)，赶来的上名册、记作赶来；连带写一句交编剧(用 id，引擎交编剧前过掩码)。"""
+    if not band:
+        return []
+    g, turn = world.graph, getattr(world, "turn", None)
+    dest, out = g.get(pid, "location"), []
+    for q in band:
+        g.set(q, "location", dest)
+        g.nodes[q].pop("strayed", None)  # 导演挪动了他：回到原著的轨道上
+        if turn is not None:
+            turn.setdefault("movers", {})[q] = "director"
+        if op["op"] == "arrive":
+            situation.enlist(world, [q])
+            if turn is not None:
+                turn.setdefault("arrived", set()).add(q)
+            out.append({"op": "arrive", "id": q, "by": pid})
+        else:
+            out.append({"op": "set", "id": q, "key": "location", "value": dest, "by": pid})
+    _note(world, f"{'、'.join(band)}随{pid}" + ("一同来到" if op["op"] == "arrive" else f"同往{dest}"))
+    return out
 
 
 def _exec_one(world, op, origin):
@@ -851,7 +878,7 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             me.set("came_from", route[-2])
             me.set("en_route", {"to": dest, "left": world.graph.distances(route[-1]).get(dest, 0)}
                    if why and why.startswith(access.ON_ROAD) else None)  # 途中：记着去向，下回合可续行，也可在途中生事
-            _exec(world, op, origin)
+            applied += _exec(world, op, origin)
             toll = access.tolls(world, route)
             if toll and stock.pay(world, "player", toll):  # 过关付的关钱(v11)：barrier 已核过够不够
                 _note(world, f"过关付了关钱{stock.say(toll)}")
@@ -864,8 +891,9 @@ def apply(world, ops: list, origin: str, scope: set | None = None) -> tuple[list
             else:
                 _note(world, situation.follow(world, route))
             continue
-        _exec(world, op, origin)
+        extra = _exec(world, op, origin)
         applied.append(op)
+        applied += extra  # 同行者与人质随之同去(v12)：连带挪动也是成立的指令
         if origin == "director" and not named(op) and op.get("key") != "epithet":  # 报个姓名、立个外号不算扰动原著：因果污染只记碰过的人与物
-            world.taint.update(i for i in _ids(op) if i and i != "player")
+            world.taint.update(i for o in [op, *extra] for i in _ids(o) if i and i != "player")
     return applied, rejected

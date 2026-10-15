@@ -6,7 +6,8 @@
           shortnames() 近处子地点的短名(体检与落账同一口径)；
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
-          party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前）、
+          party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前；v12 不在路上的同伴了断随行、不再瞬移，同伴带着的人一并跟来）、
+          company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
@@ -17,6 +18,7 @@
        「在眼前」只有一个口径(around)：裁决、选项、视锥、认知校正、见证人数、原著的分身之禁都读它。
        每一种都有写入者(导演指令或系统连带)、读者(原著前提、裁决器、视锥与后台)与自动变化(随行跟走、获救即解押、溃退期满、任务谓词满足即了结)，
        让 LLM 想做的事都有合法的落账通道——没有通道的愿望，迟早会在文字里偷偷做掉
+       v12 同行与押解随调遣：导演挪动一个人，他的同行者与人质一并同去(effects 据 carried 连带落账)；原著挪人不带人，回合末两端异地的同行由 sunder 了断；离队的同伴不再瞬移回主角身边
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 from . import access, venue
@@ -194,13 +196,24 @@ def part(world, pid: str):
 
 
 def follow(world, route: list[str]) -> list[str]:
-    """主角走完 route 之后，同伴沿同一路线跟上；某一步对同伴不通，就留在那一步之前。返回连带说明。"""
+    """主角走完 route 之后，同伴沿同一路线跟上；某一步对同伴不通，就留在那一步之前。返回连带说明。
+    v12：只带走此刻在这条路线上任一处或其近旁的同伴，连同他一并带走的人(carried：他的同行者与人质)，到了即上名册；
+    不在路上的(被导演送去了别处)了断随行、回告「X已不在你身边」——不再从大理城瞬移回主角身边。"""
     g, notes = world.graph, []
+    way = set().union(*(near(world, loc) for loc in route)) if route else set()
+    turn = getattr(world, "turn", None)
+    movers = turn.setdefault("movers", {}) if turn is not None else {}
     for pid in party(world):
         if captors(world, pid):
             part(world, pid)
             notes.append(f"{pid}身受拘押，未能随你同行")
             continue
+        at = g.get(pid, "location")
+        if at not in way:
+            part(world, pid)
+            notes.append(f"{pid}已不在你身边")
+            continue
+        band = [q for q in carried(world, pid, at) if q not in party(world)]
         stop = route[-1]
         for a, b in zip(route, route[1:]):
             edge = g.road(a, b)
@@ -208,10 +221,74 @@ def follow(world, route: list[str]) -> list[str]:
                 stop = a
                 break
         g.set(pid, "location", stop)
+        for q in band:
+            g.set(q, "location", stop)
+            movers[q] = "director"
         if stop != route[-1]:
             part(world, pid)
-            notes.append(f"{pid}过不去，留在了{stop}")
+            notes.append(f"{pid}过不去，留在了{stop}" + (f"，{'、'.join(band)}也留在那里" if band else ""))
+        elif band:
+            enlist(world, band)
+            notes.append(f"{'、'.join(band)}随{pid}一同跟来")
     return notes
+
+
+# ============================================================
+#  同行与押解(v12)：NPC 之间的随行、擒者与人质——一人被调遣，同行者与人质一并动身；回合末两端异地的同行了断
+# ============================================================
+def company(world, pid: str) -> list[str]:
+    """与 pid 同行的人：以「随行」相连、两端都不是主角，按无向连通算(段誉→钟灵与钟灵→段誉同义)；只收活人。"""
+    g, links = world.graph, {}
+    for e in g.edges:
+        if e["rel"] == FOLLOW and "player" not in (e["src"], e["dst"]):
+            links.setdefault(e["src"], set()).add(e["dst"])
+            links.setdefault(e["dst"], set()).add(e["src"])
+    seen, todo = {pid}, [pid]
+    while todo:
+        for q in sorted(links.get(todo.pop(), ())):
+            if q not in seen and g.kind(q) == "person" and g.get(q, "status") != "dead":
+                seen.add(q)
+                todo.append(q)
+    return sorted(seen - {pid})
+
+
+def hostages(world, pid: str) -> list[str]:
+    """pid 扣着的人：pid 作擒者、关系是拘押(围攻除外——一群人围住某人，不是押着他走)。"""
+    return sorted({e["dst"] for e in world.graph.edges if e["src"] == pid and e["rel"] in CUSTODY - {"围攻"}})
+
+
+def carried(world, pid: str, at: str | None) -> list[str]:
+    """pid 从 at 动身时一并带走的人：同行者，连同他与同行者扣着的人质——逐一筛：此刻在 at 或其近旁；活着、未隐匿、未休眠；
+    本回合没被别的来源(原著、场外剧情)调遣；受制于人的，擒者须也在被带走之列(免得把人质与擒者拆开)。"""
+    g = world.graph
+    if not at or g.kind(pid) != "person":
+        return []
+    band = company(world, pid)
+    want = list(dict.fromkeys(band + [h for p in [pid, *band] for h in hostages(world, p)]))
+    spots = near(world, at)
+    movers = (getattr(world, "turn", None) or {}).get("movers", {})
+    keep = [q for q in want if q != pid and g.kind(q) == "person" and g.get(q, "location") in spots and _alive(g, q)
+            and movers.get(q, "director") == "director"]
+    crew = set(keep) | {pid}
+    return [q for q in keep if all(c in crew for c in captors(world, q))]
+
+
+def sunder(world) -> list[str]:
+    """回合末了断名存实亡的同行(engine 在 sweep 之后调)：NPC 之间两端异地(不在彼此近旁)的随行了断(原著把段誉挪走，钟灵留下)；
+    随行→主角的边，随行者不在主角近旁也了断。返回说明，写日志。"""
+    g, out, close = world.graph, [], near(world)
+    for e in [e for e in g.edges if e["rel"] == FOLLOW]:
+        a, b = e["src"], e["dst"]
+        if "player" in (a, b):
+            other = a if b == "player" else b
+            apart = g.get(other, "location") not in close
+        else:
+            la, lb = g.get(a, "location"), g.get(b, "location")
+            apart = not la or not lb or lb not in near(world, la)
+        if apart:
+            g.unlink(a, b, FOLLOW)
+            out.append(f"{a}与{'你' if b == 'player' else b}已不同行")
+    return out
 
 
 # ============================================================
