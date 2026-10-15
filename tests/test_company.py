@@ -2,7 +2,8 @@
 [INPUT]: 依赖 tianlong.world 的 adjudicate / effects / situation 与 data/canon 原著世界；复用 tests/test_adjudicate 的 plan / judge / GO
 [OUTPUT]: unittest 用例——v12 B1 同行与押解随调遣：15 回实录里第 4 回导演结下「段誉—随行→钟灵」，第 11 回只赶来段誉，钟灵留在无量山，这条边悬空到终局：
           赶来段誉钟灵同来(边的方向反过来亦然)、赶来擒者人质同来且仍受制、送段誉去大理城钟灵同去、受制于不在场之人的同行者不被拆走、
-          原著挪人不带人而回合末了断异地的同行、离队的同伴不再瞬移回主角身边(同一回合先送走后移动亦然)、本回合已被原著挪过的同伴不被带走
+          原著挪人不带人而回合末了断异地的同行、离队的同伴不再瞬移回主角身边(同一回合先送走后移动亦然)、本回合已被原著挪过的同伴不被带走；
+          v12 P1-3 近处的熟人另收三日内见过的人、附注同行(MetTest)
 [POS]: tests 的同行连带验证——v12 B1 的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -97,6 +98,35 @@ class CompanyTest(unittest.TestCase):
         adjudicate.judge(w, plan(("段誉", "段誉奔上崖来", [COME("段誉")])), set())
         self.assertEqual(g.get("段誉", "location"), "澜沧江边高崖")
         self.assertEqual(g.get("钟灵", "location"), "无量山")                         # 一回合一人只听一处调遣
+
+
+class MetTest(unittest.TestCase):
+    """v12 P1-3 近处的熟人另收三日内见过的人：钟灵在练武厅当着主角放貂救人，没报过名、没与主角交手，此后从没进过导演后台的【近处的熟人】。"""
+
+    def test_a_face_seen_two_days_ago_is_an_acquaintance(self):
+        from tianlong.world import rag
+        w = World.create("测")
+        day = w.clock.day
+        w.player.set("met", {"钟灵": day - 2, "段誉": day - 2})
+        for p in ("段誉", "钟灵"):
+            w.graph.set(p, "location", "无量后山")                                     # 一日路程之内，不在眼前
+        w.graph.link("段誉", "钟灵", "随行")
+        lines = rag.acquainted(w)
+        zhong = next(x for x in lines if x.startswith("钟灵："))
+        self.assertIn("主角只识其貌：大眼圆脸的少女", zhong)                           # 未识名：只识其貌
+        self.assertIn("与钟灵同行", next(x for x in lines if x.startswith("段誉：")))
+        w.player.set("met", {"钟灵": day - 5})
+        self.assertFalse(any(x.startswith("钟灵：") for x in rag.acquainted(w)))        # 见过是五日前的事：不算
+
+    def test_the_engine_remembers_who_was_met(self):
+        from tests.test_engine import StubLLM, director
+        from tianlong.engine import Game
+        w = World.create("测")
+        Game(w, StubLLM(director())).act("看")
+        self.assertEqual(w.player["met"].get("钟灵"), w.clock.day)                     # 本回合见过的人记下见到的日子
+        old = w.dump()
+        old["player"].pop("met")
+        self.assertEqual(World.from_dump(old).player["met"], {})                        # 旧档没有 met 也读得进来
 
 if __name__ == "__main__":
     unittest.main()

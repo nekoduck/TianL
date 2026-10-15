@@ -18,7 +18,7 @@
        backstage 另有群战预裁 crowd(整群之力、脱身、偷取，与 acts 执行的是同一套规则)、各人身上的银两 money、较量预裁每行加上夺不夺得下与偷不偷得到(WIN 是算赢的那几档，acts 夺取同用)；
        condition 另有被一群人围住与身上的银两；暗藏之物与研习的提示写成事码(揭开、拿取、研习)
        v10：后台另有 flocks——近处不在跟前的人群(要他们来写赶来，要几人从中分出)
-       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们
+       v12：后台另有 reserved——原著近事要用的人马(事前不得登场，远远望见可以)，flocks 不再列它们；近处的熟人另收三日内见过的人(MET_DAYS)，熟人与此地另有其人各行附与谁同行、押着谁
        v11：近事里场外编剧排进日程的衍生事件标作「场外剧情」，与原著一样只可借风声伏笔；dossier 是场外编剧任务书里一个人的底子
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -74,16 +74,28 @@ def _salient(world, p) -> tuple:
     return (-len((world.graph.get(p, "bond") or {}).get("log", [])), not perspective.knows(world, "player", p), p)
 
 
-def acquainted(world, limit: int = 5) -> list[str]:
-    """近处的熟人(v5)：一日路程之内、此刻不在眼前，主角叫得出名字或与之有过交集的人——导演知道他们就在不远处，剧情需要时可以让他们找来。"""
+MET_DAYS = 3  # 近处的熟人另收几日内见过的人(v12)：钟灵在厅上当着主角放貂救人，没报过名、没交过手，也是熟人
+
+
+def _ties(world, p) -> str:
+    """此人带着谁(v12)：与谁同行、押着谁——导演叫他来，同行者与人质会一并来(situation.carried)。"""
+    band, held = situation.company(world, p), situation.hostages(world, p)
+    return (f"｜与{'、'.join(band)}同行" if band else "") + (f"｜押着{'、'.join(held)}" if held else "")
+
+
+def acquainted(world, limit: int = 6) -> list[str]:
+    """近处的熟人(v5)：一日路程之内、此刻不在眼前，主角叫得出名字或与之有过交集的人——导演知道他们就在不远处，剧情需要时可以让他们找来。
+    v12 另收 MET_DAYS 日内见过的人(黑板 met)，未识名的注明主角只识其貌；每行附与谁同行、押着谁；至多六人。"""
     g, dist, close = world.graph, world.graph.distances(world.here), situation.around(world) | set(situation.elsewhere(world))
+    met, today = world.player.get("met") or {}, world.clock.day
     known = [p for p in g.where(type="person") if p not in close and g.get(p, "status") != "dead" and not g.get(p, "dormant")
              and dist.get(g.get(p, "location"), lod.NEAR + 1) <= lod.NEAR
-             and (perspective.knows(world, "player", p) or (g.get(p, "bond") or {}).get("log"))]
+             and (perspective.knows(world, "player", p) or (g.get(p, "bond") or {}).get("log") or today - met.get(p, -10 ** 6) <= MET_DAYS)]
     out = []
     for p in sorted(known, key=lambda p: _salient(world, p))[:limit]:
         where, belief = g.get(p, "location"), world.knowledge.view(p).get("location")
-        out.append(f"{p}：身在{where}（距此{dist.get(where, '?')}日）" + (f"，主角以为在{belief}" if belief and belief != where else ""))
+        out.append(f"{p}：身在{where}（距此{dist.get(where, '?')}日）" + (f"，主角以为在{belief}" if belief and belief != where else "")
+                   + ("" if perspective.knows(world, "player", p) else f"｜主角只识其貌：{perspective.guise(world, p)}") + _ties(world, p))
     return out
 
 
@@ -292,7 +304,7 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
                    if loc != here and loc not in situation.near(world)][:PLACES_SHOWN],  # 近旁的房间不占名额(v11)：它们在【近旁】里
-        "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带"  # 有过交集的、怀有图谋的在前
+        "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带" + _ties(world, p)  # 有过交集的、怀有图谋的在前；v12 附同行、押着
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
         "rooms": scenery.rooms(world),        # 近旁各处摆着、藏着什么(v8 场景清单)：导演知道隔壁有什么，不必凭空添置

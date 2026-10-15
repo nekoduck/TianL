@@ -7,7 +7,7 @@
           seen 是本回合见过的人(眼前 + 回合开始时在身边 + 本回合赶来 + 近旁的遗体 bodies)，导演够得着、编剧只叫外貌都读它；
           同在一片而不在眼前的人只交导演；原著里尚未登场的人不在任何人眼前、也赶不来）、
           party() / join() / part() / follow()（随行：主角移动，同伴一并移动，过不去的留在关前；v12 不在路上的同伴了断随行、不再瞬移，同伴带着的人一并跟来）、
-          company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
+          meet() / MET_KEEP（v12 回合末记下见过的人）、company() / hostages() / carried() / sunder()（v12 同行与押解：NPC 之间的随行按无向连通、某人扣着的人质、某人动身时一并带走的人、回合末了断两端异地的同行）、
           captors() / captive() / free()（受制：扣为人质、囚禁之类的关系边；v9 一群人的围攻也是一种受制）、CUSTODY、imperiled()（命悬一线：兜底选项、幕间省略、导演后台共用的口径）、PERIL、
           routed() / rout()（溃退：离场且数日内不得卷土重来）、
           spawn() / sweep()（场景实体：一队人马，入账、有归属、离远即回收；v8 物件不再另立——器物由场景清单布齐，FORGE 是驳回的缘由；v10 一队人马交 crowd.muster 重组或补充，回收即并回原群）、FORGE、
@@ -142,6 +142,20 @@ def seen(world) -> set[str]:
     编剧仍只叫他的外貌——他刚从主角眼前走开(或刚死在主角眼前)，换回名字就等于替主角认出了他。"""
     turn = getattr(world, "turn", None) or {}
     return around(world) | set(turn.get("present", ())) | set(turn.get("arrived", ())) | bodies(world)
+
+
+MET_KEEP = 30  # 见过的人只记三十日内的(v12)
+
+
+def meet(world):
+    """回合末记下本回合见过的人(v12 黑板 met：{人: 最后见到的日子})：此刻眼前与本回合见过的(seen)，连同时间轴上各时刻耳边的人；
+    只留 MET_KEEP 日内的。望见(隔着关口远远看见)不算见过——seen 本就不收望见之人。"""
+    g, day = world.graph, world.clock.day
+    turn = getattr(world, "turn", None) or {}
+    faces = seen(world) | {p for m in turn.get("moments") or () for p in m.get("ears") or ()}
+    met = {p: d for p, d in (world.player.get("met") or {}).items() if day - d <= MET_KEEP}
+    met.update({p: day for p in faces if p != "player" and g.kind(p) == "person"})
+    world.player.set("met", met)
 
 
 def inhabited(world) -> bool:
