@@ -6,7 +6,7 @@
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
-          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)；LeaveTest：离去取最近的主语(C3)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -386,6 +386,22 @@ class ReplyTest(unittest.TestCase):
             return llm.writer_prompts[-1]
         self.assertIn("【须回应】", turn([]))
         self.assertNotIn("【须回应】", turn([{"做": "前往", "谁": "干光豪", "到": "无量山"}]))  # 回合末已不在眼前
+
+
+class LeaveTest(unittest.TestCase):
+    """C3：体检的离去取动词前最近的主语(连同并列在前的人)，「离去的方向」是定语不是离去。
+    日志第 5 回导演首稿第 1 拍被判「马五德离去」引出一次返工；编剧正文里同样的句子又让账房那一路误判一次、交复核。"""
+
+    def leavers(self, text, *present):
+        tab, kinds = adjudicate.names(World.create("测"))
+        view = lexicon.View(here_start=set(present), here_end=set(present))
+        return sorted(f.entity for f in lexicon.scan([{"who": None, "text": text}], view, tab, kinds) if f.kind == "leave")
+
+    def test_the_nearest_subject_leaves(self):
+        self.assertEqual(self.leavers("你借着马五德身躯遮掩，疾步朝殿门外段誉二人离去的方向奔去", "马五德"), [])
+        self.assertEqual(self.leavers("你推开马五德的拉扯，拔步便朝殿门外段誉二人逃走的方向奔去", "马五德"), [])
+        self.assertEqual(self.leavers("马五德拂袖离去", "马五德"), ["马五德"])
+        self.assertEqual(self.leavers("段誉与钟灵相携离去", "段誉", "钟灵"), ["段誉", "钟灵"])
 
 
 class ReplayBaselineTest(unittest.TestCase):

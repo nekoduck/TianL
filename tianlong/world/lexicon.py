@@ -17,6 +17,7 @@
        「据说已坠崖」这种传闻口吻照样要对账；lod 据此决定照录说法还是只记系统核实过的后果；
        不及物的死(v7 _dying)认死字之前最近的那个人(连同以「、与和」并列在前的)——「持剑少年见容师叔毙命」死的是容师叔，不是叫他的人；
        主角的去留与生死擒放同一口径(v7)：整句否定即不算——「你借故离开练武厅，往后山去——未曾发生」不是离开；
+       离去(v12)认动词前最近的主语(连同并列在前的)，「离去的方向」是定语——「你借着马五德遮掩，朝段誉二人离去的方向奔去」不是马五德离去；
        场景清单(v8)：寻常之物(trifle：茶碗、瓜子)的取用与交出只记软违例；谁都一样，拿出、取来、递上的东西若不是名表里的任何一件，即 conjure(世上有没有由调用方对账)；
        DRAIN 的「吸了」不认「吸了过去」「倒吸了一口凉气」
        物量(v9)：MONEYISH 说到了钱(查前先挖去实体名：钱光胜不是钱)、COIN 名词就是钱、WRITING 起意提笔、FELL 一群人里有人倒下；
@@ -358,12 +359,25 @@ def _sentence(i, sent, who, view, tab, kinds, prev) -> tuple[list[Finding], list
         company = people + ([p for p in prev if p not in people] if GROUP.search(sent) else [])  # 「二人」只指上一句里的人，不扩到全场
         out += [Finding("follow", i, p, f"第{i}拍写{p}随你同行，账上{p}却留在原地")
                 for p in company if p in view.here_start and p not in view.here_end]
-    m = LEAVE.search(sent)
-    if m and not follow:
-        for p, a, b in ents:  # 去者须是动词之前的主语，且与动词之间没有「你」——「你掠过司空玄遁去」走的是你
-            if a < m.start() and "你" not in sent[b:m.start()] and p in view.here_end:
+    for m in ([] if follow else LEAVE.finditer(sent)):
+        if sent[m.end():m.end() + 1] == "的":  # 「离去的方向」「远去的背影」是定语，不是离去(v12)
+            continue
+        for p, a, b in _leavers(sent, ents, m):  # 去者是动词之前最近的那个人(连同并列在前的)，与动词之间没有「你」——「你掠过司空玄遁去」走的是你
+            if "你" not in sent[b:m.start()] and p in view.here_end and not any(f.kind == "leave" and f.entity == p for f in out):
                 out.append(Finding("leave", i, p, f"第{i}拍写{p}离去，账上{p}却仍在你身边"))
     return out, people or prev
+
+
+def _leavers(sent: str, ents, m) -> list[tuple]:
+    """离去的是谁(v12)：动词之前最近的那个人，连同以「、与和及同」并列在他前面的人(同 _dying 的写法)——
+    「你借着马五德身躯遮掩，朝段誉二人离去的方向奔去」不是马五德离去；「段誉与钟灵相携离去」是两个人。"""
+    before = sorted((e for e in ents if e[2] <= m.start()), key=lambda e: -e[2])
+    group = before[:1]
+    for e in before[1:]:
+        if not re.fullmatch(r"[、与和及同跟]", sent[e[2]:group[-1][1]]):
+            break
+        group.append(e)
+    return group
 
 
 # ============================================================
