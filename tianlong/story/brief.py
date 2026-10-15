@@ -12,6 +12,8 @@
        v13：赌注只写带后果的时限（并注明到期规则照办什么）；到期的时限若已由规则兑现，场记写「规则已照预设落账：…」是成立的事实、不可更改(主角不在场只借风声传闻)，没能兑现的写明缘由由剧情圆回
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import re
+
 from ..world import adjudicate, crowd, pacing, situation
 from . import arc, scene, setups, stakes
 
@@ -61,7 +63,10 @@ def _due(due: list[dict]) -> str:
     return "；".join(lines)
 
 
-def compose(world, staged: dict | None, due: list[dict], scale: str | None = None) -> dict:
+TRAVEL = re.compile(r"赶往|奔赴|前往|赶去|奔往|同奔|直奔|投奔|返回|回到|去往|上路|启程|动身|路程|兼程|星夜")  # 上回合所选是赶路(v14)
+
+
+def compose(world, staged: dict | None, due: list[dict], scale: str | None = None, deed: str = "") -> dict:
     """本回合的场记 {text, spine}。due：本回合到期的时限(stakes.due 已除去)；scale：玩家上回合所选之举的尺度。
     主干(v5)：此地原著 > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(没有人、或主角线刚有了进展，就是主角线) > 顺着举动推进；
     一场之内主干不换题，换题看哪条线有了进展，不看上一回合用过谁。场记是「至少要处理什么」，不是「只处理什么」。"""
@@ -110,8 +115,9 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     for line in (seed, plot):
         if line:
             lines.append(line)
-    if scale == "此后":
-        lines.append("主角上回合选的是一件持续之事：本回合略写那段光阴，pace 取那件事实际耗时，写到它有了结果或被打断")
+    if scale == "此后":  # v14 写明是哪件事；赶路就真走：run4 第 17 回「随段誉同奔大理王府（一日路程）」只走出了大厅
+        lines.append(f"主角上回合选的是一件持续之事{f'「{deed}」' if deed else ''}：本回合略写那段光阴，pace 取那件事实际耗时，写到它有了结果或被打断"
+                     + ("；要去的地方就写 前往 那里(远路由系统按路程结算，一回合走不完即在途中歇脚)，别只走出门口" if TRAVEL.search(deed or "") else ""))
     if scene.over(sc):
         lines.append(f"这一场已演{sc['turns']}回合：本回合必须有个结果（scene.state 写 合 或 断）")
     if sc.get("stall", 0) >= pacing.STALL_WARN:  # 危局僵持(v12)：与场的上限并存——上限管一场演多久，僵持管危局里有没有动

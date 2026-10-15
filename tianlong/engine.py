@@ -174,7 +174,7 @@ class Game:
         stakes.enforce(w, due)                        # v13 带后果的时限到期：后果由规则在回合开头兑现，结果交场记
         scene.begin(w)                                # 续场或开新场
         arc.track(w)
-        story = brief.compose(w, staged, due, scale)
+        story = brief.compose(w, staged, due, scale, deed)
         skip = {ev["id"] for ev, _ in offstage} | ({staged["id"]} if staged else set())
         soon = lod.upcoming(w, skip)
         held = lod.reserved(w, soon)                  # v12 原著近事要用的人马(带队之人是近事相关者)：事前叫不来、分不出人；拉上台的那一桩不在 soon 里
@@ -222,7 +222,7 @@ class Game:
             log.info("幕间省略不成立：%s（%s）", cut, veto)
         w.turn["days"] = days
         venue.restock(w, days)                        # 跨了日子(v11)：店里每日补货的货补回原数
-        mend = body.recover(w, spent)                 # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则
+        mend = body.recover(w, spent, journey)        # 歇满两个时辰，气血渐复、内伤降一级：伤病的好转也归规则；赶路的光阴不算歇息(v14)
         mend = "；".join(x for x in [mend, body.poison_tick(w), *crowd.recover(w)] if x)  # 毒随光阴发作、退去(v13)；打晕的无名弟子过两个时辰醒转归队(v10)：纯规则
         arrived = w.sync()
         void = ruling.void

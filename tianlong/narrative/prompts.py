@@ -112,6 +112,7 @@ def render(pack: dict) -> str:
         _section("关系网·在场之人明面上的关系（主角未必都知道，不得替他说破）", pack["relations"]),
         "【出路】" + ("、".join(f"{e.get('way', '往')}→{e['name']}（{e['days']}日" + (f"·{e['kind']}" if e.get("kind") else ("·路通，可径直走到" if not e["days"] else ""))
                               + ("·来路" if e.get("back") else "") + "）" for e in pack["exits"]) or "无"),  # v13 零日而无关口的路写明路通：不要写成天堑
+        ("【去处·未了之事所系，走得到】" + "、".join(pack["errands"])) if pack.get("errands") else "",  # v14 去那里用原名
         (f"【途中】主角正赶往{me['en_route']['to']}，尚余{me['en_route']['left']}日路程，此地只是途中歇脚之处" if me.get("en_route") else ""),
         f"【主角】{me['name']}｜{me['origin'] or '来历不明'}｜所求：{me['goal'] or '尚无'}｜气血 {me['hp']}"
         + (f"（{me['wound']}）" if me.get("wound") else "") + f"｜{me['tier']}｜姿态：{me['posture']}"
@@ -352,7 +353,7 @@ def director(pack: dict, gm: dict, deed: str) -> tuple[str, str]:
 
 def repair(pack: dict, gm: dict, deed: str, draft: dict, problems: list[str]) -> tuple[str, str]:
     """导演返工：原样拿回自己的提议与系统查出的问题，只改有问题的拍，输出同一格式。"""
-    system = _director_system(pack) + "\n\n你上一稿的提议有几处与世界账本对不上。只改有问题的拍（补上漏写的 ops、改掉做不到的事、删去越权之举），其余照旧，输出完整的同一格式 JSON。"
+    system = _director_system(pack) + "\n\n你上一稿的提议有几处与世界账本对不上。只改有问题的拍（补上漏写的 ops、改掉做不到的事、删去越权之举），其余照旧，输出完整的同一格式 JSON。【主角此刻】是玩家选的事，返工时照样要演出来：器物的叫法对不上就换成清单里那一件的原名，别把这一举删掉。"
     user = (f"{_brief(gm)}{render(pack)}\n{render_backstage(gm)}\n【主角此刻】{deed}\n"
             f"【上一稿】{json.dumps(draft, ensure_ascii=False)}\n{_section('账本对不上之处', problems)}")
     return system, user
@@ -373,7 +374,7 @@ def writer(pack: dict, frame: dict) -> tuple[str, str]:
               "篇幅 250~450 字，不写标题与任何 markdown 符号。\n"
               "正文写完后另起一行只写 ===，然后写：\n"
               "梗概：本回合实际发生之事的一句话，不超过40字\n"
-              "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【远处可见】【出路】【随身之物】【此处器物】里的原名，多个用顿号；远处可见的人要找他就写去找、追、攀下去寻他）｜尺度：此刻\n2. …｜尺度：此后\n3. …｜尺度：机缘\n"
+              "选项：\n1. 下一步｜对象：人物、地点或器物名（用【在场人物】【近旁】【同行】【远处可见】【出路】【去处】【随身之物】【此处器物】里的原名，多个用顿号；远处可见的人要找他就写去找、追、攀下去寻他）｜尺度：此刻\n2. …｜尺度：此后\n3. …｜尺度：机缘\n"
               "伏笔：正文里埋下、日后须兑现的一句悬念｜期限：回合数（多数回合应当写 无；伤病与身体不作伏笔）\n"
               "传言：若此事值得在江湖上传开，一句客观记述（不超过30字，以主角名号称呼主角）；否则写 无\n"
               "选项是三个方向迥异、此情此景下真正诱人的下一步，按【选项槽位】各拟一项（尺度写那一槽的名字），每个不超过20字，江湖口吻；"

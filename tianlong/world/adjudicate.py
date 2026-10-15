@@ -56,7 +56,7 @@ SEIZED = "押解"                   # 僵持到期押走(v12)：那一群 —押
 HARD = {"foretold", "void", "acquire", "unnamed", "give", "absent", "kill", "drain", "bind", "spawn", "secret", "interrupt",
         "follow", "leave", "custody", "name", "mastery", "move", "conjure", "fell", "afar", "stay", "overreach"}
 RATIFY = {"free"}                 # 追认只解除拘押边（获救），从不挪动任何人：正则看错了，代价只是一条关系
-UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure", "stay", "overreach"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
+UNSURE = {"follow", "leave", "name", "foretold", "mastery", "fell", "afar", "conjure", "unnamed", "stay", "overreach"}  # 词表推断的去留、叫错的名字、疑似凭空的器物：交导演返工一次，仍不成立也不作废整拍——名字由 perspective.mask 兜底换掉；v13 凭空之物若真碰了指令，那条指令自己落不了（void）照样作废
 
 
 @dataclass
@@ -492,6 +492,7 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     if then:
         then()
     _found(world, seek)
+    _alongside(world, around0)
     if not moments or moments[-1]["here"] != world.here:  # 主角最后到了哪里：那一刻的听众到成文时再看
         moments.append({"here": world.here, "ears": set(), "bodies": set()})
     _custody(world, r, touched)
@@ -504,6 +505,15 @@ def judge(world, plan: dict, allowed: set[str], *, embargo=frozenset(), cast=fro
     _seize(world, r, stall, world.here != here0)
     r.notes = list(world.turn.get("notes", []))
     return r
+
+
+def _alongside(world, before) -> None:
+    """导演领着走的人(v14)：本回合由导演挪动、回合开始时就在主角眼前、此刻与主角同在一处的人，是陪着主角一路走过来的——
+    片区里也上名册，不因主角进了一片大地方就从眼前划掉(run4 第 14 回管家引路进了万劫谷，补记却说「管家离开了」)。"""
+    movers = world.turn.get("movers") or {}
+    g = world.graph
+    situation.enlist(world, [p for p, src in movers.items() if src == "director" and p in before
+                             and g.kind(p) == "person" and g.get(p, "location") == world.here])
 
 
 def _seize(world, r: Ruling, stall: int, moved: bool):
@@ -702,9 +712,10 @@ def _examine(world, r: Ruling, shown, power0, stripped=frozenset(), named=()):
     越权而被剥掉的那几件(取走、杀、吸)已明告编剧未曾发生，拍文里提到它们不再算违例。named 是逐拍听写时查出的称谓违例。"""
     tab_kinds = names(world)
     view = _view(world, world.turn["start"], power0)
+    named_items = {i for i, b in enumerate(shown, 1) if any(_thing(world, op) for op in (b.get("ops") or []))}  # v14 这一拍的事码点了名的器物：拍文里的「石上药瓶」说的就是事码里的断肠散(run4 第 8 回)
     found = [f for f in lexicon.scan(shown, view, *tab_kinds)
              if not (f.kind in ("acquire", "kill", "drain", "give") and f.entity in stripped)
-             and not (f.kind == "conjure" and not forged(world, f.entity))]  # 拍文里拿出来的东西世上有(或说的就是眼前某物)：不算凭空造
+             and not (f.kind in ("conjure", "unnamed") and (f.beat in named_items or not forged(world, f.entity)))]  # 拍文里拿出来的东西世上有(或说的就是眼前某物)：不算凭空造
     found += list(named)
     secrets = _secrets(world)
     for i, beat in enumerate(shown, 1):
@@ -825,7 +836,7 @@ def brief(world, ruling: Ruling) -> list[str]:
         if f.kind in ("acquire", "give", "void") and g.kind(f.entity) == "item":  # 暗藏在隔壁的东西：主角要先到那里(同一拍里先走过去也行)
             line += f"（{f.entity}现{_where(world, f.entity)}）"
         elif f.kind in ("unnamed", "conjure"):
-            near = [i for i in effects.things(world, situation.near(world)) if not g.get(i, "hidden") and effects.usable(world, i)]
+            near = [i for i in reach(world) if g.kind(i) == "item" and not g.get(i, "hidden")]  # v14 与 forged 同一口径：这一拍刚用掉的、近处别人手里的(不在眼前)都照实
             shop = trade.shop(world)
             ware = trade.ware_of(world, shop, f.entity) if shop and f.kind == "conjure" else None
             if shop and f.kind == "conjure" and (ware or (venue.wares(world, shop) and SERVED.search(f.entity))):  # 店里的货：要买下才到得了桌上
@@ -862,18 +873,10 @@ def forged(world, noun: str) -> bool:
     v9 收紧：单字的名词须是器物名字的末字(「信」不是「内堂信笺」，是一封书信)；远处的东西拿不到眼前来；银两不是器物，有没有由银两账裁定(lexicon 另查得失)。"""
     if lexicon.COIN.search(noun):
         return False
-    g, start = world.graph, (getattr(world, "turn", None) or {}).get("start") or {}
-    spots = situation.near(world) | situation.near(world, start.get("here") or world.here) | set(start.get("route") or ())
-    people = situation.around(world) | set(start.get("around") or ()) | {"player"}
-    head = noun[-2:]
-    reach = []
-    for n, node in g.nodes.items():
-        if node["type"] not in ("item", "feature") or not effects.usable(world, n):
-            continue
-        holder = node.get("holder")
-        if not (holder in people or (holder is None and effects.place(world, n) in spots)):
-            continue
-        reach.append(n)
+    g, head = world.graph, noun[-2:]
+    near = reach(world)
+    for n in near:
+        node = g.nodes[n]
         if n.endswith(noun) or (len(noun) > 1 and (noun in n or n in noun or head in n)):
             return False
         if 2 <= len(noun) <= 4 and n.endswith(noun[-1]) and _subseq(noun, n):  # v14 简称不必连着：「剑图」就是手里的玉壁剑影图(run2 第 11 回白返工一次)
@@ -882,12 +885,30 @@ def forged(world, noun: str) -> bool:
         if (noun in desc) if len(noun) > 1 else re.search(re.escape(noun) + r"(?=[，。；！？、]|$)", desc):  # 「一叠发黄的纸，」说的是纸；「信笺」不是信
             return False
     kin = next((c for c in KIN if noun[-1] in c), None) if noun.endswith(KIN_TAILS) else None  # v14 同一类的泛称：「腥黑药丸」就是司空玄手里的断肠散(丸、散、丹、药同是一类)，手边这一类只有一件即是它
-    if kin and len([n for n in reach if g.kind(n) == "item" and n[-1] in kin]) == 1:
+    if kin and len([n for n in near if g.kind(n) == "item" and n[-1] in kin]) == 1:
         return False
     tail = noun[-2:]  # v14「怀中异草」收尾是泛称「异草」(run3 第 9 回)
     if len(tail) == 2 and tail[0] in lexicon.GENERIC and tail[-1] in lexicon.KINDS:  # v13 「灵草」「宝剑」这样的泛称：手边同类的只有一件，说的就是它（第 8 回的「灵草」就是手里的通天草）；「断肠草」「密图」「金创药」这样有名有姓的不算
-        return len([n for n in reach if g.kind(n) == "item" and n.endswith(noun[-1])]) != 1
+        return len([n for n in near if g.kind(n) == "item" and n.endswith(noun[-1])]) != 1
     return True
+
+
+def reach(world) -> list[str]:
+    """够得着的器物与景物(forged 与返工清单同一口径，按创世次序)：此地与近旁(连同回合开始时那几处、走过的路)落着的，
+    眼前之人(连同回合开始时在眼前的)与主角手里的——同在一片而不在眼前的人手里的不算；这一回合经手而用掉、毁掉的照算(v14 run4 第 8 回：
+    拍里刚服下的断肠散不在清单上，导演只好把玩家要做的事整个删掉)。"""
+    g, turn = world.graph, getattr(world, "turn", None) or {}
+    start, traded = turn.get("start") or {}, set(turn.get("traded") or ())
+    spots = situation.near(world) | situation.near(world, start.get("here") or world.here) | set(start.get("route") or ())
+    people = situation.around(world) | set(start.get("around") or ()) | {"player"}
+    out = []
+    for n, node in g.nodes.items():
+        if node["type"] not in ("item", "feature") or not (effects.usable(world, n) or n in traded):
+            continue
+        holder = node.get("holder")
+        if holder in people or (holder is None and effects.place(world, n) in spots) or (n in traded and not effects.usable(world, n)):  # 用尽了的东西已不在任何地方
+            out.append(n)
+    return out
 
 
 def _thing(world, op) -> str | None:

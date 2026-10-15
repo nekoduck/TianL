@@ -5,10 +5,12 @@
           NearTest(近旁认父：玉壁与谷底同一处所，站在玉壁揭得开谷底的暗路)、AheadTest(去处一瞥与机关实情)、NameTest(器物名认回、驳回给正解)、
           FoundTest(顺手之物：本回合揭出、玩家此举指着那一处才算授意)、SettleBenignTest(读者读到的拿起无主之物照记)、OverreachTest(越权的物理之举先交返工)、
           OptionTest(景物够得着、兜底不重样、久悬之事不兜底、歇息不连喂、候选不收报名与所求、不截半句、漏写「对象：」也认)、
-          FaceTest(器物叫法去掉所在地、身况同口径、情绪标注不入正文、暗路补记、掉了血不是安然无恙)、StateTest(一时气氛不入现状、一记耳光不算负伤)、
+          FaceTest(器物叫法去掉所在地、身况同口径、情绪标注不入正文、暗路补记、掉了血不是安然无恙)、StateTest(一时气氛不入现状、一记耳光不算负伤、赶路不是歇息)、
           WordTest(两字人名撞常用词、进境的否定、简称不连着、等到月出)；
           run3(人物戏多的一局)：PeopleTest(手边的毒药即是那一味毒、走开而去处说不出从眼前划掉、同一屋里才听得见、登门见得着主人、放下缺省为持有者)、
-          LedgerTest(账房看得见伤势、伤势与查无此人的说法不作数、伙计领路不是江湖事、挣名字五桩才了结)、OptionMoreTest(为救某人是话题、四字概括写明对谁、报名作废只去名字)
+          LedgerTest(账房看得见伤势、伤势与查无此人的说法不作数、伙计领路不是江湖事、挣名字五桩才了结)、OptionMoreTest(为救某人是话题、四字概括写明对谁、报名作废只去名字)；
+          run4(验收局)：ForgedMoreTest(拍文的「石上药瓶」就是同一拍事码里的断肠散、刚服下的仍说得出名字也仍在返工清单、不在眼前的人手里的不算)、
+          QuestTest(换个说法的同一件事只记一条、撂狠话不必硬塞回应而问句仍要、服下的毒够得着)、GuideTest(引路的人随主角进了片区仍在眼前、选项不报节点全名)、JourneyTest(场记写明上回合选的赶路、要去的地方写 前往)、MaidTest(婢女的外号不用胡须秃顶)
 [POS]: tests 的 v14 验收——导演对着真图写戏，驳回给正解，被否决的事不以文字活下来，读者读到的平常之举照记
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -196,6 +198,14 @@ class StateTest(unittest.TestCase):
         ok, _ = effects.apply(w, [{"做": "现状", "对": "剑湖宫·练武厅", "为": "大门已被东宗弟子拔剑封锁"}], "director")
         self.assertTrue(ok)
 
+    def test_the_road_is_not_a_rest(self):
+        w = at("澜沧江")
+        w.player.set("hp", 55)
+        body.recover(w, PER_DAY, PER_DAY)
+        self.assertEqual(w.player["hp"], 55)                                           # run4 第 11 回：带毒赶了一整日路，气血不该回三十点
+        body.recover(w, PER_DAY, PER_DAY // 2)
+        self.assertGreater(w.player["hp"], 55)                                         # 走半日、歇半日，歇的那半日照养
+
     def test_a_slap_is_not_a_wound(self):
         w = World.create("测")
         ev = next(e for e in w.canon if e["id"] == "龚光杰掌掴段誉")
@@ -333,6 +343,87 @@ class ForgedMoreTest(unittest.TestCase):
         w.player.push("inventory", "通天草")
         w.graph.set("通天草", "holder", "player")
         self.assertFalse(adjudicate.forged(w, "怀中异草"))                              # run3 第 9 回
+
+    def test_the_beat_names_what_its_text_describes(self):
+        w = PeopleTest().mountain()
+        effects.apply(w, [{"做": "放下", "谁": "司空玄", "物": "断肠散"}], "director")  # 掷在山石上
+        aim = adjudicate.targets(w, "抢步拾起山石上的断肠散替青衫少年服下")
+        r = judge(w, plan(("player", "你抢步抓起石上药瓶，拔塞仰首吞下。",
+                           [{"做": "拿取", "物": "断肠散（山石上）"}, {"做": "服用", "物": "断肠散"}])), aim)
+        self.assertFalse([f for f in r.hard if f.kind in ("conjure", "unnamed")])     # run4 第 8 回：「石上药瓶」就是事码里的断肠散
+        self.assertFalse(adjudicate.doomed(r))
+        w2 = PeopleTest().mountain()
+        effects.apply(w2, [{"做": "放下", "谁": "司空玄", "物": "断肠散"}], "director")
+        r = judge(w2, plan(("player", "你抢步抓起石上的断肠散，拔塞仰首吞下。",
+                            [{"做": "拿取", "物": "断肠散"}, {"做": "服用", "物": "断肠散"}])), aim)
+        self.assertFalse([f for f in r.hard if f.kind in ("conjure", "unnamed")])     # 刚服下(经手)的断肠散仍是说得出名字的东西，不是凭空
+        self.assertIn("断肠散", body.poisons(w, "player"))
+        self.assertIn("断肠散", adjudicate.reach(w))                                  # 刚服下的照样在返工清单里
+        self.assertNotIn("鳄嘴剪", adjudicate.reach(w))                               # 同在无量山而不在眼前的南海鳄神手里的不算
+
+
+class GuideTest(unittest.TestCase):
+    def test_whoever_leads_the_way_stays_in_sight(self):
+        w = at("万劫谷·谷外树林")                                                      # 走近了才布好万劫谷的房间与伙计
+        w.player.set("location", "万劫谷·门房")
+        w.graph.set("万劫谷·管家", "location", "万劫谷·门房")
+        self.assertIn("万劫谷·管家", situation.around(w))
+        judge(w, plan(("万劫谷·管家", "管家在前引路，绕过影壁。", [{"做": "前往", "谁": "万劫谷·管家", "到": "万劫谷"}]),
+                      ("player", "你随他入谷。", [{"做": "前往", "谁": "player", "到": "万劫谷"}])), adjudicate.targets(w, "随管家快步入内"))
+        self.assertEqual(w.here, "万劫谷")
+        self.assertIn("万劫谷·管家", situation.around(w))                              # run4 第 14 回：引路的管家没有「离开」
+        self.assertNotIn("钟万仇", situation.around(w))                                # 谷里别的人照旧要被剧情带到跟前
+        opts = [{"text": "随管家直入万劫谷·大厅", "targets": ["万劫谷·大厅"], "scale": "此刻"}]
+        self.assertEqual(menu.check(w, opts)[0][0], "随管家直入大厅")                   # 选项不报节点全名
+
+
+class JourneyTest(unittest.TestCase):
+    def test_a_chosen_journey_is_walked(self):
+        from tianlong.story import brief, scene
+        w = at("万劫谷·谷外树林")
+        w.player.set("location", "万劫谷·大厅")
+        scene.begin(w)
+        text = brief.compose(w, None, [], "此后", "强忍剧痛随段誉同奔大理王府（一日路程）")["text"]
+        self.assertIn("同奔大理王府", text)                                            # run4 第 17 回：场记写明上回合选的是哪件事
+        self.assertIn("写 前往 那里", text)                                             # 赶路就真走，别只走出门口
+        self.assertNotIn("前往 那里", brief.compose(w, None, [], "此后", "盘膝调息一个时辰")["text"])
+
+
+class MaidTest(unittest.TestCase):
+    def test_a_maid_has_no_beard(self):
+        w = at("大理城")
+        w.player.set("location", "镇南王府")
+        venue.settle(w)
+        w.turn = {}
+        ops = perspective.distinguish(w)
+        maids = [op["value"] for op in ops if "婢女" in op["value"]]
+        self.assertTrue(maids)
+        self.assertFalse([m for m in maids if any(t in m for t in ("须", "秃", "络腮"))])  # run4 第 20 回「短须婢女」「秃顶婢女」
+
+
+class QuestTest(unittest.TestCase):
+    def test_the_same_errand_said_twice_is_one_thread(self):
+        w = at("无量山")
+        for goal in ("七日之内取来解药救下钟灵", "七日之内取来解药换回钟灵", "护送钟灵回万劫谷"):
+            effects.apply(w, [{"op": "push", "id": "player", "key": "threads", "value": goal}], "director")
+        self.assertEqual(w.player["threads"], ["七日之内取来解药救下钟灵", "护送钟灵回万劫谷"])  # run4 第 9 回同一件事记了两条
+
+    def test_a_parting_threat_needs_no_forced_reply(self):
+        w = PeopleTest().mountain()
+        opts = [{"text": "追问万劫谷去路与信物", "targets": ["钟灵"], "scale": "此刻"},
+                {"text": "携段誉兼程赶往大理城求医", "targets": ["大理城", "段誉"], "scale": "此后"},
+                {"text": "问明万劫谷地界后径往澜沧江寻路", "targets": ["段誉"], "scale": "机缘"}]
+        texts = [t for t, _ in menu.check(w, opts, ["司空玄"], said={"司空玄": "滚罢！七日后不见解药，连你二人一并收尸！"})]
+        self.assertEqual(texts, [o["text"] for o in opts])                             # run4 第 9 回：狠话不必硬塞「回应神农帮的汉子」
+        texts = [t for t, _ in menu.check(w, opts, ["司空玄"], said={"司空玄": "你这小子究竟是谁派来的？"})]
+        self.assertTrue(any("神农帮" in t or "所问" in t for t in texts))               # 问句仍要回应
+
+    def test_the_poison_inside_is_within_reach(self):
+        w = PeopleTest().mountain()
+        effects.apply(w, [{"做": "放下", "谁": "司空玄", "物": "断肠散"}], "director")
+        judge(w, plan(("player", "你拾起断肠散吞下。", [{"做": "拿取", "物": "断肠散"}, {"做": "服用", "物": "断肠散"}])),
+              adjudicate.targets(w, "拾起断肠散吞下"))
+        self.assertTrue(menu._reachable(w, "断肠散", "就地运功强压断肠散毒性"))           # run4 第 10 回：毒在你身上，压毒的选项不该落选
 
 
 if __name__ == "__main__":

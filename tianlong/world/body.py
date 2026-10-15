@@ -76,16 +76,19 @@ def relieve(world, why: str = "", who: str = "player") -> str:
     return (f"{why}，" if why else "") + head + (f"内伤减轻为{INJURIES[level - 2]}" if level > 1 else "内息已然平复")
 
 
-def recover(world, minutes: int) -> str:
+def recover(world, minutes: int, walked: int = 0) -> str:
     """光阴里的自然恢复：歇满两个时辰才算——气血按两个时辰计回复，内伤降一级(本回合强练岔气则不降)。
-    主角之外，天下负过伤的人(图上已有气血账的)一同将养；返回的说明只讲主角与身边之人。"""
-    spans = minutes // REST
-    if spans <= 0:
+    主角之外，天下负过伤的人(图上已有气血账的)一同将养；返回的说明只讲主角与身边之人。
+    v14 赶路不是歇息：主角与同行者这一回合走在路上的 walked 分钟不算养伤(run4 第 11 回带毒赶了一整日路，气血反倒回了三十点)。"""
+    if minutes // REST <= 0:
         return ""
-    near, told = situation.around(world), []
+    near, told, party = situation.around(world), [], {*situation.party(world), "player"}
     hurt = ["player"] + [p for p, n in world.graph.nodes.items() if n.get("type") == "person" and "hp" in n
                          and n.get("status") != "dead" and (n["hp"] < n["max_hp"] or severity(world, p))]
     for who in hurt:
+        spans = (minutes - walked if who in party else minutes) // REST
+        if spans <= 0:
+            continue
         hp, cap = actor.vitals(world, who)
         said = []
         if hp < cap:

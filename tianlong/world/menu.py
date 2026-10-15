@@ -106,7 +106,7 @@ def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
     if kind == "feature":  # 景物(v14)：书架、水晶窗、石床、藤蔓——在近旁即够得着(run1 第 11、13、18 回编剧的这类选项成批落选，换上了「歇息」)
         return not g.get(nid, "hidden") and g.get(nid, "location") in situation.near(world)
     if kind == "item":
-        if nid in world.player["inventory"]:
+        if nid in world.player["inventory"] or nid in (world.player.get("poison") or {}):  # v14 服下的毒就在你身上：运功压毒、逼毒都够得着(run4 第 10 回)
             return True
         holder = g.get(nid, "holder")
         return effects.usable(world, nid) and not g.get(nid, "hidden") and \
@@ -187,6 +187,29 @@ def offer(world, picked) -> None:
     world.player.set("offered", ((world.player.get("offered") or []) + [objs])[-OFFERED_TURNS:])
 
 
+def _plain(world, text: str) -> str:
+    """选项不报节点全名(v14)：编剧照抄了【近旁】里的「万劫谷·大厅」，写作「大厅」；伙计写职名、器物写它本身(run4 第 14 回)。"""
+    g, out, i = world.graph, text, 0
+    while (i := out.find("·", i)) > 0:
+        hit = next((out[i - a:i + 1 + b] for a in range(min(i, 10), 0, -1) for b in range(min(len(out) - i - 1, 10), 0, -1)
+                    if g.has(out[i - a:i + 1 + b])), None)
+        if not hit:
+            i += 1
+            continue
+        kind = g.kind(hit)
+        short = (hit.rpartition("·")[2] if kind == "location" else perspective.handle(world, hit) if kind == "person"
+                 else perspective.thing(world, hit) if kind == "item" else hit)
+        start = out.index(hit, max(0, i - 10))
+        out = out[:start] + short + out[start + len(hit):]
+        i = start + len(short)
+    return out
+
+
+def _demands(line: str) -> bool:
+    """这一句要主角答话(v14)：盘问、拦阻、催促、赔罪，或是问句；撂狠话、打发人走、自说自话不必强插一项回应。"""
+    return bool(re.search(r"[？?]", line)) or any(t in pacing.tag(line) for t, _ in ANSWER)
+
+
 def _answer(world, p: str, said=None) -> str:
     """须回应的措辞按此人对主角那一句的主题(v12)：盘问即答其所问、拦阻即理论去留、催促即依其所言、赔罪即受这一礼，其余回应他。"""
     tags = pacing.tag((said or {}).get(p) or "")
@@ -217,12 +240,18 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
     picked: list[tuple[str, list[str]]] = []
     bodies: dict[str, list[str]] = {}  # 选项文字 → 物理对象(v12)：可达只验它们，去重也只比它们
 
-    def fine(text, ids, body=None) -> bool:
+    def flaw(text, ids, body=None) -> str:
+        """这一项为什么不入选(v14 记进日志：编剧原拟落选要查得出缘由)；入选即空串。"""
         body = ids if body is None else body
-        return bool(text) and not lexicon.leaks(text) and not lexicon.secret_hits(text, secrets, tab) \
-            and all(_reachable(world, i, text, ids) for i in body) and not _shopless(world, text) and text not in [t for t, _ in picked] \
-            and not _stale(world, body, danger) and not _unattainable(world, text) \
-            and not (body and any(set(body) == set(bodies.get(t, o)) and alike(text, t) for t, o in picked))  # 对象相同且文字相近才是重复(v12)：同指段誉的挟持与劝和是两条路
+        far = [i for i in body if not _reachable(world, i, text, ids)]
+        return ("空" if not text else "后台术语" if lexicon.leaks(text) else "说破隐情" if lexicon.secret_hits(text, secrets, tab)
+                else f"够不着{'、'.join(far)}" if far else "此处没有铺子" if _shopless(world, text) else "重复" if text in [t for t, _ in picked]
+                else "琐物衰减" if _stale(world, body, danger) else "进境够不着" if _unattainable(world, text)
+                else "与别项同一件事" if body and any(set(body) == set(bodies.get(t, o)) and alike(text, t) for t, o in picked)  # 对象相同且文字相近才是重复(v12)：同指段誉的挟持与劝和是两条路
+                else "")
+
+    def fine(text, ids, body=None) -> bool:
+        return not flaw(text, ids, body)
 
     def take(text, given=()) -> tuple[list[str], list[str]]:
         ids, body = _objects(world, text, given)
@@ -230,13 +259,18 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
         return ids, body
 
     for o in options:
-        text = str(o.get("text") or "").strip()
+        text = _plain(world, str(o.get("text") or "").strip())
+        if o.get("text") and text != o["text"]:
+            o["text"] = text  # 引擎按文字取回尺度：改了措辞，原拟那一项也跟着改
         ids, body = take(text, o.get("targets") or [])
         who = [i for i in body if world.graph.kind(i) == "person"]
         if len(text) <= 4 and len(who) == 1 and perspective.handle(world, who[0]) not in text:  # v14 四字概括(「试探虚实」)写明对谁：向管家试探虚实
             text = o["text"] = f"向{perspective.handle(world, who[0])}{text}"
             ids, body = take(text, o.get("targets") or [])
-        if fine(text, ids, body):
+        why = flaw(text, ids, body)
+        if why:
+            log.info("编剧原拟落选（%s）：%s", why, text)
+        else:
             picked.append((text, ids))
     mine = {t for t, _ in picked}                     # 编剧原拟：让位只在它们里挑，至少留一项
     scales = {str(o.get("text") or "").strip(): o.get("scale") for o in options}
@@ -282,6 +316,8 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
             insert((want, ids), "越权候选")
             break
     for p in reversed(hang):  # 收尾时仍悬着的话：只回应最后一个还没被回应的人
+        if said is not None and not _demands((said or {}).get(p) or ""):  # v14 撂下一句狠话、打发人走不必硬塞「回应某人」(run4 第 9 回挤掉了编剧原拟的「追问万劫谷去路」)
+            continue
         if not any(answered(p, t, o) for t, o in picked):
             insert((_answer(world, p, said), [p]), "须回应")
             break

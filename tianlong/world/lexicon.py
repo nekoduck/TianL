@@ -322,7 +322,8 @@ def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -
     说你得了钱、交了钱，你的银两却分文未动，即为漏记；v10 谁都一样：「段誉把三两银子递给马五德」而两人的银两都没动，也是漏记。"""
     out, ents = [], find(clause, tab)
     mine = who == "player" or "你" in clause
-    things = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle") and n not in view.traded]
+    items = [n for n, _, _ in ents if kinds.get(n) in ("item", "thing", "trifle")]
+    things = [n for n in items if n not in view.traded]  # 经手过的(拿了一部分、刚服下)不算漏记，但仍是说得出名字的东西(v14 run4 第 8 回)
     m, give = ACQUIRE.search(clause), GIVE.search(clause)
     funds = view.funds or {"player": (view.money_start, view.money_end)}
     if (m or give) and "银两" not in view.traded and MONEYISH.search(bare(clause, ents)):
@@ -337,7 +338,7 @@ def _clause(i, clause, who, view, tab, kinds, far: bool, quoted: bool = False) -
     if mine and m:  # 寻常之物(v8 trifle：茶碗、瓜子)端起放下不必记账，只记软违例
         out += [Finding("acquire", i, t, f"第{i}拍写你取得{t}，账上却没有这件东西到你手里", hard=kinds.get(t) != "trifle")
                 for t in things if t not in view.inventory_end and t not in view.inventory_start]
-        noun = None if things or any(kinds.get(n) == "person" for n, _, _ in ents) else itemish(clause[m.end():][:10])
+        noun = None if items or any(kinds.get(n) == "person" for n, _, _ in ents) else itemish(clause[m.end():][:10])
         if noun:
             out.append(Finding("unnamed", i, noun, f"第{i}拍写你取得「{noun}」，世上却没有这件器物：器物不得新造，只能用此地与身边清单里既有之物"))
     if mine and GIVE.search(clause):

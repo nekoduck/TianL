@@ -768,8 +768,22 @@ def _quest(world, value):
     names = {n: n for n, node in g.nodes.items() if node["type"] in ("person", "item", "group")}
     names.update({a: n for a, n in world.aliases.items() if g.kind(n) in ("person", "item")})
     about = [n for n, _, _ in lexicon.find(goal, lexicon.table(names))]
+    q = situation.quests(world)
+    for old in world.player["threads"]:  # v14 换个说法的同一件事不另记一条(run4 第 9 回「七日之内取来解药救下钟灵」「…换回钟灵」)
+        x, y = _grams(old), _grams(goal)
+        if about and set(about) == set((q.get(old) or {}).get("about") or ()) and len(x & y) / max(1, len(x | y)) >= SAME_QUEST:
+            situation.touch(world, set(about))
+            return
     world.player.push("threads", goal)
     _note(world, situation.track(world, goal, about, cond))
+
+
+SAME_QUEST = 0.5  # 两条未了之事对象相同、去标点后二字组重合过半，即同一件事的两种说法
+
+
+def _grams(text: str) -> set[str]:
+    bare = re.sub(r"[^\w]", "", text)
+    return {bare[i:i + 2] for i in range(len(bare) - 1)}
 
 
 def _hand(world, item: str, holder: str | None = None, location: str | None = None):

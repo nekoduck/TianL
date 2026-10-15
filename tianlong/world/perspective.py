@@ -194,6 +194,9 @@ def surname(name: str) -> str | None:
     return next((c for c in COMPOUND if name.startswith(c) and len(name) > len(c)), name[0])
 
 
+FEMININE = re.compile(r"女|婢|娘|婆|妇|姑|嫂|姐|妹|妪|尼")
+
+
 def _noun(g, pid: str) -> str:
     title, faction = g.get(pid, "title") or "", g.get(pid, "faction") or ""
     if "僧" in title or "方丈" in title or faction == "少林派":
@@ -201,7 +204,7 @@ def _noun(g, pid: str) -> str:
     if any(w in title for w in ("幼儿", "幼子", "孩童", "小孩")):
         return "孩童"
     age = g.get(pid, "age")
-    female = g.get(pid, "gender") == "女"
+    female = g.get(pid, "gender") == "女" or (not g.get(pid, "gender") and bool(FEMININE.search(title)))  # v14 伙计没写男女，看职名：婢女不叫「短须婢女」(run4 第 20 回)
     young = (age or 30) < 21 or any(w in title for w in ("少女", "弟子", "婢女", "小姐", "世子", "公子"))
     if female:
         return "少女" if young else "妇人" if any(w in title for w in ("夫人", "王妃", "遗孀", "主人")) else "女子"
@@ -273,7 +276,7 @@ def distinguish(world) -> list[dict]:
         for p in group:
             arms = [thing(world, i) for i in g.where(type="item", holder=p) if not g.get(i, "hidden") and ARMS.search(thing(world, i))]
             pool = [f"持{arms[0][-1]}"] if arms else []
-            pool += sorted(TRAITS.get(noun or _noun(g, p), TRAITS["汉子"]), key=lambda t: zlib.crc32(f"{p}{t}".encode()))
+            pool += sorted(TRAITS.get(noun) or TRAITS.get(_noun(g, p)) or TRAITS["汉子"], key=lambda t: zlib.crc32(f"{p}{t}".encode()))  # v14 婢女、书生这类叫法没有自己的外貌表，按此人是谁取
             name = next((f"{head}{t}{noun}" if noun else f"{t}的{h}" for t in pool
                          if (f"{head}{t}{noun}" if noun else f"{t}的{h}") not in taken), None)
             if name:
@@ -563,7 +566,7 @@ def mask(world, text: str, speaker: str | None = None) -> str:
     seen = situation.seen(world) | set(situation.sighted(world))  # 本回合见过的人(v5)：刚从眼前走开的生人仍只叫外貌——换回名字就替主角认出了他；v12 远远望见的也一样(名号显赫的司空玄亦然)
     met = seen | set(world.player.get("met") or {}) | situation.cast(world)
     tab = lexicon.table({s: p for s, p in _surfaces(world).items()  # 当面不识其人，或连其名都未曾听过——久仰的不在眼前，照叫其名
-                         if not knows(world, "player", p) and (p in seen or not world.knowledge.knows(p))
+                         if not knows(world, "player", p) and (p in seen or not identified(world, p))  # v14 不在眼前时照叫其名的只有闻名已久(识底)的人：见过而不知其名的仍只叫外貌(run4 第 5 回「容子矩的尸首」)
                          and (len(s) >= 3 or p in met or p in _hereabouts(world))})  # v14 两字人名撞上寻常字眼(「石室里」的「室里」是一位远在辽国的武将、「知道清楚」里有「道清」)：只掩见过的与一日路程之内的
 
     me = world.player["name"]

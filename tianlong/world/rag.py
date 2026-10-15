@@ -24,7 +24,7 @@
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 
-from . import access, actor, body, crowd, growth, locale, lod, pacing, perspective, scenery, situation, stock
+from . import access, actor, body, crowd, growth, lexicon, locale, lod, pacing, perspective, scenery, situation, stock
 from .effects import usable
 from .ledger import NEWS_SPEED
 from .profile import TIERS, power_tier, profile, ties
@@ -83,6 +83,27 @@ def _ties(world, p) -> str:
     """此人带着谁(v12)：与谁同行、押着谁——导演叫他来，同行者与人质会一并来(situation.carried)。"""
     band, held = situation.company(world, p), situation.hostages(world, p)
     return (f"｜与{'、'.join(band)}同行" if band else "") + (f"｜押着{'、'.join(held)}" if held else "")
+
+
+def errands(world) -> list[str]:
+    """未了之事与所求里说到的、主角走得到的远处(v14)：「镇南王府（1日）」——编剧拟去那里的选项用原名，导演写 前往 也认得它
+    (run4 第 16、17 回：编剧写「同奔大理王府」落不到镇南王府，导演只把主角送出了大厅)。近旁的不列(在【近旁】【出路】里)。"""
+    g, me = world.graph, world.player
+    text = "；".join([*me["threads"], me.get("goal") or ""])
+    if not text.strip("；"):
+        return []
+    key = (g.stamp, text, world.here)
+    hit = g.memo.get("errands")
+    if hit and hit[0] == key:
+        return hit[1]
+    places = {n: n for n in g.of("location")}
+    places.update({a: n for a, n in world.aliases.items() if n in places})
+    places.update({n.replace("·", ""): n for n in list(places.values()) if "·" in n})
+    dist, near = access.distances(world, world.here), situation.near(world)
+    found = [n for n, _, _ in lexicon.find(text, lexicon.table(places))]
+    out = [f"{n}（{dist[n]}日）" for n in dict.fromkeys(found) if n in dist and n not in near]
+    g.memo["errands"] = (key, out)
+    return out
 
 
 def acquainted(world, limit: int = 6) -> list[str]:
@@ -161,6 +182,7 @@ def build(world) -> dict:
         "party": situation.party(world),
         "nearby": [f"{p}（{g.get(p, 'title')}）在{g.get(p, 'location')}" for p in sorted(situation.around(world) - set(s["people"]))],
         "exits": access.exits(world),
+        "errands": errands(world),                # v14 未了之事所系的远处：去那里的选项用原名
         "news": news,
         "journal": me["journal"],
         "afar": _afar(world),                     # 远处可见(v12)：本回合望见的人与人群——隔着关口望得见、听不见、够不着
@@ -327,8 +349,8 @@ def backstage(world, stage: dict | None = None, upcoming=(), tempo=(), aim=(), r
         "passes": access.passes(world),
         "secret_ways": access.secret_ways(world, {loc for loc, d in dist.items() if d <= lod.NEAR}),
         "mechanism": mechanism(world),  # v14 机关实情：此处与近旁真有的暗门暗道与暗藏之物，此外搜不出别的(52 回局玉壁原地编出整座石室)
-        "places": [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
-                   if loc != here and loc not in situation.near(world)][:PLACES_SHOWN],  # 近旁的房间不占名额(v11)：它们在【近旁】里
+        "places": list(dict.fromkeys(errands(world) + [f"{loc}（{d}日）" for loc, d in sorted(dist.items(), key=lambda x: x[1])
+                   if loc != here and loc not in situation.near(world)][:PLACES_SHOWN])),  # 近旁的房间不占名额(v11)：它们在【近旁】里；未了之事所系之处在前(v14)
         "elsewhere": [f"{p}（{g.get(p, 'title') or '无名'}）在{g.get(p, 'location')}一带" + _ties(world, p)  # 有过交集的、怀有图谋的在前；v12 附同行、押着
                       for p in sorted(situation.elsewhere(world), key=lambda p: (*_salient(world, p)[:2], not g.get(p, "agenda"), p))][:8],
         "acquainted": acquainted(world),
