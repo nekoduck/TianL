@@ -5,25 +5,27 @@
           SCALES、peril()
 [POS]: story 层的选项编排——选项从「正文的附录」变成「先定槽位、再让编剧措辞」：
        A 此刻：用还没试过的路数推进本场之问；B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、找人)，写出代价；C 机缘：一个两难或机会(时限冲突、眼前之人眼下之事里的破绽)。
-       v12：C 槽不引用图谋(编剧看不见 agenda)，只列看得见的眼下之事与最急的时限；引擎交编剧前整段槽位再过一遍视角掩码
+       v12：C 槽不引用图谋(编剧看不见 agenda)，只列看得见的眼下之事与最急的时限；引擎交编剧前整段槽位再过一遍视角掩码；
+       危局(world/pacing.danger)只有一个口径：危局里没有此后，三槽改为 A 刚/奇、B 智/言、C 势/变
        槽位只规定每项回答什么，不规定措辞；险境里 B 槽改为脱身一类的此刻之举。编剧在每项后写「｜尺度：此刻/此后/机缘」，
        引擎记下玩家所选之举的尺度：选了此后，下一回合的场记要求略写、时长按那件事的规则结算——选项与时间从此互相咬合
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from ..world import access, body, growth, perspective, situation
+from ..world import access, body, growth, pacing, perspective, situation
 from ..world.clock import span
 from . import stakes, timing
 
 SCALES = ("此刻", "此后", "机缘")
 
 
-def peril(world) -> bool:
-    return situation.imperiled(world) or bool(situation.captors(world, "player"))
+def peril(world, danger=None) -> bool:
+    """处在危局里(v12 与 world/pacing.danger 同一口径：被围、受制、命悬一线、同伴受制、有人拦阻追杀主角)；danger 由引擎算好传入，缺省现算。"""
+    return bool(pacing.danger(world) if danger is None else danger)
 
 
-def later(world) -> list[tuple[str, list[str]]]:
-    """此后槽的素材(也是兜底项)：续行、出路(带日程)、研习手边的秘籍、带伤歇息、去推进未了之事。险境里没有此后。"""
-    if peril(world):
+def later(world, danger=None) -> list[tuple[str, list[str]]]:
+    """此后槽的素材(也是兜底项)：续行、出路(带日程)、研习手边的秘籍、带伤歇息、去推进未了之事。危局里没有此后。"""
+    if peril(world, danger):
         return []
     me, out = world.player, []
     if me.get("en_route"):
@@ -39,21 +41,24 @@ def later(world) -> list[tuple[str, list[str]]]:
     return out
 
 
-def slots(world, addressed=()) -> list[str]:
-    """给编剧的三个槽位说明(每行一个)。addressed：收尾时仍悬着话的人(叫法，v12)——平常写进 A 槽、险境写进 B 槽：在举动里顺带回应他，兜底便少用。"""
+def slots(world, addressed=(), danger=None) -> list[str]:
+    """给编剧的三个槽位说明(每行一个)。addressed：收尾时仍悬着话的人(叫法，v12)——平常写进 A 槽、危局写进 B 槽：在举动里顺带回应他，兜底便少用。
+    danger(v12 pacing.danger，引擎用成文前的拍与世界算好传入)：危局的三槽——A 刚/奇(借景物器物地势拼死一搏或突围)、B 智/言(对围困者周旋、诈称、求援)、
+    C 势/变(眼前之人的眼下之事里的变数)；平常照旧 A 此刻、B 此后、C 机缘。"""
+    danger = pacing.danger(world) if danger is None else danger
     sc, hurry = world.player["scene"] or {}, stakes.urgent(world)
     reply = f"；{'、'.join(addressed)}刚对你说了话：在举动里顺带回应他" if addressed else ""
-    a = f"A 此刻：用一种还没试过的路数(力、智、情、术、退)推进本场之问「{sc.get('ask') or '眼前之事'}」"
-    if sc.get("tried"):
-        a += f"（已试：{'、'.join(sc['tried'][-3:])}）"
-    if peril(world):
-        b = "B 此后→此刻：主角身处险境，这一项改为脱身或自保的此刻之举" + reply
-    else:
-        a += reply
-        stuff = [t for t, _ in later(world)]
-        b = "B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、去找某人)，写出代价或耗时" + (f"；可用：{'、'.join(stuff)}" if stuff else "")
+    tried = f"（已试：{'、'.join(sc['tried'][-3:])}）" if sc.get("tried") else ""
     hooks = [f"时限「{hurry[0]['what']}」{hurry[1]}"] if hurry else []
     hooks += doings(world)
+    if danger:
+        a = f"A 此刻·刚/奇：危局（{'；'.join(danger)}）——借此处的景物、器物或地势拼死一搏，或设法突围脱身{tried}"
+        b = "B 此刻·智/言：对围困、逼迫你的人周旋、诈称、求援" + reply
+        c = "C 机缘·势/变：眼前局势里的变数" + (f"（可从{'；'.join(hooks)}里找）" if hooks else "——有人心思松动、有人另有所图，就是破局的缝")
+        return [a, b, c]
+    a = f"A 此刻：用一种还没试过的路数(力、智、情、术、退)推进本场之问「{sc.get('ask') or '眼前之事'}」{tried}{reply}"
+    stuff = [t for t, _ in later(world, danger)]
+    b = "B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、去找某人)，写出代价或耗时" + (f"；可用：{'、'.join(stuff)}" if stuff else "")
     c = "C 机缘：一个两难或一个机会" + (f"（可从{'；'.join(hooks)}里找）" if hooks else "；没有时，换一种与 A 迥异的路数")
     return [a, b, c]
 

@@ -1,6 +1,6 @@
 """
 [INPUT]: 依赖 world/growth 的 stage_of / SITTING / STAGES / TEACH_MINUTES（研习的规则时长）、world/body 的 REST（养伤半日）、
-         world/situation 的 captors / imperiled（险境不许歇）、world/pacing 的 CUTS / UNTIL（幕间省略的措辞）、world/effects 的 resolve、world/acts 的 expand（v9 事码的研习也主张时长）；World 门面的 clock / player / graph
+         world/pacing 的 danger（v12 危局的单一口径：险境不许歇）与 CUTS / UNTIL（幕间省略的措辞）、world/effects 的 resolve、world/acts 的 expand（v9 事码的研习也主张时长）；World 门面的 clock / player / graph
 [OUTPUT]: 对外提供 claim()（规则主张的戏内光阴下限与缘由，只看真会成立的拍）、study_minutes()（研习一回的规则时长）、cut_minutes()（幕间省略换算成分钟：一段长度或「到某一刻」）、LATER（选了「此后」之举的下限）、REST_WORDS
 [POS]: story 层的时间结算——「时间是后果」(宪法第 10 条 v4)：导演只选措辞(pace/cut)，戏内光阴取措辞与规则主张的较大者：
        研习一部秘籍主张到下一阶的合理时长(初窥半个时辰、此后每回两个时辰)，求教主张一个时辰，歇息养伤主张两个时辰——
@@ -12,7 +12,7 @@
 """
 import re
 
-from ..world import acts, body, effects, growth, situation
+from ..world import acts, body, effects, growth, pacing
 from ..world.clock import PER_DAY, PER_SHICHEN
 from ..world.pacing import CUTS, UNTIL
 
@@ -52,7 +52,7 @@ def claim(world, plan: dict, deed: str = "", scale: str | None = None, allowed=N
         if g.kind(src) in ("skill", "item"):
             floors.append((study_minutes(world, src), f"{'求教' if g.kind(src) == 'skill' else '研习'}{src}"))
     texts = [deed or ""] + [b.get("text") or "" for b in beats if b.get("who") in (None, "player")]
-    safe = not situation.captors(world, "player") and not situation.imperiled(world)
+    safe = not pacing.danger(world, beats)  # v12 危局的单一口径：被围、受制、命悬一线、同伴受制、有人拦阻追杀主角，都不是歇息的时候
     if safe and any(REST_WORDS.search(t) and not SHORT.search(t) for t in texts):
         floors.append((body.REST, "歇息养伤"))
     if scale == "此后":

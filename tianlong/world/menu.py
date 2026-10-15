@@ -7,13 +7,13 @@
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
        v12 选项链路：授意标记(@书写、@交易)不是实体，可达与去重只看实体、交还的对象不带标记(下回合引擎从原话重算)；买卖住店雇人此处没有铺子也没有当值伙计即办不成；
        只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路；
-       按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题
+       按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题；危局里(pacing.danger)兜底由状态生成，不给出路、歇息、四下察看
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import logging
 import re
 
-from . import access, adjudicate, effects, lexicon, pacing, perspective, scenery, situation, stock, trade
+from . import access, adjudicate, bond, crowd, effects, lexicon, pacing, perspective, scenery, situation, stock, trade
 
 log = logging.getLogger("tianlong")
 SIZE = 3
@@ -96,13 +96,17 @@ def _reachable(world, nid: str, text: str = "", ids=()) -> bool:
     return kind in ("group", "skill", "faction")
 
 
-def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
+def _fallbacks(world, pack_options, danger=None, said=None) -> list[tuple[str, list[str]]]:
     """兜底项看局面：导演旧写法或离线说书人给的选项；途中则先是续行；再是推进未了之事、与身边之人攀谈、
-    近处一条不是来路的出路(按方向措辞，不报节点全名)、歇息——身处险境(命悬一线、受制于人)时只给眼前的应对，不给走开与歇息。"""
+    近处一条不是来路的出路(按方向措辞，不报节点全名)、歇息、四下察看。
+    v12 危局里(pacing.danger)不给出路、歇息、四下察看，改由状态生成：被围即冲出那一群的包围、受制即挣脱、同伴受制即护住他、
+    眼前有敌对之人即向他出言周旋，无论哪种都留一项不带对象的「强撑伤势，寻隙脱身」——命悬一线而无人可指时，它就是兜底。"""
     me = world.player
-    peril = situation.imperiled(world) or bool(situation.captors(world, "player"))
+    danger = pacing.danger(world) if danger is None else danger
     out = [(o, []) for o in pack_options]
-    if me.get("en_route") and not peril:
+    if danger:
+        out += _rescue(world, said) + [("强撑伤势，寻隙脱身", [])]
+    elif me.get("en_route"):
         out.append((f"继续赶往{me['en_route']['to']}", [me["en_route"]["to"]]))
     for goal, meta in situation.quests(world).items():
         if goal in me["threads"]:
@@ -111,10 +115,27 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     salient = sorted(situation.around(world), key=lambda p: (-len((g.get(p, "bond") or {}).get("log", [])),
                                                           not perspective.knows(world, "player", p), p))
     out += [(f"与{perspective.handle(world, p)}攀谈", [p]) for p in salient[:2]]
-    if not peril:
+    if not danger:
         out += [(e["way"], [e["name"]]) for e in access.exits(world) if e["days"] == 0 and not e["back"]][:2]
         out.append(("歇息", []))
-    out.append(("四下察看", []))
+        out.append(("四下察看", []))
+    return out
+
+
+def _rescue(world, said=None) -> list[tuple[str, list[str]]]:
+    """危局里由状态生成的应对(v12)：冲出包围、挣脱、护住同伴、向敌对之人出言周旋。"""
+    g, out = world.graph, []
+    sieges = crowd.besiegers(world)
+    out += [(f"设法冲出{perspective.handle(world, s)}的包围", [s]) for s in sieges]
+    out += [(f"设法挣脱{perspective.handle(world, c)}", [c]) for c in situation.captors(world, "player") if c not in sieges]
+    close = situation.around(world) | set(crowd.squads(world))
+    out += [(f"护住{perspective.handle(world, p)}", [p]) for p in situation.party(world)
+            if any(c in close for c in situation.captors(world, p))]
+    around = situation.around(world)
+    foes = [c for c in situation.captors(world, "player") if c in around]
+    foes += [p for p, text in (said or {}).items() if p in around and pacing.TENSE & set(pacing.tag(text))]
+    foes += sorted(p for p in around if (bond.stance(world, p) or ("",))[0] in ("嫌恶", "仇视"))
+    out += [(f"向{perspective.handle(world, p)}出言周旋", [p]) for p in list(dict.fromkeys(foes))[:1]]
     return out
 
 
@@ -130,7 +151,7 @@ def _answer(world, p: str, said=None) -> str:
     return word.format(perspective.handle(world, p))
 
 
-def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=(), said=None) -> list[tuple[str, list[str]]]:
+def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=(), said=None, danger=None) -> list[tuple[str, list[str]]]:
     """验收编剧拟的选项，返回恰好三项 (文字, 对象)。fallback：导演旧写法给的选项或离线说书人的朴素选项；
     later：此后槽的兜底项(story/choices 看局面给出)；addressed：收尾时仍悬着话的人(adjudicate.hanging)；said：各人对主角说的那一句(定回应的措辞)。
     v12 按优先级合并，不按下标覆盖：先收编剧选项里过了验收的(保持原序)，再依次看 越权候选 > 须回应 > 此后——已满足的跳过；
@@ -211,7 +232,7 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
             if fine(text, ids, body):
                 insert((text, ids), "此后")
                 break
-    for text, ids in _fallbacks(world, fallback):
+    for text, ids in _fallbacks(world, fallback, danger, said):
         if len(picked) >= SIZE:
             break
         ids, body = take(text, ids)

@@ -1,15 +1,16 @@
 """
 [INPUT]: 依赖 story/scene（场）、story/stakes（时限）、story/arc（主角线）、story/setups（系统伏笔），world/situation 的 around，World 门面的 graph / player（鸭子类型）
-[OUTPUT]: 对外提供 compose()（本回合的场记：几行字 + 主干的来源 canon/clock/setup/scene/arc/agenda/deed）、allow_pull()（轮转：原著连占三场主干，就不再提前拉原著）、remember()（记下本回合主干的来源）、SPINES
+[OUTPUT]: 对外提供 compose()（本回合的场记：几行字 + 主干的来源 canon/clock/crisis(v12)/setup/scene/arc/agenda/deed）、allow_pull()（轮转：原著连占三场主干，就不再提前拉原著）、remember()（记下本回合主干的来源）、SPINES
 [POS]: story 层的戏剧调度器与场记——给导演的焦点：确定性地选出本回合的主干，优先级(v5，与 L1 宪法同构)
        主角眼前上演的原著(v11 场外编剧写到主角跟前的那一桩同此) > 到期的时限 > 该埋的系统伏笔 > 续场的本场之问 > 开场时眼前之人的图谋(无人、或主角线刚有进展则是主角线) > 顺着主角的举动推进；
        一场之内主干不换题，换题看哪条线有了进展，不再按回合在主角线与图谋之间机械轮换；
        轮转：最近 SPINES 回合的主干都来自原著，就不再提前拉原著(到期的照演)，让主角线有机会作主干——「段誉占四成」由此回落。
        场记是导演上下文的第一节、「至少要处理什么」而非「只处理什么」：场况与问题、主干、开场时眼前有谁(抵达即遭遇)、
-       在场各怀打算之人(不得当他们不在)、已试路数、最急的时限、主角线、伏笔、光阴与收场提示
+       在场各怀打算之人(不得当他们不在)、已试路数、最急的时限、主角线、伏笔、光阴与收场提示；
+       v12 危局：危局里新开的场主干是眼前的危局(不落回某人的图谋)；危局僵持满 STALL_WARN 回合，写明本回合须有结构性的变化
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
-from ..world import situation
+from ..world import pacing, situation
 from . import arc, scene, setups, stakes
 
 SPINES = 3
@@ -44,10 +45,13 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
     seed, back, plot = setups.plant(world), setups.payoff(world, staged), arc.line(world)
     schemers = _schemers(world)
     fresh = bool(me["arc"]) and me["arc"].get("since", -1) >= me["turn"] - 1  # 主角线刚跨进一阶
+    danger = pacing.danger(world)  # v12 危局的单一口径：开头还没有拍，读上一回合记下的逼迫
     if staged:
         spine, trunk = "canon", f"{'场外剧情' if staged.get('derived') else '原著'}「{staged['summary']}」在主角眼前上演（见后台）"  # v11 场外编剧写到主角跟前的一桩，同原著一样作主干
     elif due:
         spine, trunk = "clock", f"时限已到——{'；'.join(c['what'] for c in due)}：本回合让它有个结果"
+    elif danger and sc["state"] == "开" and sc["turns"] == 0:  # 危局里新开的场(v12)：主干是眼前的危局，不落回某人的图谋
+        spine, trunk = "crisis", f"眼前的危局（{'；'.join(danger)}）：这一场问的就是怎么脱出这一局"
     elif seed:
         spine, trunk = "setup", seed
         seed = ""
@@ -81,6 +85,9 @@ def compose(world, staged: dict | None, due: list[dict], scale: str | None = Non
         lines.append("主角上回合选的是一件持续之事：本回合略写那段光阴，pace 取那件事实际耗时，写到它有了结果或被打断")
     if scene.over(sc):
         lines.append(f"这一场已演{sc['turns']}回合：本回合必须有个结果（scene.state 写 合 或 断）")
+    if sc.get("stall", 0) >= pacing.STALL_WARN:  # 危局僵持(v12)：与场的上限并存——上限管一场演多久，僵持管危局里有没有动
+        lines.append(f"危局已僵持{sc['stall']}回合：本回合须有结构性的变化——被擒押走、脱身、有人赶来解围、谈妥罢手（了断围攻）或有人倒下；"
+                     "只扣气血、只改打算不算；上回合已说过的话不再原样重说")
     lines.append("光阴：pace 照拍里的事如实取；无人相逼时，平静的光阴(等候、练功、歇宿、赶路)用 cut 跳过，不必逐刻细磨"
                  "（可写一段长度，或 {\"until\":\"入夜/天明/正午/某个时限\"}）；本场有了结果才写合")
     return {"text": "\n".join(lines), "spine": spine, "tension": scene.tension(sc, bool(hurry and hurry[1] == "迫在眉睫"))}

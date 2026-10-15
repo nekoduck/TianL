@@ -92,7 +92,8 @@ class FallbackTest(unittest.TestCase):
         texts = self.texts()
         self.assertNotIn("歇息", texts)
         self.assertNotIn("出练武厅", texts)                                               # 命悬一线：不给走开
-        self.assertIn("四下察看", texts)
+        self.assertIn("强撑伤势，寻隙脱身", texts)                                       # v12 危局兜底由状态生成，不再是「四下察看」
+        self.assertNotIn("四下察看", texts)
 
 
 if __name__ == "__main__":

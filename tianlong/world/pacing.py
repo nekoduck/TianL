@@ -1,6 +1,6 @@
 """
-[INPUT]: 依赖 re，world/situation 的 captors / imperiled（幕间省略的闸门）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
-[OUTPUT]: 对外提供 THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
+[INPUT]: 依赖 re，world/situation 的 captors / imperiled / around / party / FOLLOW / CUSTODY、world/crowd 的 besiegers / squads / handle（v12 危局的单一口径）；World 门面的 player / here（鸭子类型）；本回合导演已成立的拍与「局面是否有了物理变化」由引擎给出
+[OUTPUT]: 对外提供 danger()（v12 危局的单一口径）、structural()（v12 结构性变化）、STALL_WARN、THEMES / tag()（一段文字的主题标签）、record()（把本回合记进节奏账）、tired()（打转的主题或诉求，纯函数）、UNTIL（幕间省略可等到的时刻）、
           advise()（给导演后台的阻尼提示）、calm()（幕间省略的闸门：无人相逼、本幕未被打断才许光阴跳过——v5 悬而未决的一幕也可隔夜）、CUTS、STREAK / WINDOW / LOG
 [POS]: world 层的阻尼器——慢变量之外，剧情还会在「快变量」上打转：连着几回合都是被拦、赔罪、催促，同一个人反复同一句诉求，
        主角在一处僵持多回合而局面纹丝不动（43 回与 25 回两份实录里都见过）。这里只做确定性统计：按词表给每回合打主题标签、
@@ -9,11 +9,12 @@
        不调 LLM、不改世界，只给导演一句话——阻尼，不是禁令之外的另一套规则。
        光阴分两段：戏内光阴(pace，举动本身耗时)与幕间省略(cut，一幕了结后跳到下一处有戏的时刻)；后者是场面结构的决定，由 calm 把关——
        25 回实录里导演回回取「片刻」，因为一回合只写到此刻为止的三五拍，戏内光阴本就是片刻，缺的是幕与幕之间的空白
+       v12 危局的单一口径 danger：选项槽位、兜底、合场、主干、僵持提示、幕间省略都读它；structural 判结构性变化(合场与僵持押走共用)
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
 import re
 
-from . import situation
+from . import crowd, situation
 
 # 主题词表：只认强字眼，宁漏勿滥——漏了不过少一句提示，滥了会把正常的戏也拦下
 THEMES = {
@@ -31,6 +32,7 @@ LOG = 6      # 节奏账只留最近几回合
 CUTS = ("一顿饭", "半日", "一夜", "一日")  # 幕间省略可取的措辞：戏内光阴归 pace，幕与幕之间的空白归 cut
 UNTIL = ("入夜", "天明", "正午")             # 幕间省略也可以是「到某一刻」：{"until": 入夜/天明/正午/某个时限}，换算归 story/timing
 TENSE = {"拦阻", "追杀"}                   # 本回合还在写这些，局面就没有平静下来
+STALL_WARN = 3                             # 危局僵持几回合，场记要求本回合须有结构性的变化(v12)
 
 
 def tag(text: str) -> list[str]:
@@ -38,27 +40,68 @@ def tag(text: str) -> list[str]:
 
 
 def record(world, beats: list[dict], changed: bool):
-    """beats：本回合已成立的拍 {who, to, text}；changed：局面有无物理变化(去留、得失、生死、随行拘押、研习…)。"""
+    """beats：本回合已成立的拍 {who, to, text}；changed：局面有无物理变化(去留、得失、生死、随行拘押、研习…)。
+    v12 另记 pressed(当回合是否处在危局里)与 tense(对主角的拦阻追杀)：下回合开头还没有拍时，danger 读它。"""
     me = world.player
     themes = sorted({t for b in beats for t in tag(b.get("text"))})
     pleas = sorted({f"{b['who']}|{t}" for b in beats if b.get("to") == "player" and b.get("who") not in (None, "player")
                     for t in tag(b.get("text"))})
-    log = (me.get("pacing") or []) + [{"themes": themes, "pleas": pleas, "place": world.here, "still": not changed}]
+    log = (me.get("pacing") or []) + [{"themes": themes, "pleas": pleas, "place": world.here, "still": not changed,
+                                       "pressed": bool(danger(world, beats)), "tense": _pressing(beats)}]
     me.set("pacing", log[-LOG:])
 
 
-def calm(world, state: str, beats=()) -> str | None:
+def _pressing(beats) -> list[str]:
+    """拍里对主角的拦阻、追杀：只算对主角说的拍(to 为 player)或写着「你」的拍——厅上左子穆喝止龚光杰不是冲你来的。"""
+    return sorted(TENSE & {t for b in beats or () if b.get("to") == "player" or "你" in (b.get("text") or "") for t in tag(b.get("text"))})
+
+
+def danger(world, beats=None) -> list[str]:
+    """危局的单一口径(v12)：选项槽位、兜底、合场、主干、僵持提示、幕间省略都读它。返回缘由，空即平静——
+    主角被一群人围住、受制于人；命悬一线；同行之人受制于眼前之人；拍里有人拦阻、追杀主角(_pressing)。
+    beats 为 None(回合开头还没有拍)时，拦阻追杀读节奏账上一回合记下的(tense)。"""
+    g, out = world.graph, []
+    sieges = crowd.besiegers(world)
+    if sieges:
+        out.append(f"主角被{'、'.join(crowd.handle(g, s) for s in sieges)}围住")
+    if [c for c in situation.captors(world, "player") if c not in sieges]:
+        out.append("主角受制于人")
+    if situation.imperiled(world):
+        out.append("主角命悬一线")
+    close = situation.around(world) | set(crowd.squads(world))
+    for p in situation.party(world):
+        by = [crowd.handle(g, c) if crowd.is_squad(g, c) else c for c in situation.captors(world, p) if c in close]
+        if by:
+            out.append(f"{p}受制于{'、'.join(by)}")
+    tense = _pressing(beats) if beats is not None else ((world.player.get("pacing") or [{}])[-1].get("tense") or [])
+    if tense:
+        out.append(f"局面仍紧（{'、'.join(tense)}）")
+    return out
+
+
+def structural(applied: list, moved: bool = False) -> bool:
+    """结构性变化(v12)：主角挪了步，或有人去留(前往、赶来)、易手(持有、随身、银两、买卖)、身死、随行与拘押的结下或了断、人群有人倒下。
+    扣血、打算、神色、看法不算——危局里只有这些，局面便没有动。放在 world 层：story 的合场与 adjudicate 的僵持押走都用它。"""
+    if moved:
+        return True
+    for op in applied:
+        kind, key = op.get("op"), op.get("key")
+        if kind in ("arrive", "money", "trade", "squad") or (kind == "set" and key in ("location", "holder")) \
+                or (kind in ("push", "pull") and key == "inventory") or (kind == "set" and key == "status" and op.get("value") == "dead") \
+                or (kind in ("link", "unlink") and (op.get("rel") == situation.FOLLOW or op.get("rel") in situation.CUSTODY)):
+            return True
+    return False
+
+
+def calm(world, state: str, beats=None) -> str | None:
     """幕间省略的闸门：无人相逼，光阴才可跳过；否则返回不许跳的缘由。
     省略是场面结构的决定，不是举动的时长——刀架在脖子上时，没有「半日之后」。
-    v5：本幕之问未了而局面平静(等人、练功、赶路)也可跳——悬着的事隔一夜还悬着；不再逼导演为了跳过光阴把一场硬写成「合」。被打断的一幕不跳。"""
+    v5：本幕之问未了而局面平静(等人、练功、赶路)也可跳——悬着的事隔一夜还悬着；不再逼导演为了跳过光阴把一场硬写成「合」。被打断的一幕不跳。
+    v12：本幕刚被打断，或处在危局里(danger，与选项、合场同一口径)。"""
     if state == "interrupted":
         return "本幕刚被打断"
-    if situation.captors(world, "player"):
-        return "主角受制于人"
-    if situation.imperiled(world):
-        return "主角命悬一线"
-    tense = TENSE & {t for b in beats for t in tag(b.get("text"))}
-    return f"局面仍紧（{'、'.join(sorted(tense))}）" if tense else None
+    why = danger(world, beats)
+    return why[0] if why else None
 
 
 def tired(log: list[dict], field: str = "themes") -> list[str]:

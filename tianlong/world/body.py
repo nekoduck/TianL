@@ -1,11 +1,11 @@
 """
 [INPUT]: 依赖 world/situation 的 around（身边之人）、world/actor 的 vitals / mend / conditions / set_conditions（任何人的身体），World 门面的 graph / player / clock / seed / turn（鸭子类型）
 [OUTPUT]: 对外提供 fate()（本回合的命运骰）、INJURIES / severity() / injure() / relieve() / recover()（内伤分层与病程）、
-          risk() / forecast()（研习预裁）、wound()（伤势措辞）、INNER（拍文与境况里说的内伤）
+          risk() / forecast()（研习预裁）、wound() / WELL / GRAVE（伤势措辞；v12 五成以下重伤、命悬一线与 situation.PERIL 同一判定）、INNER（拍文与境况里说的内伤）
 [POS]: world 层的身体规则——与 growth（进境与功力）互为表里：growth 算「学到多少」，body 算「学得顺不顺、伤得多重、好得多快」。
        研习预裁与较量预裁同构：命运骰 + 懂行之人 + 伤势 → 顺利 / 小有所得 / 受阻 / 岔气，导演只演出、不得自编反噬；
        内伤是境况里的一个分级词（内息紊乱 → 经脉受损 → 经脉重创），只由规则升降：强练岔气至多一回合升一级，歇息与疗伤降级。
-       伤势措辞以气血与内伤共同定：重伤只给气血三成以下或经脉受损以上——不再一掉血就重伤。
+       伤势措辞以气血与内伤共同定：重伤只给气血五成以下(v12，原为三成)或经脉受损以上——不再一掉血就重伤；命悬一线与 situation.imperiled 同一判定。
        主角与 NPC 同构(v4)：内伤升降、伤势措辞、歇息养伤对任何人成立(who 缺省为主角)，一回合各人至多升降一级；光阴流过，天下负伤之人一同将养
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -95,7 +95,8 @@ def recover(world, minutes: int) -> str:
 
 
 # 气血不报数字，只报身况：(气血比例下限, 措辞, 语气)；语气 plain/warn/alert 交由表现层决定着色
-WOUNDS = ((0.8, "安然无恙", "plain"), (0.3, "轻伤", "warn"), (0.12, "重伤", "warn"), (0.0, "命悬一线", "alert"))
+WELL, GRAVE = 0.8, 0.5   # v12：五成以下即重伤(33/100 不再报轻伤，五成半仍是轻伤)；不超过 situation.PERIL 即命悬一线——与兜底、后台、危局同一口径，NPC 同此比例
+WOUNDS = ((WELL, "安然无恙", "plain"), (GRAVE, "轻伤", "warn"), (0.0, "重伤", "warn"))
 
 
 def wound(world, who: str = "player") -> tuple[str, str]:
@@ -104,6 +105,8 @@ def wound(world, who: str = "player") -> tuple[str, str]:
         return "已故", "alert"
     hp, cap = actor.vitals(world, who)
     ratio, level = hp / cap, severity(world, who)
+    if ratio <= situation.PERIL:
+        return "命悬一线", "alert"
     text, tone = next((t, tone) for floor, t, tone in WOUNDS if ratio >= floor)
     if level >= 2 and text in ("安然无恙", "轻伤"):
         return "重伤", "warn"
