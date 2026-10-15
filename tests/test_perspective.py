@@ -4,7 +4,7 @@
           开局只识出身带来的人与当众主持剑会的掌门、无名之辈不在开局常识里、叫出不知其名之人(全名或姓+称谓)即违例、
           NPC 不知主角姓名却叫「王兄」即违例、自报家门与当面点名让在场者听来名字、编剧从主角视角看世界(只剩外貌叫法、不露身份)、
           交编剧之前与成文之后确定性地把漏出的名字换成叫法与泛称(编剧熟读原著，名字可能是它自己带来的)、编剧与玩家用的叫法落得回实体；
-          v12 A5：编剧提示词全文(连同【选项槽位】)没有未识之人的真名与「图谋」，C 槽读看得见的眼下之事
+          v12 A5：编剧提示词全文(连同【选项槽位】)没有未识之人的真名与「图谋」，C 槽读看得见的眼下之事；C2 外号示例是占位、赶来即到跟前
 [POS]: tests 的认知视角验证——v3 方案 P0-2「视角即上下文」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -88,6 +88,18 @@ class PerspectiveTest(unittest.TestCase):
             self.assertNotIn(word, prompt)
         self.assertIn("青衫少年眼下：护着大眼圆脸的少女离开练武厅", prompt)             # C 槽读看得见的眼下之事
 
+
+
+class DirectorPromptTest(unittest.TestCase):
+    """v12 C2：外号示例不拿原著人物(17 次导演调用都带着「钟灵→绿衫少女」，第 11 回导演照写「那乘马绿衫少女」而没有事码)；写明「赶来」即到跟前。"""
+
+    def test_the_example_is_a_placeholder_and_arrival_means_at_hand(self):
+        from tianlong.narrative import prompts
+        from tianlong.world import rag
+        system = prompts._director_system(rag.build(World.create("测")))
+        self.assertNotIn("绿衫少女", system)
+        self.assertIn("<正文里的叫法>", system)
+        self.assertIn("赶来就是来到主角跟前、伸手可及", system)                        # 第 11 回：崖下山道间的人用了赶来，账上却到了崖上
 
 if __name__ == "__main__":
     unittest.main()
