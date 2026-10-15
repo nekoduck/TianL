@@ -101,5 +101,56 @@ class DirectorPromptTest(unittest.TestCase):
         self.assertIn("<正文里的叫法>", system)
         self.assertIn("赶来就是来到主角跟前、伸手可及", system)                        # 第 11 回：崖下山道间的人用了赶来，账上却到了崖上
 
+
+class IdentityTest(unittest.TestCase):
+    """v12 P1-5 识名不等于识底：第 2 回段誉自报「小生段誉」，同回编剧视锥里就是「段誉｜镇南王世子｜大理国」与「段正淳—父子—段誉」，
+    选项出了「借机结交世子」；第 15 回又出「报出大理段氏之名以骇退帮众」。"""
+
+    def test_a_name_alone_does_not_bare_the_background(self):
+        from tianlong.narrative import prompts
+        w = World.create("测")
+        perspective.learn(w, "player", "段誉")                                         # 只报了姓名
+        view = perspective.veil(w, rag.build(w))
+        duan = next(p for p in view["people"] if p["name"] == "段誉")
+        self.assertEqual((duan["title"], duan["faction"]), ("来历未明", "门派不明"))
+        text = prompts.render(view)
+        for word in ("镇南王世子", "大理国", "段正淳—父子—段誉"):
+            self.assertNotIn(word, text)
+        zuo = next(p for p in view["people"] if p["name"] == "左子穆")
+        self.assertEqual(zuo["title"], "无量剑东宗掌门")                                 # 当众主持的掌门：识名即识底
+
+    def test_fame_reads_the_end_of_each_title(self):
+        from tianlong.world import ledger
+        g = World.create("测").graph
+        fame = lambda p: ledger.famous(g.nodes[p])
+        self.assertFalse(fame("小兰"))                                                  # 王家婢女：中间带个王字不算闻名
+        self.assertFalse(fame("段誉"))                                                  # 世子不在词表里
+        self.assertTrue(fame("段正淳") and fame("司空玄"))                              # 皇太弟、镇南王；神农帮帮主
+        self.assertTrue(fame("刀白凤") and fame("宗赞王子"))                              # 镇南王妃、吐蕃王子：补了王妃、王子
+
+    def test_saying_the_title_with_the_name_bares_it(self):
+        from tianlong.world import effects
+        w = World.create("测")
+        ops = perspective.hear(w, "段誉拱手道：「小生大理段誉，乃镇南王世子。」", "段誉")
+        self.assertEqual(ops[0].get("know"), "身份")                                     # 报名的那一句里说破了来历
+        w.turn = {}
+        effects.apply(w, ops, "director")
+        self.assertTrue(perspective.identified(w, "段誉"))
+        w2 = World.create("测")
+        effects.apply(w2, perspective.hear(w2, "段誉拱手道：「小生段誉。」", "段誉"), "director")
+        self.assertTrue(perspective.knows(w2, "player", "段誉"))
+        self.assertFalse(perspective.identified(w2, "段誉"))                            # 只报姓名：识名不识底
+        effects.apply(w2, [{"做": "识名", "谁": "段誉", "知": "身份"}], "director")
+        self.assertTrue(perspective.identified(w2, "段誉"))                              # 名字早已知道：说破来历仍是一件事
+
+    def test_an_old_save_without_the_ledger_loads(self):
+        w = World.create("测")
+        perspective.learn(w, "player", "段誉")
+        old = w.dump()
+        old["player"].pop("identified")
+        w2 = World.from_dump(old)
+        self.assertTrue(perspective.identified(w2, "段誉"))                              # 旧档：叫得出名字的人照旧当作识底
+        self.assertTrue(perspective.identified(w2, "司空玄"))
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,7 @@
          world/growth 的 study / drain / DRAINERS（数值规则）、world/body 的 INNER / injure / relieve（内伤分级，任何人）、
          world/actor 的 hurt / declare / feel（任何人的气血、生死与心境）、world/bond 的 attitude（态度 link 化作关系账上的事件）、world/graph 的 ROAD、world/clock 的 PER_DAY，
          world/acts 的 expand / perform / is_act / describe（v9 事码）、world/crowd 的 besiegers / is_squad / handle（人群与围攻）、world/stock（银两与数量的说法），World 门面的 graph / player / knowledge / here / taint / turn（鸭子类型）
-[OUTPUT]: 对外提供 SOFT_KEYS（v12 人的软状态）、apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
+[OUTPUT]: 对外提供 SOFT_KEYS（v12 人的软状态）、KNOW（v12 识名指令连来历一并说破）、apply()（规整→校验→落账剧情后果）、describe()（把一条指令译成人话，供回告编剧）、resolve()（别名/名号/近处子地点的短名/器物近似名→id）、
           named() / naming()（v6 识名指令：是不是、几种写法规整成 reveal{id}）、
           unearth()（导演要立的物件认作现场既有的器物——v8 物件不再另立，认得回就用它）、
           place()（任一节点此刻所在之地）、things()（v11 此刻在某几处的器物：地上的连同那里的人手里的，按索引取、与 place 同一口径）、usable()、destination()（一条指令或事码里主角要去的地方）、OPS、STATUSES、MOVERS
@@ -64,7 +64,7 @@ from .graph import PLIGHT, ROAD
 OPS = {"set", "add", "push", "pull", "link", "unlink", "reveal", "arrive", "study", "drain"}
 STATUSES = {"alive", "wounded", "dead"}
 FROZEN_PLAYER_KEYS = {"name", "journal", "max_hp", "quests", "study", "hooks", "turn", "acquaintances", "cast", "pacing", "came_from", "en_route", "money",
-                      "drift", "scene", "clocks", "arc", "spines", "setups", "met"}
+                      "drift", "scene", "clocks", "arc", "spines", "setups", "met", "identified"}
 PLAYER_ALIASES = {"姿态": "posture", "气血": "hp", "功力": "power", "物品": "inventory", "随身": "inventory",
                   "武学": "skills", "武功": "skills", "位置": "location", "所在": "location"}
 TERRAIN = {"location", "feature"}               # 地理：定义由创世数据给出，剧情只能改变其现状(state)
@@ -79,6 +79,7 @@ NOTE_LEN = 40                                    # 关系边上的印象一句�
 SENTENCE = {"intent": actor.INTENT_LEN, "mood": actor.MOOD_LEN, "spot": 16}  # 人物身上的一句话属性；器物在一处地方的方位(v8)
 STATUS_WORDS = {"alive": "安好无恙", "wounded": "负伤", "dead": "身亡"}
 NAME = "name"                                    # reveal 的 id 形(v6)：某人的姓名被说了出来——认知唯一的落账通道
+KNOW = "身份"                                    # reveal 的 id 形另带 know(v12)：连来历(头衔、门派)一并说破——主角在场即识底
 SOFT_KEYS = {"intent", "mood", "epithet", "agenda"}  # 人的软状态(v12)：打算、神色、外号、志向——本回合见过的人即可落账，不是物理
 NAMEISH = {"姓名", "名字", "名号", "名姓", "真名", "身份", "来历", "name"}  # reveal 写成关系形、rel 说的是姓名
 
@@ -230,7 +231,7 @@ def describe(op) -> str:
     if kind == "drain":
         return f"主角吸取{v}的内力"
     if kind == "reveal" and key == NAME:
-        whose = "主角的名号" if nid == "player" else f"{nid}的姓名"
+        whose = "主角的名号" if nid == "player" else f"{nid}的姓名" + ("与来历" if op.get("know") == KNOW else "")
         return f"{name(op['to'])}得知{whose}" if op.get("to") else f"在场之人得知{whose}"
     if kind == "reveal" and op.get("rel") == ROAD:
         return f"发现{op.get('src')}与{op.get('dst')}之间的暗路"
@@ -291,6 +292,7 @@ def _naming(world, op):
     set epithet 为其本名(给段誉立外号「段誉」)、reveal 的关系形 rel=姓名、push 主角的 acquaintances 或某人的 knows。"""
     g, kind, key = world.graph, op.get("op"), op.get("key")
     person = lambda x: x == "player" or g.kind(x) == "person"
+    know = op.get("know")  # 连来历一并说破(v12 识底)：规整之后照带着
     if kind == "reveal" and op.get("rel") in NAMEISH and person(op.get("src")):
         who, to = op["src"], op.get("dst")
     elif kind == "reveal" and "src" not in op and "dst" not in op and op.get("id"):
@@ -303,7 +305,7 @@ def _naming(world, op):
     else:
         return
     op.clear()
-    op.update({"op": "reveal", "id": who, "key": NAME, **({"to": to} if person(to) else {})})
+    op.update({"op": "reveal", "id": who, "key": NAME, **({"to": to} if person(to) else {}), **({"know": KNOW} if know == KNOW else {})})
 
 
 def naming(world, op) -> dict | None:
@@ -692,6 +694,8 @@ def _exec_one(world, op, origin):
     elif named(op):  # 姓名被说了出来：此刻在场的人都听见了(to 则只那一人)
         for who in _hearers(world, op):
             perspective.learn(world, who, op["id"])
+        if op.get("know") == KNOW and op.get("to") in (None, "player"):  # 连来历一并说破(v12)：主角听见即识底
+            perspective.identify(world, op["id"])
     elif kind == "reveal":
         if origin == "director":  # 远方原著揭开的身世，主角不会当场知道：随事件入账，由 Knowledge.learn 按传闻或亲历送达
             world.knowledge.reveal(op["src"], op["dst"], op["rel"])
@@ -789,8 +793,9 @@ def _noop(world, op) -> bool:
     """原样不动的指令：人已在那里、物已在那人手里、关系本就如此——不是一件事，不入账、不成传闻(v5)。
     「龚光杰前往剑湖宫·练武厅」而他本就站在那里，写进传闻便是一句假话。主角本人的指令只认一种：去他已经站着的地方。"""
     g, kind = world.graph, op.get("op")
-    if named(op):  # 人人早已知道他叫什么：不是一件事
-        return all(perspective.knows(world, who, op.get("id")) for who in _hearers(world, op))
+    if named(op):  # 人人早已知道他叫什么：不是一件事(v12 连来历一并说破而主角还不识底，仍是一件事)
+        fresh = op.get("know") == KNOW and op.get("to") in (None, "player") and not perspective.identified(world, op.get("id"))
+        return not fresh and all(perspective.knows(world, who, op.get("id")) for who in _hearers(world, op))
     if kind in ("link", "unlink") and all(isinstance(op.get(k), str) for k in ("src", "dst", "rel")):
         has = any(e["src"] == op["src"] and e["dst"] == op["dst"] and e["rel"] == op["rel"] for e in g.edges)
         return has if kind == "link" else not has

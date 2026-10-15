@@ -18,7 +18,7 @@ from . import bond, effects, genesis, lore, perspective, rag, situation, venue
 from .blackboard import ORIGINS, Blackboard
 from .clock import Clock
 from .graph import PLIGHT, ROAD, Graph
-from .ledger import Knowledge, Messenger, Truth
+from .ledger import Knowledge, Messenger, Truth, famous
 
 
 def _lay(graph: Graph, d: dict):
@@ -147,6 +147,9 @@ class World:
         if "acquaintances" not in d["player"]:  # 旧档没有识名账：出身里的人与已有交情的人算作相识
             perspective.seed(world, {e["src"] if e["dst"] == "player" else e["dst"] for e in world.graph.edges
                                      if "player" in (e["src"], e["dst"])} - {"player"})
+        if "identified" not in d["player"]:  # 旧档没有识底账(v12)：叫得出名字的人照旧当作识底(与读档前所见一致)，闻名之人开局即识底
+            for p in [*world.player["acquaintances"], *(n for n in world.graph.of("person") if famous(world.graph.nodes[n]))]:
+                perspective.identify(world, p)
         bond.migrate(world)  # 旧档里某人对主角的态度边折成恩怨账上的事件(v4)
         for node in world.graph.nodes.values():  # 旧档没有剧情上的伤(v5)：此刻带伤的人补记一笔，原著前提不因读档而断
             if node.get("type") == "person" and node.get("status") == "wounded" and PLIGHT not in node:
