@@ -6,7 +6,7 @@
           研习分阶段(一刻调息不涨功力)、吸功双边结算、导演不得直接加功力、赶来须路程够、场景实体的归属与禁令(v8 物件一概不立)、
           拍文写了变化却无指令即违例并交导演返工、返工仍不成立则整拍作废、只追认获救(解押)、漏写的随行交导演写明、
           越权之举不演而成下回合选项、打断须有来源、选项出口检查(够不着/说破隐情/须回应)、伏笔记账、回放基准量得出旧对局的违例；
-          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)
+          v12 选项链路(OptionChainTest)：授意标记不当选项对象(A1)；TopicTest：话题里的人不验可达、眼前的遗体够得着、对象栏认人群叫法(A2)；DedupeTest：对象相同且文字相近才去重(A3)；ReplyTest：须回应只认收尾时仍悬着的话、按优先级合并(A4)
 [POS]: tests 的裁决层验证——「LLM 提议，世界裁决，文字只渲染已成立之事」的离线证据
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -14,7 +14,7 @@ import unittest
 
 from tests.test_engine import StubLLM, WRITER
 from tianlong.engine import Game
-from tianlong.world import adjudicate, growth, lexicon, lod, menu, rag, situation
+from tianlong.world import adjudicate, growth, lexicon, lod, menu, perspective, rag, situation
 from tianlong.world.world import World
 
 GO = lambda dest: {"op": "set", "id": "player", "key": "location", "value": dest}
@@ -327,6 +327,65 @@ class DedupeTest(unittest.TestCase):
 
     def setUp(self):
         self.w = cliff()
+
+
+class ReplyTest(unittest.TestCase):
+    """A4：须回应只认收尾时仍悬着的话；候选、回应、此后按优先级合并，不按下标覆盖。"""
+
+    def setUp(self):
+        self.w = World.create("测")
+
+    def opts(self, *texts, scales=()):
+        return [{"text": t, "targets": [], **({"scale": scales[i]} if scales else {})} for i, t in enumerate(texts)]
+
+    def test_candidate_and_reply_both_stay_with_one_of_the_writers(self):
+        w = self.w
+        mine = ("护着段誉退向宫门", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(w, self.opts(*mine), addressed=["干光豪"], candidates=["取走辛双清的长剑"])]
+        self.assertIn("取走辛双清的长剑", texts)                                         # 越权候选
+        self.assertIn(f"回应{perspective.handle(w, '干光豪')}", texts)                  # 须回应
+        self.assertEqual(texts[0], mine[0])                                             # 编剧原拟至少留一项
+
+    def test_the_one_that_gives_way_repeats_a_target(self):
+        mine = ("挟持段誉保命", "劝段誉讲和离去", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(self.w, self.opts(*mine), addressed=["干光豪"])]
+        self.assertEqual(texts[:2], ["挟持段誉保命", "抓起剑架上的青钢剑防身"])       # 让位的是对象重复的那一项，不是固定的第三项
+
+    def test_three_wants_insert_only_two(self):
+        mine = ("挟持段誉保命", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        later = [("寻个僻静处歇息养伤（两个时辰）", [])]
+        texts = [t for t, _ in menu.check(self.w, self.opts(*mine, scales=("此刻", "此刻", "机缘")), addressed=["干光豪"],
+                                          candidates=["取走辛双清的长剑"], later=later)]
+        self.assertEqual(sum(t in mine for t in texts), 1)                              # 强插至多两项
+        self.assertNotIn(later[0][0], texts)                                            # 第三条要求作罢
+
+    def test_only_the_last_two_beats_still_hang(self):
+        w = self.w
+        r = judge(w, plan(("player", "你上前一步", []), ("龚光杰", "龚光杰喝道：「你是什么来历？」", [], "player"),
+                          ("左子穆", "左子穆喝止龚光杰", [], "龚光杰"), (None, "容子矩一声闷哼，倒在地上", []),
+                          ("左子穆", "左子穆转向辛双清拱手", [], "辛双清")))
+        self.assertEqual(adjudicate.hanging(w, r), [])                                  # 第 3、4、8 回：那句话之后又过了三四拍
+        mine = ("护着段誉退向宫门", "向左子穆陈说利害", "抓起剑架上的青钢剑防身")
+        self.assertEqual([t for t, _ in menu.check(w, self.opts(*mine), adjudicate.hanging(w, r))], list(mine))
+        w = World.create("测")
+        r = judge(w, plan(("player", "你上前一步", []), ("左子穆", "左子穆道：「阁下请坐。」", [], "player"),
+                          ("干光豪", "干光豪喝道：「你是何人？报上名来！」", [], "player"), ("马五德", "马五德向左子穆赔笑", [], "左子穆")))
+        self.assertEqual(adjudicate.hanging(w, r), ["干光豪"])
+        first = [{"text": "冷冷瞪了持剑少年一眼", "targets": ["干光豪"]}, {"text": "向左子穆陈说利害", "targets": []},
+                 {"text": "抓起剑架上的青钢剑防身", "targets": []}]
+        self.assertEqual([t for t, _ in menu.check(w, first, adjudicate.hanging(w, r))][1:], ["向左子穆陈说利害", "抓起剑架上的青钢剑防身"])
+        mine = ("挟持段誉保命", "劝段誉讲和离去", "抓起剑架上的青钢剑防身")
+        texts = [t for t, _ in menu.check(w, self.opts(*mine), adjudicate.hanging(w, r), said=adjudicate.lines_to_player(w, r))]
+        self.assertIn(f"答{perspective.handle(w, '干光豪')}所问", texts)                # 回应的措辞按那一句的主题：盘问即答其所问
+
+    def test_who_has_walked_off_is_not_owed_a_reply(self):
+        def turn(ops):
+            llm = StubLLM({"说书人与导演": {"beats": [{"who": "干光豪", "to": "player", "text": "干光豪喝道：「哼，你等着！」", "ops": ops}],
+                                       "pace": "瞬息"}})
+            Game(World.create("测"), llm).act("看")
+            return llm.writer_prompts[-1]
+        self.assertIn("【须回应】", turn([]))
+        self.assertNotIn("【须回应】", turn([{"做": "前往", "谁": "干光豪", "到": "无量山"}]))  # 回合末已不在眼前
 
 
 class ReplayBaselineTest(unittest.TestCase):

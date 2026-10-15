@@ -1,7 +1,7 @@
 """
 [INPUT]: 依赖 story/stakes（时限）、story/timing 的 study_minutes 与 world/clock 的 span（选项上写的耗时与规则主张同一张表）、world/growth 的 studiable / progress（研习对象与进度）、world/access 的 exits（出路与日程）、world/situation 的 imperiled / captors / quests、
          world/body 的 severity，world/perspective 的 handle；World 门面的 player / graph（鸭子类型）
-[OUTPUT]: 对外提供 slots()（给编剧的三个槽位：此刻 / 此后 / 机缘，各写明它要回答什么与可用的素材）、later()（此后槽的兜底项 [(文字, 对象)]，供 menu.check 补位）、
+[OUTPUT]: 对外提供 slots()（给编剧的三个槽位：此刻 / 此后 / 机缘，各写明它要回答什么与可用的素材；v12 收尾时仍悬着话的人平常写进 A 槽、险境写进 B 槽：在举动里顺带回应他）、later()（此后槽的兜底项 [(文字, 对象)]，供 menu.check 补位）、
           SCALES、peril()
 [POS]: story 层的选项编排——选项从「正文的附录」变成「先定槽位、再让编剧措辞」：
        A 此刻：用还没试过的路数推进本场之问；B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、找人)，写出代价；C 机缘：一个两难或机会(时限冲突、图谋的破绽)。
@@ -38,15 +38,17 @@ def later(world) -> list[tuple[str, list[str]]]:
     return out
 
 
-def slots(world) -> list[str]:
-    """给编剧的三个槽位说明(每行一个)。"""
+def slots(world, addressed=()) -> list[str]:
+    """给编剧的三个槽位说明(每行一个)。addressed：收尾时仍悬着话的人(叫法，v12)——平常写进 A 槽、险境写进 B 槽：在举动里顺带回应他，兜底便少用。"""
     sc, hurry = world.player["scene"] or {}, stakes.urgent(world)
+    reply = f"；{'、'.join(addressed)}刚对你说了话：在举动里顺带回应他" if addressed else ""
     a = f"A 此刻：用一种还没试过的路数(力、智、情、术、退)推进本场之问「{sc.get('ask') or '眼前之事'}」"
     if sc.get("tried"):
         a += f"（已试：{'、'.join(sc['tried'][-3:])}）"
     if peril(world):
-        b = "B 此后→此刻：主角身处险境，这一项改为脱身或自保的此刻之举"
+        b = "B 此后→此刻：主角身处险境，这一项改为脱身或自保的此刻之举" + reply
     else:
+        a += reply
         stuff = [t for t, _ in later(world)]
         b = "B 此后：一件持续之事或一次过场(赶路、研习、养伤、等人、去找某人)，写出代价或耗时" + (f"；可用：{'、'.join(stuff)}" if stuff else "")
     hooks = []

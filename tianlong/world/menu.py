@@ -1,19 +1,24 @@
 """
 [INPUT]: 依赖 world/trade 的 shop（v12 此处的铺子）、world/effects 的 resolve / place / usable、world/access 的 distances / exits(方向措辞与来路)、world/situation 的 around / party / quests / captors / imperiled、
-         world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked（v12 授意标记不是实体），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
-[OUTPUT]: 对外提供 SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
+         world/lexicon 的 leaks / secret_hits、world/pacing 的 tired（一再重复的诉求）、world/adjudicate 的 names / targets / marked / pick（v12 授意标记不是实体、对象栏的名字）、world/scenery 的 TRIFLE 与 world/stock 的 is_cash（v12 让位先挑只指着琐物碎银的），world/perspective 的 handle（不识名之人的叫法），World 门面（graph / player / knowledge / here）
+[OUTPUT]: 对外提供 FORCED / ANSWER（v12 强插至多几项、回应的措辞）、SHOPPING（v12 离不开铺子的事）、TOPIC（v12 话题里的人：名字前后的字眼）、SIMILAR / alike()（v12 两句是不是同一件事：去标点后的二字组 Jaccard）、check()（编剧拟的选项过出口检查 → [(文字, 对象 id 列表)] 恰好三项；later 是此后槽的兜底项，标了尺度而没有此后之事时补位）
 [POS]: world 层的选项出口检查——选项在落账之后由编剧拟定，再由规则验收：对象须够得着或走得到、不得说破未揭的隐情与后台术语、
        三项各不相同、至少一件「此后」之事(槽位覆盖，v4；险境里不要求)、兜底攀谈先找与主角有过交集的人、再找叫得出名字的人(v5，不按字码挑人)、有人刚对主角开口则至少一项回应他(一再重复同一诉求者除外，见 pacing)、主角上回合越权未演之举优先补进来；不合格的项以规则生成的兜底项替换——兜底看局面：途中先给续行，出路按方向措辞、不走回头路、不报节点全名，身处险境(命悬一线、受制于人)只给眼前的应对，不给走开与歇息；对不识名之人只用叫法。
        对象随选项一并交还引擎，玩家选中即成为下一回合的授意范围——选项与授意从此是同一份数据
        v12 选项链路：授意标记(@书写、@交易)不是实体，可达与去重只看实体、交还的对象不带标记(下回合引擎从原话重算)；买卖住店雇人此处没有铺子也没有当值伙计即办不成；
-       只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路
+       只对物理对象验可达、话题放行——【对象】栏的实体与文字里的人是物理对象(报某人之名、问起某人的下落不是)，对象栏不空时文字里的地点器物是话题；眼前的遗体够得着；对象相同且文字相近才去重——同指段誉的挟持与劝和是两条路；
+       按优先级合并、不按下标覆盖(越权候选 > 须回应 > 此后，已满足的跳过；满了才让位，强插至多两项、编剧原拟至少留一项)，须回应只认收尾时仍悬着的话(adjudicate.hanging)，措辞按那一句的主题
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
+import logging
 import re
 
-from . import access, adjudicate, effects, lexicon, pacing, perspective, situation, trade
+from . import access, adjudicate, effects, lexicon, pacing, perspective, scenery, situation, stock, trade
 
+log = logging.getLogger("tianlong")
 SIZE = 3
+FORCED = 2  # 强插(让位)至多几项(v12)：编剧原拟至少留一项
+ANSWER = (("盘问", "答{}所问"), ("拦阻", "与{}理论去留"), ("催促", "依{}所言"), ("赔罪", "受{}这一礼"))  # 回应的措辞按那一句的主题(v12)
 SEEK = re.compile(r"寻|找|去|往|赴|追|访|打听|探听|等候|守候|求见|传信|捎信|托人")  # 指向不在身边之人的选项，须是去找他、打听他
 SHOPPING = re.compile(r"(?<!收)买|购|(?<!出)卖|典当|住店|投宿|打尖|结账|会钞|雇")  # 离不开铺子的事(v12)：此处没有铺子、眼前也没有当值的伙计，就办不成
 TOPIC = (re.compile(r"(?:提起|说起|问起|谈起|冒充|假冒|借|以)$"),                    # 话题里的人(v12)：名字前是说起、冒充、借、以
@@ -113,14 +118,28 @@ def _fallbacks(world, pack_options) -> list[tuple[str, list[str]]]:
     return out
 
 
-def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=()) -> list[tuple[str, list[str]]]:
+def _petty(world, nid: str) -> bool:
+    g = world.graph
+    return g.kind(nid) == "item" and (g.get(nid, "grade") == scenery.TRIFLE or stock.is_cash(g, nid))
+
+
+def _answer(world, p: str, said=None) -> str:
+    """须回应的措辞按此人对主角那一句的主题(v12)：盘问即答其所问、拦阻即理论去留、催促即依其所言、赔罪即受这一礼，其余回应他。"""
+    tags = pacing.tag((said or {}).get(p) or "")
+    word = next((w for t, w in ANSWER if t in tags), "回应{}")
+    return word.format(perspective.handle(world, p))
+
+
+def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), later=(), said=None) -> list[tuple[str, list[str]]]:
     """验收编剧拟的选项，返回恰好三项 (文字, 对象)。fallback：导演旧写法给的选项或离线说书人的朴素选项；
-    later：此后槽的兜底项(story/choices 看局面给出)——三项里没有一件「此后」之事(编剧标的尺度)，就以它换下最后一项。"""
+    later：此后槽的兜底项(story/choices 看局面给出)；addressed：收尾时仍悬着话的人(adjudicate.hanging)；said：各人对主角说的那一句(定回应的措辞)。
+    v12 按优先级合并，不按下标覆盖：先收编剧选项里过了验收的(保持原序)，再依次看 越权候选 > 须回应 > 此后——已满足的跳过；
+    不足三项直接追加，满了才找一项让位(没满足任何要求的编剧原拟：对象与别项重复的 > 只指着琐物碎银的 > 最后一项)，
+    强插至多 FORCED 项、编剧原拟至少留一项，第三条要求就此作罢并记日志；仍不足三项以兜底补齐。"""
     tab, _ = adjudicate.names(world)
     secrets = [(e["src"], e["rel"], e["dst"]) for e in world.graph.edges
                if e.get("secret") and not world.knowledge.knows_secret(e)]
     picked: list[tuple[str, list[str]]] = []
-
     bodies: dict[str, list[str]] = {}  # 选项文字 → 物理对象(v12)：可达只验它们，去重也只比它们
 
     def fine(text, ids, body=None) -> bool:
@@ -139,21 +158,58 @@ def check(world, options: list[dict], addressed=(), candidates=(), fallback=(), 
         ids, body = take(text, o.get("targets") or [])
         if fine(text, ids, body):
             picked.append((text, ids))
-    for want in candidates:  # 上回合越权未演之举：玩家想做，自己选
-        ids, body = take(want)
-        if not any(set(ids) & set(o) for _, o in picked) and fine(want, ids, body):
-            picked = picked[:SIZE - 1] + [(want, ids)]
-    nagging = {k.split("|")[0] for k in pacing.tired(world.player.get("pacing") or [], "pleas")}
-    for p in dict.fromkeys(addressed):  # 有人刚对主角开口：至少一项回应他——一再重复同一句诉求的人不再硬塞「回应」，免得原地打转
-        if p in situation.around(world) and p not in nagging and not any(p in o for _, o in picked):
-            picked = picked[:SIZE - 1] + [(f"回应{perspective.handle(world, p)}", [p])]
+    mine = {t for t, _ in picked}                     # 编剧原拟：让位只在它们里挑，至少留一项
     scales = {str(o.get("text") or "").strip(): o.get("scale") for o in options}
     tagged = any(scales.values())  # 编剧照槽位标了尺度才查覆盖：没标尺度的旧写法无从判断哪一项是此后
-    if later and tagged and not any(scales.get(t) == "此后" for t, _ in picked):  # 槽位覆盖：至少一件持续之事，时间才往前走
+    want_later = bool(later) and tagged
+    nagging = {k.split("|")[0] for k in pacing.tired(world.player.get("pacing") or [], "pleas")}
+    hang = [p for p in dict.fromkeys(addressed) if p in situation.around(world) and p not in nagging]  # 一再重复同一诉求的人不再硬塞「回应」
+    cands = [(want, *take(want)) for want in candidates]
+    pinned, forced = set(), 0
+
+    def answered(p, text, ids) -> bool:
+        return p in ids or perspective.handle(world, p) in text
+
+    def needed(text, ids) -> bool:  # 这一项满足了某条要求(候选、回应、此后)：不让位
+        return text in pinned or any(set(ids) & set(c) for _, c, _ in cands if c) \
+            or any(answered(p, text, ids) for p in hang) or (want_later and scales.get(text) == "此后")
+
+    def victim() -> int | None:
+        pool = [k for k, (t, ids) in enumerate(picked) if t in mine and not needed(t, ids)]
+        dup = [k for k in pool if bodies.get(picked[k][0]) and any(
+            j != k and set(bodies.get(picked[j][0], picked[j][1])) == set(bodies[picked[k][0]]) for j in range(len(picked)))]
+        petty = [k for k in pool if picked[k][1] and all(_petty(world, i) for i in picked[k][1])]
+        return (dup or petty or pool or [None])[-1]
+
+    def insert(item, why: str) -> bool:
+        nonlocal forced
+        if len(picked) < SIZE:  # 不足三项：直接追加，不让位
+            picked.append(item)
+            pinned.add(item[0])
+            return True
+        k = victim() if forced < FORCED and sum(t in mine for t, _ in picked) > 1 else None
+        if k is None:
+            log.info("选项要求作罢（%s）：%s", why, item[0])
+            return False
+        del picked[k]
+        picked.append(item)
+        pinned.add(item[0])
+        forced += 1
+        return True
+
+    for want, ids, body in cands:  # 上回合越权未演之举：玩家想做，自己选(至多一条)
+        if not any(set(ids) & set(o) for _, o in picked) and fine(want, ids, body):
+            insert((want, ids), "越权候选")
+            break
+    for p in reversed(hang):  # 收尾时仍悬着的话：只回应最后一个还没被回应的人
+        if not any(answered(p, t, o) for t, o in picked):
+            insert((_answer(world, p, said), [p]), "须回应")
+            break
+    if want_later and not any(scales.get(t) == "此后" for t, _ in picked):  # 槽位覆盖：至少一件持续之事，时间才往前走
         for text, ids in later:
             ids, body = take(text, ids)
             if fine(text, ids, body):
-                picked = picked[:SIZE - 1] + [(text, ids)]
+                insert((text, ids), "此后")
                 break
     for text, ids in _fallbacks(world, fallback):
         if len(picked) >= SIZE:
