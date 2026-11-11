@@ -63,6 +63,20 @@ class PerChapterTests(TmpDirCase):
         self.assertEqual(rc, 1)
         self.assertIn('编号冲突', out)
 
+    def test_event_and_secret_ids_are_unique_across_chapters(self):
+        ev = {'id': 'event:canon:e1', 'name': '某事', 'kind': 'plot', 'time': {'start': 3},
+              'participants': [{'person': 'person:canon:linyuan', 'role': 'actor'}]}
+        sec = {'id': 'secret:canon:s1', 'truth': '某真相',
+               'knowers_at_open': [{'person': 'person:canon:linyuan', 'believes': 'truth', 'from': 'self'}]}
+        self.write('events/ch01.jsonl', jl(ev))
+        self.write('events/ch02.jsonl', jl(ev))                      # 内容相同也算重复：事件、秘密的编号全库唯一
+        self.write('secrets/ch01.jsonl', jl(sec))
+        self.write('secrets/ch02.jsonl', jl(sec))
+        rc, out = self.run_check('--events', '--secrets')
+        self.assertEqual(rc, 1)
+        self.assertIn('事件编号 event:canon:e1 与 ch01.jsonl:1 重复', out)
+        self.assertIn('秘密编号 secret:canon:s1 与 ch01.jsonl:1 重复', out)
+
     def test_part_selects_chapter_files(self):
         rc, out = self.run_check('--assertions', '--part', 'p1')          # p1 = 第 0–12 回：ch01 与 ch02，不含 ch20
         self.assertEqual(rc, 0, out)
@@ -135,6 +149,24 @@ class EvidenceTests(TmpDirCase):
         self.assertIn('basis=recall（凭记忆）的行证据必须为空', out)
         self.assertIn('指针须为', out)                            # 未解析的锚点形式
         self.assertIn('必须至少有 1 条有效证据', out)
+
+    def test_secrets_and_identities_are_covered_too(self):
+        sec = {'id': 'secret:canon:s1', 'truth': '某真相', 'knowers_at_open': [{'person': 'person:canon:linyuan', 'believes': 'truth', 'from': 'self'}]}
+        ident = {'person': 'person:canon:suxiaotang', 'as_name': '黑衣客', 'kind': 'disguise'}
+        self.write('secrets/ch01.jsonl', jl(dict(sec, b='text', ev=[self.good])))
+        self.write('identities/ch01.jsonl', jl(dict(ident, b='text', ev=[self.good])))
+        rc, out = self.run_check()
+        self.assertEqual(rc, 0, out)
+        self.assertIn('秘密：1 行；basis=text 1', out)
+        self.assertIn('身份：1 行；basis=text 1', out)
+        self.assertIn('证据指针有效率：2/2 = 100.0%', out)
+        # 秘密：basis=text 却没有有效证据；身份：basis=recall 却带指针 -> 都报错
+        self.write('secrets/ch01.jsonl', jl(dict(sec, b='text', ev=[self.bad])))
+        self.write('identities/ch01.jsonl', jl(dict(ident, ev=[self.good])))
+        rc, out = self.run_check()
+        self.assertEqual(rc, 1)
+        self.assertIn('必须至少有 1 条有效证据', out)
+        self.assertIn('basis=recall（凭记忆）的行证据必须为空', out)
 
     def test_empty_span_is_invalid(self):
         self.write('assertions/ch01.jsonl', jl(self.A(b='text', e=[[1, 1, 3, 3, self.good[4]]])))

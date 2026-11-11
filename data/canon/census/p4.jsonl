@@ -1,0 +1,114 @@
+# p4 人物普查：首见回在第 39-52 回（少林寺大会、西夏招亲、曼陀山庄、宋辽结局、后记附录与作者注里的真实人物）
+# ---- 少林寺大会（第 39-43 回）与外来高僧 ----
+{"id": "person:canon:shenshanshangren", "type": "person", "name": "神山上人", "aliases": ["神山"], "note": "五台山清凉寺方丈，应邀到少林寺的外来高僧，威名与玄慈并称；是丐帮徐冲霄长老的师弟、神音的师兄"}
+{"id": "person:canon:shenyin", "type": "person", "name": "神音", "aliases": ["神音大师"], "note": "五台山清凉寺僧，神山上人的师弟，随神山应邀赴少林寺"}
+{"id": "person:canon:guanxin", "type": "person", "name": "观心", "aliases": ["观心大师"], "note": "开封府大相国寺高僧，应邀赴少林寺的外来客僧之一；注意第7、46回各有一处成语误命中"}
+{"id": "person:canon:daoqing", "type": "person", "name": "道清", "aliases": ["道清大师"], "note": "江南普渡寺高僧，性情慈祥、通达人情世故，应邀赴少林寺的外来客僧之一；注意第3回有一处词组误命中"}
+{"id": "person:canon:juexian", "type": "person", "name": "觉贤", "aliases": ["觉贤大师"], "note": "庐山东林寺高僧，应邀赴少林寺的外来客僧之一"}
+{"id": "person:canon:rongzhi", "type": "person", "name": "融智", "aliases": ["融智大师"], "note": "长安净影寺高僧，应邀赴少林寺的外来客僧之一"}
+{"id": "person:canon:xuansheng", "type": "person", "name": "玄生", "aliases": ["玄生大师"], "note": "少林寺玄字辈高僧；曾赴卫辉查徐长老遇害案，随方丈试萧峰掌力；与河北神弹子诸葛中是好友"}
+{"id": "person:canon:xuanyin", "type": "person", "name": "玄因", "aliases": ["玄因大师"], "note": "少林寺玄字辈高僧；与玄渡、玄生赴卫辉查案，随方丈试萧峰掌力，藏经阁一幕中也在场"}
+{"id": "person:canon:xuanzhi", "type": "person", "name": "玄止", "aliases": ["玄止大师"], "note": "少林寺玄字辈高僧；随方丈试萧峰掌力，群僧议事时有发言"}
+{"id": "person:canon:xuangou", "type": "person", "name": "玄垢", "aliases": ["玄垢师兄"], "note": "少林寺玄字辈高僧，与玄石一道奉方丈之命追查玄苦遇害一案"}
+{"id": "person:canon:xuanshi", "type": "person", "name": "玄石", "aliases": ["玄石师弟"], "note": "少林寺玄字辈高僧，与玄垢同办玄苦遇害一案；后在与辽兵的混战中身受重创"}
+{"id": "person:canon:xuanming", "type": "person", "name": "玄鸣", "aliases": [], "note": "少林寺玄字辈高僧，奉方丈命迎接客僧；后在与辽兵的混战中身受重伤"}
+{"id": "person:canon:xuancan", "type": "person", "name": "玄惭", "aliases": [], "note": "少林寺玄字辈高僧，少室山上奉方丈命以龙爪功出手制住灵鹫宫四女之一"}
+{"id": "person:canon:xuankui", "type": "person", "name": "玄愧", "aliases": [], "note": "少林寺玄字辈高僧，少室山上奉方丈命以虎爪手出手制住灵鹫宫四女之一"}
+{"id": "person:canon:xuannian", "type": "person", "name": "玄念", "aliases": [], "note": "少林寺玄字辈高僧，少室山上奉方丈命以鹰爪功出手制住灵鹫宫四女之一"}
+{"id": "person:canon:xuanjing", "type": "person", "name": "玄净", "aliases": [], "note": "少林寺玄字辈高僧，少室山上奉方丈命以少林擒拿功夫出手制住灵鹫宫四女之一"}
+{"id": "person:canon:xuancheng", "type": "person", "name": "玄澄", "aliases": ["玄澄大师"], "note": "少林寺高僧，被誉为本寺二百年来武功第一，因强练上乘武功筋脉尽断、无法救治（只被提及）"}
+{"id": "person:canon:huilun", "type": "person", "name": "慧轮", "aliases": [], "note": "少林寺慧字辈僧人，虚竹的亲传师父"}
+{"id": "person:canon:yuangen", "type": "person", "name": "缘根", "aliases": [], "note": "少林寺菜园的管事僧，不是少林出家、不入玄慧虚空辈分；资质平庸、爱管琐事，虚竹被罚挑粪浇菜时受他管"}
+{"id": "person:canon:wuminglaoseng", "type": "person", "name": "无名老僧", "aliases": [], "note": "少林寺藏经阁里潜修的无名老僧，佛法与武学高深莫测；以佛法点化萧远山与慕容博，二人皆皈依出家"}
+{"id": "person:canon:lingmen", "type": "person", "name": "灵门", "aliases": ["灵门大师", "灵门禅师"], "note": "少林派第三十四代高僧，玄慈方丈的师父（只被提及；首见于第35回）"}
+{"id": "person:canon:yuanyuan", "type": "person", "name": "元元", "aliases": [], "note": "少林寺第八代方丈，降魔掌的创制者（只被提及）"}
+{"id": "person:canon:qizhitouto", "type": "person", "name": "七指头陀", "aliases": [], "note": "外来头陀，在少林寺挂单四十年，摩诃指的创制者（只被提及）"}
+{"id": "person:canon:xuantong2", "type": "person", "name": "玄通", "aliases": [], "note": "少林寺玄字辈僧人，试萧峰掌力时与玄难、玄寂一同因事外出（只被提及）；注意第40回有一处词组误命中"}
+{"id": "person:canon:zhugezhong", "type": "person", "name": "诸葛中", "aliases": ["神弹子", "诸葛老儿"], "note": "河北武林人物，绰号神弹子，应邀赴少林寺；与玄生交好三十年"}
+# ---- 西夏招亲、吐蕃（第 40-50 回） ----
+{"id": "person:canon:zongzan", "type": "person", "name": "宗赞", "aliases": ["宗赞王子", "吐蕃王子"], "note": "吐蕃国王之子，赴西夏争做驸马，与段誉、慕容复等同为求婚者；性情粗豪"}
+{"id": "person:canon:menggu", "type": "person", "name": "梦姑", "aliases": ["李清露", "清露", "银川公主", "西夏公主"], "note": "西夏银川公主，闺名李清露；虚竹在西夏皇宫冰窖中结识、私下称作梦姑的女子，后来成为虚竹之妻，同住灵鹫宫"}
+{"id": "person:canon:xiaolei", "type": "person", "name": "晓蕾", "aliases": [], "note": "西夏皇宫的宫女，侍候银川公主，怕羞；后来随公主出宫，被送给段誉，成为大理淑妃"}
+{"id": "person:canon:taoshangshu", "type": "person", "name": "陶尚书", "aliases": [], "note": "西夏礼部尚书，奉命迎接段誉等来使入宾馆，经办招驸马的诸般规矩"}
+{"id": "person:canon:liqianshun", "type": "person", "name": "李乾顺", "aliases": ["西夏皇帝", {"name": "西夏国王", "ambiguous": true}], "note": "西夏国君（史称崇宗），书中西夏为公主招驸马的朝廷之主；“西夏国王”一称在书中也指更早的一代君主"}
+# ---- 北宋朝廷与历史人物（第 49 回等） ----
+{"id": "person:canon:zhaoxu", "type": "person", "name": "赵煦", "aliases": ["哲宗"], "note": "北宋皇帝（史称哲宗），年少亲政，一心要复行先帝新法，与祖母太皇太后、苏辙等大臣争执"}
+{"id": "person:canon:taihuangtaihou", "type": "person", "name": "太皇太后", "aliases": ["高氏"], "note": "北宋太皇太后高氏，赵煦的祖母，曾垂帘听政；临终前叮嘱孙儿勿轻易动刀兵"}
+{"id": "person:canon:sushi", "type": "person", "name": "苏轼", "aliases": ["苏东坡", "苏大胡子"], "note": "北宋文豪、礼部尚书，赵煦亲政后被贬为定州知府；书中也以苏东坡之名被提及"}
+{"id": "person:canon:suzhe", "type": "person", "name": "苏辙", "aliases": [], "note": "苏轼之弟，北宋宰相，在朝堂上以史事劝谏赵煦不可轻改旧政"}
+{"id": "person:canon:fanzuyu", "type": "person", "name": "范祖禹", "aliases": [], "note": "北宋翰林学士，上疏劝谏赵煦；被赵煦疑为借谏议骂先帝"}
+{"id": "person:canon:fanchunren", "type": "person", "name": "范纯仁", "aliases": [], "note": "北宋白须老臣，在朝堂上劝赵煦息怒，为苏辙言语开解"}
+{"id": "person:canon:wanganshi", "type": "person", "name": "王安石", "aliases": [], "note": "北宋变法的主持者（神宗朝），其新法是赵煦与太皇太后争执的焦点（只被提及）"}
+{"id": "person:canon:lvhuiqing", "type": "person", "name": "吕惠卿", "aliases": [], "note": "王安石变法的助手，范祖禹奏疏里与王安石并提（只被提及）"}
+{"id": "person:canon:lvgongzhu", "type": "person", "name": "吕公著", "aliases": [], "note": "北宋旧党大臣，赵煦口中与司马光、苏轼并称的“腐儒”之一（只被提及）"}
+{"id": "person:canon:caique", "type": "person", "name": "蔡确", "aliases": [], "note": "神宗朝新法一派官员，范祖禹奏疏里被点名（只被提及）"}
+{"id": "person:canon:wangshao", "type": "person", "name": "王韶", "aliases": [], "note": "神宗朝官员，奏疏里提到他开拓熙河（只被提及）"}
+{"id": "person:canon:zhangdun", "type": "person", "name": "章惇", "aliases": [], "note": "神宗朝新法一派官员，奏疏里提到他开拓五溪（只被提及）"}
+{"id": "person:canon:shenqi", "type": "person", "name": "沈起", "aliases": [], "note": "神宗朝官员，奏疏里被点名指责扰动边事（只被提及）"}
+{"id": "person:canon:shenkuo", "type": "person", "name": "沈括", "aliases": [], "note": "北宋学者官员，范祖禹奏疏里被点名；后记里作者称他并非迂人"}
+{"id": "person:canon:hanwudi", "type": "person", "name": "汉武帝", "aliases": [], "note": "西汉皇帝，苏辙进谏时拿他的兴作与后事为例（只被提及）"}
+{"id": "person:canon:muguifei", "type": "person", "name": "穆贵妃", "aliases": [], "note": "辽主耶律洪基最宠幸的贵妃，在阿紫与皇帝争执时旁观说话"}
+{"id": "person:canon:jinwengong", "type": "person", "name": "晋文公", "aliases": ["重耳"], "note": "春秋晋国霸主，包不同与公冶乾议论复国时以他为例（只被提及）"}
+{"id": "person:canon:jiezitui", "type": "person", "name": "介子推", "aliases": [], "note": "晋文公的随从，包不同调侃时提到（只被提及）"}
+{"id": "person:canon:humao", "type": "person", "name": "狐毛", "aliases": [], "note": "晋文公的随从，包不同调侃时提到（只被提及）"}
+{"id": "person:canon:huyan", "type": "person", "name": "狐偃", "aliases": [], "note": "晋文公的随从，包不同调侃时提到（只被提及）"}
+{"id": "person:canon:qinmugong", "type": "person", "name": "秦穆公", "aliases": [], "note": "春秋秦国国君，出兵助晋公子重耳回国（只被提及）"}
+{"id": "person:canon:huoguang", "type": "person", "name": "霍光", "aliases": [], "note": "西汉大臣，昭帝时受委任罢去烦苛之政，苏辙进谏时提及（只被提及）"}
+{"id": "person:canon:chairong", "type": "person", "name": "柴荣", "aliases": ["柴世宗"], "note": "后周世宗，慕容复谈复姓之事时以他继郭威为例（只被提及）"}
+# ---- 鲜卑慕容氏先祖（第 40、42 回，只被提及） ----
+{"id": "person:canon:muronglongcheng", "type": "person", "name": "慕容龙城", "aliases": [], "note": "鲜卑慕容氏的武学奇才，创出斗转星移，意图复国而终无所成（只被提及）"}
+{"id": "person:canon:muronghuang", "type": "person", "name": "慕容皝", "aliases": [], "note": "大燕国先祖，慕容氏的英主之一（只被提及）"}
+{"id": "person:canon:murongke", "type": "person", "name": "慕容恪", "aliases": [], "note": "大燕国先祖，慕容氏的名王之一（只被提及）"}
+{"id": "person:canon:murongchui", "type": "person", "name": "慕容垂", "aliases": [], "note": "大燕国先祖，慕容氏的名王之一（只被提及）"}
+{"id": "person:canon:murongde", "type": "person", "name": "慕容德", "aliases": [], "note": "大燕国先祖，慕容氏的名王之一（只被提及）"}
+{"id": "person:canon:murongyanchao", "type": "person", "name": "慕容彦超", "aliases": [], "note": "五代时慕容氏的大将，威镇四方（只被提及）"}
+{"id": "person:canon:zhangjiangjun", "type": "person", "name": "张将军", "aliases": [], "note": "大宋镇守雁门关的指挥使，拦下萧峰一行并盘查；事后上捷表向朝廷报功"}
+{"id": "person:canon:kaihuer", "type": "person", "name": "凯虎儿", "aliases": [], "note": "辽国王府监押萧峰的百夫长，奉亲兵管带之命去请示指挥使"}
+# ---- 大理（第 47-50 回） ----
+{"id": "person:canon:gaotaiming", "type": "person", "name": "高泰明", "aliases": [], "note": "高昇泰之子，段誉登基后被拜为左丞相，是朝中重臣之一"}
+{"id": "person:canon:duanzhengxing", "type": "person", "name": "段正兴", "aliases": [], "note": "大理国君段誉之子，继位为帝（见于第50回史籍式的结语）"}
+{"id": "person:canon:jialaozhe", "type": "person", "name": "贾老者", "aliases": [], "note": "第47回乡间老汉，姓贾，把段誉一行引进屋内待茶"}
+# ---- 后记、附录与作者注里的真实人物 ----
+{"id": "person:canon:chenshixiang", "type": "person", "name": "陈世骧", "aliases": ["陈先生"], "note": "学者、文学批评家，作者的友人；后记以书献给他，附录收有他的两封书函"}
+{"id": "person:canon:xiajian", "type": "person", "name": "夏济安", "aliases": [], "note": "台湾学者，夏志清之弟，陈世骧与作者的共同友人，喜欢武侠小说；书函中说他已逝世"}
+{"id": "person:canon:xiazhiqing", "type": "person", "name": "夏志清", "aliases": [], "note": "夏济安之兄，学者，作者的友人"}
+{"id": "person:canon:nikuang", "type": "person", "name": "倪匡", "aliases": ["倪匡兄"], "note": "作家，作者的友人；曾在作者外游期间代写四万多字，修订时被删去"}
+{"id": "person:canon:jinyong", "type": "person", "name": "金庸", "aliases": ["良镛"], "note": "本书作者；附录书函以“金庸吾兄”“良镛吾兄”称呼他；卷首、后记、作者注里的“我”"}
+{"id": "person:canon:chenzude", "type": "person", "name": "陈祖德", "aliases": [], "note": "围棋名家，作者的围棋老师，丽江“炎黄杯”围棋赛发起人之一"}
+{"id": "person:canon:nieweiping", "type": "person", "name": "聂卫平", "aliases": [], "note": "围棋名家，丽江“炎黄杯”围棋赛发起人之一（作者注）"}
+{"id": "person:canon:linhaifeng", "type": "person", "name": "林海峰", "aliases": [], "note": "围棋名家，丽江“炎黄杯”围棋赛发起人之一（作者注）"}
+{"id": "person:canon:shenjunshan", "type": "person", "name": "沈君山", "aliases": [], "note": "围棋名家，丽江“炎黄杯”围棋赛发起人之一（作者注）"}
+{"id": "person:canon:yangliansheng", "type": "person", "name": "杨莲生", "aliases": [], "note": "陈世骧书函里提到的友人，常与陈省身等聚谈作者的小说"}
+{"id": "person:canon:chenxingshen", "type": "person", "name": "陈省身", "aliases": [], "note": "陈世骧书函里提到的友人，常与杨莲生等聚谈作者的小说"}
+{"id": "person:canon:shichengzhi", "type": "person", "name": "史诚之", "aliases": [], "note": "陈世骧书函里提到的友人，曾向他出示新出的《明报月刊》"}
+{"id": "person:canon:songqi", "type": "person", "name": "宋淇", "aliases": ["宋淇兄"], "note": "陈世骧书函里提到的友人，书函请他转交一篇文章"}
+{"id": "person:canon:maozedong", "type": "person", "name": "毛泽东", "aliases": [], "note": "后记里讨论文艺创作原则时提到的人物（只被提及）"}
+{"id": "person:canon:wangguowei", "type": "person", "name": "王国维", "aliases": ["王静安"], "note": "近代学者，后记引他对词句的称赞，附录书函也引他论意境的话（只被提及）"}
+{"id": "person:canon:hezuoma", "type": "person", "name": "何祚麻", "aliases": [], "note": "物理学家、科学院院士，作者在北京与他会谈，后记引述其见解"}
+{"id": "person:canon:zhanmushixierdeng", "type": "person", "name": "詹姆士·希尔登", "aliases": [], "note": "英国近代小说家，《失落的地平线》作者（第50回作者注）"}
+{"id": "person:canon:kafuka", "type": "person", "name": "卡夫卡", "aliases": [], "note": "外国小说家，后记举其作品情节说明想象的合理（只被提及）"}
+{"id": "person:canon:libai", "type": "person", "name": "李白", "aliases": [], "note": "唐代诗人，段誉在第50回吟他的诗；后记也举他的诗句为例"}
+{"id": "person:canon:baijuyi", "type": "person", "name": "白居易", "aliases": [], "note": "唐代诗人，后记议论他的《长恨歌》（只被提及）"}
+{"id": "person:canon:tangxuanzong", "type": "person", "name": "唐玄宗", "aliases": [], "note": "唐朝皇帝，后记评《长恨歌》时提及（只被提及）"}
+{"id": "person:canon:xuanzang", "type": "person", "name": "玄奘", "aliases": [], "note": "唐代高僧，第42回作者注里提到他与大雁塔的缘起（只被提及）"}
+{"id": "person:canon:zhishou", "type": "person", "name": "智首", "aliases": [], "note": "唐初高僧，著有《四分律疏》（第42回作者注，只被提及）"}
+{"id": "person:canon:hongyifashi", "type": "person", "name": "弘一法师", "aliases": [], "note": "近代佛教大师，属南山律宗（第42回作者注，只被提及）"}
+{"id": "person:canon:bazhitouto", "type": "person", "name": "八指头陀", "aliases": [], "note": "近代僧人，作者注里举他燃指供佛为苦行之例（只被提及）"}
+{"id": "person:canon:yanwangfashi", "type": "person", "name": "延王法师", "aliases": [], "note": "少林寺法师，作者注里说曾蒙他教导易筋、洗髓两经"}
+{"id": "person:canon:yongxin", "type": "person", "name": "永信", "aliases": ["永信大师"], "note": "少林寺方丈，作者注里说曾向他请教少林戒律"}
+# ---- 对其他分区实体的别名补充（同号同名，合并时取并集；这些称呼首见于第 39 回之后）----
+{"id": "person:canon:wangfuren", "type": "person", "name": "王夫人", "aliases": ["阿萝"], "note": ""}
+{"id": "person:canon:qinhongmian", "type": "person", "name": "秦红棉", "aliases": ["秦红绵"], "note": ""}
+{"id": "person:canon:duanyanqing", "type": "person", "name": "段延庆", "aliases": ["段老大", "段先生"], "note": ""}
+{"id": "person:canon:xiaoyuanshan", "type": "person", "name": "萧远山", "aliases": ["萧居士", "萧老施主", "萧老"], "note": ""}
+{"id": "person:canon:murongbo", "type": "person", "name": "慕容博", "aliases": ["慕容居士", "燕龙渊", "燕兄"], "note": ""}
+{"id": "person:canon:murongfu", "type": "person", "name": "慕容复", "aliases": ["慕容少侠"], "note": ""}
+{"id": "person:canon:wangyuyan", "type": "person", "name": "王语嫣", "aliases": ["嫣妹"], "note": ""}
+{"id": "person:canon:duanyu", "type": "person", "name": "段誉", "aliases": ["誉哥", "余公子"], "note": ""}
+{"id": "person:canon:azi", "type": "person", "name": "阿紫", "aliases": ["平南公主"], "note": ""}
+{"id": "person:canon:qiaofeng", "type": "person", "name": "乔峰", "aliases": ["萧君", "平南大元帅"], "note": ""}
+{"id": "person:canon:xuzhanglao", "type": "person", "name": "徐长老", "aliases": ["徐冲霄", "徐师兄"], "note": ""}
+{"id": "person:canon:xuzhu", "type": "person", "name": "虚竹", "aliases": ["灵鹫宫主人"], "note": ""}
+{"id": "person:canon:youtanzhi", "type": "person", "name": "游坦之", "aliases": ["庄公子"], "note": ""}
+{"id": "person:canon:kebaisui", "type": "person", "name": "柯百岁", "aliases": ["柯施主"], "note": ""}
+{"id": "person:canon:batianshi", "type": "person", "name": "巴天石", "aliases": ["巴叔叔"], "note": ""}

@@ -1,0 +1,82 @@
+{"id": "org:canon:gaibang", "type": "org", "name": "丐帮", "aliases": ["第一大帮"], "note": "中原第一大帮；前任帮主汪剑通，继任乔峰，副帮主马大元；设传功、执法等长老与大智、大义等分舵，是全书核心帮会之一"}
+{"id": "org:canon:shaolinsi", "type": "org", "name": "少林寺", "aliases": ["少林派", "少林", "嵩山少林寺"], "note": "河南嵩山少室山的佛门大寺，武林泰山北斗，方丈玄慈；设达摩院、戒律院、罗汉堂等，各设首座（少林寺同时是地点，另有编号）"}
+{"id": "org:canon:xingxiupai", "type": "org", "name": "星宿派", "aliases": [], "note": "丁春秋所创的邪派，据星宿海，擅毒功与化功大法；丁春秋原出逍遥派，后叛出师门"}
+{"id": "org:canon:lingjiugong", "type": "org", "name": "灵鹫宫", "aliases": ["缥缈峰灵鹫宫", "天山灵鹫宫"], "note": "天山缥缈峰上的隐居门派，天山童姥为主，辖三十六洞、七十二岛与九天九部，后由虚竹执掌（灵鹫宫同时是地点，另有编号）"}
+{"id": "org:canon:tianlongsi", "type": "org", "name": "天龙寺", "aliases": ["大理天龙寺", "大理国天龙寺", "崇圣寺"], "note": "大理皇家寺院，在点苍山中，段氏子孙出家之处，方丈本因，枯荣长老在此修行，珍藏六脉神剑剑谱（天龙寺同时是地点，另有编号）"}
+{"id": "org:canon:xiaoyaopai", "type": "org", "name": "逍遥派", "aliases": [], "note": "无崖子为掌门的隐居门派，门下有苏星河、丁春秋，后由虚竹接掌；李秋水、天山童姥同出一门，门中恩怨贯穿后半书"}
+{"id": "org:canon:qingchengpai", "type": "org", "name": "青城派", "aliases": ["青城一派"], "note": "四川的武林门派，掌门司马林，与山东蓬莱派是死对头；第13回前后与秦家寨争抢王语嫣"}
+{"id": "org:canon:shennongbang", "type": "org", "name": "神农帮", "aliases": [], "note": "以毒药见长的江湖帮会，帮主司空玄；开篇即追捕钟灵与段誉，第14回、第34回亦有提及"}
+{"id": "org:canon:wuliangjian", "type": "org", "name": "无量剑", "aliases": ["无量剑派"], "note": "无量山剑湖宫的武林门派，下设东、西、北三个宗，北宗早已衰落，东西两宗五年一次比剑争夺剑湖宫；后归附灵鹫宫"}
+{"id": "org:canon:wuliangjiandongzong", "type": "org", "name": "无量剑东宗", "aliases": ["东宗"], "note": "无量剑的东宗，掌门左子穆；与西宗五年一比剑，争夺剑湖宫的居住权"}
+{"id": "org:canon:wuliangjianxizong", "type": "org", "name": "无量剑西宗", "aliases": ["西宗"], "note": "无量剑的西宗，掌门是道姑辛双清；与东宗五年一比剑，争夺剑湖宫的居住权"}
+{"id": "org:canon:wuliangjianbeizong", "type": "org", "name": "北宗", "aliases": [], "note": "无量剑三宗之一，早已衰落，书中只在第1回交代一笔"}
+{"id": "org:canon:penglaipai", "type": "org", "name": "蓬莱派", "aliases": [], "note": "山东的武林门派，与四川青城派是死对头；第13回有人被疑为蓬莱派派来青城派卧底的奸细"}
+{"id": "org:canon:funiupai", "type": "org", "name": "伏牛派", "aliases": [], "note": "伏牛派，掌门柯百岁，大弟子追魂鞭过彦之；第9回过彦之登门镇南王府求见"}
+{"id": "org:canon:nanhaipai", "type": "org", "name": "南海派", "aliases": [], "note": "南海鳄神岳老三所属的门派，有收徒时先假意推辞的规矩；书中几乎只见岳老三一人"}
+{"id": "org:canon:kunlunpai", "type": "org", "name": "昆仑派", "aliases": [], "note": "昆仑派，以混沌剑阵著称，常与少林罗汉剑阵、天龙寺六脉神剑阵相提并论；第2回琅嬛福地的书签中亦有其名"}
+{"id": "org:canon:kongtongpai", "type": "org", "name": "崆峒派", "aliases": [], "note": "崆峒派，以金刚指等点穴功夫著称，书中偶被提及"}
+{"id": "org:canon:taihangpai", "type": "org", "name": "太行派", "aliases": [], "note": "太行派，第15回有人猜测谭公、谭婆是否出身太行派，出场极少"}
+{"id": "org:canon:qinjiazhai", "type": "org", "name": "秦家寨", "aliases": ["云州秦家寨"], "note": "云州的山寨，寨主姚伯当（北方大豪），寨中传五虎断门刀；第13回与青城派争王语嫣"}
+{"id": "org:canon:sidaeren", "type": "org", "name": "四大恶人", "aliases": ["天下四大恶人"], "note": "段延庆、叶二娘、岳老三（南海鳄神）、云中鹤四人的合称，江湖上凶名远扬，第2回起出现"}
+{"id": "org:canon:hangubayou", "type": "org", "name": "函谷八友", "aliases": [], "note": "聪辩先生苏星河的八名弟子，被逐出师门后仍以此合称，薛慕华（薛神医）排行第五；第30回起出场"}
+{"id": "org:canon:sanshiliudong", "type": "org", "name": "三十六洞", "aliases": ["三十六洞洞主"], "note": "灵鹫宫辖下三十六个洞的洞主合称，多是不属门派帮会的旁门左道之士；与七十二岛并称，万仙大会上出场"}
+{"id": "org:canon:qishierdao", "type": "org", "name": "七十二岛", "aliases": ["七十二岛岛主"], "note": "灵鹫宫辖下七十二个岛的岛主合称，多是不属门派帮会的旁门左道之士；与三十六洞并称，万仙大会上出场"}
+{"id": "org:canon:jiutianjiubu", "type": "org", "name": "九天九部", "aliases": [], "note": "灵鹫宫属下的九个分部（钧天、昊天、阳天、赤天、朱天、成天、幽天、玄天、鸾天），部众听命于尊主童姥，第37回出场"}
+{"id": "org:canon:juntianbu", "type": "org", "name": "钧天部", "aliases": ["均天部"], "note": "灵鹫宫九天九部之一，在童姥被困时留守本宫；九部中书中提及最多"}
+{"id": "org:canon:haotianbu", "type": "org", "name": "昊天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责东方"}
+{"id": "org:canon:yangtianbu", "type": "org", "name": "阳天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责东南方"}
+{"id": "org:canon:chitianbu", "type": "org", "name": "赤天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责南方"}
+{"id": "org:canon:zhutianbu", "type": "org", "name": "朱天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责西南方；后文另有提及"}
+{"id": "org:canon:chengtianbu", "type": "org", "name": "成天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责西方"}
+{"id": "org:canon:youtianbu", "type": "org", "name": "幽天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责西北方"}
+{"id": "org:canon:xuantianbu", "type": "org", "name": "玄天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责北方"}
+{"id": "org:canon:luantianbu", "type": "org", "name": "鸾天部", "aliases": [], "note": "灵鹫宫九天九部之一，当年下山分路寻找童姥时负责东北方；后文另有提及"}
+{"id": "org:canon:yipintang", "type": "org", "name": "一品堂", "aliases": ["西夏一品堂"], "note": "西夏国网罗武林高手的机构，第13回起有大批好手南下江南，与丐帮、慕容氏一方冲突，第46回前后仍在西夏出场"}
+{"id": "org:canon:dazhifenduo", "type": "org", "name": "大智分舵", "aliases": [], "note": "丐帮分舵，舵主全冠清（八袋舵主）；杏子林之变时他是主谋，第29回另有其帮众聚会议事"}
+{"id": "org:canon:dayifenduo", "type": "org", "name": "大义分舵", "aliases": [], "note": "丐帮分舵，舵主姓蒋；第14回有外人闯入其驻地，杏子林之变中其部众未受全冠清煽动"}
+{"id": "org:canon:darenfenduo", "type": "org", "name": "大仁分舵", "aliases": [], "note": "丐帮分舵，书中仅在第14、16回提及"}
+{"id": "org:canon:dayongfenduo", "type": "org", "name": "大勇分舵", "aliases": [], "note": "丐帮分舵，舵主姓方，第16回出场"}
+{"id": "org:canon:daxinfenduo", "type": "org", "name": "大信分舵", "aliases": [], "note": "丐帮分舵，书中仅在第15回提及一次"}
+{"id": "org:canon:dalunsi", "type": "org", "name": "大轮寺", "aliases": ["大雪山大轮寺"], "note": "吐蕃大雪山上的密宗大寺，鸠摩智即出自此寺（大轮寺同时是地点，另有编号）"}
+{"id": "org:canon:qingliangsi", "type": "org", "name": "清凉寺", "aliases": [], "note": "五台山寺院，方丈神山上人，其师弟神音大师同来；第39回应邀赴少林"}
+{"id": "org:canon:daxiangguosi", "type": "org", "name": "大相国寺", "aliases": [], "note": "开封府名刹，观心大师所在；第39回应邀赴少林"}
+{"id": "org:canon:donglinsi", "type": "org", "name": "东林寺", "aliases": [], "note": "庐山寺院，觉贤大师所在；第39回应邀赴少林"}
+{"id": "org:canon:jingyingsi", "type": "org", "name": "净影寺", "aliases": [], "note": "长安寺院，融智大师所在；第39回应邀赴少林"}
+{"id": "org:canon:pudusi", "type": "org", "name": "普渡寺", "aliases": ["普渡山"], "note": "江南寺院，道清大师所在；第39回应邀赴少林（书中一处误写作普渡山）"}
+{"id": "org:canon:zhiguansi", "type": "org", "name": "止观寺", "aliases": ["止观禅寺"], "note": "天台山中的寺院，第21回乔峰、阿朱追查旧案时欲往之处"}
+{"id": "org:canon:tianningsi", "type": "org", "name": "天宁寺", "aliases": [], "note": "江南乡间的寺院，第18回西夏一品堂一行曾占据并关押丐帮众人"}
+{"id": "org:canon:shenjiesi", "type": "org", "name": "身戒寺", "aliases": ["陆凉州身戒寺"], "note": "大理陆凉州的寺院，少林玄悲大师在此遇害（第9回），后文数次回顾"}
+{"id": "org:canon:minzhongsi", "type": "org", "name": "悯忠寺", "aliases": [], "note": "辽南京的寺庙，少林僧慧净曾在此挂单（第28回）"}
+{"id": "org:canon:nianhuasi", "type": "org", "name": "拈花寺", "aliases": [], "note": "大理城外山中的偏僻小庙，第8回保定帝前往之处"}
+{"id": "org:canon:yuxuguan", "type": "org", "name": "玉虚观", "aliases": [], "note": "大理城外的道观，刀白凤出家做道姑之处，第6、7、9回出现"}
+{"id": "org:canon:damoyuan", "type": "org", "name": "达摩院", "aliases": [], "note": "少林寺属下的院，设首座，首座玄难；与戒律院、罗汉堂并列（达摩院同时是地点，另有编号）"}
+{"id": "org:canon:jielvyuan", "type": "org", "name": "戒律院", "aliases": [], "note": "少林寺内持戒守律、管束门下弟子的院，设首座（戒律院同时是地点，另有编号）"}
+{"id": "org:canon:luohantang", "type": "org", "name": "罗汉堂", "aliases": [], "note": "少林寺属下的堂，设首座，与达摩院、戒律院并列（罗汉堂同时是地点，另有编号）"}
+{"id": "org:canon:juxianzhuang", "type": "org", "name": "聚贤庄", "aliases": [], "note": "游氏双雄的庄院，第19回起英雄大会聚集于此，乔峰在此与群雄恶斗（聚贤庄同时是地点，另有编号）"}
+{"id": "org:canon:mantuoshanzhuang", "type": "org", "name": "曼陀山庄", "aliases": [], "note": "苏州太湖畔王夫人所居的世家庄园，遍种山茶，内有琅嬛玉洞（曼陀山庄同时是地点，另有编号）"}
+{"id": "org:canon:shanjiazhuang", "type": "org", "name": "单家庄", "aliases": ["单家", "单氏"], "note": "山东泰安单家庄的单氏一门，家主铁面判官单正，其庄在第21回被烧；单家庄同时是地点，另有编号"}
+{"id": "org:canon:wanjiegu", "type": "org", "name": "万劫谷", "aliases": [], "note": "钟万仇夫妇所居的隐秘山谷，钟灵之家，谷主钟万仇，在大理境内（万劫谷同时是地点，另有编号）"}
+{"id": "org:canon:gusumurong", "type": "org", "name": "姑苏慕容", "aliases": ["慕容氏", "慕容家"], "note": "江南太湖燕子坞的世家，慕容博、慕容复父子相继为主，家臣有邓百川、公冶乾及包不同、风波恶；世代图谋兴复大燕"}
+{"id": "org:canon:daliduanshi", "type": "org", "name": "大理段氏", "aliases": ["段氏", "段家", "大理段家"], "note": "大理国皇族，保定帝（段正明）为帝，镇南王段正淳为其弟；传承一阳指、六脉神剑，子孙多入天龙寺出家"}
+{"id": "org:canon:zhennanwangfu", "type": "org", "name": "镇南王府", "aliases": [], "note": "大理城内镇南王段正淳的王府，世子段誉所居，设府中护卫家人（镇南王府同时是地点，另有编号）"}
+{"id": "org:canon:sidahuwei", "type": "org", "name": "四大护卫", "aliases": [], "note": "大理国段氏的四名贴身护卫，姓褚古傅朱（含朱丹臣、傅思归），随镇南王府行事"}
+{"id": "org:canon:daliguo", "type": "org", "name": "大理国", "aliases": [], "note": "西南王国，段氏为帝，佛教为国教，国都大理城；全书开篇所在，保定帝在位（大理国同时是地点，另有编号）"}
+{"id": "org:canon:dasong", "type": "org", "name": "大宋", "aliases": ["宋朝", "大宋国", "宋国", "南朝"], "note": "中原汉人王朝，书中时代为哲宗朝，国都汴梁，与辽、西夏、大理、吐蕃并立（大宋同时是地点，另有编号）"}
+{"id": "org:canon:liaoguo", "type": "org", "name": "辽国", "aliases": ["大辽", "大辽国", "契丹国", "辽朝"], "note": "契丹人的北方帝国，与宋对峙，皇帝耶律洪基；萧峰曾官至南院大王（辽国同时是地点，另有编号）"}
+{"id": "org:canon:xixia", "type": "org", "name": "西夏", "aliases": ["西夏国"], "note": "党项人的西北王国，都兴州；一品堂与银川公主招驸马皆在此（西夏同时是地点，另有编号）"}
+{"id": "org:canon:tufan", "type": "org", "name": "吐蕃", "aliases": ["吐蕃国"], "note": "青藏高原的吐蕃国，鸠摩智为其护国法王，大轮寺在其境内（吐蕃同时是地点，另有编号）"}
+{"id": "org:canon:nvzhen", "type": "org", "name": "女真", "aliases": [], "note": "辽国之东、高丽之北的女真部族，族长和哩布，其子完颜阿骨打；萧峰入北时与之相遇（第26回）"}
+{"id": "org:canon:dayanguo", "type": "org", "name": "大燕国", "aliases": ["大燕", "燕国"], "note": "鲜卑慕容氏昔日所建之国，早已灭亡；慕容氏子孙世代图谋兴复，慕容复一心复国"}
+{"id": "org:canon:nanyuandawangfu", "type": "org", "name": "南院大王府", "aliases": ["南院大王王府", "南院", "辽国南院", "大辽南院"], "note": "辽国朝制中统民的南院，长官南院大王，萧峰曾任；官署即南院大王府（南院大王府同时是地点，另有编号）"}
+{"id": "org:canon:beiyuan", "type": "org", "name": "北院", "aliases": [], "note": "辽国朝制中统兵的北院，长官北院大王，另有北院枢密使，第27回率军平叛；第49、50回再提"}
+{"id": "org:canon:xixialibu", "type": "org", "name": "西夏礼部", "aliases": ["西夏国礼部"], "note": "西夏国的礼部，尚书姓陶；第45、46回负责迎接并款待大理段誉一行入宫"}
+{"id": "org:canon:yuying", "type": "org", "name": "御营", "aliases": ["御营军", "御营亲军"], "note": "辽国皇帝所在的御营及其亲军；第27回与叛军对阵，第49、50回再现"}
+{"id": "org:canon:pishijun", "type": "org", "name": "皮室军", "aliases": [], "note": "辽国皇帝大帐所部的亲军，飞熊队等属之，第27回出现"}
+{"id": "org:canon:liaojun", "type": "org", "name": "辽军", "aliases": ["辽国军"], "note": "辽国的军队，出现于第27、43、50回"}
+{"id": "org:canon:songjun", "type": "org", "name": "宋军", "aliases": [], "note": "宋朝的军队，书中偶见（第20、21、42、50回）"}
+{"id": "org:canon:shencejun", "type": "org", "name": "神策军", "aliases": [], "note": "大理国的禁军之一，仅在第8回与御林军并提"}
+{"id": "org:canon:fomen", "type": "org", "name": "佛门", "aliases": ["佛教", "佛家"], "note": "佛教徒与寺院的总称，佛教为大理国教，少林、天龙寺等皆属之"}
+{"id": "org:canon:chanzong", "type": "org", "name": "禅宗", "aliases": [], "note": "佛教的一个宗派，讲究顿悟；少林寺属于禅宗，书中多处谈及禅理"}
+{"id": "org:canon:ningmapai", "type": "org", "name": "宁玛派", "aliases": [], "note": "吐蕃密教的宁玛派，其上师授鸠摩智火焰刀神功（第39、40、42回提及）"}
+{"id": "org:canon:heijiao", "type": "org", "name": "黑教", "aliases": [], "note": "吐蕃一带的教团，被密教宁玛派一方视为邪徒，双方争斗剧烈（第40、42回提及）"}
+{"id": "org:canon:mijiao", "type": "org", "name": "密教", "aliases": ["密宗"], "note": "佛教密宗，吐蕃一带盛行，鸠摩智所修，第39回起出现"}

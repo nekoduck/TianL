@@ -8,7 +8,8 @@
   * JSONL 读写助手
   * 30 人召回名单
 
-没有原文时全部断言 basis = recall、evidence = []（docs/DECISIONS.md 第三节）。
+取证口径（docs/CANON_SCHEMA.md 第 0 节）：有原文的行 basis = text、evidence 至少一条能取回的指针；
+只有缺口填补与开局状态推断才 basis = recall、evidence = []（docs/DECISIONS.md 第三节）。
 """
 from __future__ import annotations
 
@@ -398,7 +399,10 @@ def compact_pointer(p):
 def validate_pointer(p, where='evidence'):
     errs = []
     if not isinstance(p, dict):
-        return [f'{where}: 指针须为 {{ch,para,start,end,hash}} 或 [回,段,起,止,哈希]']
+        hint = ''
+        if isinstance(p, (list, tuple)) and len(p) in (3, 4) and isinstance(p[2], str):
+            hint = '（这是未解析的锚点：先运行 tools/canon_resolve.py 改写成指针；终稿不得残留锚点）'
+        return [f'{where}: 指针须为 {{ch,para,start,end,hash}} 或 [回,段,起,止,哈希]{hint}']
     extra = set(p) - set(POINTER_KEYS)
     if extra:
         errs.append(f'{where}: 指针含未知键 {sorted(extra)}')

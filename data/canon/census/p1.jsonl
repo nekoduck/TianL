@@ -1,0 +1,86 @@
+{"id": "person:canon:duanyu", "type": "person", "name": "段誉", "aliases": ["誉儿", "段相公", "段公子", {"name": "段殿下", "ambiguous": true}], "note": "大理国镇南王段正淳的世子，书呆子，学成北冥神功与凌波微步；全书主角之一"}
+{"id": "person:canon:zhongling", "type": "person", "name": "钟灵", "aliases": ["钟姑娘", "灵儿", {"name": "段姑娘", "ambiguous": true}], "note": "万劫谷钟万仇夫妇的女儿（实为段正淳之女），养有灵貂，第1回与段誉结伴"}
+{"id": "person:canon:duanzhengchun", "type": "person", "name": "段正淳", "aliases": ["镇南王", "段王爷", "段郎", "保国大将军", {"name": "段殿下", "ambiguous": true}], "note": "大理镇南王，保定帝之弟，段誉名义上的父亲，风流多情，与多位女子有旧情"}
+{"id": "person:canon:baodingdi", "type": "person", "name": "保定帝", "aliases": ["段正明", "保定皇爷", "本尘", "本尘大师"], "note": "大理国当朝皇帝段正明，段正淳之兄，崇信佛法；避位出家后法名本尘（第10回明说，第48回称本尘大师），与本因、本观、本相、本参同在天龙寺；并入原“本尘”条"}
+{"id": "person:canon:daobaifeng", "type": "person", "name": "刀白凤", "aliases": ["玉虚散人", {"name": "段夫人", "ambiguous": true}], "note": "段正淳的正妃、段誉之母，摆夷族出身；因故出家为道姑，称玉虚散人"}
+{"id": "person:canon:gaoshengtai", "type": "person", "name": "高昇泰", "aliases": ["善阐侯", "高侯爷"], "note": "大理善阐侯，大功臣高智昇之子，保定帝、段正淳倚重的重臣"}
+{"id": "person:canon:gaozhisheng", "type": "person", "name": "高智昇", "aliases": [], "note": "大理旧臣，高昇泰之父；上德帝被弑后协助平灭杨义贞（旧事，只被提及）"}
+{"id": "person:canon:batianshi", "type": "person", "name": "巴天石", "aliases": ["巴司空", "巴兄"], "note": "大理国司空，三公之一，保定帝与段正淳的亲信"}
+{"id": "person:canon:huahegen", "type": "person", "name": "华赫艮", "aliases": ["华司徒"], "note": "大理国司徒，三公之一"}
+{"id": "person:canon:fanhua", "type": "person", "name": "范骅", "aliases": ["范司马"], "note": "大理国司马，三公之一"}
+{"id": "person:canon:zhudanchen", "type": "person", "name": "朱丹臣", "aliases": ["朱四哥", "笔砚生"], "note": "镇南王府四大护卫之一，书生模样，外号笔砚生，判官笔使得好"}
+{"id": "person:canon:chuwanli", "type": "person", "name": "褚万里", "aliases": ["褚兄"], "note": "镇南王府四大护卫之一（褚古傅朱）"}
+{"id": "person:canon:guducheng", "type": "person", "name": "古笃诚", "aliases": [], "note": "镇南王府四大护卫之一（褚古傅朱），使板斧"}
+{"id": "person:canon:fusigui", "type": "person", "name": "傅思归", "aliases": [], "note": "镇南王府四大护卫之一（褚古傅朱），使熟铜棍"}
+{"id": "person:canon:duansiping", "type": "person", "name": "段思平", "aliases": [], "note": "大理国开国之君（太祖），在第6回的史述中被提及，距保定帝时已百五十余年"}
+{"id": "person:canon:duanlianyi", "type": "person", "name": "段廉义", "aliases": ["上德帝"], "note": "大理前朝皇帝，延庆太子（即段延庆）之父，被奸臣杨义贞所弑（旧事，第8回起被提及）"}
+{"id": "person:canon:duanshouhui", "type": "person", "name": "段寿辉", "aliases": ["上明帝"], "note": "上德帝之侄、保定帝的堂兄，平乱后即位为上明帝，在位一年即入天龙寺出家（旧事，只被提及）"}
+{"id": "person:canon:yangyizhen", "type": "person", "name": "杨义贞", "aliases": [], "note": "弑上德帝的奸臣，后被平灭（旧事，只被提及）"}
+{"id": "person:canon:benyin", "type": "person", "name": "本因", "aliases": ["本因方丈", "本因大师"], "note": "天龙寺方丈，按俗家辈分是保定帝的叔父；鸠摩智来访时出面接待"}
+{"id": "person:canon:benguan", "type": "person", "name": "本观", "aliases": [], "note": "天龙寺高僧，与本因等同守寺，第10回出场"}
+{"id": "person:canon:benxiang", "type": "person", "name": "本相", "aliases": [], "note": "天龙寺高僧，第10回随本因会见鸠摩智"}
+{"id": "person:canon:bencan", "type": "person", "name": "本参", "aliases": [], "note": "天龙寺高僧，第10回出场"}
+{"id": "person:canon:kurong", "type": "person", "name": "枯荣", "aliases": ["枯荣大师", "枯荣长老"], "note": "天龙寺辈分最高的老僧，参枯荣禅，第10回与鸠摩智较量时出场"}
+{"id": "person:canon:huangmeiseng", "type": "person", "name": "黄眉僧", "aliases": ["黄眉大师", "黄眉和尚"], "note": "天龙寺僧人，保定帝的师兄，精于棋艺与内功，弟子有破疑、破嗔"}
+{"id": "person:canon:poyi", "type": "person", "name": "破疑", "aliases": [], "note": "黄眉僧的弟子，第8、9回出场"}
+{"id": "person:canon:pochen", "type": "person", "name": "破嗔", "aliases": [], "note": "黄眉僧的弟子，第8、9回出场"}
+{"id": "person:canon:duanyanqing", "type": "person", "name": "段延庆", "aliases": ["延庆太子", "青袍客"], "note": "四大恶人之首，号称天下第一恶人；曾是大理延庆太子，腹语、一阳指；青袍铁杖，形貌如活尸"}
+{"id": "person:canon:nanhaieshen", "type": "person", "name": "南海鳄神", "aliases": ["岳老三", "岳老二"], "note": "四大恶人之一，本名岳老三，却自称岳老二；凶蛮暴躁，使鳄嘴剪，收有弟子孙三霸"}
+{"id": "person:canon:yeerniang", "type": "person", "name": "叶二娘", "aliases": [], "note": "四大恶人之一，排行第二，每日掳走婴儿玩弄；第5回在无量山一带出场"}
+{"id": "person:canon:yunzhonghe", "type": "person", "name": "云中鹤", "aliases": ["云老四"], "note": "四大恶人之一，排行第四，使钢抓，轻功了得，好色"}
+{"id": "person:canon:sunsanba", "type": "person", "name": "孙三霸", "aliases": ["小煞神"], "note": "南海鳄神的弟子，外号小煞神，被木婉清所杀（第4回，只被提及）"}
+{"id": "person:canon:zhongwanchou", "type": "person", "name": "钟万仇", "aliases": ["钟谷主"], "note": "万劫谷谷主，甘宝宝之夫，钟灵名义上的父亲，面貌丑陋却对妻子百依百顺"}
+{"id": "person:canon:ganbaobao", "type": "person", "name": "甘宝宝", "aliases": ["钟夫人"], "note": "钟万仇之妻、钟灵之母，是段正淳的旧情人"}
+{"id": "person:canon:laifuer", "type": "person", "name": "来福儿", "aliases": [], "note": "万劫谷钟家的家人，第2回向主人禀报岳老三闹事，第3回已死"}
+{"id": "person:canon:jinxier", "type": "person", "name": "进喜儿", "aliases": [], "note": "万劫谷钟家的家人，在第2回被岳老三打伤"}
+{"id": "person:canon:muwanqing", "type": "person", "name": "木婉清", "aliases": ["黑衣女郎", "木姑娘", "木姊姊", "婉妹", "婉儿", {"name": "段姑娘", "ambiguous": true}], "note": "秦红棉与段正淳之女，黑纱蒙面的黑衣少女，善使毒箭；与段誉结下纠葛"}
+{"id": "person:canon:liangapo", "type": "person", "name": "梁阿婆", "aliases": [], "note": "为秦红棉代买米盐的乡下老妇，只在第7回木婉清的话里被提及"}
+{"id": "person:canon:qinhongmian", "type": "person", "name": "秦红棉", "aliases": ["红棉", "修罗刀", "幽谷客"], "note": "外号修罗刀，木婉清的师父兼生母，终身不见男子，段正淳的旧情人；木婉清曾以“幽谷客”之名搪塞外人"}
+{"id": "person:canon:pingpopo", "type": "person", "name": "平婆婆", "aliases": [], "note": "第3回在宅院中盘问段誉的凶悍老妇，使双短刀，身形肥胖"}
+{"id": "person:canon:ruipopo", "type": "person", "name": "瑞婆婆", "aliases": [], "note": "第3回在宅院中盘问段誉的凶悍老妇，使铁拐杖，较平婆婆沉稳"}
+{"id": "person:canon:zuozimu", "type": "person", "name": "左子穆", "aliases": [], "note": "无量剑东宗掌门，第1回出场；其子左山山曾被叶二娘掳走"}
+{"id": "person:canon:zuoshanshan", "type": "person", "name": "左山山", "aliases": [], "note": "左子穆之子，幼童，第5回被叶二娘掳走又被救回"}
+{"id": "person:canon:xinshuangqing", "type": "person", "name": "辛双清", "aliases": [], "note": "无量剑西宗掌门，后被灵鹫宫指定主持无量洞"}
+{"id": "person:canon:ganguanghao", "type": "person", "name": "干光豪", "aliases": [], "note": "左子穆的大弟子，无量剑东宗，第3回与葛光佩私奔被人追问"}
+{"id": "person:canon:gongguangjie", "type": "person", "name": "龚光杰", "aliases": [], "note": "左子穆的大弟子，无量剑东宗，第1回首先向段誉动手"}
+{"id": "person:canon:geguangpei", "type": "person", "name": "葛光佩", "aliases": ["葛师妹"], "note": "无量剑女弟子，脸有麻点，与干光豪私奔，第3、5回被提及"}
+{"id": "person:canon:mawude", "type": "person", "name": "马五德", "aliases": [], "note": "滇南普洱的老武师兼大茶商，豪富好客，武功平平；带段誉去无量剑，第1回出场"}
+{"id": "person:canon:yuguangbiao", "type": "person", "name": "郁光标", "aliases": [], "note": "无量剑东宗弟子，第5回与钱光胜一同出场"}
+{"id": "person:canon:qianguangsheng", "type": "person", "name": "钱光胜", "aliases": [], "note": "无量剑东宗弟子，第5回与郁光标一同出场"}
+{"id": "person:canon:rongziju", "type": "person", "name": "容子矩", "aliases": [], "note": "无量剑东宗的老一辈弟子，左子穆的师弟，第1回被神农帮所害"}
+{"id": "person:canon:sikongxuan", "type": "person", "name": "司空玄", "aliases": ["司空帮主"], "note": "神农帮帮主，受制于灵鹫宫，第1至5回出场；第3回向灵鹫宫圣使请罪，第5回跳入澜沧江"}
+{"id": "person:canon:ahong", "type": "person", "name": "阿洪", "aliases": [], "note": "神农帮帮众，第1回奉司空玄之命动手"}
+{"id": "person:canon:tianshantonglao", "type": "person", "name": "天山童姥", "aliases": ["童姥"], "note": "灵鹫宫之主，用生死符控制人，第1回起即被提及"}
+{"id": "person:canon:wuyazi", "type": "person", "name": "无崖子", "aliases": ["无涯子"], "note": "逍遥派前辈，琅嬛福地石壁上的题字者（第2回写作无涯子），为秋水妹书写"}
+{"id": "person:canon:liqiushui", "type": "person", "name": "李秋水", "aliases": ["秋水妹"], "note": "逍遥派旧人，李青萝之母；第2回只见于石壁题字里被称作秋水妹的女子"}
+{"id": "person:canon:qiaofeng", "type": "person", "name": "乔峰", "aliases": ["萧峰", "北乔峰", "乔帮主", "乔大爷", "乔某", "乔兄", "乔大哥", "萧大侠", "萧大哥", {"name": "萧兄", "ambiguous": true}, {"name": "萧某", "ambiguous": true}, "萧施主"], "note": "丐帮帮主，江湖号称北乔峰；后知为契丹人萧峰；第9回起被提及"}
+{"id": "person:canon:xuanci", "type": "person", "name": "玄慈", "aliases": ["玄慈方丈", "玄慈大师", "带头大哥"], "note": "少林寺方丈，第9回首次被提及"}
+{"id": "person:canon:xuanbei", "type": "person", "name": "玄悲", "aliases": ["玄悲大师"], "note": "少林寺高僧，遇害（第9回起被谈及），其弟子慧真、慧观等"}
+{"id": "person:canon:huizhen", "type": "person", "name": "慧真", "aliases": [], "note": "少林僧，玄悲的弟子，第9回奉命到大理送信"}
+{"id": "person:canon:huiguan", "type": "person", "name": "慧观", "aliases": [], "note": "少林僧，玄悲的弟子，随慧真到大理送信"}
+{"id": "person:canon:wuye", "type": "person", "name": "五叶", "aliases": ["五叶大师", "五叶方丈"], "note": "身戒寺方丈，第9回被慧真提及，玄悲遗体暂厝于其寺"}
+{"id": "person:canon:xuandu", "type": "person", "name": "玄渡", "aliases": [], "note": "少林寺高僧，第10回被鸠摩智提及其指力"}
+{"id": "person:canon:murongbo", "type": "person", "name": "慕容博", "aliases": ["慕容先生", "慕容老爷"], "note": "姑苏慕容氏前辈，慕容复之父，第9回起被提及；世传已逝"}
+{"id": "person:canon:murongfu", "type": "person", "name": "慕容复", "aliases": ["慕容公子", "南慕容", "慕容兄", "慕容兄弟"], "note": "姑苏慕容氏的少主，江湖号称南慕容；第9回起被提及，第12回起被谈起"}
+{"id": "person:canon:cuibaiquan", "type": "person", "name": "崔百泉", "aliases": ["霍先生", "霍大爷", "金算盘", "崔兄"], "note": "外号金算盘，柯百岁的师弟；长期化名霍先生隐身于大理镇南王府账房，第9回被过彦之认出"}
+{"id": "person:canon:guoyanzhi", "type": "person", "name": "过彦之", "aliases": ["追魂鞭", "过大爷"], "note": "伏牛派柯百岁的首徒，外号追魂鞭，第9回持丧服到大理求见崔百泉"}
+{"id": "person:canon:kebaisui", "type": "person", "name": "柯百岁", "aliases": [], "note": "伏牛派掌门，过彦之之师，善使软鞭，第9回起被提及"}
+{"id": "person:canon:lvqingtu", "type": "person", "name": "吕庆图", "aliases": [], "note": "为恶的官宦人物，柯百岁的友人曾遭他陷害（第9回，只被提及）"}
+{"id": "person:canon:zhangxudaoren", "type": "person", "name": "章虚道人", "aliases": [], "note": "山东武林中人，杀人手段狠毒，后遭同样报应（第9回，只被提及）"}
+{"id": "person:canon:jiumozhi", "type": "person", "name": "鸠摩智", "aliases": ["大轮明王", "吐蕃国师"], "note": "吐蕃国师，大轮明王，第10回到天龙寺索取六脉神剑，随后到姑苏"}
+{"id": "person:canon:dingchunqiu", "type": "person", "name": "丁春秋", "aliases": ["星宿老仙", "丁老怪", "丁老贼"], "note": "星宿派掌门，第10回被鸠摩智等提及"}
+{"id": "person:canon:azhu", "type": "person", "name": "阿朱", "aliases": ["阮姑娘", {"name": "段夫人", "ambiguous": true}], "note": "姑苏慕容氏的婢女，擅长易容，第11回起与段誉同行"}
+{"id": "person:canon:abi", "type": "person", "name": "阿碧", "aliases": [], "note": "姑苏慕容氏的婢女，擅吴语与弹奏，第11回起出场"}
+{"id": "person:canon:dengbaichuan", "type": "person", "name": "邓百川", "aliases": ["邓大哥"], "note": "慕容氏家臣，常随慕容复左右，第12回被阿朱等提及"}
+{"id": "person:canon:gongyeqian", "type": "person", "name": "公冶乾", "aliases": ["公冶二爷", "公冶二哥"], "note": "慕容氏家臣，排行第二，第12回被小茗、王语嫣提及"}
+{"id": "person:canon:baobutong", "type": "person", "name": "包不同", "aliases": ["包三哥", "包三先生", "包兄", "包先生"], "note": "慕容氏家臣，排行第三，第12回被王语嫣提及"}
+{"id": "person:canon:fengboe", "type": "person", "name": "风波恶", "aliases": ["风四哥", "风四爷"], "note": "慕容氏家臣，排行第四，第12回被王语嫣提及"}
+{"id": "person:canon:madayuan", "type": "person", "name": "马大元", "aliases": ["马副帮主", "马兄弟"], "note": "丐帮副帮主，已遇害，丐帮疑为慕容复所为（第12回起被提及）"}
+{"id": "person:canon:wangyuyan", "type": "person", "name": "王语嫣", "aliases": ["语嫣", "王姑娘", {"name": "神仙姊姊", "ambiguous": true}], "note": "曼陀山庄王夫人之女，与无量山玉像容貌相似，通晓天下武学理论；第12回出场"}
+{"id": "person:canon:wangfuren", "type": "person", "name": "王夫人", "aliases": ["李青萝"], "note": "曼陀山庄庄主，李秋水之女李青萝，王语嫣之母，爱茶花，对外人严苛；第12回出场"}
+{"id": "person:canon:yanmama", "type": "person", "name": "严妈妈", "aliases": [], "note": "曼陀山庄的老仆妇，第12回出场"}
+{"id": "person:canon:xiaoming", "type": "person", "name": "小茗", "aliases": [], "note": "曼陀山庄的侍女，第12回出场"}
+{"id": "person:canon:xiaocui", "type": "person", "name": "小翠", "aliases": [], "note": "曼陀山庄的婢女，第12回被提及"}
+{"id": "person:canon:xiaocha", "type": "person", "name": "小茶", "aliases": [], "note": "曼陀山庄的婢女，第12回负责照料山茶"}
+{"id": "person:canon:xiaoshi", "type": "person", "name": "小诗", "aliases": [], "note": "曼陀山庄的婢女，第12回被提及"}
+{"id": "person:canon:youcao", "type": "person", "name": "幽草", "aliases": [], "note": "曼陀山庄的小丫鬟，第12回在庄前招呼阿朱、阿碧"}

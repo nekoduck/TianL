@@ -1,0 +1,68 @@
+{"id": "person:canon:xuzhu", "type": "person", "name": "虚竹", "aliases": ["虚竹子", "虚竹先生"], "note": "少林寺年轻僧人，第29回起出场；破解珍珑棋局，得无崖子传功，继为逍遥派掌门、灵鹫宫之主"}
+{"id": "person:canon:suxinghe", "type": "person", "name": "苏星河", "aliases": ["聪辩先生", "聋哑先生"], "note": "无崖子的大弟子，函谷八友之师，擂鼓山珍珑棋局的主人；因身有残疾被称聋哑先生，自号聪辩先生"}
+{"id": "person:canon:wuyazi", "type": "person", "name": "无崖子", "aliases": ["无涯子"], "note": "逍遥派掌门，苏星河、丁春秋之师，临终把内力传给虚竹"}
+{"id": "person:canon:liqiushui", "type": "person", "name": "李秋水", "aliases": ["秋水妹"], "note": "逍遥派，无崖子的师妹，与童姥宿怨极深；西夏皇太妃，第36回起出现"}
+{"id": "person:canon:yelvhongji", "type": "person", "name": "耶律洪基", "aliases": ["洪基", "耶律基"], "note": "辽国皇帝；微服出猎时化名耶律基，与萧峰结为义兄弟，后封萧峰为南院大王"}
+{"id": "person:canon:yelvzhongyuan", "type": "person", "name": "耶律重元", "aliases": ["皇太叔", "重元"], "note": "洪基的叔父、辽兴宗之弟，身居兵马大元帅之职；其子涅鲁古趁洪基出猎作乱"}
+{"id": "person:canon:yelvniegu", "type": "person", "name": "耶律涅鲁古", "aliases": [{"name": "楚王", "ambiguous": true}, "涅鲁古"], "note": "耶律重元之子，封楚王，任南院大王；趁洪基出猎围困皇宫作乱，被萧峰射杀"}
+{"id": "person:canon:yelvmoge", "type": "person", "name": "耶律莫哥", "aliases": [], "note": "辽国左军将军，叛乱平定后被洪基任为南院枢密使，辅佐萧峰理政"}
+{"id": "person:canon:yelvlongxu", "type": "person", "name": "耶律隆绪", "aliases": ["圣宗"], "note": "辽圣宗，洪基的祖父；书中只在交代皇位旧事时提及"}
+{"id": "person:canon:yelvzongzhen", "type": "person", "name": "耶律宗真", "aliases": ["宗真", "兴宗"], "note": "辽兴宗，圣宗长子、洪基之父；其弟重元曾为他让出皇位（旧事，只被提及）"}
+{"id": "person:canon:shili", "type": "person", "name": "室里", "aliases": [], "note": "辽国卫队队长，先奉耶律基之命给萧峰送礼并接引，后在南京受阿紫差遣"}
+{"id": "person:canon:aguda", "type": "person", "name": "阿骨打", "aliases": ["完颜阿骨打"], "note": "女真完颜部青年，族长和哩布的次子；被萧峰所救并与之相交，称萧峰为萧大哥"}
+{"id": "person:canon:helibu", "type": "person", "name": "和哩布", "aliases": [], "note": "女真完颜部族长，有十一个儿子，阿骨打之父"}
+{"id": "person:canon:polasu", "type": "person", "name": "颇拉苏", "aliases": [], "note": "阿骨打的叔父，女真人；向被俘的耶律基索取赎金"}
+{"id": "person:canon:xuzhuocheng", "type": "person", "name": "许卓诚", "aliases": [], "note": "汉人商贩，每年冬天到女真地界收购人参毛皮，充当萧峰与女真人的通译"}
+{"id": "person:canon:huijing", "type": "person", "name": "慧净", "aliases": [], "note": "少林寺大肚僧人，在南京悯忠寺挂单，冰蚕被游坦之偷走；后随玄难一行遇上丁春秋"}
+{"id": "person:canon:huifang", "type": "person", "name": "慧方", "aliases": [], "note": "少林寺慧字辈僧人，虚竹称他师叔；随玄难等出寺同行"}
+{"id": "person:canon:huijing2", "type": "person", "name": "慧镜", "aliases": [], "note": "少林寺慧字辈僧人，随玄难出寺，被丁春秋手下抓回"}
+{"id": "person:canon:xuantong", "type": "person", "name": "玄痛", "aliases": [], "note": "少林寺高僧，玄难的师弟；与玄难奉方丈之命往姑苏送请帖，途中卷入丁春秋之祸"}
+{"id": "person:canon:tianlangzi", "type": "person", "name": "天狼子", "aliases": [], "note": "星宿派矮个弟子，法名天狼子；与丐帮全冠清接洽，被全冠清尊为大仙"}
+{"id": "person:canon:laowang", "type": "person", "name": "老汪", "aliases": [], "note": "丐帮弟子，第29回与同伴小毕私下议论新帮主人选"}
+{"id": "person:canon:xiaobi", "type": "person", "name": "小毕", "aliases": [], "note": "丐帮弟子，第29回与老汪私下议论新帮主人选"}
+{"id": "person:canon:kangguangling", "type": "person", "name": "康广陵", "aliases": [], "note": "函谷八友之首，苏星河的大弟子，精于琴，武功在同门中最高，为人幼稚，对师父苏星河忠心"}
+{"id": "person:canon:fanbailing", "type": "person", "name": "范百龄", "aliases": [], "note": "函谷八友之一，痴于弈棋，以铁棋盘为兵器"}
+{"id": "person:canon:goudu", "type": "person", "name": "苟读", "aliases": [], "note": "函谷八友之一，行三，书呆，博览群书、好与人辩论"}
+{"id": "person:canon:wulingjun", "type": "person", "name": "吴领军", "aliases": [], "note": "函谷八友之一，行四，原为宋朝领军将军，擅丹青，使判官笔"}
+{"id": "person:canon:fengasan", "type": "person", "name": "冯阿三", "aliases": [], "note": "函谷八友之一，行六，木匠出身，擅长机关土木"}
+{"id": "person:canon:shiqingfeng", "type": "person", "name": "石清风", "aliases": [], "note": "函谷八友中唯一的女子，行七，精于莳花；丁春秋来袭时身受重伤，留在地窖中，后被星宿派抬出"}
+{"id": "person:canon:likuilei", "type": "person", "name": "李傀儡", "aliases": [], "note": "函谷八友之一，行八，沉迷戏文，疯疯癫癫，不重武学"}
+{"id": "person:canon:wulaoda", "type": "person", "name": "乌老大", "aliases": ["乌先生", "乌洞主"], "note": "三十六洞七十二岛群豪之首，策划反叛童姥；与不平道人等同聚，后身受重伤"}
+{"id": "person:canon:bupingdaoren", "type": "person", "name": "不平道人", "aliases": ["不平道长", "蛟王"], "note": "号称蛟王的道人，轻功极高，自称相助群豪对付童姥；后死于虚竹手下"}
+{"id": "person:canon:zhuobufan", "type": "person", "name": "卓不凡", "aliases": ["卓先生"], "note": "福建建阳一字慧剑门的高手，号称剑神；来缥缈峰参与群豪之事，逼问童姥遗言"}
+{"id": "person:canon:cuilvhua", "type": "person", "name": "崔绿华", "aliases": ["芙蓉仙子"], "note": "号称芙蓉仙子，与不平道人、卓不凡同来相助群豪"}
+{"id": "person:canon:andongzhu", "type": "person", "name": "安洞主", "aliases": [], "note": "三十六洞之一天风洞洞主，群豪核心之一，与乌老大、钦岛主等九人曾轮值向灵鹫宫进贡"}
+{"id": "person:canon:qindaozhu", "type": "person", "name": "钦岛主", "aliases": [], "note": "七十二岛之一海马岛岛主，群豪之一，被乌老大派去把守东南方"}
+{"id": "person:canon:huodongzhu", "type": "person", "name": "霍洞主", "aliases": [], "note": "三十六洞之一紫岩洞洞主，群豪之一，被乌老大派去把守正西方"}
+{"id": "person:canon:qudaozhu", "type": "person", "name": "区岛主", "aliases": [], "note": "七十二岛之一剑鱼岛岛主，第35回临阵脱逃，被剑神卓不凡斩杀"}
+{"id": "person:canon:yundaozhu", "type": "person", "name": "云岛主", "aliases": [], "note": "七十二岛之一碧石岛岛主，第38回对灵鹫宫女子动粗逼问"}
+{"id": "person:canon:duanmuyuan", "type": "person", "name": "端木元", "aliases": ["端木洞主", "端木岛主"], "note": "海南五指山赤焰洞洞主，面目是个大头老者；第33回被王语嫣点破所练功夫的来历"}
+{"id": "person:canon:sangtugong", "type": "person", "name": "桑土公", "aliases": [], "note": "川西碧磷洞洞主，三十六洞洞主之一，其门派所用铜鼎被王语嫣认出"}
+{"id": "person:canon:xuanhuangzi", "type": "person", "name": "玄黄子", "aliases": [], "note": "甘肃虬龙洞洞主，只在第33回被慕容复点名提及"}
+{"id": "person:canon:zhangdaren", "type": "person", "name": "章达人", "aliases": [], "note": "东海玄冥岛岛主，只在第33回被慕容复点名提及"}
+{"id": "person:canon:hadaba", "type": "person", "name": "哈大霸", "aliases": [], "note": "铁鳌岛岛主，第38回突发狂躁，乱撕自己衣襟，被群豪认出"}
+{"id": "person:canon:xindongzhu", "type": "person", "name": "辛洞主", "aliases": [], "note": "三十六洞洞主之一，第38回群豪逼问童姥遗言时发言，众人附和"}
+{"id": "person:canon:simadaozhu", "type": "person", "name": "司马岛主", "aliases": [], "note": "七十二岛岛主之一，受过童姥蟒鞭责打，被乌老大叫出展示伤痕"}
+{"id": "person:canon:jiuyidaoren", "type": "person", "name": "九翼道人", "aliases": [], "note": "西夏一品堂高手，实为童姥所杀，江湖上却误传是慕容氏所为"}
+{"id": "person:canon:baweiheshang", "type": "person", "name": "八尾和尚", "aliases": [], "note": "江湖上传言被姑苏慕容氏所杀的人物之一，只被包不同提及"}
+{"id": "person:canon:zhuyadaguai", "type": "person", "name": "珠崖大怪", "aliases": ["大怪"], "note": "珠崖双怪中的兄长，第38回扣住虚竹脉门，逼问童姥临终遗言"}
+{"id": "person:canon:zhuyaerguai", "type": "person", "name": "珠崖二怪", "aliases": ["二怪"], "note": "珠崖双怪中的弟弟，第38回搜查虚竹身上的物件"}
+{"id": "person:canon:yupo", "type": "person", "name": "余婆", "aliases": ["余婆婆", "小余"], "note": "灵鹫宫昊天部首领，夫家姓余，童姥称她小余；虚竹继任后尊称余婆婆"}
+{"id": "person:canon:shisao", "type": "person", "name": "石嫂", "aliases": [], "note": "灵鹫宫朱天部首领，姓石，三十来岁，虚竹称她石嫂"}
+{"id": "person:canon:fuminyi", "type": "person", "name": "符敏仪", "aliases": [], "note": "灵鹫宫阳天部首领，二十来岁，第37回向虚竹禀报洞主岛主攻打缥缈峰"}
+{"id": "person:canon:chengqingshuang", "type": "person", "name": "程青霜", "aliases": [], "note": "灵鹫宫钧天部副首领，第37回身受重伤下峰求救，得虚竹施救"}
+{"id": "person:canon:meijian", "type": "person", "name": "梅剑", "aliases": [], "note": "灵鹫宫童姥座下四使婢之一，第38回参见虚竹"}
+{"id": "person:canon:lanjian", "type": "person", "name": "兰剑", "aliases": [], "note": "灵鹫宫童姥座下四使婢之一，第38回参见虚竹"}
+{"id": "person:canon:zhujian", "type": "person", "name": "竹剑", "aliases": [], "note": "灵鹫宫童姥座下四使婢之一，第38回参见虚竹"}
+{"id": "person:canon:jujian", "type": "person", "name": "菊剑", "aliases": [], "note": "灵鹫宫童姥座下四使婢之一，第38回参见虚竹"}
+{"id": "person:canon:menggu", "type": "person", "name": "梦姑", "aliases": ["银川公主"], "note": "第36回冰窖中与虚竹相聚的少女，虚竹称她梦姑；后来相认为西夏银川公主"}
+{"id": "person:canon:qiaofeng", "type": "person", "name": "乔峰", "aliases": ["萧大王", "萧大爷", "萧英雄", {"name": "楚王", "ambiguous": true}], "note": "第26-38回里入辽，称萧大爷；平叛后被洪基封为楚王、南院大王，称萧大王"}
+{"id": "person:canon:youtanzhi", "type": "person", "name": "游坦之", "aliases": ["庄兄", "庄大哥"], "note": "第33回里被全冠清称庄兄，被阿紫称庄大哥"}
+{"id": "person:canon:duanyu", "type": "person", "name": "段誉", "aliases": ["段王子"], "note": "第29回起被丐帮、少林等称为大理国段王子"}
+{"id": "person:canon:dingchunqiu", "type": "person", "name": "丁春秋", "aliases": ["丁施主", "星宿老怪"], "note": "第29-32回里被少林僧称丁施主，被江湖人称星宿老怪"}
+{"id": "person:canon:dengbaichuan", "type": "person", "name": "邓百川", "aliases": ["邓施主"], "note": "第29回起被少林僧称邓施主"}
+{"id": "person:canon:baobutong", "type": "person", "name": "包不同", "aliases": ["包施主"], "note": "第29回起被少林僧称包施主"}
+{"id": "person:canon:gongyeqian", "type": "person", "name": "公冶乾", "aliases": ["公冶施主"], "note": "第29回起被少林僧称公冶施主"}
+{"id": "person:canon:xuemuhua", "type": "person", "name": "薛慕华", "aliases": ["薛五哥", "薛贤侄"], "note": "第30回揭明是苏星河之徒，函谷八友排行第五"}
+{"id": "person:canon:azi", "type": "person", "name": "阿紫", "aliases": ["端福郡主"], "note": "第28回里被辽帝封为端福郡主"}
+{"id": "person:canon:tianshantonglao", "type": "person", "name": "天山童姥", "aliases": ["童姥姥", "老贼婆", "老尊主"], "note": "第34-38回里被群豪称老贼婆，被灵鹫宫下属称老尊主"}
