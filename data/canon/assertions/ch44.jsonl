@@ -27,9 +27,9 @@
 {"s":"person:canon:duanyu","p":"trait","v":"好色","m":"speech","q":{"speaker":"person:canon:azi"},"r":"norm","b":"text","e":[[44,168,73,82,"77ba5fd827026e56"]]}
 {"s":"person:canon:duanzhengchun","p":"trait","v":"多情","m":"speech","q":{"speaker":"person:canon:duanyu"},"r":"norm","b":"text","e":[[44,206,110,117,"c1be593626a5e7a6"]]}
 {"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:chuwanli","q":{"rel":"自幼交好"},"b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
-{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:guducheng","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫按姓氏对应褚万里、古笃诚、傅思归、朱丹臣","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
-{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:fusigui","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫按姓氏对应褚万里、古笃诚、傅思归、朱丹臣","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
-{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:zhudanchen","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫按姓氏对应褚万里、古笃诚、傅思归、朱丹臣","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
+{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:guducheng","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫，按各人姓氏对应到本人","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
+{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:fusigui","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫，按各人姓氏对应到本人","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
+{"s":"person:canon:duanyu","p":"kin_other","v":"person:canon:zhudanchen","q":{"rel":"自幼交好"},"t":"infer","w":"褚古傅朱四大护卫，按各人姓氏对应到本人","b":"text","e":[[44,28,137,152,"6ba5399128e2d7b6"]]}
 {"s":"person:canon:chuwanli","p":"org","v":"org:canon:sidahuwei","b":"text","e":[[44,28,116,126,"6ba5399128e2d7b6"]]}
 {"s":"person:canon:guducheng","p":"org","v":"org:canon:sidahuwei","t":"infer","w":"褚古傅朱四大护卫按姓氏对应，古即古笃诚","b":"text","e":[[44,28,140,148,"6ba5399128e2d7b6"]]}
 {"s":"person:canon:fusigui","p":"org","v":"org:canon:sidahuwei","t":"infer","w":"褚古傅朱四大护卫按姓氏对应，傅即傅思归","b":"text","e":[[44,28,140,148,"6ba5399128e2d7b6"]]}
@@ -136,7 +136,7 @@
 {"s":"person:canon:nanhaieshen","p":"master","v":"person:canon:duanyu","m":"speech","q":{"speaker":"person:canon:zhongling"},"r":"norm","b":"text","e":[[44,12,39,46,"621180ca310d95a8"]]}
 {"s":"person:canon:jiumozhi","p":"martial","v":"martial:canon:huoyandao","b":"text","e":[[44,45,37,45,"0137cda53cb1cc1e"],[44,101,30,36,"ce301298063b3043"]]}
 {"s":"person:canon:jiumozhi","p":"trait","v":"阴险","t":"infer","w":"他在老僧为众人说法时突然下手伤人，叙述者称之为毒手、暗算","b":"text","e":[[44,100,16,28,"8380144892a3e968"],[44,1,74,82,"6d32c829c72cb266"]]}
-{"s":"person:canon:muwanqing","p":"father","v":"person:canon:duanzhengchun","t":"infer","w":"叙述者说她明知段誉是自己同父异母的哥哥，她又提到爹爹派巴天石、朱丹臣送信，送信人奉的是段正淳之命","b":"text","e":[[44,202,34,48,"905e5354dd4cd488"],[44,203,150,163,"2be7ff45a0398366"]]}
+{"s":"person:canon:muwanqing","p":"father","v":"person:canon:duanzhengchun","t":"infer","w":"叙述者交代她明知段誉与自己是同父异母的兄妹；她又提到爹爹派人送信，送信人奉的是段正淳之命","b":"text","e":[[44,202,34,48,"905e5354dd4cd488"],[44,203,150,163,"2be7ff45a0398366"]]}
 {"s":"person:canon:muwanqing","p":"trait","v":"嘴硬","b":"text","e":[[44,205,23,28,"db678acc22e66960"],[44,201,122,135,"df931f549dc07444"]]}
 {"s":"person:canon:muwanqing","p":"trait","v":"痴情","t":"infer","w":"叙述者说她对段誉的相思爱慕非但未减还日增，听他一句温柔话便泪落","b":"text","e":[[44,202,50,68,"905e5354dd4cd488"],[44,200,109,117,"7e938b423bd1fd94"]]}
 {"s":"person:canon:muwanqing","p":"ambition","v":"pursue","q":{"target":"person:canon:duanyu"},"t":"infer","w":"她随着来兴州是为看段誉，叙述者说段誉的话正中她的心事","b":"text","e":[[44,205,10,21,"db678acc22e66960"],[44,202,53,59,"905e5354dd4cd488"]]}
@@ -157,9 +157,9 @@
 {"s":"item:canon:muhu","p":"use","v":"孩童玩物","b":"text","e":[[44,90,61,69,"e85642a7d57ec368"]]}
 {"s":"item:canon:muhu","p":"location","v":"place:canon:qiaosanhuaiwu","b":"text","e":[[44,90,17,28,"e85642a7d57ec368"],[44,90,71,76,"e85642a7d57ec368"]]}
 {"s":"item:canon:muhu","p":"holder","v":"person:canon:qiaofeng","t":"infer","w":"萧峰说这是义父刻给五岁的自己的，此时他拿在手中端详","b":"text","e":[[44,98,70,79,"6da24a1890e6c48e"],[44,98,2,12,"6da24a1890e6c48e"]]}
-{"s":"place:canon:hezhongfu","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西赴永兴军路的陕州、解州、河中府，三地即该路辖地","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
-{"s":"place:canon:shanzhou","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西赴永兴军路的陕州、解州、河中府，三地即该路辖地","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
-{"s":"place:canon:jiezhou","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西赴永兴军路的陕州、解州、河中府，三地即该路辖地","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
+{"s":"place:canon:hezhongfu","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西行入永兴军路，陕州、解州、河中府三地都在该路辖下","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
+{"s":"place:canon:shanzhou","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西行入永兴军路，陕州、解州、河中府三地都在该路辖下","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
+{"s":"place:canon:jiezhou","p":"parent","v":"place:canon:yongxingjunlu","t":"infer","w":"叙述者说西行入永兴军路，陕州、解州、河中府三地都在该路辖下","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
 {"s":"place:canon:henanfu","p":"parent","v":"place:canon:jingxibeilu","b":"text","e":[[44,150,0,12,"121b54170a6b125a"]]}
 {"s":"place:canon:shaoshishan","p":"route","v":"place:canon:shanzhou","t":"infer","w":"叙述者按先后列出少室山去西夏要经过的州府，陕州为西行第一站","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}
 {"s":"place:canon:shanzhou","p":"route","v":"place:canon:jiezhou","t":"infer","w":"叙述者按先后列出沿途州府，解州紧接陕州","b":"text","e":[[44,150,19,37,"121b54170a6b125a"]]}

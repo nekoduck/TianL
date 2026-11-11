@@ -8,4 +8,4 @@
 {"id":"item:canon:xiangyashan","type":"item","name":"象牙扇","aliases":[],"note":"象牙骨的扇子，扇面是段正淳亲手抄录的佛经，托朱丹臣送给虚竹的薄礼（第44回）"}
 {"id":"item:canon:muhu","type":"item","name":"木虎","aliases":["小老虎","木雕小虎"],"note":"乔三槐在萧峰五岁时亲手雕给他的小木老虎，收在旧居炕边桌子的抽屉里，萧峰见之触动旧情（第44回）"}
 {"id":"document:canon:duanzhengchunjiashu","type":"document","name":"段正淳致段誉的信","aliases":[],"note":"段正淳亲笔写给段誉的信，嘱他到西夏后设法娶公主以结姻亲，由巴天石、朱丹臣送到（第44回）"}
-{"id":"document:canon:duanzhengchunqiuqinhan","type":"document","name":"段正淳求亲函","aliases":["求亲函件"],"note":"盖有镇南王大印的信函，是段正淳向西夏皇帝求亲的亲笔函件，由巴天石交段誉到兴州后呈递（第44回）"}
+{"id":"document:canon:duanzhengchunqiuqinhan","type":"document","name":"段正淳求亲函","aliases":["求亲函件"],"note":"盖镇南王大印的信函，段正淳亲笔写给西夏皇帝、为段誉求亲，由巴天石交段誉带到兴州呈递（第44回）"}
