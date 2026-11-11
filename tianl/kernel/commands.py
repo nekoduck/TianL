@@ -36,6 +36,16 @@ class CommandsMixin:
             self.ev('CASE_OPENED', place=dp, actor=self.holder(self.T.discipline_head, day), cause=r, about=actor)
         return e
 
+    # 契约里有、B1 没做的三条命令（ARCHITECTURE 5 节：由集成代理实现）。先给出明确的报错，免得调用者撞上 AttributeError 摸不着头脑。
+    def cmd_put(self, *args, **kw):
+        raise NotImplementedError('cmd_put 尚未实现：ARCHITECTURE 5 节写明由集成代理做')
+
+    def cmd_use(self, *args, **kw):
+        raise NotImplementedError('cmd_use 尚未实现：ARCHITECTURE 5 节写明由集成代理做')
+
+    def cmd_say(self, *args, **kw):
+        raise NotImplementedError('cmd_say 尚未实现：ARCHITECTURE 5 节写明由集成代理做')
+
     def audit_items(self):
         for iid, name, home, keeper, place, known in self.x('SELECT id,name,home,keeper,place,missing_known FROM item ORDER BY id').fetchall():
             if place != home and not known:

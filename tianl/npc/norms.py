@@ -115,7 +115,7 @@ class Norms:
         if st.gone:
             off.gone, off.gone_why = day, st.txt
         eng.moods.think(off, sp.cases.sanction_thought, day)
-        for a in sorted(c.acc):
+        for a in sorted(c.acc):             # 指认人按 ix 升序：原型遍历 set，次序是 CPython 的实现细节（NPC_ENGINE.md 第 9 节第 11 条）
             eng.opinions.add_mod(off.ix, a, sp.cases.accuse_mod, day)
         c.state = sp.cases.done
         c.txt, c.day, c.via = st.txt, day, via

@@ -7,24 +7,46 @@ from ..core.calendar import YEAR
 from .vocab import SHI
 
 
+NAME_DRAWS = 64        # 取名：单字名先按随机键抽，每个池字平均最多抽这么多轮；仍抽不中才改为确定性扫描（见 _newname）
+
+
 class PeopleMixin:
     # ------------------------------------------------------------------ 造人
-    def _mk(self, gen, name, age, hall, canon=0, joined=0):
+    def _mk(self, gen, name, age, hall, canon=0, joined=0, home=None):
+        """造一个人并落库。引擎的 on_person_added 在这一行的各字段（含 home）都写定之后才调用：
+        收录者的住处由调用方经 home 一并写入，开局造人时住处在 _people 里统一排定（那时引擎尚未接上，不会回调）。"""
         pid = f'P{len(self.pids) + 1:04d}'; self.pids.append(pid); self.names.add(name)
         self.x('INSERT INTO person VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
-               (pid, name, '要角' if canon else '普通', gen, age, self.ac.org, hall, None, None, '在寺', joined, None, canon))
+               (pid, name, '要角' if canon else '普通', gen, age, self.ac.org, hall, home, None, '在寺', joined, None, canon))
         if self.engine is not None: self.engine.on_person_added(pid)
         return pid
 
     def _newname(self, gen, salt):
-        pool, i = self._pool, 0
-        while True:
-            ch = pool[int(self.u('name', gen, salt, i) * len(pool))]; i += 1
-            if ch != gen and gen + ch not in self.names: return gen + ch
+        """辈字 + 池里一个字。只要池里还有没用过的字，抽签次序与原型逐位相同（所以哈希不变）。
+        池耗尽时不再死循环：先（极小概率）抽不中则按池序确定性扫描空位，单字名全被占满则改取两字名（辈字 + 池字 + 池字），
+        两字名也占满才报错。"""
+        pool, names = self._pool, self.names
+        n = len(pool)
+        free = lambda nm: nm not in names
+        for i in range(n * NAME_DRAWS):
+            ch = pool[int(self.u('name', gen, salt, i) * n)]
+            if ch != gen and free(gen + ch): return gen + ch
+        start = int(self.u('name', gen, salt, 'scan') * n)                       # 确定性扫描：随机起点、按池序
+        for j in range(n):
+            ch = pool[(start + j) % n]
+            if ch != gen and free(gen + ch): return gen + ch
+        for i in range(n * NAME_DRAWS):                                          # 单字名占满：两字名
+            a, b = pool[int(self.u('name2', gen, salt, i, 'a') * n)], pool[int(self.u('name2', gen, salt, i, 'b') * n)]
+            if free(gen + a + b): return gen + a + b
+        for j in range(n * n):
+            nm = gen + pool[(start + j // n) % n] + pool[j % n]
+            if free(nm): return nm
+        raise RuntimeError(f'取名池耗尽：辈字 {gen!r} 下 {n} 个单字名与 {n * n} 个两字名都已用完')
 
     def _people(self):
         x, o, K = self.x, self.S.org, self.K
-        assert len(set(o.pool)) >= K['pool_min']
+        if len(set(o.pool)) < K['pool_min']:
+            raise ValueError(f"取名池只有 {len(set(o.pool))} 个不同的字，少于规则参数 pool_min = {K['pool_min']}")
         canon = {c.name: self._mk(c.gen, c.name, c.age, c.hall, 1) for c in o.canon}
         for gd in o.gens:
             lo, hi = gd.age
@@ -109,8 +131,8 @@ class PeopleMixin:
             n = Pm['monks'] - self.head()
             for k in range(n):
                 nm = self._newname(o.recruit.gen, f'r{d}-{k}')
-                pid = self._mk(o.recruit.gen, nm, o.recruit.age_min + int(self.u('age', nm) * o.recruit.age_span), o.default_hall, joined=d)
-                self.x('UPDATE person SET home=? WHERE id=?', (f'{o.dorm.prefix}{o.dorm.recruit}', pid))
+                self._mk(o.recruit.gen, nm, o.recruit.age_min + int(self.u('age', nm) * o.recruit.age_span), o.default_hall, joined=d,
+                         home=f'{o.dorm.prefix}{o.dorm.recruit}')        # 住处随行写入：引擎在回调里读到的就是定稿的一行
             if n > 0: self.ev('RECRUIT', place=self.pl.temple, actor=self.holder(self.T.abbot), n=n)
         if c['festival'] == se.charity_festival:
             if self.tier_i == 0:
@@ -118,7 +140,7 @@ class PeopleMixin:
                 self.ev('CHARITY', place=self.pl.gate, actor=self.holder(self.T.cook), grain=g)
             extra = self.bal(self.ac.org) - Pm['treasury_target']
             if extra > 0:
-                m = self.pay(self.ac.org, self.ac.town, extra * K['merit_n'] // K['merit_d'], '修造功德')
+                m = self.pay(self.ac.org, self.ac.town, extra * K['merit_n'] // K['merit_d'], self.R['merit'])
                 self.ev('MERIT_SPEND', place=self.pl.temple, actor=self.holder(self.T.abbot), money=m)
         if c['dom'] == 1: self.audit_items()
         self.make_roster(d + 1)

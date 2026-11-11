@@ -14,6 +14,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace as NS
 
+from tests.test_b1_common import REF_HASH, baseline_world
 from tianl.core.calendar import Calendar
 from tianl.defs import Defs
 from tianl.kernel import World, load_kernel_defs, load_spec
@@ -21,7 +22,6 @@ from tianl.kernel.spec import KERNEL_CATEGORIES
 
 ROOT = Path(__file__).resolve().parents[1]
 SLOW = os.environ.get('TIANL_SLOW') == '1'
-REF_HASH = '49f6ddde04dfa7f5'
 
 
 def load_reference():
@@ -34,10 +34,25 @@ def load_reference():
 REF = load_reference()
 
 
+REF_FLOOR = load_spec().K['hh_shop'][0]['floor_guan']      # 取一次干净值（后面的测试会改别的副本）
+
+
+def copy_defs(tmp, edit=lambda text: text):
+    """把内核用的各类定义目录复制到 tmp（每个文件的内容过一遍 edit），返回 tmp。"""
+    for cat in KERNEL_CATEGORIES:
+        src = ROOT / 'defs' / cat
+        if not src.is_dir(): continue
+        for f in src.rglob('*.toml'):
+            out = Path(tmp) / f.relative_to(ROOT / 'defs')
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(edit(f.read_text(encoding='utf-8')), encoding='utf-8')
+    return tmp
+
+
 class DefsMatchPrototype(unittest.TestCase):
     def test_kernel_defs_load_clean(self):
-        d = load_kernel_defs()
-        self.assertEqual(d.problems, [])
+        d = load_kernel_defs(scope='shaolin')                  # 少林寺自己的定义没有问题（别的 scope 写进同一批目录的，不归内核管）
+        self.assertEqual([p for p in d.problems if re.match(r'[a-z_]+:shaolin:', p)], [])
         self.assertGreater(len(d), 70)
 
     def test_constants_equal_prototype(self):
@@ -84,12 +99,13 @@ class DefsMatchPrototype(unittest.TestCase):
 
     def test_order_field_not_id_order(self):
         """Defs.by_kind 按编号排序，不等于原型的字典顺序——内核必须按 order 字段排。"""
-        d = load_kernel_defs()
-        by_id = [x['code'] for x in d.by_kind('place')]
+        d = load_kernel_defs(scope='shaolin')
+        mine = lambda kind: [x for x in d.by_kind(kind) if x['id'].split(':')[1] == 'shaolin' and x.get('kernel', True)]   # 别的 scope（别的模块的原型世界）不归内核管
+        by_id = [x['code'] for x in mine('place')]
         self.assertNotEqual(by_id, list(REF.PLACE_NAME))
         self.assertEqual([p[0] for p in load_spec().places], list(REF.PLACE_NAME))
         for kind in ('place', 'account', 'commodity', 'item', 'post'):
-            orders = [x['order'] for x in d.by_kind(kind)]
+            orders = [x['order'] for x in mine(kind)]
             self.assertEqual(len(set(orders)), len(orders), f'{kind} 的 order 有重复')
 
     def test_new_scope_runs_identically(self):
@@ -123,6 +139,25 @@ class DefsMatchPrototype(unittest.TestCase):
             self.assertNotIn('SH_BATH', [p[0] for p in spec.places])
             self.assertEqual(World(spec=spec).run(30).state_hash(), World().run(30).state_hash())
 
+    def test_other_scopes_problems_do_not_break_this_kernel(self):
+        """别的 scope（别的模块的原型世界）往内核类别目录里写的定义，哪怕有悬空引用、缺 code、缺 order，也不拖累少林寺的内核；
+        严格加载（不给 scope）与它们自己的负责人用的完整加载器照样报。自己的定义出问题则照样报。"""
+        broken = (
+            '["post:other:cook"]\nname = "厨"\nsite = "place:other:nowhere"\nfacility = "facility:other:oven"\n'
+            '["place:other:yard"]\nname = "院"\naccess = "open"\n'                      # 缺 code
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            copy_defs(tmp)
+            (Path(tmp) / 'post' / 'other.toml').write_text(broken, encoding='utf-8')
+            with self.assertRaises(Exception) as cm: load_kernel_defs(tmp)               # 严格：照报
+            self.assertIn('place:other:nowhere', str(cm.exception))
+            spec = load_spec(root=tmp)                                                   # 按 scope：只看自己的
+            self.assertEqual([p[0] for p in spec.places], list(REF.PLACE_NAME))
+            self.assertEqual(World(spec=spec).run(30).state_hash(), World().run(30).state_hash())
+            (Path(tmp) / 'post' / 'mine.toml').write_text('["post:shaolin:ghost"]\nname = "鬼"\nsite = "place:shaolin:nowhere"\n', encoding='utf-8')
+            with self.assertRaises(Exception) as cm: load_spec(root=tmp)                 # 自己的定义有问题：照报
+            self.assertIn('place:shaolin:nowhere', str(cm.exception))
+
     def test_missing_role_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             for cat in KERNEL_CATEGORIES:
@@ -139,6 +174,54 @@ class DefsMatchPrototype(unittest.TestCase):
                 load_spec(scope='demo', root=tmp)
             self.assertIn('T.cook', str(cm.exception))
 
+    def test_new_scope_must_spell_out_its_own_calendar(self):
+        """Calendar.from_def 对 festivals / retreat / wheat_doy / millet_doy 缺省回落到少林寺的值：新寺院漏写不能悄悄用上它们，装配时就报。"""
+        for field in ('festivals', 'retreat', 'wheat_doy', 'millet_doy', 'sell_doys'):
+            with self.subTest(field), tempfile.TemporaryDirectory() as tmp:
+                copy_defs(tmp, lambda t: re.sub(rf'(?m)^{field} = .*$', '', t))
+                with self.assertRaises(Exception) as cm:
+                    load_spec(root=tmp)
+                self.assertIn(field, str(cm.exception))
+                self.assertIn('历法', str(cm.exception))
+        with tempfile.TemporaryDirectory() as tmp:                           # 年长也不许乱写：内核按 360 日算
+            copy_defs(tmp, lambda t: t.replace('year = 360', 'year = 300'))
+            with self.assertRaises(Exception) as cm:
+                load_spec(root=tmp)
+            self.assertIn('year', str(cm.exception))
+
+    def test_load_spec_gives_independent_copies(self):
+        """改某个 World 的 K、品类、场所表……不得污染后来的 World（缓存里的原件、别的 World 的副本都不能变）。"""
+        a = World()
+        a.K['transfer_sla'] += 100
+        a.K['tiers'].append('乱入')
+        a.K['hh_shop'][0]['floor_guan'] += 7
+        a.G[a.cm.staple].name = '改过的名'
+        a.G[a.cm.fuel].use += 1
+        a.S.org.canon.pop()
+        a.S.places.append(('SH_X', 'x', 'open'))
+        a.S.season.sell_doys = ()
+        a.S.labels['reasons']['incense'] = '改过'
+        a.pl.granary = 'XX'
+        a.T.cook = '厨子'
+        a.P['seed'] = 99
+        b = World()
+        ref = load_spec()
+        for w in (b, World(spec=ref)):
+            self.assertEqual(w.K['transfer_sla'], 20)
+            self.assertEqual(w.K['tiers'], ['充足', '留意', '紧张', '告急', '断供'])
+            self.assertEqual(w.K['hh_shop'][0]['floor_guan'], REF_FLOOR)
+            self.assertNotEqual(w.G[w.cm.staple].name, '改过的名')
+            self.assertEqual(w.G[w.cm.fuel].use, REF.GOODS[w.cm.fuel][3])
+            self.assertEqual(len(w.S.org.canon), len(REF.CANON))
+            self.assertNotIn('SH_X', [p[0] for p in w.S.places])
+            self.assertTrue(w.S.season.sell_doys)
+            self.assertNotEqual(w.S.labels['reasons']['incense'], '改过')
+            self.assertEqual(w.pl.granary, 'SH_GRANARY')
+            self.assertEqual(w.T.cook, '典座')
+            self.assertEqual(w.P['seed'], REF.P['seed'])
+        self.assertIsNot(load_spec(), load_spec())
+        self.assertEqual(b.run(5).state_hash(), World().run(5).state_hash())
+
     def test_params_override_and_seed_matters(self):
         a, b = World().run(10), World({'seed': 7}).run(10)
         self.assertNotEqual(a.state_hash(), b.state_hash())
@@ -154,7 +237,7 @@ class NoShaolinConstantsInCode(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         S = load_spec()
-        D = load_kernel_defs()
+        D = load_kernel_defs(scope='shaolin')
         codes = {p[0] for p in S.places} | {a.code for a in S.accounts} | {i.code for i in S.items}
         cls.codes = codes
         cls.prefixes = {c.prefix for c in S.hh_classes} | {S.org.dorm.prefix}
@@ -163,9 +246,10 @@ class NoShaolinConstantsInCode(unittest.TestCase):
         names |= {a.name for a in S.accounts if a.name} | {a.office for a in S.accounts if a.office}
         names |= {g.name for g in S.goods.values()} | set(S.cal.festivals.values()) | {c.label for c in S.hh_classes}
         names |= {v for v in S.labels.values() if isinstance(v, str)} | {gd.gen for gd in S.org.gens}
+        cls.labels_nested = {v for k in ('reasons', 'grain_ledger') for v in S.labels[k].values()}
         for i in D.ids():
             d = D.get(i)
-            if i.startswith('post:'): names.add(d['name'])
+            if i.startswith('post:shaolin:'): names.add(d['name'])
         cls.names = {n for n in names if n and len(n) >= 2}
         cls.pool = S.org.pool
 
@@ -202,9 +286,49 @@ class NoShaolinConstantsInCode(unittest.TestCase):
                 if hit: bad.append(f'{f.name}:{ln} {s[:30]!r} {sorted(set(hit))}')
         self.assertEqual(bad, [])
 
+    def test_no_ledger_reason_or_grain_category_literals(self):
+        """钱账事由与粮账类别名（labels.reasons / labels.grain_ledger 的值）不许原样写在代码里（日报叙述里的同形词不算：只查整串相等）。"""
+        bad = []
+        for f in self.FILES:
+            for ln, s in self.literals(f):
+                if s in self.labels_nested: bad.append(f'{f.name}:{ln} {s!r}')
+        self.assertEqual(bad, [])
+
     def test_no_name_pool_or_canon_text(self):
         for f in self.FILES:
             self.assertNotIn(self.pool[:20], f.read_text(encoding='utf-8'), f.name)
+
+    def test_every_rule_parameter_is_read_by_the_kernel_and_none_is_missing(self):
+        """110 项规则参数 K：defs 里的每一项都被内核代码读取（没有死参数），代码里读的每一项都在 defs 里（没有缺项）。
+        有的分支基准里走不到（点检时辰、还粮比例、关键岗位空缺上限、减供档线），所以不能只靠哈希；这里按源码静态核对。"""
+        src = '\n'.join(f.read_text(encoding='utf-8') for f in (ROOT / 'tianl' / 'kernel').glob('*.py') if f.name != 'spec.py')
+        used = set(re.findall(r"K\[\s*['\"](\w+)['\"]\s*\]", src))
+        keys = set(load_spec().K)
+        self.assertEqual(sorted(keys - used), [], 'defs 里有内核从不读取的规则参数')
+        self.assertEqual(sorted(used - keys), [], '内核读取了 defs 里没有的规则参数')
+
+    def test_ledger_reasons_come_from_defs(self):
+        """钱账事由（流水 reason）全部取自 labels.reasons：账上出现的每个事由都能在 defs 里找到（前缀型的取前缀）。"""
+        S = load_spec()
+        reasons = set(S.labels['reasons'].values())
+        w = baseline_world()                                  # 预热 1 年 + 3 年的共享基准（只读）
+        seen = {r[0] for r in w.x('SELECT DISTINCT reason FROM ledger')}
+        stray = {r for r in seen if r not in reasons and not any(r.startswith(p) for p in reasons if p.endswith(':'))}
+        self.assertEqual(sorted(stray), [])
+        self.assertGreaterEqual(len(seen & reasons) + sum(1 for r in seen if any(r.startswith(p) for p in reasons if p.endswith(':'))), 12)
+
+    def test_missing_ledger_reason_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for cat in KERNEL_CATEGORIES:
+                src = ROOT / 'defs' / cat
+                if not src.is_dir(): continue
+                for f in src.rglob('*.toml'):
+                    out = Path(tmp) / f.relative_to(ROOT / 'defs')
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(f.read_text(encoding='utf-8').replace('\nincense = "香火钱"', '\nincense_x = "香火钱"'), encoding='utf-8')
+            with self.assertRaises(Exception) as cm:
+                load_spec(root=tmp)
+            self.assertIn('incense', str(cm.exception))
 
     def test_defs_do_hold_them(self):
         """反过来：这些常量确实在 defs 里。"""

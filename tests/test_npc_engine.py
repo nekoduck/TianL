@@ -3,6 +3,7 @@
 """
 import ast
 import dataclasses
+import hashlib
 import os
 import re
 import unittest
@@ -12,10 +13,13 @@ from pathlib import Path
 from tianl.core import cal, rnd, rnd_b2
 from tianl.npc import NpcEngine, PersonSpec, ProtoRun, Script, StandaloneHost, proto60_spec
 from tianl.npc import events as E
+from tianl.npc.handlers import GATES
 from tianl.npc.host import CmdResult, Event, Host
 from tianl.npc.model import FIELD_MASK, GAP, Symbols, Trail, pack, unpack
-from tianl.npc.spec import SpecError
-from tianl.npc.scenarios import gossip_script
+from tianl.npc.model import Case
+from tianl.npc.spec import A_GUARD, A_MARTIAL, A_STROLL, L_FREE, L_SLACK, AdSpec, NeedTerm, SpecError
+from tianl.npc.scenarios import PROTO_SEED, gossip_script, proto60_roster
+from tests.test_npc_support import with_when
 
 BASE_HASH = 'e8f8209eeb8ca94a'
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
@@ -25,6 +29,19 @@ def base_run(**kw):
     g = ProtoRun().common
     kw.setdefault('script', gossip_script(g))
     return ProtoRun(**kw).run()
+
+
+_SHARED = {}
+
+
+def shared_run(seed=PROTO_SEED, days=30, gossip=False):
+    """只读用的运行结果，整个模块里同样的（种子、日数、脚本）只跑一次。凡是会改引擎的测试
+    （加人、设观察者、换 Host、改规格）一律不要用它，各自 ProtoRun 一份。"""
+    key = (seed, days, gossip)
+    if key not in _SHARED:
+        kw = {'script': gossip_script(ProtoRun().common)} if gossip else {}
+        _SHARED[key] = ProtoRun(seed=seed, days=days, **kw).run()
+    return _SHARED[key]
 
 
 class HostBoundary(unittest.TestCase):
@@ -105,7 +122,7 @@ class HostBoundary(unittest.TestCase):
         news = [n for p in eng.pids for n in eng.news_of(p)]
         self.assertTrue(news and all(n[0] in h.by_id for n in news))
         self.assertEqual(eng.event_of(news[0][0]).hid, news[0][0])
-        ref = base_run().engine
+        ref = shared_run(gossip=True).engine
         self.assertEqual(eng.stat, ref.stat)
         self.assertEqual([eng.places_of(i) for i in range(60)], [ref.places_of(i) for i in range(60)])
 
@@ -174,7 +191,7 @@ class ObserverIndependence(unittest.TestCase):
 class Queries(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.world = base_run()
+        cls.world = shared_run(gossip=True)
         cls.eng = cls.world.engine
 
     def test_every_decision_has_layer_and_reason(self):
@@ -252,8 +269,7 @@ class Queries(unittest.TestCase):
     def test_every_sanction_traces_back_to_a_report_or_a_confession(self):
         confessions = 0
         for seed in (20261110, 2, 4):                              # 种子 2、4 的 90 日里有人认错
-            x = ProtoRun(seed=seed, days=90).run()
-            eng = x.engine
+            eng = shared_run(seed, 90).engine
             by_case = {c['eid']: c for c in eng.cases()}
             sanctions = [e for e in eng.evs if e.kind == E.SANCTION]
             self.assertEqual(len(sanctions), eng.stat['sanction'])
@@ -273,14 +289,14 @@ class Queries(unittest.TestCase):
         self.assertGreater(confessions, 0)
 
     def test_90_days_ladder_and_leaving(self):
-        x = ProtoRun(days=90).run()
+        x = shared_run(days=90)
         eng = x.engine
         self.assertEqual([c['sanction'] for c in eng.cases() if c['sanction']],
                          ['罚跪香三日', '杖责并禁闭二日', '禁闭五日', '迁单出寺'])    # 四级阶梯各走一遍
         self.assertEqual(eng.people[x.glutton.ix].gone, 83)                     # 计划 8.5：第 83 日迁单出寺
 
     def test_explain_says_where_a_departed_monk_went(self):
-        x = ProtoRun(days=90).run()
+        x = shared_run(days=90)
         eng, g = x.engine, x.glutton
         self.assertEqual((g.gone, g.gone_why), (83, '迁单出寺'))
         self.assertIsNone(eng.where(g.ix, 83, 11))                               # where 仍是契约里的 None
@@ -363,6 +379,15 @@ class IxAndPid(unittest.TestCase):
         a = ProtoRun(script=Script(gossip=(6, g[8].ix, g[9].ix))).run().hash
         b = ProtoRun(script={'gossip': (6, g[8].pid, g[9].pid)}).run().hash
         self.assertEqual(a, b)
+        self.assertEqual(a, BASE_HASH)
+
+    def test_profile_id_is_a_read_only_alias_of_ix(self):
+        """验收脚本里写 `common[8].id`（原型的档案叫 id）：它就是 ix，且只读，所以不会与 ix 不一致。"""
+        g = ProtoRun().common
+        self.assertTrue(all(p.id == p.ix for p in g))
+        with self.assertRaises(AttributeError):
+            g[0].id = 5
+        a = ProtoRun(script={'gossip': (6, g[8].id, g[9].id)}).run().hash         # 任务书里的写法，逐字
         self.assertEqual(a, BASE_HASH)
 
     def test_explicit_traits_override_generation(self):
@@ -457,7 +482,7 @@ class SpecDriven(unittest.TestCase):
 
     def test_uposatha_by_calendar_day_of_month(self):
         sp = proto60_spec()
-        by_dom = dataclasses.replace(sp, uposatha=dataclasses.replace(sp.uposatha, by='dom', days=(1, 15)))
+        by_dom = with_when(sp, 'uposatha', days=None, doms=(1, 15))        # 布萨的日子从“模拟日序号”改成“历法的月内日”
         x = ProtoRun(spec=by_dom, days=31).run().engine
         act_at = lambda day: Counter(x.where(i, day, 7)[1] for i in range(60) if x.where(i, day, 7))
         self.assertEqual(cal(14)['dom'], 15)
@@ -471,6 +496,19 @@ class SpecDriven(unittest.TestCase):
         harsh = dataclasses.replace(sp, kitchen=dataclasses.replace(sp.kitchen, min_staff=99))
         x = ProtoRun(spec=harsh, days=3).run().engine
         self.assertEqual(x.stat['half_meal'], x.stat['meals'])      # 永远人手不足：每顿都是半餐
+
+    def test_job_priority_is_a_field(self):
+        sp = proto60_spec()
+        eng = ProtoRun().engine
+        eng.jobs.publish()
+        self.assertEqual([r.name for r in eng.jobs.rows][:5], ['挑水', '打柴', '舂米', '菜园帮工', '洒扫'])
+        swept = tuple(dataclasses.replace(j, prio=0) if j.name == '洒扫' else j for j in sp.jobs.board)
+        spec = dataclasses.replace(sp, jobs=dataclasses.replace(sp.jobs, board=swept))
+        eng2 = ProtoRun(spec=spec).engine
+        eng2.jobs.publish()
+        self.assertEqual([r.place for r in eng2.jobs.rows][:4], ['hall', 'zen', 'clo', 'dorm1'])   # 洒扫提到最前，同级保持原次序
+        self.assertEqual([r.name for r in eng2.jobs.rows][4:], ['挑水', '打柴', '舂米', '菜园帮工'])
+        self.assertNotEqual(ProtoRun(days=3).run().hash, ProtoRun(spec=spec, days=3).run().hash)
 
     def test_ladder_is_a_field(self):
         sp = proto60_spec()
@@ -506,14 +544,245 @@ class SpecValidation(unittest.TestCase):
         self.assertTrue(any('choice_key_chars' in p for p in problems))
         self.assertTrue(any('via_report' in p for p in problems))
 
+    def test_free_time_needs_something_to_choose_from(self):
+        sp = proto60_spec()
+        problems = dataclasses.replace(sp, ads=()).validate()
+        self.assertTrue(any('ads' in p for p in problems), problems)
+        problems = dataclasses.replace(sp, free=dataclasses.replace(sp.free, top_k=0)).validate()
+        self.assertTrue(any('top_k' in p for p in problems), problems)
+        with self.assertRaises(SpecError):
+            NpcEngine(dataclasses.replace(sp, ads=()), StandaloneHost(1, rnd_b2))
+
     def test_via_labels_come_from_the_spec(self):
         sp = proto60_spec()
         renamed = dataclasses.replace(sp, cases=dataclasses.replace(sp.cases, via_report='据举报', via_confess='自认'))
         x = ProtoRun(spec=renamed, days=90, seed=4).run()
         vias = {c['via'] for c in x.engine.cases() if c['via']}
         self.assertEqual(vias, {'据举报', '自认'})
-        y = ProtoRun(days=90, seed=4).run()                                  # 换了标签，行为不变
+        y = shared_run(4, 90)                                                # 换了标签，行为不变
         self.assertEqual(x.hash, y.hash)
+
+
+class FreeChoiceFallback(unittest.TestCase):
+    """自由时段没有任何得分为正的广告：原型在 top[0] 处 IndexError；移植版改为散步并记 free_none。"""
+
+    def stroll_only(self, run):
+        eng, sp = run.engine, run.engine.spec
+        n = 0
+        for p in eng.people:
+            for day in range(1, run.days + 1):
+                for slot in range(12):
+                    place, act, layer, reason = eng.where(p.ix, day, slot)
+                    if layer in (L_FREE, L_SLACK):
+                        n += 1
+                        self.assertEqual((place, act, reason), (sp.free.stroll_place, A_STROLL, sp.free.stroll_label))
+        return n
+
+    def test_every_ad_scores_nonpositive(self):
+        sp = proto60_spec()
+        sad = AdSpec(A_MARTIAL, 'yard', '习武', (NeedTerm('e', -3, ()),), None, None, None, {})      # 迫切度乘负增量：恒不为正
+        spec = dataclasses.replace(sp, ads=(sad,))
+        self.assertEqual(spec.validate(), [])
+        run = ProtoRun(spec=spec, days=6).run()
+        n = self.stroll_only(run)
+        self.assertGreater(n, 0)
+        self.assertEqual(run.engine.stat['free_none'], n)               # 每个自由时段的决定都是这一支
+        self.assertEqual(run.engine.stat['full'], 0)
+
+    def test_no_facility_open(self):
+        run = ProtoRun(days=4)
+        run.engine.fac.open_ads = lambda p, day, slot: []               # 设施都没开
+        run.run()
+        n = self.stroll_only(run)
+        self.assertGreater(n, 0)
+        self.assertEqual(run.engine.stat['free_none'], n)
+
+    def test_ordinary_world_never_takes_the_fallback(self):
+        eng = shared_run(gossip=True).engine
+        self.assertEqual(eng.stat['free_none'], 0)
+        self.assertNotIn('free_none', {k for k, v in eng.stat.items() if v})
+
+
+def build(spec, keep=lambda ps: True, n=60, seed=PROTO_SEED):
+    """按名册建一个引擎（不用 ProtoRun，所以名册可以缺人：只留岗位僧、只留清众、去掉藏主……）；keep 决定留谁。"""
+    eng = NpcEngine(spec, StandaloneHost(seed, rnd_b2))
+    for ps in proto60_roster(spec, n):
+        if keep(ps):
+            eng.add_person(ps)
+    return eng
+
+
+def run_days(eng, days):
+    for day in range(1, days + 1):
+        eng.run_day(day)
+    return eng
+
+
+def decisions(eng, days):
+    for p in eng.people:
+        for day in range(1, days + 1):
+            for slot in range(12):
+                w = eng.where(p.ix, day, slot)
+                if w:
+                    yield p, day, slot, w
+
+
+class DefensiveBranches(unittest.TestCase):
+    """基准世界与所有对照场景都走不到的三处防御性分支。原型在这几处要么 IndexError、要么根本不可达，
+    所以没法与原型逐项比对；这里直接造出会走到它们的世界，断言行为合理并且不崩、不越界。"""
+
+    def test_every_candidate_full_falls_back_to_stroll(self):
+        """freechoice：能选的广告都满员 → 去廊下散步（不是 free_none：那是“没有任何正分广告”）。
+        原型的“小憩”广告落在本人床位、不记容量，永远有空，所以这一支在原型世界里不可达。"""
+        sp = proto60_spec()
+        only = AdSpec(A_MARTIAL, 'yard', '习武', (NeedTerm('a', 6, ()),), None, None, None, {})      # 迫切度乘正增量：恒为正
+        for cap in (2, 0):
+            spec = dataclasses.replace(sp, ads=(only,), capacity={**sp.capacity, 'yard': cap})
+            self.assertEqual(spec.validate(), [])
+            eng = run_days(build(spec), 6)
+            fr = spec.free
+            n_free = n_yard = crowded = 0
+            for day in range(1, 7):
+                for slot in range(12):
+                    here = {}
+                    for p in eng.people:
+                        w = eng.where(p.ix, day, slot)
+                        if w and w[2] in (L_FREE, L_SLACK):
+                            self.assertIn((w[0], w[1]), ((only.place, A_MARTIAL), (fr.stroll_place, fr.stroll_act)))
+                            here[(w[0], w[1])] = here.get((w[0], w[1]), 0) + 1
+                    n_free += sum(here.values())
+                    n_yard += here.get(('yard', A_MARTIAL), 0)
+                    crowded += here.get(('yard', A_MARTIAL), 0) == cap and here.get((fr.stroll_place, fr.stroll_act), 0) > 0
+            self.assertGreater(n_free, 100)
+            self.assertEqual(eng.stat['free_none'], 0)                  # 有正分广告，只是满了
+            self.assertGreater(eng.stat['full'], 0)
+            self.assertEqual(eng.fac.violations, [])                     # 占用从不超过容量
+            if cap:
+                self.assertGreater(n_yard, 0)
+                self.assertGreater(crowded, 0)                           # 练武场坐满、后来的人散步：这一支走到了
+            else:
+                self.assertEqual(n_yard, 0)                              # 一个座位也没有：自由时段全都散步
+
+    def test_library_gate_needs_a_keeper(self):
+        """handlers.lib_open：没有藏主，藏经阁就不开（原型此处 IndexError）。"""
+        sp = proto60_spec()
+        ad = next(a for a in sp.ads if a.gate == 'lib_open')
+        keeper, open_slots = ad.gate_params['office'], ad.gate_params['slots']       # 管阁的岗位与开阁时辰在交互的 admission 里
+        control = run_days(build(sp), 15)
+        empty = run_days(build(sp, lambda ps: ps.office != keeper), 15)
+        self.assertEqual(empty.by.get(keeper), None)
+        free_reads = lambda e: sum(1 for p, d, s, w in decisions(e, 15)
+                                   if w[0] == 'lib' and w[2] in (L_FREE, L_SLACK))
+        self.assertGreater(free_reads(control), 0)
+        self.assertEqual(free_reads(empty), 0)
+        slot = open_slots[0]
+        for slot_ in range(12):
+            self.assertFalse(GATES['lib_open'](empty, empty.people[0], 3, slot_, ad.gate_params))
+            self.assertEqual(GATES['lib_open'](control, control.people[0], 3, slot_, ad.gate_params), slot_ in open_slots)
+        zhu = control.people[control.by[keeper][0]]                      # 藏主病了：同样不开
+        zhu.ill = 3
+        self.assertFalse(GATES['lib_open'](control, control.people[0], 3, slot, ad.gate_params))
+        self.assertTrue(GATES['lib_open'](control, control.people[0], 4, slot, ad.gate_params))
+
+    def test_a_temple_without_common_monks_has_no_gate_guards(self):
+        """engine.guards：清众为空 → 无人值守山门（不除以零）。只有岗位僧的寺照样能跑。"""
+        sp = proto60_spec()
+        eng = build(sp, lambda ps: ps.office is not None)
+        self.assertEqual((eng.common, eng.guards(1), eng.guards(2), eng.guards(99)), ([], (), (), ()))
+        run_days(eng, 8)
+        self.assertGreater(eng.stat['ps'], 1000)
+        self.assertFalse(any(w[1] == A_GUARD for p, d, s, w in decisions(eng, 8)))
+        self.assertTrue(all(w[2] and w[3] for p, d, s, w in decisions(eng, 8)))      # 照样每个决定都说得清
+
+    def test_a_temple_without_office_holders_runs(self):
+        """只有清众：没有僧值、戒律院、维那、典座……各处按“岗位空缺”处理，不崩，也不会有人受处分。"""
+        sp = proto60_spec()
+        eng = build(sp, lambda ps: ps.office is None)
+        self.assertEqual((eng.night_patroller(3), eng.court_staff(), eng.court_open(3)), (None, [], False))
+        run_days(eng, 8)
+        self.assertGreater(eng.stat['ps'], 1000)
+        self.assertEqual((eng.stat['sanction'], eng.stat['absence']), (0, 0))            # 没有维那点名、没有戒律院
+        self.assertTrue(all(w[2] and w[3] for p, d, s, w in decisions(eng, 8)))
+
+
+class PlaceCodesAreKeys(unittest.TestCase):
+    """原型的场所短码（hall、kit、dorm1……）不只是名字：它们进随机数键（巡寮抽签的键里有场所码）与基线哈希
+    （每个决定一行，含场所码）。defs 驱动之后，原型场景的 place 定义的 code 就是这些短码（defs/space/proto60.toml）——
+    原型回归保持原样；换成 SH_HALL 之类就是另一个世界、另一份基线（docs/NPC_ENGINE.md 第 9 节第 14 条、第 10 节）。这里把事实钉住。"""
+
+    def test_roam_draws_are_keyed_by_the_place_code(self):
+        keys = []
+
+        def rec(*k):
+            keys.append(k)
+            return rnd_b2(*k)
+        sp = proto60_spec()
+        ProtoRun(host=StandaloneHost(PROTO_SEED, rec), days=4).run()
+        roam = [k for k in keys if k[1] == 'roam']
+        self.assertGreater(len(roam), 50)
+        self.assertEqual({k[4] for k in roam}, set(sp.roam))                # 键 = (种子, 'roam', 日, 时辰, 场所码)
+        self.assertTrue(set(sp.roam) <= set(sp.places))
+
+    def test_baseline_hash_lines_carry_the_place_code(self):
+        class Spy:
+            def __init__(self):
+                self.h, self.lines = hashlib.sha256(), []
+
+            def update(self, b):
+                self.lines.append(b.decode())
+                self.h.update(b)
+
+            def copy(self):
+                return self.h.copy()
+        run = ProtoRun(days=2)
+        run.engine._h = Spy()
+        run.run()
+        sp = run.engine.spec
+        lines = run.engine._h.lines
+        self.assertEqual(len(lines), 2 * 12 * 60)
+        codes = {ln.rstrip(';').split(',')[3] for ln in lines}
+        self.assertTrue(codes <= set(sp.places) and {'hall', 'kit', 'dorm1'} <= codes)
+        renamed = ''.join(ln.replace(',hall,', ',SH_HALL,') for ln in lines)       # 换一个场所码，摘要就不是同一个
+        self.assertNotEqual(hashlib.sha256(renamed.encode()).hexdigest(), hashlib.sha256(''.join(lines).encode()).hexdigest())
+
+    def test_display_names_are_not_part_of_the_baseline(self):
+        """场所的显示名随便改：哈希不变（名字只给 explain 的 place_name 用）；动不得的是钥匙（code）。"""
+        sp = proto60_spec()
+        renamed = dataclasses.replace(sp, places={k: '甲' + k for k in sp.places})
+        self.assertEqual(ProtoRun(spec=renamed, days=3).run().hash, ProtoRun(days=3).run().hash)
+
+
+class SanctionOrder(unittest.TestCase):
+    def test_accusers_are_visited_in_ix_order_not_set_order(self):
+        """处分时对指认人按 ix 升序加“告发”修正项。原型遍历 set，次序是 CPython 的实现细节
+        （{3, 8, 17, 42} 的遍历次序是 8, 17, 42, 3）；移植版排了序，mods 字典的键次序因此确定。"""
+        eng = ProtoRun().engine
+        self.assertEqual(list({3, 8, 17, 42}), [8, 17, 42, 3])           # 前提：set 次序确实不是升序
+        off = 5
+        e = eng.emit(E.FOOD_THEFT, off, 'kit', [], 1, 1, why='测试')
+        case = Case(e.id, 1, (), eng.spec.cases.open)
+        case.acc = {3, 8, 17, 42}
+        case.rep = 1
+        eng.norms.cases[e.id] = case
+        eng.norms.sanction(e.id, case, 2, eng.spec.cases.via_report)
+        self.assertEqual(list(eng.opinions.mods), [(off, 3), (off, 8), (off, 17), (off, 42)])
+        for k, v in eng.opinions.mods.items():
+            self.assertEqual(len(v), 1)
+            self.assertEqual(v[0][2], eng.spec.mods[eng.spec.cases.accuse_mod].kind)
+
+    def test_mods_are_ordered_the_same_way_whatever_order_the_accusers_arrived_in(self):
+        orders = []
+        for arrival in ((42, 3, 17, 8), (8, 17, 3, 42), (3, 8, 17, 42)):
+            eng = ProtoRun().engine
+            e = eng.emit(E.FOOD_THEFT, 5, 'kit', [], 1, 1, why='测试')
+            case = Case(e.id, 1, (), eng.spec.cases.open)
+            for a in arrival:
+                case.acc.add(a)
+            case.rep = 1
+            eng.norms.sanction(e.id, case, 2, eng.spec.cases.via_report)
+            orders.append(list(eng.opinions.mods))
+        self.assertEqual(orders[0], orders[1])
+        self.assertEqual(orders[1], orders[2])
 
 
 @unittest.skipUnless(os.environ.get('TIANL_SLOW'), '慢测试：TIANL_SLOW=1 打开')
@@ -538,22 +807,135 @@ class SourceRules(unittest.TestCase):
                 code = line.split('#')[0]
                 self.assertIsNone(bad.search(code), '%s:%d: %s' % (f.name, n, line))
 
-    def test_no_semantic_numbers_outside_spec_and_scenarios(self):
-        """spec.py 与 scenarios.py 之外，数值字面量只能是下标/计数用的 0 1 2 3，或模块级的具名常量（UPPER_CASE = …）。
-        所以引擎里没有藏着的参数：要调一个数，只能去 SiteSpec 或场景。"""
+    @staticmethod
+    def _parents(tree):
+        parent = {}
+        for n in ast.walk(tree):
+            for c in ast.iter_child_nodes(n):
+                parent[c] = n
+        return parent
+
+    @staticmethod
+    def _structural(n, parent):
+        """数值字面量 n 是否只是结构用的：下标/元组位置、计数、初值、±1 偏移、max/min 的保底、与 0 或 1 比较。
+        其余一律不放行——包括 0 1 2 3 里的 2 和 3（只能做下标）、乘除里的 0、赋给字段的 1（例如默认的时辰）。"""
+        v, node, p = n.value, n, parent[n]
+        if isinstance(p, ast.UnaryOp):                              # [-1] 之类
+            node, p = p, parent[p]
+        if isinstance(p, ast.Subscript) and p.slice is node:
+            return v in (0, 1, 2, 3)
+        if isinstance(p, ast.Call) and isinstance(p.func, ast.Name) and p.func.id == 'itemgetter':
+            return v in (0, 1, 2, 3)                                # itemgetter(2)：同样是元组位置
+        if v == 0:
+            return not (isinstance(p, ast.BinOp) and isinstance(p.op, (ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow)))
+        if v == 1:
+            if isinstance(p, ast.AugAssign):
+                return isinstance(p.op, (ast.Add, ast.Sub))
+            if isinstance(p, ast.GeneratorExp):                     # sum(1 for …)：计数
+                return p.elt is node
+            if isinstance(p, ast.BinOp):
+                return isinstance(p.op, (ast.Add, ast.Sub))
+            if isinstance(p, ast.Call):
+                return isinstance(p.func, ast.Name) and p.func.id in ('max', 'min')
+            if isinstance(p, ast.Compare):
+                return all(isinstance(op, (ast.Eq, ast.NotEq)) for op in p.ops)
+        return False
+
+    @staticmethod
+    def _const_target(t, const):
+        """赋值目标是具名常量（UPPER_CASE），或一组具名常量的元组（A, B = …）。"""
+        if isinstance(t, ast.Tuple):
+            return all(isinstance(e, ast.Name) and const.match(e.id) for e in t.elts)
+        return isinstance(t, ast.Name) and bool(const.match(t.id))
+
+    @classmethod
+    def _bad_numbers(cls, source, params_ok=False):
+        """源码里不合规矩的数值字面量：[(行号, 值)]。合规 = 模块级具名常量（UPPER_CASE = …），或结构用的 0/1/2/3（见 _structural）；
+        params_ok=True（handlers.py）时，登记表里 Param(…) 调用的参数（参数的默认值与取值范围）也合规——那是处理器默认参数，
+        原型场景的数只许写在 defs 里，处理器的默认值是仅有的例外（任务书：“只允许在 handlers 的默认参数与 defs 里”）。"""
         const = re.compile(r'^_?[A-Z][A-Z0-9_]*$')
-        for f in sorted(NPC_SRC.glob('*.py')):
-            if f.name in ('spec.py', 'scenarios.py'):
-                continue
-            tree = ast.parse(f.read_text(encoding='utf-8'))
-            named = set()
-            for st in tree.body:
-                if isinstance(st, ast.Assign) and all(isinstance(t, ast.Name) and const.match(t.id) for t in st.targets):
-                    named.update(id(n) for n in ast.walk(st))
+        tree = ast.parse(source)
+        parent = cls._parents(tree)
+        ok = set()
+        for st in tree.body:
+            if isinstance(st, ast.Assign) and all(cls._const_target(t, const) for t in st.targets):
+                ok.update(id(n) for n in ast.walk(st))
+        if params_ok:
             for n in ast.walk(tree):
-                if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool) \
-                        and id(n) not in named:
-                    self.assertIn(n.value, (0, 1, 2, 3), '%s:%d 有未命名的数值常数 %r' % (f.name, n.lineno, n.value))
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'Param':
+                    ok.update(id(x) for x in ast.walk(n))
+        return [(n.lineno, n.value) for n in ast.walk(tree)
+                if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool)
+                and id(n) not in ok and not cls._structural(n, parent)]
+
+    def test_no_semantic_numbers_anywhere_in_the_engine(self):
+        """tianl/npc 里的每个模块（现在连 spec.py、scenarios.py 也算：原型场景的数都在 defs 里，代码里一个不剩），
+        数值字面量只能是模块级的具名常量（UPPER_CASE = …），或结构用的 0/1/2/3（判定见 _structural：下标、计数、初值、±1 偏移……；
+        2、3 只许做下标）；handlers.py 另许 Param(…) 的参数（处理器的默认值与取值范围）。所以引擎里没有藏着的参数：
+        要调一个数，只能去 defs（或处理器的默认参数）。"""
+        for f in sorted(NPC_SRC.glob('*.py')):
+            bad = self._bad_numbers(f.read_text(encoding='utf-8'), params_ok=f.name == 'handlers.py')
+            self.assertEqual(bad, [], '%s 有未命名的数值常数（行号, 值）：%s（不是下标/计数/初值/±1 偏移）' % (f.name, bad))
+
+    def test_the_param_default_exemption_is_narrow(self):
+        """handlers 默认参数的豁免只给 Param(…) 调用：处理器函数体里的裸数字、别的调用里的数字，照旧不放行。"""
+        self.assertEqual(self._bad_numbers("p = Param('k', 'float', default=0.9, lo=0, hi=1)", params_ok=True), [])
+        self.assertEqual(self._bad_numbers("def f(x):\n    return x * 0.9", params_ok=True), [(2, 0.9)])
+        self.assertEqual(self._bad_numbers("g(k=0.9)", params_ok=True), [(1, 0.9)])
+        self.assertEqual(self._bad_numbers("p = Param('k', 'float', default=0.9)", params_ok=False), [(1, 0.9)])
+
+    def test_the_structural_rule_has_teeth(self):
+        """上面那条规则自己要能抓到违规：对一小段有毒代码逐条验证。"""
+        bad = ['x = y * 2', 'x = g(2)', 'x = y / 3', 'x = 0 * y', 'x = f(y, 2)', 'class A:\n    slot: int = 1', 'x = y + 2', 'x = y > 2',
+               'x = y[:2]', 'x = y ** 2', 'x = max(y, 2)', 'x = y.get(k, 1)']
+        good = ['x = y[2]', 'x = itemgetter(2)', 'x = y[-1]', 'x += 1', 'x = 0', 'x = (0, 0.0)', 'x = y + 1', 'x = y - 1', 'x = 1 - y',
+                'x = sum(1 for a in y)', 'x = max(1, y)', 'x = y > 0', 'x = y.get(k, 0)', 'x = y == 1.0']
+        for code, want in [(c, False) for c in bad] + [(c, True) for c in good]:
+            tree = ast.parse(code)
+            parent = self._parents(tree)
+            nums = [n for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, (int, float))
+                    and not isinstance(n.value, bool)]
+            got = all(self._structural(n, parent) for n in nums)
+            self.assertEqual(got, want, code)
+
+    def test_no_business_vocabulary_in_engine_code(self):
+        """引擎代码里不出现规格里的业务词：场所（名与代码）、岗位、中文标签（活动、原因、层、案卷状态……）。
+        这些只能在 defs 里写（spec.py 里的层标签 L_*、活动代码 A_*、events.py 里事件种类的中文渲染是引擎认识的结构性标识，例外）；
+        引擎引用的是字段。defsload.py 与 handlers.py 是“定义格式”的一部分，字段名、角色名都是 ASCII 的英文词，难免与某个场所码同名
+        （如 office、court），所以对它们只查中文的业务词。"""
+        from tianl.npc.defsload import ROLES
+        vocab = set()
+
+        def walk(o):
+            if dataclasses.is_dataclass(o) and not isinstance(o, type):
+                for fld in dataclasses.fields(o):
+                    walk(getattr(o, fld.name))
+            elif isinstance(o, dict):
+                for k, v in o.items():
+                    walk(k)
+                    walk(v)
+            elif isinstance(o, (list, tuple, set, frozenset)):
+                for v in o:
+                    walk(v)
+            elif isinstance(o, str) and re.search('[\u3400-\u9fff]', o):
+                vocab.add(o)
+        sp = proto60_spec()
+        walk(sp)
+        codes = set(sp.places) | {o.name for o in sp.offices}          # 场所代码（hall、kit……）与岗位名也算业务词
+        vocab.update(codes)
+        self.assertGreater(len(vocab), 120)
+        schema_modules = ('defsload.py', 'handlers.py')
+        for f in sorted(NPC_SRC.glob('*.py')):
+            if f.name in ('spec.py', 'events.py'):
+                continue
+            words = {w for w in vocab if re.search('[\u3400-\u9fff]', w)} if f.name in schema_modules else vocab
+            tree = ast.parse(f.read_text(encoding='utf-8'))
+            slots = {id(n) for st in ast.walk(tree) if isinstance(st, ast.Assign)
+                     and any(isinstance(t, ast.Name) and t.id in ('__slots__', 'ROLES') for t in st.targets) for n in ast.walk(st)}
+            for n in ast.walk(tree):
+                if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in slots:     # __slots__ 是字段名，ROLES 是角色名，不是业务词
+                    self.assertNotIn(n.value, words, '%s:%d 把规格里的业务词 %r 写进了引擎代码' % (f.name, n.lineno, n.value))
+        self.assertTrue(set(ROLES) & codes)                           # 前提：角色名里确有与场所码同名的（court、gate……），所以上面要区别对待
 
     def test_wall_clock_only_for_reporting(self):
         users = [f.name for f in sorted(NPC_SRC.glob('*.py')) if 'perf_counter' in f.read_text(encoding='utf-8')]
@@ -561,11 +943,11 @@ class SourceRules(unittest.TestCase):
 
     def test_every_module_in_the_plan_exists(self):
         for name in ('spec model stack needs facilities freechoice jobs perception rumor norms opinion mood engine '
-                     'scenarios life lod controller persist').split():
+                     'scenarios life lod controller persist handlers defsload').split():
             self.assertTrue((NPC_SRC / (name + '.py')).exists(), name)
         import importlib
         for name in ('life', 'lod', 'controller', 'persist'):
-            mod = importlib.import_module('tianl.npc.' + name)          # 空壳必须能 import，且带 docstring
+            mod = importlib.import_module('tianl.npc.' + name)          # 空壳（只有钩子）必须能 import，且带 docstring
             self.assertTrue(mod.__doc__ and '空壳' in mod.__doc__, name)
 
 

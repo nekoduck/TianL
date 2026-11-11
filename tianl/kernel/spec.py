@@ -1,4 +1,4 @@
-"""内核规格（Spec）：把 defs 里某座寺院的定义装配成内核直接使用的只读对象。
+"""内核规格（Spec）：把 defs 里某座寺院的定义装配成内核直接使用的规格对象（约定只读；load_spec 每次给独立副本，改它污染不到别处）。
 
 内核代码里不出现任何少林寺专有的编号、名字与数值，一律从 Spec 取：
 
@@ -13,10 +13,12 @@
 """
 from __future__ import annotations
 
+import copy
+import re
 from pathlib import Path
 from types import SimpleNamespace as NS
 
-from ..core.calendar import Calendar
+from ..core.calendar import Calendar, YEAR
 from ..defs import Defs, DefsError
 
 DEFS_ROOT = Path(__file__).resolve().parents[2] / 'defs'
@@ -31,6 +33,14 @@ REQUIRED_ROLES = dict(
     cm='staple fuel fresh textile lumber'.split(),
     hh='tenant wood'.split(),
     T='abbot supervisor cook stock_keeper manor_head guest_master grounds_keeper disciplinarian almoner discipline_head'.split())
+# 历法定义必须写全的字段。tianl.core.Calendar.from_def 对 festivals / retreat / wheat_doy / millet_doy / year 缺省会回落到 v0.2 少林寺的值
+# （那份默认历法是 M0 的东西，不归内核），所以新寺院漏写时不会报错、只会悄悄用上少林寺的节日与结夏期；内核在这里先查全再交给它。
+REQUIRED_CALENDAR = ('festivals retreat wheat_doy millet_doy crops winter_months busy_windows pilgrim_winter pilgrim_busy pilgrim_shuowang '
+                     'pilgrim_festival donor_festivals charity_festival grain_season new_year_doy year_end_doy sell_doys shop_doys '
+                     'after_harvest_doys return_doys recruit_doy cloth_due_doys cloth_hold_windows').split()
+# 钱账事由（defs 的 labels.reasons）：内核记账时按这些键取字；goods / hh_goods 是前缀
+REQUIRED_REASONS = ('opening goods hh_goods hh_misc hh_buy hh_sell sell_surplus incense donor rite alms merit repair_wage '
+                    'wood_income immigrant shop_year_end export').split()
 
 
 class Good:
@@ -55,8 +65,15 @@ class Good:
         return (self.name, self.unit, self.price, self.use, self.low, self.up, self.prio)
 
 
-def load_kernel_defs(root=None):
-    """只加载内核用到的类别目录（root 缺省为仓库的 defs/）。"""
+_PROBLEM_ID = re.compile(r'^([a-z_]+):([^\s:"\']+):')
+
+
+def load_kernel_defs(root=None, scope=None):
+    """只加载内核用到的类别目录（root 缺省为仓库的 defs/）。
+
+    scope 给定时，只有这座寺院自己的定义的问题才会让加载失败：别的 scope 往同一批类别目录里写的定义（比如别的模块的原型世界），
+    它们若有悬空引用（指向内核没加载的类别）或别的毛病，由它们自己的负责人用完整加载器去查，不拖累这座寺院的内核。
+    scope 缺省（None）则严格：任何问题都报。无法归到某个 scope 的问题（文件解析失败、编号重复）一律照报。"""
     root = Path(root) if root else DEFS_ROOT
     d = Defs()
     for cat in KERNEL_CATEGORIES:
@@ -65,8 +82,11 @@ def load_kernel_defs(root=None):
             for f in sorted(sub.rglob('*.toml')):
                 d.add_file(f)
     d.validate()
-    if d.problems:
-        raise DefsError(d.problems)
+    problems = d.problems
+    if scope is not None:
+        problems = [p for p in problems if not ((m := _PROBLEM_ID.match(p)) and m.group(2) != scope)]
+    if problems:
+        raise DefsError(problems)
     return d
 
 
@@ -94,6 +114,11 @@ class Spec:
 
         # ---- 历法
         cd = g('calendar', 'main')
+        miss = [k for k in REQUIRED_CALENDAR if k not in cd]
+        if miss:
+            raise DefsError([f'{cd["id"]} 缺少历法字段：' + '、'.join(miss) + '（内核不替它们填缺省值）'])
+        if cd.get('year', YEAR) != YEAR:
+            raise DefsError([f'{cd["id"]} 的 year = {cd["year"]!r}：内核按一年 {YEAR} 日算（tianl.core.calendar.YEAR）'])
         s.cal = Calendar.from_def(cd)
         s.season = NS(
             crops=[(c['flag'], c['name']) for c in cd['crops']],
@@ -214,6 +239,9 @@ class Spec:
         missing = [f'{ns}.{r}' for ns, roles in REQUIRED_ROLES.items() for r in roles if not hasattr(getattr(self, ns), r)]
         if missing:
             raise DefsError([f'scope {self.scope!r} 缺少内核要用的角色：' + '、'.join(missing)])
+        miss = [k for k in REQUIRED_REASONS if k not in self.labels.get('reasons', {})]
+        if miss:
+            raise DefsError([f'scope {self.scope!r} 的 labels.reasons 缺少钱账事由：' + '、'.join(miss)])
 
     def code(self, ref):
         """定义编号 -> 运行时钥匙（place / account / commodity / item 的 code）。"""
@@ -260,11 +288,29 @@ class Spec:
 _cache: dict = {}
 
 
+def _fingerprint(root):
+    """内核类别目录下各 toml 文件的 (路径, 修改时间, 大小)：缓存的钥匙之一，同一路径下的文件改了就不再命中旧缓存。"""
+    root = Path(root)
+    out = []
+    for cat in KERNEL_CATEGORIES:
+        if (root / cat).is_dir():
+            for f in sorted((root / cat).rglob('*.toml')):
+                st = f.stat()
+                out.append((str(f), st.st_mtime_ns, st.st_size))
+    return tuple(out)
+
+
 def load_spec(defs=None, scope='shaolin', root=None) -> Spec:
-    """装配规格。defs 缺省时从 root（缺省仓库 defs/）加载内核类别目录；结果按 (root, scope) 缓存（Spec 只读）。"""
+    """装配规格。defs 缺省时从 root（缺省仓库 defs/）加载内核类别目录。
+
+    每次返回**独立的一份**：K、品类表、场所表、岗位表……都是调用者自己的副本，改它不会影响别的 World，也不会污染缓存
+    （缓存里存的是装配好的原件，按 (root, scope, 文件指纹) 为键；取用时深拷贝，约 1 毫秒）。传给 World(spec=…) 的 Spec 归调用者管：
+    World 直接用它，不再拷贝。"""
     if defs is not None:
-        return Spec.from_defs(defs, scope)
-    key = (str(root or DEFS_ROOT), scope)
-    if key not in _cache:
-        _cache[key] = Spec.from_defs(load_kernel_defs(root), scope)
-    return _cache[key]
+        spec = Spec.from_defs(defs, scope)
+    else:
+        key = (str(root or DEFS_ROOT), scope, _fingerprint(root or DEFS_ROOT))      # 文件改了（同一路径下）就重新装配，不吃旧缓存
+        if key not in _cache:
+            _cache[key] = Spec.from_defs(load_kernel_defs(root, scope), scope)
+        spec = _cache[key]
+    return copy.deepcopy(spec)

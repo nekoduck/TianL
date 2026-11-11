@@ -10,6 +10,7 @@
 from collections import Counter
 
 from ..core import clamp
+from .model import PAIR
 from .spec import A_CHAT, A_STROLL, SCALE
 
 
@@ -80,7 +81,7 @@ class Rumor:
         ch = eng.spec.chat
         dec, r, seed, op = ctx.dec, eng.rng, eng.seed, eng.opinions
         L = sorted((i for i, d in dec.items() if d[1] == A_CHAT), key=lambda i: r(seed, 'cq', day, slot, i))
-        while len(L) >= 2:
+        while len(L) >= PAIR:
             a = L.pop(0)
             b = max(L, key=lambda j: op.opinion(a, j) + ch.pair_noise * r(seed, 'pair', day, slot, a, j))
             L.remove(b)

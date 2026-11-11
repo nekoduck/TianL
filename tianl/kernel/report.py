@@ -9,7 +9,7 @@ def year_report(w, y):
     d0, d1 = y * YEAR, y * YEAR + YEAR - 1
     org = w.ac.org
     money = dict(w.x("SELECT reason, SUM(CASE WHEN payee=? THEN amount ELSE -amount END) FROM ledger "
-                     "WHERE (payer=? OR payee=?) AND day BETWEEN ? AND ? AND reason<>'期初' GROUP BY reason", (org, org, org, d0, d1)).fetchall())
+                     "WHERE (payer=? OR payee=?) AND day BETWEEN ? AND ? AND reason<>? GROUP BY reason", (org, org, org, d0, d1, w.R['opening'])).fetchall())
     orders = dict(w.x('SELECT state, COUNT(*) FROM work_order WHERE created BETWEEN ? AND ? GROUP BY state', (d0, d1)).fetchall())
     ontime = w.x("SELECT COUNT(*) FROM work_order WHERE created BETWEEN ? AND ? AND state='完成' AND closed<=deadline", (d0, d1)).fetchone()[0]
     closed_n = sum(v for k, v in orders.items() if k in ('完成', '失败', '过期'))

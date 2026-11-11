@@ -9,17 +9,18 @@ import ast
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import re
 import unittest
 from pathlib import Path
 
+from tests.test_b1_common import REF_HASH, baseline_world
 from tianl.core.calendar import SLOTS_PER_DAY, YEAR
 from tianl.kernel import World, year_report
 
 ROOT = Path(__file__).resolve().parents[1]
 SLOW = os.environ.get('TIANL_SLOW') == '1'
-REF_HASH = '49f6ddde04dfa7f5'
 LOG = (ROOT / 'reference' / 'logs' / 'shaolin_run_log.txt').read_text(encoding='utf-8')
 
 
@@ -101,8 +102,8 @@ class LogNumbers:
 class BaselineTests(unittest.TestCase, LogNumbers):
     @classmethod
     def setUpClass(cls):
-        cls.w = World().run(360 * 4)
-        cls.w2 = World().run(360 * 4)
+        cls.w = baseline_world()                       # 进程内共享、只读
+        cls.w2 = World().run(360 * 4)                  # 另跑一遍，验证“重跑一致”
 
     def test_hash_matches_prototype(self):
         self.assertEqual(self.w.state_hash(), REF_HASH)
@@ -249,6 +250,30 @@ class StepTests(unittest.TestCase):
         for _ in range(SLOTS_PER_DAY): w.run_slot()
         with self.assertRaises(RuntimeError): w.run_slot()      # 十二时辰走完要先 end_day
 
+    def test_end_day_refuses_an_unfinished_day(self):
+        """日内直接 end_day 会让引擎漏掉剩下的 run_slot：必须拒绝，且拒绝之后世界毫发无损、能接着走。"""
+        eng = StubEngine()
+        w = World(engine=eng)
+        w.begin_day()
+        with self.assertRaises(RuntimeError): w.end_day()                       # 一个时辰都没走
+        for _ in range(5): w.run_slot()
+        h = w.state_hash()
+        with self.assertRaises(RuntimeError): w.end_day()                       # 走了 5 个
+        self.assertEqual((w.day, w.slot, w.state_hash()), (0, 5, h))
+        self.assertNotIn(('end_day', 0), eng.calls)                             # 引擎没被叫去收盘
+        w.step()                                                                # 补完这一日
+        self.assertEqual((w.day, w.slot), (1, 0))
+        self.assertEqual([c[2] for c in eng.calls if c[0] == 'run_slot' and c[1] == 0], list(range(SLOTS_PER_DAY)))
+        self.assertEqual(w.state_hash(), World().run(1).state_hash())
+        # 不接引擎也一样：不能靠“没人在乎”蒙混过去
+        v = World(); v.begin_day()
+        with self.assertRaises(RuntimeError): v.end_day()
+
+    def test_unimplemented_commands_fail_loudly(self):
+        w = World()
+        for name in ('cmd_put', 'cmd_use', 'cmd_say'):
+            with self.assertRaises(NotImplementedError, msg=name): getattr(w, name)('P0001')
+
     def test_hooks_fire_in_split_flow(self):
         def setup(w): w.hooks[20].append(lambda w: w.close_road(5, '扰动'))
         a = World(); setup(a); a.run(30)
@@ -299,7 +324,7 @@ class EngineHookTests(unittest.TestCase):
         self.assertGreater(w.x('SELECT COUNT(*) FROM roster WHERE day=3').fetchone()[0], 0)
 
     def test_inert_engine_changes_nothing_econ_hash_neutral(self):
-        base = World().run(360 * 4)
+        base = baseline_world()
         eng = StubEngine()
         w = World(engine=eng).run(360 * 4)
         self.assertEqual(w.state_hash(), REF_HASH)
@@ -308,6 +333,28 @@ class EngineHookTests(unittest.TestCase):
         self.assertEqual(len(removed), w.cnt['deaths'])
         self.assertTrue(all(c[2] == '圆寂' for c in removed))
         self.assertEqual(len([c for c in eng.calls if c[0] == 'added']), len(w.pids) - 300)
+
+    def test_active_engine_driving_commands_keeps_economy_neutral(self):
+        """会动手的引擎：每个时辰调 cmd_move、每日末调 set_meal_ration(次日, 1)（撤销）与 cmd_steal_food（开关关着）。
+        这些调用只许写 assignment / event_log 一类非经济表，经济表哈希与不接引擎的世界逐位相同。"""
+        class Busy(StubEngine):
+            def run_slot(self, day, slot):
+                super().run_slot(day, slot)
+                w = self.world
+                who = w.pids[(day * 12 + slot) % 40]
+                w.cmd_move(who, w.pl.main_hall, day, slot)
+            def end_day(self, day):
+                super().end_day(day)
+                self.world.set_meal_ration(day + 1, 1.0, '无事')
+                self.stolen = getattr(self, 'stolen', 0) + self.world.cmd_steal_food(self.world.pids[0], 5000)
+        eng = Busy()
+        a, b = World().run(240), World(engine=eng).run(240)
+        self.assertEqual(a.econ_hash(), b.econ_hash())
+        self.assertNotEqual(a.state_hash(), b.state_hash())                    # assignment 表里确实多了行
+        self.assertGreater(b.x('SELECT COUNT(*) FROM assignment').fetchone()[0], 0)
+        self.assertEqual(eng.stolen, 0)
+        self.assertFalse(b.x("SELECT 1 FROM event_log WHERE type IN ('MEAL_HALVED','GRAIN_STOLEN')").fetchone())
+        self.assertEqual(b.viol, [])
 
     def test_where_delegates_to_engine_for_managed_people(self):
         base = World()
@@ -321,6 +368,168 @@ class EngineHookTests(unittest.TestCase):
         self.assertEqual(w.where_ex(other, 3, 6)[2:], ('作息', '模板'))
         self.assertIn(pid, w.present('SH_X', 3, 6))
         self.assertIsNone(w.where(pid, -5, 6))                                 # 不在世者不问引擎
+
+
+def drain_famine(w):
+    """清库：寺库、庄仓、粮铺的存粮与寺里的钱一并清空（具名消耗，守恒不破），逼出“断供”档位。"""
+    for owner, place in ((w.ac.org, w.pl.granary), (w.ac.org, w.pl.estate_granary), (w.ac.shop_grain, w.pl.town)):
+        w.consume(owner, place, w.cm.staple, 10 ** 12, 'consume')
+    w.pay(w.ac.org, w.ac.equity, w.bal(w.ac.org), '扰动:清钱')
+
+
+class RecordingEngine(StubEngine):
+    """在 on_person_added 回调里当场读库：引擎看到的必须是写定的一行（含 home）。"""
+
+    def __init__(self):
+        super().__init__()
+        self.seen = []
+
+    def on_person_added(self, pid):
+        super().on_person_added(pid)
+        row = self.world.x('SELECT id, home, hall, status, org FROM person WHERE id=?', (pid,)).fetchone()
+        self.seen.append((row, self.world.person(pid)['home']))
+
+
+class PersonHookTimingTests(unittest.TestCase):
+    def test_on_person_added_sees_the_finished_row(self):
+        eng = RecordingEngine()
+        w = World(engine=eng).run(2 * YEAR)
+        recruits = [r for r, _ in eng.seen if r[0] in w.pids[300:]]
+        self.assertGreaterEqual(len(recruits), 4)
+        for (pid, home, hall, status, org), cached_home in eng.seen:
+            self.assertIsNotNone(home, f'{pid} 回调时 home 还是空')
+            self.assertEqual(home, cached_home)                      # 人员缓存里的也是定稿的一行
+            self.assertEqual((status, org), ('在寺', w.ac.org))
+        o = w.S.org
+        self.assertEqual({r[1] for r in recruits}, {f'{o.dorm.prefix}{o.dorm.recruit}'})
+
+    def test_wandering_monks_leave_and_return_through_the_hooks(self):
+        eng = StubEngine()
+        w = World(engine=eng)
+        w.hooks[40].append(drain_famine)
+        monks = [p for p in w.pids if w.person(p)['gen'] != w.S.org.visitor_gen]
+        for p in monks: w.where(p, 0, 6)                            # 先把人员缓存填满：游方者的缓存必须随状态更新
+        w.run(41)
+        gone = [c[1] for c in eng.calls if c[0] == 'removed' and c[2] == '游方']
+        self.assertGreater(len(gone), 0)
+        self.assertEqual(len(gone), w.cnt['monks_left'])
+        for pid in gone:
+            self.assertEqual(w.x('SELECT status FROM person WHERE id=?', (pid,)).fetchone()[0], '游方')
+            self.assertIsNone(w.where(pid, w.day, 6), '游方者不在世，where 应为 None（缓存没更新就会误答）')
+        n_added = len([c for c in eng.calls if c[0] == 'added'])
+        w.run(150 - 41)                                              # 过了收成日，粮足，游方僧归寺
+        self.assertEqual(w.x("SELECT COUNT(*) FROM person WHERE status='游方'").fetchone()[0], 0)
+        back = [c for c in eng.calls if c[0] == 'added'][n_added:]
+        self.assertTrue(set(gone) <= {c[1] for c in back}, '归寺者都要回调 on_person_added')
+        self.assertEqual(w.viol, [])
+
+
+class NameExhaustionTests(unittest.TestCase):
+    def test_exhausted_single_char_names_fall_back_to_two_char_names(self):
+        w = World()
+        gen = w.S.org.recruit.gen
+        for ch in w._pool: w.names.add(gen + ch)                    # 该辈的单字名全部占满
+        nm = w._newname(gen, 'probe')
+        self.assertEqual(len(nm), 3)
+        self.assertTrue(nm.startswith(gen))
+        self.assertNotIn(nm, w.names)
+        self.assertEqual(w._newname(gen, 'probe'), nm)              # 确定性：同键同名
+
+    def test_name_pool_truly_exhausted_raises_instead_of_hanging(self):
+        w = World()
+        gen, pool = w.S.org.recruit.gen, w._pool
+        w.names |= {gen + a for a in pool} | {gen + a + b for a in pool for b in pool}
+        with self.assertRaises(RuntimeError): w._newname(gen, 'probe')
+
+    def test_mass_recruitment_does_not_hang_and_names_stay_unique(self):
+        w = World({'monks': 420}).run(100)                         # 四月初一一次收录 ~120 人：远超池里剩下的单字名
+        self.assertEqual(w.head(), 420)
+        names = [r[0] for r in w.x('SELECT name FROM person')]
+        self.assertEqual(len(set(names)), len(names))
+        self.assertTrue(any(len(n) == 3 for n in names))
+        self.assertEqual(w.viol, [])
+
+    @unittest.skipUnless(SLOW, '慢测试：TIANL_SLOW=1 打开')
+    def test_slow_thirty_year_run_completes_with_no_violations(self):
+        w = World()
+        for _ in range(30): w.run(YEAR)
+        self.assertEqual(w.viol, [])
+        names = [r[0] for r in w.x('SELECT name FROM person')]
+        self.assertEqual(len(set(names)), len(names))
+        self.assertTrue(any(len(n) == 3 for n in names))           # 取名池在约 20 年后耗尽，之后改取两字名
+
+
+class CouplingTests(unittest.TestCase):
+    """ARCHITECTURE 5.1 的两处耦合：各有开关、各发事件、缺省不触发（econ_hash 中立）。"""
+
+    def test_defaults_are_inert(self):
+        w = World()
+        self.assertEqual(w.couplings, {'half_meal': True, 'food_theft': False})
+        self.assertEqual(w.cmd_steal_food('P0001', 5000), 0)       # (b) 缺省关：不扣粮、不发事件
+        self.assertFalse(w.x("SELECT 1 FROM event_log WHERE type='GRAIN_STOLEN'").fetchone())
+        base = World().run(30)
+        self.assertEqual(w.run(30).state_hash(), base.state_hash())
+
+    def test_half_meal_reduces_that_days_ration_and_emits_event(self):
+        base, w = World().run(20), World()
+        w.run(9)
+        self.assertTrue(w.set_meal_ration(10, 0.5, '厨下人手不足'))
+        w.run(11)
+        meals = lambda x, d: json.loads(x.x("SELECT payload FROM event_log WHERE type='MEALS' AND day=?", (d,)).fetchone()[0])
+        full, half = meals(base, 10)['grain'], meals(w, 10)['grain']
+        self.assertEqual(half, int(full * 0.5))
+        self.assertLess(half, full)
+        ev = w.x("SELECT payload FROM event_log WHERE type='MEAL_HALVED'").fetchall()
+        self.assertEqual(len(ev), 1)
+        p = json.loads(ev[0][0])
+        self.assertEqual((p['full'], p['need'], p['why']), (full, half, '厨下人手不足'))
+        self.assertEqual(meals(w, 9), meals(base, 9))              # 前一日不受影响
+        self.assertEqual(w.viol, [])                               # 守恒不破
+        self.assertIn('只备半餐', w.chronicle(10))
+        self.assertEqual(w.meal_scale, {})                         # 用过即清
+
+    def test_half_meal_switch_off_or_wrong_day(self):
+        w = World()
+        w.couplings['half_meal'] = False
+        self.assertFalse(w.set_meal_ration(3, 0.5))
+        w.run(5)
+        self.assertEqual(w.state_hash(), World().run(5).state_hash())
+        w = World(); w.run(2)
+        with self.assertRaises(ValueError): w.set_meal_ration(1, 0.5)             # 已过去的日子
+        w.begin_day()
+        with self.assertRaises(ValueError): w.set_meal_ration(w.day, 0.5)         # 今日消耗阶段已跑完
+        self.assertTrue(w.set_meal_ration(w.day + 1, 0.5))
+        with self.assertRaises(ValueError): w.set_meal_ration(w.day + 1, 0)
+        with self.assertRaises(ValueError): w.set_meal_ration(w.day + 1, 1.5)
+        self.assertTrue(w.set_meal_ration(w.day + 1, 1))                          # 系数 1 = 撤销
+        self.assertEqual(w.meal_scale, {})
+
+    def test_engine_can_set_tomorrows_ration_from_end_day(self):
+        class Kitchen(StubEngine):
+            def end_day(self, day):
+                super().end_day(day)
+                if day == 6: self.world.set_meal_ration(day + 1, 0.5, '人手不足')
+        w = World(engine=Kitchen()).run(10)
+        self.assertEqual([r[0] for r in w.x("SELECT day FROM event_log WHERE type='MEAL_HALVED'")], [7])
+
+    def test_food_theft_switch_on_deducts_grain_and_emits_event(self):
+        w = World().run(5)
+        w.couplings['food_theft'] = True
+        g0 = w.qty(w.ac.org, w.pl.granary, w.cm.staple)
+        e = w.ev('FOOD_THEFT', actor='P0003')
+        self.assertEqual(w.cmd_steal_food('P0003', 4000, slot=7, cause=e), 4000)
+        self.assertEqual(w.qty(w.ac.org, w.pl.granary, w.cm.staple), g0 - 4000)
+        row = w.x("SELECT actor, slot, cause, payload FROM event_log WHERE type='GRAIN_STOLEN'").fetchone()
+        self.assertEqual((row[0], row[1], row[2], json.loads(row[3])), ('P0003', 7, e, {'grain': 4000}))
+        self.assertEqual(w.cmd_steal_food('P0003', 10 ** 12), g0 - 4000)       # 不够就扣到空
+        w.run(3)
+        self.assertEqual([v for v in w.viol if v[1].startswith('物守恒')], [])
+        self.assertIn('偷食', w.chronicle(5))
+
+    def test_inert_engine_still_econ_neutral_with_couplings_present(self):
+        a, b = World().run(120), World(engine=StubEngine()).run(120)
+        self.assertEqual(a.econ_hash(), b.econ_hash())
+        self.assertFalse(b.x("SELECT 1 FROM event_log WHERE type IN ('MEAL_HALVED','GRAIN_STOLEN')").fetchone())
 
 
 if __name__ == '__main__':

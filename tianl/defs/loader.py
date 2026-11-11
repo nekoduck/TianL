@@ -8,7 +8,7 @@
 * 可选 _abstract = true：只供继承，不出现在 by_kind 的默认结果里（也不要求引用完整）。
 * 引用完整性：任何字符串，若整串恰为“已登记 kind 开头的编号”，就必须能解析到某条定义
   （键名为 note/notes/text/desc/doc/comment 或以下划线开头的字段除外）。
-* 运行时的钥匙：place 定义必须有 code（如 SH_LIBRARY），内核/引擎/数据库只认 code；
+* 运行时的钥匙：place 定义必须有 code（形如“前缀_名字”的大写串），内核/引擎/数据库只认 code；
   编号只用在定义之间互相引用与控制台别名查找。by_code() 给出反查。
 
 加载出的定义是只读的 dict（已展开继承），附带 id、kind、_file 三个键。

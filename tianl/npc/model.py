@@ -30,6 +30,8 @@ GAP = (1 << (4 * FIELD_BITS)) - 1   # 轨迹里“这一时辰没有记录”的
 
 # 一个“决定”是四元组 (场所, 活动, 层, 原因)；巡寮者的决定后面多带一项“所巡之处”（stack.duty）
 BASE_DECISION = 4
+PAIR = 2                            # 两两配对（闲谈、工友短谈）：一组两个人
+GOSSIP_SLOT = 1                     # 脚本 gossip 默认发生的时辰（丑；原型口径）。要换时辰在 Script(gossip_slot=…) 里给
 
 
 class Profile:
@@ -53,6 +55,9 @@ class Profile:
         self.gone_why = None            # 离开的缘由（处分阶梯的文字，或 on_person_removed 给的 why）
         self.lazy_day = NEVER
         self.trail = Trail()
+
+    # ix 的别名：原型的档案叫 id，验收脚本里写 `common[8].id`；内部结构一律用 ix（本类不另存一份，所以不会两处不一致）
+    id = property(lambda self: self.ix, doc='ix 的只读别名')
 
 
 class Symbols:
@@ -180,7 +185,7 @@ class Script:
     ill    = (日, [病倒者], 病几日)：该日起集体病倒。
     人用 ix 或 pid 都行。"""
     gossip: Optional[tuple] = None
-    gossip_slot: int = 1
+    gossip_slot: int = GOSSIP_SLOT
     gossip_why: str = '脚本：只有一人撞见且不举报'
     ill: Optional[tuple] = None
 

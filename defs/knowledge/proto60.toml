@@ -1,0 +1,169 @@
+# NPC 原型场景 scenario:proto60 的想法、好恶修正项、事件显著度与几条站点级规则（好恶底数、闲谈、传闻、心情、自由时段）。
+# 角色名 = 编号最后一段：thought / modifier 的最后一段是引擎与规范里引用的键；event 的 code 是 tianl/npc/events.py 登记的事件类型代码。
+
+# ---------------------------------------------------------------- 想法（计划 9.3，RimWorld）：带期限的心情加减分
+# label 同标签共用叠加上限（三种“受训诫”算一种）；value 每条的心情增减；days 持续几日；cap 同标签最多同时几条。
+["thought:proto60:endure"]
+label = "忍饥"
+value = -3
+days = 1
+cap = 2
+
+["thought:proto60:chat_good"]
+label = "谈得来"
+value = 2
+days = 1
+cap = 3
+
+["thought:proto60:sanction"]
+label = "受处分"
+value = -8
+days = 3
+cap = 3
+
+["thought:proto60:flogged"]
+label = "受杖"
+value = -15
+days = 5
+cap = 3
+
+["thought:proto60:bath"]
+label = "沐浴"
+value = 4
+days = 1
+cap = 1
+
+["thought:proto60:warned_bed"]
+label = "受训诫"
+value = -3
+days = 3
+cap = 3
+
+["thought:proto60:warned_absent"]
+label = "受训诫"
+value = -4
+days = 5
+cap = 3
+
+["thought:proto60:warned_slack"]
+label = "受训诫"
+value = -3
+days = 3
+cap = 3
+
+# ---------------------------------------------------------------- 好恶修正项（计划 9.2，CK3）：带期限的数据 [值, 止日, 种类]
+# label 种类（同种类共用叠加上限；不叫 kind：kind 是加载器保留字）；value 每条的好恶增减；days 持续几日；cap 同种类最多几条（满了只续期最老的一条）；cause 起因（“情”命令向玩家说明用）。
+["modifier:proto60:good"]
+label = "投机"
+value = 4
+days = 30
+cap = 8
+cause = "闲谈谈得投机"
+
+["modifier:proto60:bad"]
+label = "不投机"
+value = -4
+days = 20
+cap = 5
+cause = "闲谈谈得不投机"
+
+["modifier:proto60:accuse"]
+label = "告发"
+value = -30
+days = 60
+cap = 1
+cause = "被其举报而受处分"
+
+["modifier:proto60:sin"]
+label = "犯戒"
+value = -5
+days = 30
+cap = 2
+cause = "旁观其受处分，记他犯戒"
+
+# ---------------------------------------------------------------- 事件（只列本场景发的七种；code 是事件类型代码）
+# salience 目击者得到的见闻强度（0 = 不产生见闻）。
+["event:proto60:food_theft"]
+code = "FOOD_THEFT"
+salience = 80
+
+["event:proto60:sanction"]
+code = "SANCTION"
+salience = 60
+
+["event:proto60:theft_found"]
+code = "THEFT_FOUND"
+salience = 50
+
+["event:proto60:absence"]
+code = "ABSENCE"
+salience = 0
+
+["event:proto60:slack"]
+code = "SLACK"
+salience = 0
+
+["event:proto60:report"]
+code = "REPORT"
+salience = 0
+
+["event:proto60:bed_empty"]
+code = "BED_EMPTY"
+salience = 0
+
+# ---------------------------------------------------------------- 好恶：好感 = 底数 + 未过期修正项之和，夹在 [lo, hi]
+# 底数 = same_dorm×同寮 + same_track×同方向 + same_post×同岗（厨房职事视为同岗）+ (相容度 − compat_mid)×compat_w；
+# 相容度 = 1 − (|ΔD| + |ΔS| + |ΔG|) / compat_div。双方好感都 ≥ friend_line 记好友，都 ≤ foe_line 记不睦。
+["rule:proto60:opinion"]
+same_dorm = 5
+same_track = 4
+same_post = 6
+compat_div = 300
+compat_mid = 0.75
+compat_w = 40
+lo = -100
+hi = 100
+friend_line = 25
+foe_line = -15
+
+# ---------------------------------------------------------------- 闲谈（计划 8.3）
+# 谈得投机的概率 = good_base + (相容度 − good_mid)×good_w；pair_noise 配对时挑人的噪声；gain_when_brief 工友短谈给“群”的补益；
+# lone_label 落单的原因；good_mod / bad_mod 投机/不投机给的修正项；good_thought 投机给的想法。
+["rule:proto60:chat"]
+good_base = 0.7
+good_mid = 0.5
+good_w = 0.6
+pair_noise = 30
+gain_when_brief = 4
+lone_label = "无人可谈，独自散步"
+good_mod = "modifier:proto60:good"
+bad_mod = "modifier:proto60:bad"
+good_thought = "thought:proto60:chat_good"
+
+# ---------------------------------------------------------------- 传闻（计划 8.3）
+# 转述一次强度减 penalty；每日衰减 decay；低于 min_strength 不再外传；转述概率 = min(p_cap, 强度/100 + p_add) × (g_off + 转述者合群/g_div)；每人最多留 keep 条见闻。
+["rule:proto60:rumor"]
+penalty = 12
+decay = 2
+min_strength = 25
+p_add = 0.2
+p_cap = 1.0
+g_off = 0.5
+g_div = 100
+keep = 16
+
+# ---------------------------------------------------------------- 心情（计划 9.3）
+# 心情 = 五项需求的加权和 + 当前所有想法之和。三道线从高到低：lines[i].value 是线，effect 是低于它的后果；
+# enabled 是启用几道（自上而下）：先只启用第一道（低于它怠工概率加成，与原型一致）；后两道（回避集体、人生事件）留给 C7（life.py）。
+["rule:proto60:mood"]
+weights = { h = 0.28, e = 0.22, c = 0.10, s = 0.15, a = 0.25 }
+lines = [ { value = 35, effect = "slack" }, { value = 20, effect = "avoid_group" }, { value = 5, effect = "life_event" } ]
+enabled = 1
+
+# ---------------------------------------------------------------- 自由时段（计划 6.4）：在得分最高的 top_k 项里按分数加权抽一项；都不成就去 stroll
+# choice_key_chars：“自由时段的选择”统计取原因的前几个字作键（只入统计）。
+["rule:proto60:free"]
+top_k = 3
+stroll = "interaction:proto60:stroll"
+stroll_label = "散步"
+choice_key_chars = 2

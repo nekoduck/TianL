@@ -41,7 +41,7 @@ class PhasesMixin:
                     else: self.net[c] -= ret; self.flows[(self.year, c, 'returned')] += ret
                     self.x('UPDATE work_order SET qty=qty-?, shipped=shipped-? WHERE id=?', (ret, ret, oid))
                     self.ev('GOODS_RETURNED', place=dp, order=oid, c=c, q=ret, why='货款不足')
-                paid = self.pay_to(payer, payee, can, '货款:' + self.G[c].name)
+                paid = self.pay_to(payer, payee, can, self.R['goods'] + self.G[c].name)
             if acc > 0: self._add(do, dp, c, acc)
             self.x("UPDATE shipment SET state='已达', arrived=?, qty=? WHERE id=?", (d, acc, sid))
             self.x('UPDATE work_order SET delivered=delivered+? WHERE id=?', (acc, oid))
@@ -62,7 +62,7 @@ class PhasesMixin:
                      next((v['q'] for v in K['veg_yield'] if m in v['months']), K['veg_yield_default']), 'produce')
         if c['dom'] == 1:
             for h, m in self.x("SELECT id, members FROM household WHERE kind=? AND status='在' ORDER BY id", (self.hk.wood,)).fetchall():
-                self.pay(self.ac.town, h, Pm['town_bg_income'] * m, '樵菜售予县城')
+                self.pay(self.ac.town, h, Pm['town_bg_income'] * m, self.R['wood_income'])
         if c['doy'] == se.new_year_doy and d > 0:             # 岁首招佃: 空出的佃田由外来户补上
             ten = self.hk_class[self.hk.tenant]
             gone = Pm[ten.count] - self.x("SELECT COUNT(*) FROM household WHERE kind=? AND status='在'", (ten.code,)).fetchone()[0]
@@ -73,11 +73,11 @@ class PhasesMixin:
                     mm = K['member_min'] + int(self.u('members', hid) * K['member_span'])
                     self.x('INSERT INTO household VALUES(?,?,?,?,?,?,?,?,?)',
                            (hid, ten.code, ten.place, None, mm, mm * ten.mu, mm * Pm['ration_folk'], '在', 0))
-                    self.x('INSERT INTO account VALUES(?,0,0)', (hid,)); self.pay(self.ac.port, hid, K['immig_cash_guan'] * GUAN, '迁入携带')
+                    self.x('INSERT INTO account VALUES(?,0,0)', (hid,)); self.pay(self.ac.port, hid, K['immig_cash_guan'] * GUAN, self.R['immigrant'])
                     self.produce(hid, ten.place, self.cm.staple, mm * Pm['ration_folk'] * self.S.hh_grain_days, 'port_in'); n += 1
             if n: self.ev('TENANTS_SETTLED', place=ten.place, actor=self.holder(self.T.manor_head), n=n)
         if c['doy'] in se.return_doys and self.tier_i == 0:     # 收成后粮足: 游方僧归寺
-            ids = [r[0] for r in self.x("SELECT id FROM person WHERE status='游方' ORDER BY id")] if self.engine else ()
+            ids = [r[0] for r in self.x("SELECT id FROM person WHERE status='游方' ORDER BY id")] if self.engine is not None else ()
             n = self.x("UPDATE person SET status='在寺' WHERE status='游方'").rowcount
             if n:
                 self.pcache.clear(); self.ev('MONKS_RETURN', place=self.pl.gate, n=n)
@@ -85,7 +85,7 @@ class PhasesMixin:
         if c['doy'] == se.year_end_doy:                       # 岁末: 铺户盈余转为铺主家用与商税, 流回县城
             for a in self.S.accounts:
                 if a.year_end_cap is not None:
-                    self.pay(a.code, self.ac.town, max(0, self.bal(a.code) - a.year_end_cap * GUAN), '铺主家用与商税')
+                    self.pay(a.code, self.ac.town, max(0, self.bal(a.code) - a.year_end_cap * GUAN), self.R['shop_year_end'])
 
     def harvest(self, crop):
         Pm, K, y = self.P, self.K, self.year
@@ -124,7 +124,7 @@ class PhasesMixin:
             sell = min(sell, max(0, self.bal(shop) - K['shop_cash_floor_guan'] * GUAN) * SHI // p)
             if sell <= 0: continue
             self.move(hid, place, shop, town, grain, sell)
-            self.pay(shop, hid, sell * p // SHI, '卖余粮'); n += 1; tot += sell
+            self.pay(shop, hid, sell * p // SHI, self.R['hh_sell']); n += 1; tot += sell
         self.ev('MARKET_SALES', place=town, n=n, qty=tot, price=p)
 
     def households_shop(self):
@@ -135,9 +135,9 @@ class PhasesMixin:
                 c = h['c']
                 q = min(Pm[h['want']], self.qty(gen, town, c), max(0, self.bal(hid) - h['floor_guan'] * GUAN) // self.G[c].price)
                 if q > 0:
-                    self.consume(gen, town, c, q, 'consume_hh'); self.pay(hid, gen, q * self.G[c].price, '家用:' + self.G[c].name)
+                    self.consume(gen, town, c, q, 'consume_hh'); self.pay(hid, gen, q * self.G[c].price, self.R['hh_goods'] + self.G[c].name)
             spare = max(0, self.bal(hid) - K['hh_spare_floor_guan'] * GUAN)    # 留三贯买粮钱, 富余的才花; 钱多的多花
-            self.pay(hid, self.ac.town, min(spare, Pm['hh_misc'] + max(0, spare - K['hh_rich_guan'] * GUAN) * K['hh_rich_n'] // K['hh_rich_d']), '家用:杂项')
+            self.pay(hid, self.ac.town, min(spare, Pm['hh_misc'] + max(0, spare - K['hh_rich_guan'] * GUAN) * K['hh_rich_n'] // K['hh_rich_d']), self.R['hh_misc'])
 
     def temple_after_harvest(self):
         y, K = self.year, self.K
@@ -154,7 +154,7 @@ class PhasesMixin:
         sell = min(excess, self.qty(org, granary, grain), max(0, self.bal(shop) - K['shop_cash_floor_guan'] * GUAN) * SHI // p)
         if sell > 0:
             self.move(org, granary, shop, self.pl.town, grain, sell)
-            m = self.pay(shop, org, sell * p // SHI, '售余粮')
+            m = self.pay(shop, org, sell * p // SHI, self.R['sell_surplus'])
             self.tg[(y, self.TG['sold'])] += sell
             self.ev('GRAIN_SOLD', place=self.pl.estate, actor=self.holder(self.T.supervisor), q=sell, money=m)
 
@@ -173,7 +173,7 @@ class PhasesMixin:
         f = self.pilgrim_factor(c) * self.pilgrim_boost.get(d, 1) * (K['closed_pilgrim_mult'] if closed else 1)
         a, b = K['pilgrim_noise']
         n = int(Pm['pilgrims'] * f * (a + b * self.u('pilgrims', d)) + 0.5)
-        money = self.pay(self.ac.pilgrims, self.ac.org, n * Pm['alms_each'] / self.price_factor, '香火钱')
+        money = self.pay(self.ac.pilgrims, self.ac.org, n * Pm['alms_each'] / self.price_factor, self.R['incense'])
         g = int(n * Pm['guest_rate'] + 0.5)
         if self.tier_i >= K['tier_crisis']:
             if g: self.ev('GUESTS_SUSPENDED', place=self.pl.guest, actor=self.holder(self.T.guest_master), n=g)
@@ -185,9 +185,9 @@ class PhasesMixin:
         if not closed:
             big = c['festival'] in se.donor_festivals
             if (big or c['shuowang']) and self.u('donor', d) < (1.0 if big else Pm['donor_prob']):
-                self.pay(self.ac.pilgrims, self.ac.org, Pm['donor_gift'], '大施主布施'); self.ev('DONOR', place=self.pl.main_hall, money=Pm['donor_gift'])
+                self.pay(self.ac.pilgrims, self.ac.org, Pm['donor_gift'], self.R['donor']); self.ev('DONOR', place=self.pl.main_hall, money=Pm['donor_gift'])
             if self.u('rite', d) < Pm['rite_prob']:
-                self.pay(self.ac.town, self.ac.org, Pm['rite_fee'], '法事')
+                self.pay(self.ac.town, self.ac.org, Pm['rite_fee'], self.R['rite'])
                 self.ev('RITE', place=self.pl.fatang, actor=self.holder(self.T.disciplinarian), money=Pm['rite_fee'])
 
     # ------------------------------------------------------------------ 消耗
@@ -207,9 +207,11 @@ class PhasesMixin:
         head = self.head()
         cook = self.holder(self.T.cook)
         need = int((head + self.guests) * Pm['ration_monk'] * K['tier_mult'][self.tier_i])
+        need, half = self._meal_need(need)                    # 引擎告知的半餐（耦合 a，见 coupling.py）；没人告知就原样
         got = self.consume(org, self.pl.granary, grain, need, 'consume') if cook else 0
         self.tg[(self.year, self.TG['meals'])] += got
         self.ev('MEALS', place=self.pl.refectory, actor=cook, slot=K['meal_slot'], head=head, guests=self.guests, grain=got, tier=self.tier)
+        if half: self.ev('MEAL_HALVED', place=self.pl.refectory, actor=cook, factor=half[0], full=half[1], need=need, why=half[2])
         if got < need:
             self.cnt['meal_short'] += 1
             self.ev('MEAL_SHORT', place=self.pl.refectory, actor=cook, need=need, got=got, why='无人主厨' if not cook else '粮尽')
@@ -239,7 +241,8 @@ class PhasesMixin:
             for pid, in self.x("SELECT id FROM person WHERE status='在寺' AND canon=0 ORDER BY id").fetchall():
                 if self.u('leave', pid, d) < K['leave_prob']:
                     self.x("UPDATE person SET status='游方' WHERE id=?", (pid,)); self.cnt['monks_left'] += 1
-                    if self.engine: self.engine.on_person_removed(pid, '游方')
+                    self.pcache.pop(pid, None)                    # 缓存里若还是“在寺”，where 会把游方者当成在世（原型漏了这一行；缓存不入库，哈希不受影响）
+                    if self.engine is not None: self.engine.on_person_removed(pid, '游方')
         # 农户: 够吃的批量结算, 不够的逐户处理
         ok = f"h.status='在' AND s.commodity='{grain}' AND s.owner=h.id AND s.place=h.place"
         tot = self.x(f"SELECT COALESCE(SUM(h.need),0) FROM household h, stock s WHERE {ok} AND s.qty>=h.need").fetchone()[0]
@@ -252,7 +255,7 @@ class PhasesMixin:
             p = self.price(grain)
             buy = min(need * K['hh_buy_days'] - have, self.qty(shop, town, grain), self.bal(hid) * SHI // p)
             if buy > 0:
-                self.move(shop, town, hid, place, grain, buy); self.pay(hid, shop, buy * p // SHI, '买粮')
+                self.move(shop, town, hid, place, grain, buy); self.pay(hid, shop, buy * p // SHI, self.R['hh_buy'])
             have = self.qty(hid, place, grain)
             if have < need and kind == self.hk.tenant:                # 佃户向庄仓无息借粮, 记欠粮, 下季归还
                 owe = self.x("SELECT COALESCE(SUM(qty),0) FROM arrears WHERE debtor=?", (hid,)).fetchone()[0]

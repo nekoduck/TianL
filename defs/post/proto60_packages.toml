@@ -1,0 +1,259 @@
+# NPC 原型场景 scenario:proto60 的行为包（计划 6.1、6.2）：每人每个时辰“现在做什么”的答案来自一摞按次序排好的包，自上而下第一个成立的生效。
+# 次序由 rule:proto60:stack 的 packages 列表决定（引擎不再写死层的先后）。包的字段：
+#   layer    层标签（rule:proto60:layers 登记过的）：轨迹里的“生效层”、行为包占比的统计口径
+#   who      谁适用：post = [岗位编号…]（任一）、status = "common"（无岗位的清众）| "holder"（有岗位者）、track = [修行方向…]（任一）；不写 = 所有人
+#   when     何时成立：slot（时辰，一个或一组）、period（时段名：night 夜间 / meal 斋食时辰，取自 rule:schedule——日程只写一处）、day（模拟日序号）、day_of_month（历法的月内日）、month、festival（true = 任一节日，或节日名）、
+#            weather、season（春夏秋冬）；匹配次序“先具体日子（day / day_of_month / festival），再天气，再季节（season / month），最后默认”
+#   do       声明式：{ place, act, label }；place 写 place 编号，"$home" = 本人寮房；claim = true 时占一个工位（满员改去 overflow.place，原因加 overflow.suffix）
+#   handler  需要条件判断的包不写 do，写 handler = "<名>" + params（处理器与参数见 tianl/npc/handlers.py、docs/NPC_ENGINE.md 第 12 节）
+# 为了让内核也能加载本目录，这里只引用 place / post 编号；想法、规范等引用放在设施与规范的定义里（defs/facility、defs/norm）。
+
+# ---------------------------------------------------------------- 1–2 强制：卧病、禁闭（别的包都让位）
+["package:proto60:_forced"]
+_abstract = true
+layer = "强制"
+handler = "forced"
+params = { extra_sleep_slots = [2] }
+
+["package:proto60:forced_ill"]
+parent = "package:proto60:_forced"
+params = { state = "ill", place = "place:proto60:inf", sleep = "卧病", meal = "病号饭", other = "卧病", other_act = "sick" }
+
+["package:proto60:forced_confined"]
+parent = "package:proto60:_forced"
+params = { state = "conf", place = "place:proto60:court", sleep = "禁闭", meal = "禁闭送饭", other = "禁闭", other_act = "confined" }
+
+# ---------------------------------------------------------------- 3 处分：未执行完的罚跪香
+["package:proto60:penalty"]
+layer = "处分"
+handler = "penalty"
+when = { slot = 7 }
+params = { place = "place:proto60:hall", act = "kneel", label = "罚跪香" }
+
+# ---------------------------------------------------------------- 4 反应：有待报的举报，戒律院开门时去举报
+# 值守者没空去（所以另有“当面禀告”送达）；free_posts 里的岗位（僧值）当值也去得了。
+["package:proto60:court_report"]
+layer = "反应"
+handler = "court_report"
+when = { slot = [5, 8] }
+params = { place = "place:proto60:court", act = "report", label = "到戒律院举报", free_posts = ["post:proto60:duty_monk"] }
+
+# ---------------------------------------------------------------- 5 值守：此刻轮到的要紧岗位（监院派来的代理也算）
+["package:proto60:_kitchen_hours"]
+_abstract = true
+layer = "值守"
+when = { slot = [2, 3, 5, 8] }
+
+["package:proto60:duty_kitchen"]
+parent = "package:proto60:_kitchen_hours"
+handler = "kitchen_duty"
+params = { label = "厨务" }
+
+# 监院派人代理：每日厨房在岗人手不足 target 人就补（按精进降序、编号升序，避开山门值守与病、禁闭者）；仅当引擎的 acting 开着
+["package:proto60:duty_proxy"]
+parent = "package:proto60:_kitchen_hours"
+handler = "proxy_cook"
+params = { label = "代理帮厨", target = 4 }
+
+# 僧值：两人轮流，一人巡夜（白天补觉），一人日间巡寮；每次从 roam 里按随机序挑 pick 处
+["package:proto60:duty_patrol"]
+layer = "值守"
+who = { post = ["post:proto60:duty_monk"] }
+handler = "patrol_duty"
+params = { pick = 3, night_slots = [0, 1], day_slots = [5, 7, 8], rest_slots = [7, 8], label_night = "巡夜", label_day = "巡寮", label_rest = "巡夜后补觉" }
+
+["package:proto60:duty_gate"]
+layer = "值守"
+when = { slot = [5, 7, 8] }
+handler = "gate_duty"
+params = { label = "山门值守" }
+
+# ---------------------------------------------------------------- 6 生理紧急：困到不支就地昏睡；饿极了守戒低者去厨房偷吃，其余忍着
+["package:proto60:physiology"]
+layer = "生理"
+handler = "physiology"
+params = { faint_e = 10, faint_label = "昏沉不支", starve_h = 12, starve_s = 55, starve_label = "饿极偷食", act = "steal" }
+
+# ---------------------------------------------------------------- 越轨：性格改的是起念的门槛，不是生理常数（计划 6.3）
+["package:proto60:_tempted"]
+_abstract = true
+layer = "越轨"
+handler = "tempted"
+params = { act = "steal", th_base = 35, t_mid = 40, t_slope = 0.7, s_line = 45, k = 1.6, p_cap = 0.9 }
+
+["package:proto60:tempted_night"]
+parent = "package:proto60:_tempted"
+when = { slot = 1 }
+params = { label = "夜里偷食" }
+
+["package:proto60:tempted_afternoon"]
+parent = "package:proto60:_tempted"
+when = { slot = 7 }
+params = { label = "午后偷食" }
+
+# ---------------------------------------------------------------- 夜间就寝（计划里归第 9 层“身份”的默认作息）
+["package:proto60:night_sleep"]
+layer = "作息"
+when = { period = "night" }
+do = { place = "$home", act = "sleep", label = "就寝" }
+
+# ---------------------------------------------------------------- 晨起：精进低的人贪睡不起（越轨）；困乏起不来（生理）
+["package:proto60:lazy"]
+layer = "越轨"
+when = { slot = [2, 3] }
+handler = "lazy"
+params = { roll_slot = 2, d_line = 35, d_div = 60, label = "贪睡不起", tired_e = 25, tired_label = "困乏未起" }
+
+# ---------------------------------------------------------------- 7 集体：日历上的集体活动（同一条日程给所有人，不需要“集合”机制）
+["package:proto60:uposatha"]
+layer = "集体"
+when = { day = [1, 15], slot = 7 }
+do = { place = "place:proto60:hall", act = "chant", label = "布萨诵戒" }
+
+["package:proto60:morning_zazen"]
+layer = "集体"
+when = { slot = 2 }
+do = { place = "place:proto60:zen", act = "zazen", label = "晨坐" }
+
+["package:proto60:morning_chant"]
+layer = "集体"
+when = { slot = 3 }
+do = { place = "place:proto60:hall", act = "chant", label = "早课" }
+
+["package:proto60:morning_meal"]
+layer = "集体"
+when = { slot = 4 }
+do = { place = "place:proto60:ref", act = "meal", label = "早斋" }
+
+["package:proto60:noon_meal"]
+layer = "集体"
+when = { slot = 6 }
+do = { place = "place:proto60:ref", act = "meal", label = "午斋" }
+
+["package:proto60:evening_chant"]
+layer = "集体"
+when = { slot = 9 }
+do = { place = "place:proto60:hall", act = "chant", label = "晚课" }
+
+["package:proto60:evening_zazen"]
+layer = "集体"
+when = { slot = 10 }
+do = { place = "place:proto60:zen", act = "zazen", label = "晚坐" }
+
+# ---------------------------------------------------------------- 8 岗位：本职理事时段
+["package:proto60:post_abbot"]
+layer = "岗位"
+who = { post = ["post:proto60:abbot"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:abbot", act = "work", label = "方丈理事" }
+
+["package:proto60:post_supervisor"]
+layer = "岗位"
+who = { post = ["post:proto60:supervisor"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:office", act = "work", label = "监院理事" }
+
+["package:proto60:post_stock_keeper"]
+layer = "岗位"
+who = { post = ["post:proto60:stock_keeper"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:store", act = "work", label = "库头理事" }
+
+["package:proto60:post_guest_master"]
+layer = "岗位"
+who = { post = ["post:proto60:guest_master"] }
+when = { slot = [5, 7, 8] }
+do = { place = "place:proto60:gate", act = "work", label = "知客理事" }
+
+["package:proto60:post_librarian"]
+layer = "岗位"
+who = { post = ["post:proto60:librarian"] }
+when = { slot = [5, 7, 8] }
+do = { place = "place:proto60:lib", act = "work", label = "藏主理事" }
+
+["package:proto60:post_gardener"]
+layer = "岗位"
+who = { post = ["post:proto60:gardener"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:garden", act = "work", label = "园头理事" }
+
+["package:proto60:post_garden_hand"]
+layer = "岗位"
+who = { post = ["post:proto60:garden_hand"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:garden", act = "work", label = "园工理事" }
+
+["package:proto60:post_chief_seat"]
+layer = "岗位"
+who = { post = ["post:proto60:chief_seat"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:court", act = "work", label = "首座理事" }
+
+["package:proto60:post_deacon"]
+layer = "岗位"
+who = { post = ["post:proto60:deacon"] }
+when = { slot = [5, 8] }
+do = { place = "place:proto60:court", act = "work", label = "执事理事" }
+
+["package:proto60:post_infirm_head"]
+layer = "岗位"
+who = { post = ["post:proto60:infirm_head"] }
+when = { slot = [5, 7, 8] }
+do = { place = "place:proto60:inf", act = "work", label = "堂主理事" }
+
+# ---------------------------------------------------------------- 9 身份：清众（无岗位者）的默认作息与差事
+# 差事时辰：精进低或心情低的人怠工（越轨，转去自由时段选）；否则按工作板认领一件差事（认领即预约）。
+["package:proto60:slack"]
+layer = "怠工"
+who = { status = "common" }
+when = { slot = 5 }
+handler = "slack"
+params = { d_line = 40, d_div = 80, low_mood_add = 0.15 }
+
+["package:proto60:errand"]
+layer = "差事"
+who = { status = "common" }
+when = { slot = 5 }
+handler = "errand"
+
+# 功课时辰：做本方向的功课；场所满员就改去 overflow.place
+["package:proto60:class_martial"]
+layer = "身份"
+who = { status = "common", track = ["武"] }
+when = { slot = 8 }
+do = { place = "place:proto60:yard", act = "martial", label = "习武", claim = true, overflow = { place = "place:proto60:hall", suffix = "（改在讲堂）" } }
+
+["package:proto60:class_study"]
+layer = "身份"
+who = { status = "common", track = ["学"] }
+when = { slot = 8 }
+do = { place = "place:proto60:lib", act = "study", label = "读经", claim = true, overflow = { place = "place:proto60:hall", suffix = "（改在讲堂）" } }
+
+["package:proto60:class_zazen"]
+layer = "身份"
+who = { status = "common", track = ["禅"] }
+when = { slot = 8 }
+do = { place = "place:proto60:zen", act = "zazen", label = "坐禅", claim = true, overflow = { place = "place:proto60:hall", suffix = "（改在讲堂）" } }
+
+# ---------------------------------------------------------------- 10 自由：以上都不成立，按需求挑设施（Sims）
+["package:proto60:free"]
+layer = "自由"
+handler = "free"
+
+# ---------------------------------------------------------------- 栈：包的判定先后（自上而下第一个成立的生效）
+# 值守层的包必须相邻（反应包要先问“此刻有没有值守”）；同层相邻的声明式包按 when 的具体程度排（日子 > 天气 > 季节 > 默认），同级按此处次序。
+["rule:proto60:stack"]
+packages = [
+  "package:proto60:forced_ill", "package:proto60:forced_confined", "package:proto60:penalty", "package:proto60:court_report",
+  "package:proto60:duty_kitchen", "package:proto60:duty_proxy", "package:proto60:duty_patrol", "package:proto60:duty_gate",
+  "package:proto60:physiology", "package:proto60:tempted_night", "package:proto60:night_sleep", "package:proto60:lazy",
+  "package:proto60:uposatha", "package:proto60:morning_zazen", "package:proto60:morning_chant", "package:proto60:morning_meal",
+  "package:proto60:noon_meal", "package:proto60:evening_chant", "package:proto60:evening_zazen",
+  "package:proto60:post_abbot", "package:proto60:post_supervisor", "package:proto60:post_stock_keeper",
+  "package:proto60:post_guest_master", "package:proto60:post_librarian", "package:proto60:post_gardener",
+  "package:proto60:post_garden_hand", "package:proto60:post_chief_seat", "package:proto60:post_deacon",
+  "package:proto60:post_infirm_head",
+  "package:proto60:slack", "package:proto60:errand",
+  "package:proto60:class_martial", "package:proto60:class_study", "package:proto60:class_zazen",
+  "package:proto60:tempted_afternoon", "package:proto60:free",
+]

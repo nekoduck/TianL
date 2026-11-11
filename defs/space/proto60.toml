@@ -1,0 +1,109 @@
+# NPC 原型场景 scenario:proto60（60 僧 × 30 日）的场所。scope = proto60，与少林寺内核（scope = shaolin）互不相干，内核按 scope 过滤，不读这里。
+# code 是运行时钥匙；原型场景沿用原型的短码（hall、kit、dorm1……）：短码进随机数键（巡寮抽签）与基线哈希行，
+# 所以改 code 就改了哈希（docs/NPC_ENGINE.md 第 9 节第 14 条）；name 是显示名，随便改，不影响任何哈希。
+# 本文件只含场所（空间类），不引用别的类别——内核会加载 space 目录，这里不得依赖内核不加载的目录。
+
+["place:proto60:hall"]
+code = "hall"
+name = "大雄宝殿"
+kernel = false
+
+["place:proto60:zen"]
+code = "zen"
+name = "禅堂"
+kernel = false
+
+["place:proto60:ref"]
+code = "ref"
+name = "斋堂"
+kernel = false
+
+["place:proto60:kit"]
+code = "kit"
+name = "香积厨"
+kernel = false
+
+["place:proto60:store"]
+code = "store"
+name = "库房"
+kernel = false
+
+["place:proto60:dorm1"]
+code = "dorm1"
+name = "东寮"
+kernel = false
+
+["place:proto60:dorm2"]
+code = "dorm2"
+name = "西寮"
+kernel = false
+
+["place:proto60:dorm3"]
+code = "dorm3"
+name = "后寮"
+kernel = false
+
+["place:proto60:lib"]
+code = "lib"
+name = "藏经阁"
+kernel = false
+
+["place:proto60:yard"]
+code = "yard"
+name = "练武场"
+kernel = false
+
+["place:proto60:garden"]
+code = "garden"
+name = "菜园"
+kernel = false
+
+["place:proto60:gate"]
+code = "gate"
+name = "山门"
+kernel = false
+
+["place:proto60:bath"]
+code = "bath"
+name = "浴室"
+kernel = false
+
+["place:proto60:court"]
+code = "court"
+name = "戒律院"
+kernel = false
+
+["place:proto60:inf"]
+code = "inf"
+name = "延寿堂"
+kernel = false
+
+["place:proto60:clo"]
+code = "clo"
+name = "廊下"
+kernel = false
+
+["place:proto60:well"]
+code = "well"
+name = "井台"
+kernel = false
+
+["place:proto60:woods"]
+code = "woods"
+name = "后山"
+kernel = false
+
+["place:proto60:mill"]
+code = "mill"
+name = "磨坊"
+kernel = false
+
+["place:proto60:abbot"]
+code = "abbot"
+name = "方丈室"
+kernel = false
+
+["place:proto60:office"]
+code = "office"
+name = "库院"
+kernel = false

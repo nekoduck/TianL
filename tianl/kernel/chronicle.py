@@ -55,6 +55,8 @@ class ChronicleMixin:
             elif typ == 'GOODS_RETURNED': s = f"货款不足，{G(p['c'])} {U(p['c'], p['q'])} 退回。"
             elif typ == 'MEALS': s = (f"{T.cook}{a}供粥斋，僧 {p['head']} 人" + (f"、客 {p['guests']} 人" if p['guests'] else '') + f"，用粮 {shi(p['grain'])}"
                                       + ('。' if K['tiers'].index(p['tier']) <= K['tier_light'] else '（减供）。'))
+            elif typ == 'MEAL_HALVED': s = f"厨下人手不足，{T.cook}{a}只备半餐：应供 {shi(p['full'])}，减为 {shi(p['need'])}（{p['why']}）。" if p['why'] else f"厨下人手不足，{T.cook}{a}只备半餐：应供 {shi(p['full'])}，减为 {shi(p['need'])}。"
+            elif typ == 'GRAIN_STOLEN': s = f"有人偷食，{pn[self.pl.refectory]}少了 {shi(p['grain'])}。"
             elif typ == 'MEAL_SHORT': s = f"断炊：{p['why']}，应供 {shi(p['need'])}，实供 {shi(p['got'])}。"
             elif typ == 'SHORTAGE': s = f"{T.stock_keeper}{a}报：{G(p['c'])}告罄。"
             elif typ == 'FORAGE': s = f"封路缺柴，{T.grounds_keeper}{a}领众普请，上山打柴 {p['q']} {self.G[self.cm.fuel].unit}。"

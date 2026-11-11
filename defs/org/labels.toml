@@ -21,3 +21,24 @@ lend_tenant = "借给佃户"      # 庄仓借给佃户
 relief = "赈济"              # 赈济农户
 alms = "募化"                # 募化所得
 charity = "施粥"             # 节日施粥
+
+# 寺院钱账的事由（流水 ledger.reason 与 year_report 的 money 字典的键）。值逐字沿用原型；goods / hh_goods 是前缀，后面接品类名。
+# 事由是状态哈希的一部分：改一个字，哈希就变。
+[ "param:shaolin:labels".reasons ]
+opening = "期初"              # 开局注资
+goods = "货款:"               # 到货付款（前缀 + 品类名）
+hh_goods = "家用:"            # 农户买家用品（前缀 + 品类名）
+hh_misc = "家用:杂项"         # 农户杂项开销
+hh_buy = "买粮"               # 农户向粮铺买粮
+hh_sell = "卖余粮"            # 农户向粮铺卖余粮
+sell_surplus = "售余粮"       # 寺院收成后售余粮
+incense = "香火钱"            # 香客布施（日常）
+donor = "大施主布施"          # 大节与朔望的大施主
+rite = "法事"                 # 做法事的收入
+alms = "募化所得"             # 下山募化带回的钱
+merit = "修造功德"            # 节日里拨出结余修造
+repair_wage = "修缮工钱"      # 修缮雇工
+wood_income = "樵菜售予县城"  # 樵菜户每月向县城售柴菜
+immigrant = "迁入携带"        # 新佃户迁入带来的钱
+shop_year_end = "铺主家用与商税"  # 岁末铺户盈余转出
+export = "粮食外销"           # 粮铺把余粮销往外地

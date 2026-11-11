@@ -1,0 +1,50 @@
+# NPC 原型场景 scenario:proto60 的组织：寺院本身（人群的构成）与几个“部门”（香积厨、僧值巡寮、山门、戒律院）。
+# 内核会加载 org 目录（按 scope 过滤，不读这里），所以这里只引用 space / post 里的定义。
+# 角色名 = 编号最后一段（或 role 字段）：main 是寺院整体，kitchen / patrol / gate / court 是引擎认识的四个部门。
+
+# 寺院整体：
+#   dorms    寮房（有序：第 i 个人住第 i % 寮数 个）；寮房是私人场所，不记容量     roam  巡寮的候选场所（僧值每次从中按随机序挑几处）
+#   default_stations  没登记工位数（facility.stations）的场所按此数算（实际上不设限）
+#   office_track_cycle  岗位者的修行方向按序号循环      name_pool  取法名用的字池（岗位前缀 + 池中第 i 个字）
+#   common_prefix  清众的法名前缀   common_tracks  清众按序分方向（不写 count = 其余全部）
+#   groups  时间分配统计的两组名称（清众，岗位者）
+["org:proto60:main"]
+name = "少林寺·原型六十僧"
+dorms = ["place:proto60:dorm1", "place:proto60:dorm2", "place:proto60:dorm3"]
+roam = [
+  "place:proto60:clo", "place:proto60:kit", "place:proto60:hall", "place:proto60:dorm1", "place:proto60:dorm2",
+  "place:proto60:dorm3", "place:proto60:gate", "place:proto60:lib", "place:proto60:yard", "place:proto60:well",
+  "place:proto60:garden", "place:proto60:zen",
+]
+default_stations = 999
+office_track_cycle = "禅学武"
+name_pool = "明净空海山石泉松竹云月风清远静定觉悟通达道德仁义礼智信诚真善忍和安宁平康福寿喜乐观照闻思修证法宝因缘果行愿力圆融正见坚勤朴厚"
+common_prefix = "虚"
+common_tracks = [ { track = "武", count = 14 }, { track = "学", count = 10 }, { track = "禅" } ]
+groups = ["清众", "执事"]
+
+# 香积厨：place 厨房；dining 斋堂（到课＝过堂人数在此统计）；prep 备斋时辰（斋食时辰 meal 用备斋时辰 prep 的在厨人手判断足量或半餐）；
+# min_staff 足量所需人手；gain_full / gain_half 足量 / 半餐给的饥；stock_init 开局库存（水、柴；每顿斋耗什么见 interaction:meal 的 inputs，挑水打柴入账见 job 的 outputs）。
+["org:proto60:kitchen"]
+place = "place:proto60:kit"
+dining = "place:proto60:ref"
+prep = [ { meal = 4, prep = 3 }, { meal = 6, prep = 5 } ]
+min_staff = 3
+gain_full = 45
+gain_half = 22
+stock_init = { water = 8, wood = 8 }
+
+# 僧值巡寮：office 僧值（两人轮流，一人巡夜，一人日间巡寮；日程见 package:duty_patrol）
+["org:proto60:patrol"]
+office = "post:proto60:duty_monk"
+
+# 山门：place 山门；count 每日从清众里轮值几人（日程见 package:duty_gate）
+["org:proto60:gate"]
+place = "place:proto60:gate"
+count = 2
+
+# 戒律院：place；judges 有资格裁断的岗位（按次序，首座优先）；judge_slot 裁断的时辰
+["org:proto60:court"]
+place = "place:proto60:court"
+judges = ["post:proto60:chief_seat", "post:proto60:deacon"]
+judge_slot = 5

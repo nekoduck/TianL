@@ -104,7 +104,7 @@ class RulesMixin:
             self.open_order('R-IMPORT', 'IMPORT', office_grain, grain, K['shop_grain_target_shi'] * SHI - gs, K['import_sla'], supplier=port, buyer=shop)
         elif gs > K['shop_grain_high_shi'] * SHI:
             q = self.consume(shop, town, grain, gs - K['shop_grain_target_shi'] * SHI, 'port_out')
-            self.pay(port, shop, q * (self.grain_price() * K['export_pct'] // 100) // SHI, '粮食外销')
+            self.pay(port, shop, q * (self.grain_price() * K['export_pct'] // 100) // SHI, self.R['export'])
 
     # ------------------------------------------------------------------ 订单落地
     def phase_orders(self):
@@ -153,7 +153,7 @@ class RulesMixin:
                 elif self.qty(org, store, self.cm.lumber) >= q:
                     self.consume(org, store, self.cm.lumber, q, 'consume')
                     hh = [r[0] for r in self.x("SELECT id FROM household WHERE kind=? AND status='在' ORDER BY id", (self.hk.wood,))]
-                    if hh: self.pay(org, hh[oid % len(hh)], info['labor'] * Pm['wage'], '修缮工钱')
+                    if hh: self.pay(org, hh[oid % len(hh)], info['labor'] * Pm['wage'], self.R['repair_wage'])
                     self.set_state(oid, '进行中', block=None, due=d + math.ceil(info['labor'] / K['labor_per_day']))
                     self.ev('REPAIR_START', place=self.pl.temple, actor=self.holder(T.grounds_keeper), what=info['what'], timber=q, labor=info['labor'])
                 else:
@@ -167,7 +167,7 @@ class RulesMixin:
                     k = 1 / self.price_factor ** 2
                     ag, am = K['alms_grain'], K['alms_money']
                     g = self.produce(org, self.pl.granary, grain, (ag[0] + ag[1] * self.u('almsg', oid)) * SHI * k, 'port_in')
-                    m = self.pay(self.ac.pilgrims, org, (am[0] + am[1] * self.u('almsm', oid)) * GUAN * k, '募化所得')
+                    m = self.pay(self.ac.pilgrims, org, (am[0] + am[1] * self.u('almsm', oid)) * GUAN * k, self.R['alms'])
                     self.last_alms = d
                     self.tg[(self.year, self.TG['alms'])] += g
                     self.done(oid); self.ev('ALMS_ROUND_BACK', place=self.pl.gate, actor=self.holder(T.almoner), grain=g, money=m)

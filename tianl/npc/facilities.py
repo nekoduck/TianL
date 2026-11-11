@@ -2,7 +2,7 @@
 
 * 工位：每个有限容量的场所一个计数（SiteSpec.capacity）；占位即预约，满了就不能再占。床位归人，不记容量。
 * 广告：设施说“我能满足什么”（AdSpec）；人按需求打分，打分公式见 score()。
-* 准入：广告可带一道门（handlers.GATES），门不开就不进候选。
+* 准入：广告可带一道门（handlers.GATES，参数在交互的 admission 里），门不开就不进候选。
 “预约越界”是硬指标：任何时辰任何有限场所的占用都不得超过容量（check_overflow 记下违例）。
 """
 from .handlers import GATES
@@ -32,7 +32,7 @@ class Facilities:
     def open_ads(self, p, day, slot):
         """此刻对 p 开放的广告（保持规格里的次序；平分时次序决定先后）。"""
         eng = self.eng
-        return [ad for ad in self.ads if ad.gate is None or GATES[ad.gate](eng, p, day, slot)]
+        return [ad for ad in self.ads if ad.gate is None or GATES[ad.gate](eng, p, day, slot, ad.gate_params)]
 
     def score(self, ad, p):
         """p 对广告 ad 的打分：各项需求迫切度乘增量之和 → 乘性格系数 → 加性格偏好（计划 6.4 第 2 步）。"""

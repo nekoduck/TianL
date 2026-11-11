@@ -1,0 +1,170 @@
+# NPC 原型场景 scenario:proto60 的设施与交互（计划 4.3）。
+# 设施（facility）：场所里的工位。stations = 同一时辰最多几人占用（占位即预约）；不写 stations = 不限（该场所的容量按 org:main 的 default_stations）。
+# 交互（interaction）：“能做什么”写在设施上，不写在人身上。字段固定（字段表见 docs/NPC_ENGINE.md 第 12 节）：
+#   act        活动代码（轨迹、哈希里的活动名；代码里认识的活动：sleep rest chant meal zazen work martial study bath wash chat stroll patrol guard report kneel confined sick steal）
+#   station    所需工位：facility 编号；"$home" = 本人的寮房床位（不记容量，床位归人）；不写 = 不占工位
+#   duration   时长（时辰）。引擎按时辰决定，目前只接受 1
+#   effects    需求增减（每时辰；键 h 饥 e 困 c 洁 s 群 a 志）
+#   inputs     所需物（每次服务耗的物，如斋食耗水柴）    outputs  产出物（做一次得的物）
+#   admission  准入条件：登记的准入门 gate = "<名>"，其余键是该门的参数（见 handlers.py 的 GATES）
+#   norm       触犯的规范（norm 编号）：谁做了这件事，就触犯它。同一处厨房：值守包给的活动是 work（对饭头是工作，没有规范后果），
+#              越轨/饿极给的是 steal（对旁人是偷食，触犯 norm:proto60:food_theft）——同一设施两种规范后果，由“活动”区分
+#   category   时间分配类别（统计口径）    track_bonus  本方向做此事的志增量（本方向 own，其余 other）
+#   thought    做了这件事得到的想法（如沐浴）    refrain_thought  有理由做、却克制没做时得到的想法（饿极而不偷：忍饥）
+#   ad         自由时段的广告（Sims）：order 次序（平分时先出现的先）、label、terms 需求项、scale 性格系数、pref 性格偏好
+
+# ---------------------------------------------------------------- 设施
+["facility:proto60:library"]
+place = "place:proto60:lib"
+stations = 10
+
+["facility:proto60:yard"]
+place = "place:proto60:yard"
+stations = 24
+
+["facility:proto60:bath"]
+place = "place:proto60:bath"
+stations = 24
+
+["facility:proto60:well"]
+place = "place:proto60:well"
+stations = 8
+
+["facility:proto60:zen"]
+place = "place:proto60:zen"
+stations = 70
+
+["facility:proto60:cloister"]
+place = "place:proto60:clo"
+stations = 60
+
+["facility:proto60:kitchen"]
+place = "place:proto60:kit"
+
+# ---------------------------------------------------------------- 交互（19 种活动）
+["interaction:proto60:sleep"]
+act = "sleep"
+effects = { e = 36 }
+category = "睡眠"
+
+["interaction:proto60:rest"]
+act = "rest"
+station = "$home"
+effects = { e = 22 }
+category = "睡眠"
+order = 1
+ad = { label = "小憩", terms = [ { need = "e", w = 22 } ], pref = { kind = "idle", trait = "D", coef = 0.5 } }
+
+["interaction:proto60:chant"]
+act = "chant"
+effects = { s = 2, a = 3 }
+category = "课诵"
+
+["interaction:proto60:meal"]
+act = "meal"
+effects = { s = 2 }
+inputs = { water = 2, wood = 2 }
+category = "斋食"
+
+["interaction:proto60:zazen"]
+act = "zazen"
+station = "facility:proto60:zen"
+effects = { e = 3, a = 4 }
+category = "坐禅"
+track_bonus = { track = "禅", own = 11, other = 0 }
+order = 2
+ad = { label = "坐禅", terms = [ { need = "a", w = 4, by_track = [ { track = "禅", w = 15 } ] }, { need = "e", w = 3 } ], scale = { trait = "D", off = 0.6, div = 125 }, pref = { kind = "track", trait = "D", coef = 0.9, track = "禅" } }
+
+["interaction:proto60:work"]
+act = "work"
+effects = { e = -2, c = -2 }
+category = "作务"
+
+["interaction:proto60:martial"]
+act = "martial"
+station = "facility:proto60:yard"
+effects = { e = -3, c = -3, h = -3 }
+category = "自修"
+track_bonus = { track = "武", own = 23, other = 6 }
+order = 3
+ad = { label = "习武", terms = [ { need = "a", w = 6, by_track = [ { track = "武", w = 23 } ] }, { need = "e", w = -3 } ], scale = { trait = "D", off = 0.6, div = 125 }, pref = { kind = "track", trait = "D", coef = 0.9, track = "武" } }
+
+["interaction:proto60:study"]
+act = "study"
+station = "facility:proto60:library"
+effects = { a = 3 }
+category = "自修"
+track_bonus = { track = "学", own = 20, other = 3 }
+admission = { gate = "lib_open", office = "post:proto60:librarian", slots = [5, 7, 8] }
+order = 6
+ad = { label = "读经", terms = [ { need = "a", w = 6, by_track = [ { track = "学", w = 23 } ] } ], scale = { trait = "D", off = 0.6, div = 125 }, pref = { kind = "track", trait = "D", coef = 0.9, track = "学" } }
+
+["interaction:proto60:bath"]
+act = "bath"
+station = "facility:proto60:bath"
+effects = { c = 60 }
+category = "洗沐"
+thought = "thought:proto60:bath"
+admission = { gate = "bath_day", every = 5, phase = 4, slots = [7, 8] }
+order = 7
+ad = { label = "沐浴", terms = [ { need = "c", w = 60 } ] }
+
+["interaction:proto60:wash"]
+act = "wash"
+station = "facility:proto60:well"
+effects = { c = 25 }
+category = "洗沐"
+order = 4
+ad = { label = "浣洗", terms = [ { need = "c", w = 25 } ] }
+
+["interaction:proto60:chat"]
+act = "chat"
+station = "facility:proto60:cloister"
+effects = { s = 16 }
+category = "交游"
+order = 5
+ad = { label = "闲谈", terms = [ { need = "s", w = 16 } ], scale = { trait = "G", off = 0.5, div = 100 }, pref = { kind = "trait", trait = "G", coef = 0.9 } }
+
+["interaction:proto60:stroll"]
+act = "stroll"
+station = "facility:proto60:cloister"
+effects = { s = 2, e = 2 }
+category = "交游"
+
+["interaction:proto60:patrol"]
+act = "patrol"
+effects = { e = -1 }
+category = "作务"
+
+["interaction:proto60:guard"]
+act = "guard"
+effects = {}
+category = "作务"
+
+["interaction:proto60:report"]
+act = "report"
+effects = {}
+category = "其他"
+
+["interaction:proto60:kneel"]
+act = "kneel"
+effects = { e = -3 }
+category = "受罚"
+
+["interaction:proto60:confined"]
+act = "confined"
+effects = { e = 4, s = -2 }
+category = "受罚"
+
+["interaction:proto60:sick"]
+act = "sick"
+effects = { e = 16 }
+category = "病"
+
+["interaction:proto60:steal"]
+act = "steal"
+station = "facility:proto60:kitchen"
+effects = { h = 30 }
+category = "其他"
+norm = "norm:proto60:food_theft"
+refrain_thought = "thought:proto60:endure"

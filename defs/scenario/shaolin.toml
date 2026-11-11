@@ -1,5 +1,6 @@
-# 回归场景：tools/shaolin_regress.py 复现原型“人物与独有物测试”与换种子实验所用的探测点。
-# 日用（year, doy）表示第 year 年年内第 doy 日（0 起）。
+# 回归场景：tools/shaolin_regress.py 复现原型 main() / --all 输出所用的全部探测点、扰动与标题。
+# 工具里不写死日序号与扰动字符串：它们只在这里。日用 { year, doy } 表示第 year 年年内第 doy 日（doy 从 0 起）。
+# 其中 reason 会原样写进库（route_closure.reason、ledger.reason），所以也是状态哈希口径的一部分，改一个字日志就对不上。
 ["scenario:shaolin:regress"]
 name = "少林寺回归场景"
 seeds = [1, 7, 42, 1094, 8848, 20261110]
@@ -17,5 +18,62 @@ visitor = { name = "香客甲", hall = "外客", org = "外来", age = 30 }   # 
 lock_probe = { place = "place:shaolin:library", slot = 0 }       # 子时潜入上锁场所：物理层拒绝
 takes = [
   { item = "item:shaolin:yijinjing", place = "place:shaolin:puti", slot = 6 },
-  { item = "item:shaolin:banruozhang", place = "place:shaolin:library", slot = 5 },
+  { item = "item:shaolin:banruozhang", place = "place:shaolin:library", slot = 5, report = true },   # report：这一次要数“当场举报”几起
 ]
+
+# ---- 基准段与十年基准
+["scenario:shaolin:regress".baseline]
+years = 3                                   # 预热 1 年 + 3 年
+chronicle = [{ year = 1, doy = 125 }, { year = 1, doy = 97 }, { year = 1, doy = 337 }]   # 日报取这几日
+
+["scenario:shaolin:regress".ten_year]
+years = 10
+
+# ---- 扰动实验（at = 扰动落在哪一日；chronicle = 打印日报的日子，相对 at 的天数，除非另行说明）
+["scenario:shaolin:regress".e1]             # 封路
+title = "E1 封路 45 日 (第2年腊月初一起)"
+at = { year = 2, doy = 330 }
+days = 45                                   # 封多少日
+reason = "扰动:封路"
+window = 70                                 # 时间序列窗口 [at, at+window]
+events = 60                                 # 事件计数窗口 [at, at+events]
+chronicle = [0, 22, 45, 47]
+
+["scenario:shaolin:regress".e2]             # 歉收
+title = "E2 歉收 (第2年亩产 x0.75)"
+year = 2
+factor = 0.75
+years = 3
+
+["scenario:shaolin:regress".e2b]            # 大荒，连看多年
+title = "E2b 大荒 (第2年亩产 x0.5), 连看 7 年"
+year = 2
+factor = 0.5
+years = 7                                   # 连看 years 年（预热年之外）
+chronicle = [{ year = 2, doy = 125 }, { year = 3, doy = 60 }]     # 绝对日子
+
+["scenario:shaolin:regress".e3]             # 要职离任
+title = "E3 {post}离任 (第2年四月十一)"
+post = "post:shaolin:cook"
+at = { year = 2, doy = 100 }
+events = 4                                  # 事件计数窗口 [at, at+events]
+chronicle = [0, 1]
+years = 3
+
+["scenario:shaolin:regress".e5]             # 节日香客暴增
+title = "E5 {festival}香客 x10 (第2年)"
+at = { year = 2, doy = 97 }
+festival = [4, 8]                           # 标题里的节日名取自历法 festivals
+mult = 10
+chronicle = [0]
+years = 3
+
+["scenario:shaolin:regress".e6]             # 余钱清零
+title = "E6 余钱清零 (第2年七月廿一)"
+at = { year = 2, doy = 200 }
+reason = "扰动:余钱清零"
+days = 160                                  # 此后 days 日：事件窗口 [at, at+days-1]
+sample_from = { year = 2, doy = 195 }       # 余钱抽样：从这一日起每 sample_step 日一次，到运行结束
+sample_step = 30
+chronicle = [35, 56]
+years = 3

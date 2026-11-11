@@ -131,6 +131,12 @@ class Engine(Protocol):
 * **经济中立性测试**：接上引擎、基准里没有触发任何耦合时，纯经济表（`account/ledger/stock/shipment/work_order/household/arrears/route_closure`）
   的哈希 `econ_hash()` 必须与未接引擎时相同。耦合只有两处，且必须有开关与事件：(a) 厨房人手不足 → 半餐 → 当日口粮减量；
   (b) 偷食扣厨房粮。基准里 (b) 关闭；(a) 在基准里应从不触发。
+* **耦合的内核入口**（B1 已实现，`tianl/kernel/coupling.py`）：开关 `World.couplings = {'half_meal': True, 'food_theft': False}`；
+  (a) 引擎调 `world.set_meal_ration(day, factor, why)`，内核在 `day` 日消耗阶段把斋粮按 `factor` 减量并发 `MEAL_HALVED`；
+  (b) 引擎调 `world.cmd_steal_food(actor, q, slot, cause)`，开关开着时内核从寺库粮仓扣粮并发 `GRAIN_STOLEN`。
+  **时序约束**：内核的消耗阶段早于 `engine.begin_day`，所以 (a) 只能为明日及以后的日子登记（引擎在 `end_day(d)` 里为 `d+1` 登记），登记当日抛 `ValueError`；
+  要当日生效须把消耗阶段挪到 `engine.begin_day` 之后（改本节契约，不是改内核入口）。两个入口缺省都不触发，econ_hash 与未接引擎时相同。
+* `on_person_added` 回调时那个人的库里一行已定稿（含 `home`）；`on_person_removed(pid, '游方')` 之后 `world.where(pid, …)` 为 `None`。
 * 引擎的随机数函数由构造参数注入：集成世界用 `rnd`（sha256）；复现原型哈希的测试用 `rnd_b2`。
 
 ## 6. NPC 引擎（tianl/npc）——C 段负责
@@ -230,7 +236,7 @@ report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共�
 | --- | --- |
 | M0 | `python3 -m unittest tests.test_core_defs` |
 | A1–A4 | `python3 tools/canon_check.py`（指针有效率仅统计 basis=text；30 人召回；时间线无环/无人两地/死后不出场/路程可行；必填字段有来源） |
-| B1 | `python3 -m unittest tests.test_b1_kernel`：基准哈希 49f6ddde04dfa7f5；E1–E6 与十年基准的数字复现 |
+| B1 | 默认 `python3 -m unittest tests.test_b1_kernel tests.test_b1_defs tests.test_b1_branches`：基准哈希 49f6ddde04dfa7f5、E1 与 E3 的日志数字、日志里没走到的分支与原型逐位对照；`TIANL_SLOW=1` 再验 E2/E2b/E5/E6、十年基准、六个种子、人物与独有物测试；与日志逐行比对用 `tools/shaolin_regress.py --all`（命令见 KERNEL_DEFS 第 7 节） |
 | B2 | 各项需求月末均值 ≥ 20；设施容量按“人数×频次”反推 |
 | B3 | 十年全图运行不变量违规 0 |
 | B4 | 原型复用率 ≥ 70%；按书重放不违反任何物理规则 |

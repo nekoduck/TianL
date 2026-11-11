@@ -9,9 +9,9 @@
 | 怠工 | 巡寮者所到之处 | 记怠工 |
 见闻本身由 NpcEngine.emit 按事件的显著度（SiteSpec.salience）写进每个见证人的 news。
 """
-from .events import ABSENCE, BED_EMPTY, FOOD_THEFT, SLACK, THEFT_FOUND
+from .events import ABSENCE, BED_EMPTY, SLACK, THEFT_FOUND
 from .model import Case
-from .spec import A_SLEEP, A_STEAL, A_WORK, L_SLACK
+from .spec import A_SLEEP, A_WORK, L_SLACK
 
 
 class Perception:
@@ -19,19 +19,21 @@ class Perception:
         self.eng = eng
         self.undisc = []                    # 还没被清点发现的偷食事件 id
 
-    # ---------- 偷食 → 见证 → 是否举报 ----------
+    # ---------- 越轨 → 见证 → 是否举报（哪些活动触犯规范、发什么事件、在哪里：SiteSpec.violations，来自交互的 norm 字段）----------
     def thefts(self, ctx, day, slot):
         eng = self.eng
         dec = ctx.dec
-        kit = eng.spec.kitchen.place
+        viol = eng.spec.violations
         for i, d in dec.items():
-            if d[1] != A_STEAL:
+            v = viol.get(d[1])
+            if v is None:
                 continue
+            kit = v.place
             wit = [j for j, x in dec.items() if x[0] == kit and j != i and x[1] != A_SLEEP]
             pt = ctx.patroller
             if pt is not None and kit in ctx.seen and pt != i and pt not in wit:
                 wit.append(pt)
-            e = eng.emit(FOOD_THEFT, i, kit, wit, day, slot, why=d[3])
+            e = eng.emit(v.event, i, kit, wit, day, slot, why=d[3])
             eng.stat['theft'] += 1
             eng.stat['theft_seen'] += bool(wit)
             self.undisc.append(e.id)
@@ -96,7 +98,7 @@ class Perception:
     # ---------- 怠工被巡寮撞见 ----------
     def slackers(self, ctx, day, slot):
         eng = self.eng
-        if slot != eng.spec.common.work_slot:
+        if slot not in eng.spec.errand_slots:
             return
         sk = eng.spec.slack
         for i, d in ctx.dec.items():

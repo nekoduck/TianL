@@ -1,0 +1,45 @@
+# 场景 scenario:proto60：NPC 原型（60 僧 × 30 日）与实验。引擎的世界描述由同 scope 的全部定义拼成（SiteSpec.from_defs），
+# 这里只写“这一次怎么跑”：种子、人口、三个手工指定的要角、脚本与实验、报表用词。原型回归基线哈希 e8f8209eeb8ca94a 由这些数据复现（rnd_b2）。
+# 内核会加载 scenario 目录（按 scope 过滤，不读这里），所以本文件只引用 space / post 里的定义。
+# 清众序号从 0 起（清众 = 无岗位者，按名册次序）。
+
+# main：seed 种子；population 人口（岗位者按岗位编制排在前，其余是清众）；days 默认跑几日（基准是 30 日）；
+#   cast 要角：清众里第 index 位的性格改写（第 6 位馋而散漫＝惯犯，第 12 位懒，第 21 位刚正）；glutton / lazy 报表里点名的两位（清众序号）
+#   observer_place “观察者在廊下”那一行的观察处；trace_day / trace_post 报表里“某日四人轨迹”的日子与第四人的岗位；track_suffix 清众的称呼 = 修行方向 + 此字
+#   long_days “90 日”那一行；extra_seeds 多种子那几行
+["scenario:proto60:main"]
+name = "少林寺·原型六十僧"
+seed = 20261110
+population = 60
+days = 30
+cast = [
+  { index = 5, traits = { T = 92, S = 22, D = 45 } },
+  { index = 11, traits = { D = 18, S = 38 } },
+  { index = 20, traits = { R = 95, S = 90 } },
+]
+glutton = 5
+lazy = 11
+observer_place = "place:proto60:clo"
+trace_day = 8
+trace_post = "post:proto60:cook"
+track_suffix = "僧"
+long_days = 90
+extra_seeds = [1, 2, 3, 4, 5]
+
+# 传闻实验：第 day 日 slot 时辰，清众第 who 位偷食、第 heard 位撞见（唯一的见证人，且不举报），追踪这条传闻的传播曲线。
+["scenario:proto60:gossip"]
+day = 6
+who = 8
+heard = 9
+slot = 1
+why = "脚本：只有一人撞见且不举报"
+
+# 实验 N1（计划 7.4）：第 day 日起 sick 里的岗位者同时病倒 days 日（first = 只取该岗位的前几位；sick_label 是报表标题里对他们的称呼）；
+# 两个对照组：监院不派人代理 / 派人代理；逐日偷食累计看第 window[0]–window[1] 日。
+["scenario:proto60:n1"]
+day = 10
+days = 4
+sick = [ { post = "post:proto60:cook" }, { post = "post:proto60:head_cook", first = 3 } ]
+sick_label = "典座与三名饭头"
+window = [9, 16]
+arms = [ { name = "无人代理", acting = false }, { name = "监院派人代理", acting = true } ]

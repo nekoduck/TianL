@@ -1,0 +1,67 @@
+# NPC 原型场景 scenario:proto60 的规范（计划 8.5）与处分阶梯。
+# 规范（norm）：role 是引擎认识的四种：theft（越轨 → 见证 → 举报 → 立案 → 传讯 → 裁断 → 处分 → 公告）、absence（点名缺课）、slack（怠工被撞见）、bed（巡夜查寮记空铺）。
+# 哪些活动触犯哪条规范，写在交互上（interaction 的 norm 字段）；这里写的是触犯之后怎么办。
+# 规范文件不被内核加载，所以可以引用 thought / modifier / event / interaction 等知识与设施类定义。
+
+# 处分阶梯：第 k 次受处分取第 k 级，超出取最后一级。
+#   txt 处分名（写进案卷与事件）   kneel_days 罚跪香几日   conf_days 禁闭几日   need_hit 需求增减（键 h e c s a）   thought 加给受处分者的想法   gone 迁单出寺
+["ladder:proto60:monastic"]
+steps = [
+  { txt = "罚跪香三日", kneel_days = 3 },
+  { txt = "杖责并禁闭二日", conf_days = 2, need_hit = { e = -30 }, thought = "thought:proto60:flogged" },
+  { txt = "禁闭五日", conf_days = 5 },
+  { txt = "迁单出寺", gone = true },
+]
+
+# 偷食：
+#   event          触犯它时发的事件（目击者得见闻，强度见 event 的 salience）
+#   report         见证人举报的概率 = base + r_w×刚正/100 − op_w×对当事人的好感，夹在 [lo, hi]（纪律执事必报）
+#   case           案卷：open / done / cold / closed 四个状态名；stale_days 无人指认的案子几日后成悬案；confess_base + confess_r×刚正/100 是被传讯者认错的概率；
+#                  via_report / via_confess 是案卷里定罪依据的两个标签
+#   accuse_mod     受罚者对指认人记的好恶修正项     sanction_thought  每起处分都给受处分者的想法     ladder  处分阶梯
+#   announce       处分在 slot 时辰于 place 表堂，在场者全部得知；守戒高于 s_line 的旁观者对受罚者记 mod
+#   inventory      典座在 slot 时辰清点，发现失窃的概率 p_find（发现即立案）
+["norm:proto60:food_theft"]
+role = "theft"
+name = "偷食"
+event = "event:proto60:food_theft"
+report = { base = 0.15, r_w = 0.6, op_w = 0.004, lo = 0.02, hi = 0.98 }
+case = { open = "在查", done = "已处分", cold = "悬案", closed = "结案", stale_days = 10, confess_base = 0.25, confess_r = 0.5, via_report = "举报", via_confess = "认错" }
+accuse_mod = "modifier:proto60:accuse"
+sanction_thought = "thought:proto60:sanction"
+ladder = "ladder:proto60:monastic"
+announce = { slot = 6, place = "place:proto60:ref", s_line = 60, mod = "modifier:proto60:sin" }
+inventory = { slot = 2, p_find = 0.7 }
+
+# 缺课：维那（office）在 slots 时辰于 place 点名；exempt_layers 里的层不点名；window 日内缺 limit 次就罚跪香 kneel_days 日（统计名目 kneel_txt）；
+# absent_thought 缺课者的想法，kneel_thought 被罚跪香者的想法。
+["norm:proto60:absence"]
+role = "absence"
+name = "缺课"
+office = "post:proto60:disciplinarian"
+place = "place:proto60:hall"
+slots = [3, 9]
+exempt_layers = ["强制", "值守", "反应"]
+window = 10
+limit = 3
+kneel_days = 2
+kneel_txt = "缺课跪香"
+absent_thought = "thought:proto60:warned_absent"
+kneel_thought = "thought:proto60:sanction"
+
+# 怠工：被巡寮者撞见记一笔；window 日内 limit 次就罚跪香 kneel_days 日；thought 被撞见者的想法。（起意怠工的概率在 package:slack 的参数里。）
+["norm:proto60:slack"]
+role = "slack"
+name = "怠工"
+window = 10
+limit = 3
+kneel_days = 1
+thought = "thought:proto60:warned_slack"
+
+# 夜不在寮：巡夜者（org:patrol 的岗位）在 check_slots 时辰查寮，不在床上且不在 exempt_layers 里的人记空铺并列入当夜嫌疑；thought 被记空铺者的想法。
+["norm:proto60:bed"]
+role = "bed"
+name = "夜不在寮"
+check_slots = [0, 1]
+exempt_layers = ["值守", "强制"]
+thought = "thought:proto60:warned_bed"

@@ -1,0 +1,253 @@
+# NPC 原型场景 scenario:proto60 的岗位、差事、性格刻度与几条站点级规则（scope = proto60）。
+# 内核会加载 post 目录（按 scope 过滤，不读这里），所以本文件只引用 space/org/post/scenario 里的定义，不引用设施、规范、知识类。
+# 次序敏感的定义带 order：岗位表的次序决定名册（谁排第几、法名与寮房）、工作板的次序决定同级差事的认领先后。
+
+# ---------------------------------------------------------------- 岗位（人岗分离：岗位是表上的一行，人是被任命的）
+# name 岗位名；count 编制；prefix 法名前缀；disc 纪律执事（当面禀告的对象、见证必报）；kitchen 厨房职事。
+# 岗位的日常时段不在这里：它是第 8 层的行为包（defs/post/proto60_packages.toml 的 post_*）。
+["post:proto60:abbot"]
+order = 1
+name = "方丈"
+count = 1
+prefix = "玄"
+disc = true
+
+["post:proto60:supervisor"]
+order = 2
+name = "监院"
+count = 1
+prefix = "慧"
+disc = true
+
+["post:proto60:disciplinarian"]
+order = 3
+name = "维那"
+count = 1
+prefix = "慧"
+disc = true
+
+["post:proto60:cook"]
+order = 4
+name = "典座"
+count = 1
+prefix = "慧"
+kitchen = true
+
+["post:proto60:head_cook"]
+order = 5
+name = "饭头"
+count = 4
+prefix = "慧"
+kitchen = true
+
+["post:proto60:stock_keeper"]
+order = 6
+name = "库头"
+count = 1
+prefix = "慧"
+
+["post:proto60:guest_master"]
+order = 7
+name = "知客"
+count = 1
+prefix = "慧"
+
+["post:proto60:librarian"]
+order = 8
+name = "藏主"
+count = 1
+prefix = "慧"
+
+["post:proto60:gardener"]
+order = 9
+name = "园头"
+count = 1
+prefix = "慧"
+
+["post:proto60:garden_hand"]
+order = 10
+name = "园工"
+count = 5
+prefix = "慧"
+
+["post:proto60:chief_seat"]
+order = 11
+name = "首座"
+count = 1
+prefix = "玄"
+disc = true
+
+["post:proto60:deacon"]
+order = 12
+name = "执事"
+count = 2
+prefix = "慧"
+disc = true
+
+["post:proto60:duty_monk"]
+order = 13
+name = "僧值"
+count = 2
+prefix = "慧"
+disc = true
+
+["post:proto60:infirm_head"]
+order = 14
+name = "堂主"
+count = 1
+prefix = "慧"
+
+# ---------------------------------------------------------------- 工作板上的差事（计划 7.1）
+# 每日发布一张；认领次序按 prio 升序，同级按 order；prio 数字小的先被认领。认领即预约。
+# count 当日需要几人；outputs 每名完成者给库存入账的物（挑水得水、打柴得柴）。
+["job:proto60:fetch_water"]
+order = 1
+prio = 1
+name = "挑水"
+place = "place:proto60:well"
+count = 4
+outputs = { water = 1 }
+
+["job:proto60:chop_wood"]
+order = 2
+prio = 2
+name = "打柴"
+place = "place:proto60:woods"
+count = 6
+outputs = { wood = 1 }
+
+["job:proto60:mill_rice"]
+order = 3
+prio = 3
+name = "舂米"
+place = "place:proto60:mill"
+count = 4
+
+["job:proto60:garden_work"]
+order = 4
+prio = 4
+name = "菜园帮工"
+place = "place:proto60:garden"
+count = 6
+
+["job:proto60:sweep_hall"]
+order = 5
+prio = 5
+name = "洒扫"
+place = "place:proto60:hall"
+count = 2
+
+["job:proto60:sweep_zen"]
+order = 6
+prio = 5
+name = "洒扫"
+place = "place:proto60:zen"
+count = 2
+
+["job:proto60:sweep_clo"]
+order = 7
+prio = 5
+name = "洒扫"
+place = "place:proto60:clo"
+count = 2
+
+["job:proto60:sweep_dorm"]
+order = 8
+prio = 5
+name = "洒扫"
+place = "place:proto60:dorm1"
+count = 3
+
+# 工作板的站点级参数：work_chat_p = 同一件差事里两两搭伴的工友闲谈的概率。
+["rule:proto60:board"]
+work_chat_p = 0.6
+
+# ---------------------------------------------------------------- 性格刻度（键 D 精进 S 守戒 G 合群 T 馋 R 刚正；0–100，开局按 N(mean, sd) 生成再夹到 [lo, hi]）
+# office_bonus：有岗位者的均值加成。
+["trait:proto60:D"]
+name = "精进"
+mean = 60
+sd = 20
+office_bonus = 8
+lo = 5
+hi = 98
+
+["trait:proto60:S"]
+name = "守戒"
+mean = 62
+sd = 20
+office_bonus = 8
+lo = 5
+hi = 98
+
+["trait:proto60:G"]
+name = "合群"
+mean = 50
+sd = 22
+lo = 5
+hi = 98
+
+["trait:proto60:T"]
+name = "馋"
+mean = 42
+sd = 22
+lo = 5
+hi = 98
+
+["trait:proto60:R"]
+name = "刚正"
+mean = 55
+sd = 22
+lo = 5
+hi = 98
+
+# ---------------------------------------------------------------- 层标签与计划 6.1 的层号（越轨与怠工不是一层包，记 0）
+# 行为包的 layer 写这里登记过的标签；rank 只用于 explain 与统计（判定先后由栈的次序决定，不由 rank 决定）。
+["rule:proto60:layers"]
+ranks = [
+  { name = "强制", rank = 1 }, { name = "处分", rank = 2 }, { name = "反应", rank = 3 }, { name = "值守", rank = 5 },
+  { name = "生理", rank = 6 }, { name = "集体", rank = 7 }, { name = "岗位", rank = 8 }, { name = "身份", rank = 9 },
+  { name = "差事", rank = 9 }, { name = "作息", rank = 9 }, { name = "自由", rank = 10 }, { name = "越轨", rank = 0 },
+  { name = "怠工", rank = 0 },
+]
+
+# ---------------------------------------------------------------- 时间表
+# night 夜间时辰（子 0 … 亥 11）；rotate = [日系数, 时辰系数]：各人决定的起点按 (日×a + 时辰×b) % 人数 轮转（保证工位预约公平且确定）；
+# meal_slots 斋食时辰；seasons 季节与月份（行为包 when.season 用）。
+["rule:proto60:schedule"]
+night = [11, 0, 1]
+rotate = [7, 3]
+meal_slots = [4, 6]
+seasons = [
+  { name = "春", months = [1, 2, 3] }, { name = "夏", months = [4, 5, 6] },
+  { name = "秋", months = [7, 8, 9] }, { name = "冬", months = [10, 11, 12] },
+]
+
+# ---------------------------------------------------------------- 五项需求（计划 6.3；键 h 饥 e 困 c 洁 s 群 a 志）
+# init 开局值；base 每时辰的基础消耗；names 报表里的中文名；活动的增减在各 interaction 的 effects，不在这里。
+# 饥的消耗 = base.h × (1 + (T - hunger_t_mid) / hunger_t_div)，睡时用 hunger_sleep 代替 base.h；群的消耗再乘 (social_g.off + G / social_g.div)；
+# 晨起（morning_slot）不睡就补 morning_c 点洁；在 duty_layers 里的决定每时辰补 duty_a 点志（履职）；
+# 迫切度 u(x) = ((100 - x) / 100)^urgency_pow + urgency_floor；hungry_line / tired_line 只是统计线（报表用）。
+["rule:proto60:needs"]
+init = { h = 70.0, e = 80.0, c = 70.0, s = 60.0, a = 60.0 }
+base = { h = -7.0, e = -6.0, c = -1.0, s = -1.6, a = -3.0 }
+names = { h = "饥", e = "困", c = "洁", s = "群", a = "志" }
+category_default = "其他"
+hunger_sleep = -3
+hunger_t_mid = 40
+hunger_t_div = 400
+social_g = { off = 0.5, div = 100 }
+morning_slot = 2
+morning_c = 6
+duty_layers = ["岗位", "值守"]
+duty_a = 6
+urgency_floor = 0.05
+urgency_pow = 2
+hungry_line = 25
+tired_line = 20
+
+# 生病：每人每日抽签，概率 p；病 min_days + [0, span) 日。
+["rule:proto60:illness"]
+p = 0.004
+min_days = 1
+span = 3

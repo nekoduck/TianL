@@ -1,8 +1,9 @@
 """C 段第一步验收：tianl/npc 忠实复现 reference/npc_spike.py（哈希 e8f8209eeb8ca94a）。
 
 全部数字与哈希来自 reference/logs/npc_run_log.txt。除逐项断言外，还把 report.proto_report() 的输出
-与日志逐行比对（耗时行只记录、不比对）。整个文件约 6 秒。
+与日志逐行比对（耗时行只记录、不比对）。整个文件约 3 秒。
 """
+import os
 import subprocess
 import sys
 import unittest
@@ -139,13 +140,35 @@ class ProtoBaseline(unittest.TestCase):
         for i, (a, b) in enumerate(zip(self.lines, ref), 1):
             self.assertEqual(strip_timing(a), strip_timing(b), '第 %d 行' % i)
 
-    def test_regress_tool_stdout_has_the_prototype_format(self):
+    def regress_tool(self, *flags):
         tool = LOG.parent.parent.parent / 'tools' / 'npc_regress.py'
-        r = subprocess.run([sys.executable, str(tool), '--all', '--diff'], capture_output=True, text=True, check=False)
+        env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
+        r = subprocess.run([sys.executable, str(tool), *flags, '--diff'], capture_output=True, text=True, check=False,
+                           env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
         out, ref = r.stdout.splitlines(), LOG.read_text(encoding='utf-8').splitlines()
+        if '--all' not in flags:                                     # 基准部分 = 日志里 N1 标题之前的行
+            ref = ref[:next(i for i, x in enumerate(ref) if x.startswith('== 实验 N1'))]
         self.assertEqual([strip_timing(x) for x in out], [strip_timing(x) for x in ref])
         self.assertIn('与日志逐行比对：一致', r.stderr)
+
+    def test_regress_tool_stdout_has_the_prototype_format(self):
+        """命令行工具（基准部分）的标准输出与日志逐行相同。完整的 --all 版本见下一条（慢测试，与上面 proto_report 同一函数）。"""
+        self.regress_tool()
+
+    @unittest.skipUnless(os.environ.get('TIANL_SLOW'), '慢测试：TIANL_SLOW=1 打开')
+    def test_regress_tool_all_stdout_matches_the_whole_log(self):
+        self.regress_tool('--all')
+
+    def test_speed_tool_prints_a_ratio_and_leaves_the_prototype_untouched(self):
+        tool = LOG.parent.parent.parent / 'tools' / 'npc_regress.py'
+        r = subprocess.run([sys.executable, str(tool), '--speed', '1'], capture_output=True, text=True, check=False,
+                           env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout, '')                                # 速度对照写到标准错误，不混进回归输出
+        self.assertRegex(r.stderr, r'移植版/原型 = \d+\.\d+')
+        stale = list((LOG.parent.parent / '__pycache__').glob('npc_spike*')) if (LOG.parent.parent / '__pycache__').is_dir() else []
+        self.assertEqual(stale, [])                                   # 加载原型时不写字节码：reference/ 下不留文件
 
     # ---- 6 速度：只记录，不是通过线 ----
     def test_speed_is_reported_not_asserted(self):

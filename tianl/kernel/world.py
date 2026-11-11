@@ -7,7 +7,7 @@
   day, slot            下一个要跑的时辰（slot 0..11）；
   begin_day()          BEGIN；hooks；weather -> arrivals -> production -> visitors -> rules -> orders -> consumption；[engine.begin_day]
   run_slot()           [engine.run_slot(day, slot)]；slot += 1
-  end_day()            [engine.end_day(day)]；people（圆寂、继任、收录、次日班表）-> check -> COMMIT；day += 1
+  end_day()            十二时辰须已走完（否则 RuntimeError）；[engine.end_day(day)]；people（圆寂、继任、收录、次日班表）-> check -> COMMIT；day += 1
   step() = begin_day(); 12 x run_slot(); end_day()        与原型 step() 逐位相同（未接引擎时）
   advance(n) 走 n 个时辰，自动处理跨日；日内停在时辰边界时事务保持打开。
 """
@@ -20,6 +20,7 @@ from ..core.calendar import SLOTS_PER_DAY, YEAR
 from ..core.rng import rnd
 from .chronicle import ChronicleMixin
 from .commands import CommandsMixin
+from .coupling import CouplingMixin
 from .economy import EconomyMixin
 from .invariants import InvariantsMixin
 from .people import PeopleMixin
@@ -67,14 +68,14 @@ SCHEMA = '''
         '''
 
 
-class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, CommandsMixin, InvariantsMixin, ChronicleMixin):
+class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, CommandsMixin, CouplingMixin, InvariantsMixin, ChronicleMixin):
     def __init__(self, params=None, spec=None, defs=None, engine=None):
         """params 只覆盖参数 P；spec 缺省时由 defs（缺省仓库 defs/）装配；engine 见 attach()。"""
         S = self.S = spec if spec is not None else load_spec(defs)
         self.P = dict(S.P); self.P.update(params or {})
         self.K, self.G, self.pl, self.ac, self.cm, self.hk, self.T = S.K, S.goods, S.pl, S.ac, S.cm, S.hh, S.T
         self.hk_class = {c.code: c for c in S.hh_classes}
-        self.TG = S.labels['grain_ledger']
+        self.TG, self.R = S.labels['grain_ledger'], S.labels['reasons']   # 粮账类别名；钱账事由（流水 reason）
         self.cal, self.cal_str = S.cal.cal, S.cal.cal_str
         self.db = sqlite3.connect(':memory:'); self.db.isolation_level = None
         self.x = self.db.execute
@@ -92,6 +93,7 @@ class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, C
         self.cnt = defaultdict(int)
         self.hooks = defaultdict(list)
         self.engine = None
+        self._init_couplings()
         self.pids, self.names, self.pcache = [], set(S.org.reserved), {}
         self._pool = list(dict.fromkeys(S.org.pool))
         self._schema()
@@ -138,7 +140,7 @@ class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, C
         for a in S.accounts:
             if not a.virtual: x('INSERT INTO account VALUES(?,?,0)', (a.code, a.boundary))
         for a in S.accounts:
-            if a.opening_cash is not None: self.pay(self.ac.equity, a.code, a.opening_cash * GUAN, '期初')
+            if a.opening_cash is not None: self.pay(self.ac.equity, a.code, a.opening_cash * GUAN, self.R['opening'])
         for e in S.opening_stock:
             q = e.v if e.kind == 'qty' else self.G[e.c].use * e.v if e.kind == 'days' else self.G[e.c].band[1]
             self.produce(e.owner, e.place, e.c, q, 'opening')
@@ -151,7 +153,7 @@ class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, C
                 x('INSERT INTO household VALUES(?,?,?,?,?,?,?,?,?)',
                   (hid, cls.code, cls.place, name, m, m * cls.mu, m * Pm['ration_folk'], '在', 0))
                 x('INSERT INTO account VALUES(?,0,0)', (hid,))
-                self.pay(self.ac.equity, hid, cls.cash * GUAN, '期初')
+                self.pay(self.ac.equity, hid, cls.cash * GUAN, self.R['opening'])
                 self.produce(hid, cls.place, self.cm.staple, m * Pm['ration_folk'] * S.hh_grain_days, 'opening')
         self.P['temple_mu'] = self.x("SELECT SUM(land) FROM household WHERE kind=?", (self.hk.tenant,)).fetchone()[0]
 
@@ -171,7 +173,10 @@ class World(EconomyMixin, PhasesMixin, RulesMixin, PeopleMixin, ScheduleMixin, C
         self.slot += 1
 
     def end_day(self):
+        """收盘。十二个时辰必须都走完：否则（接了引擎时）会静默漏掉剩下的 engine.run_slot；要补完这一日请用 step()。"""
         if not self._began: raise RuntimeError('先 begin_day')
+        if self.slot < SLOTS_PER_DAY:
+            raise RuntimeError(f'今日十二时辰才走了 {self.slot} 个，不能收盘；请继续 run_slot()，或用 step() 补完这一日')
         if self.engine is not None: self.engine.end_day(self.day)
         self.phase_people(); self.phase_check()
         self.x('COMMIT'); self._began = False

@@ -5,6 +5,12 @@
 * 人内部用 ix（int，稳定，新人追加），外部用 pid（str）；事件同理：内部用引擎自己的流水号 id（见闻、案卷、随机数键），
   Host 给的事件 id（hid）只在边界出现——所以引擎的行为与 Host 怎么编号、别处写了多少事件无关；
 * 每个决定都留“生效层与原因”（轨迹打包），where / explain 随时可答（计划 12.2 第九条“说得清”）。
+
+四个钩子（默认都是空操作，不改任何哈希；之后的步骤只改各自的模块，不再改本文件。签名与调用点见 docs/NPC_ENGINE.md 第 13 节）：
+  life.pulse(engine, day)                  begin_day 的第一步：月 / 年脉冲（C7）
+  controller.decide(engine, p, day, slot, ctx)   run_slot 第 1 步每人的“决定”入口：有操纵者就在候选里选，没有就走栈（C9）
+  lod.observe(engine, ctx, day, slot)      run_slot 第 5 步：观察者所在场所的细节叙述，只读（C8）
+  persist.flush(engine, day)               end_day 的最后一步：每日落盘（持久化）
 """
 import hashlib
 from collections import Counter
@@ -12,7 +18,8 @@ from operator import itemgetter
 from time import perf_counter
 
 from ..core import SLOTS, clamp, gauss, t_of
-from .events import FOOD_THEFT, label as event_label
+from . import controller, life, lod, persist
+from .events import label as event_label
 from .facilities import Facilities
 from .freechoice import FreeChoice
 from .jobs import JobBoard
@@ -24,7 +31,7 @@ from .norms import Norms
 from .opinion import Opinions
 from .perception import Perception
 from .rumor import Rumor
-from .spec import A_WORK, L_FREE, L_SLACK, TRAIT_KEYS, SpecError
+from .spec import A_STEAL, A_WORK, L_FREE, L_SLACK, TRAIT_KEYS, SpecError
 from .stack import Stack
 
 HASH_CHARS = 16                     # state_hash 取 sha256 十六进制的前几位（基线口径）
@@ -49,7 +56,11 @@ class NpcEngine:
         self.sym = Symbols()
         self._packed = {}                          # 决定四元组 -> 轨迹打包值（同样的决定天天重复，驻留一次就够）
         # 世界状态
-        self.stock = dict(spec.kitchen.stock_init)  # 厨房库存：水、柴（挑水打柴入账，斋食出账）
+        self.stock = dict(spec.kitchen.stock_init)  # 厨房库存：水、柴（差事的产出入账，斋食的所需物出账）
+        self.controllers = {}                      # ix -> Controller：有操纵者的档案（没有就走程序的栈）；见 controller.py
+        its = spec.interactions
+        self._category = {act: it.category for act, it in its.items()}          # 活动 -> 时间分配类别
+        self._act_thought = {act: it.thought for act, it in its.items() if it.thought}   # 活动 -> 做了就得到的想法
         self.kit_staff = {}                        # 备斋时辰 -> 当时在厨房干活的人数
         self.sight = set()                         # 当日查寮记下的空铺者
         self.evs, self.ev_by_id = [], {}           # 引擎自留的事件记录（ix 版本）；ev_by_id 以引擎流水号为键
@@ -118,7 +129,7 @@ class NpcEngine:
                 v = ps.traits[k]
             else:
                 b = tr.office_bonus.get(k, 0) if ps.office else 0
-                v = clamp(gauss(tr.mean[k] + b, tr.sd[k], self.seed, k, ix, rng=self.rng), tr.lo, tr.hi)
+                v = clamp(gauss(tr.mean[k] + b, tr.sd[k], self.seed, k, ix, rng=self.rng), tr.lo[k], tr.hi[k])
             setattr(p, k, v)
         self.people.append(p)
         self.pids.append(ps.pid)
@@ -127,6 +138,14 @@ class NpcEngine:
         if ps.office is None:
             self.common.append(p)
         return p
+
+    def set_controller(self, who, ctl):
+        """给一份档案配操纵者（controller.Controller；None = 回到程序的栈）。操纵者只在栈给出的候选里选，见 controller.py。"""
+        ix = self.ix_of(who)
+        if ctl is None:
+            self.controllers.pop(ix, None)
+        else:
+            self.controllers[ix] = ctl
 
     def set_traits(self, who, **traits):
         """改性格刻度（场景里的“要角”用；必须在开跑前调）。"""
@@ -177,6 +196,7 @@ class NpcEngine:
     # ================= 一日 =================
     def begin_day(self, day):
         t0 = perf_counter()
+        life.pulse(self, day)                                              # 钩子：月 / 年脉冲（默认空操作）
         sp, P, r, seed = self.spec, self.people, self.rng, self.seed
         live = [p for p in P if p.gone is None]
         il = sp.illness
@@ -188,15 +208,7 @@ class NpcEngine:
         if sc and sc[0] == day:
             for i in sc[1]:
                 P[self.ix_of(i)].ill = day + sc[2] - 1
-        kt = sp.kitchen
-        kit = [p for p in live if p.office in sp.kitchen_offices and p.ill < day and p.conf < day]
-        if self.acting and len(kit) < kt.acting_target:                  # 监院派人代理
-            gs = self.guards(day)
-            cand = sorted((p for p in live if p.office is None and p.ill < day and p.conf < day
-                           and p.ix not in gs), key=lambda p: (-p.D, p.ix))
-            for p in cand[:kt.acting_target - len(kit)]:
-                p.duty_day = day
-                self.stat['acting'] += 1
+        self.stack.begin_day(day)                                          # 处理器的每日钩子（监院派人代理……）
         self.jobs.publish()
         self.sight = set()
         self.elapsed += perf_counter() - t0
@@ -215,6 +227,7 @@ class NpcEngine:
         self.opinions.expire(day)
         self.rumor.end_day(day)
         self.daily.append((day, self.stat['theft'], self.stat['half_meal'], self.stat['hungry']))
+        persist.flush(self, day)                                           # 钩子：每日落盘（默认空操作）
         self.elapsed += perf_counter() - t0
 
     # ================= 一个时辰 =================
@@ -228,7 +241,8 @@ class NpcEngine:
         dec = ctx.dec
         # 1 各人决定：起点轮转，保证工位预约公平且确定
         off = (day * sp.rotate[0] + slot * sp.rotate[1]) % n
-        decide = self.stack.decide
+        decide = self.stack.decide if not self.controllers else \
+            (lambda p, day, slot, ctx: controller.decide(self, p, day, slot, ctx))     # 钩子：有操纵者才绕道（默认走栈）
         for k in range(n):
             p = P[(off + k) % n]
             if p.gone is not None:
@@ -242,16 +256,16 @@ class NpcEngine:
         self.rumor.pair(ctx, day, slot)
         # 3 差事结算；斋食
         kt = sp.kitchen
-        if slot == sp.common.work_slot:
+        if slot in sp.errand_slots:
             self.jobs.settle(day, slot)
         if slot in kt.prep.values():
             self.kit_staff[slot] = sum(1 for d in dec.values() if d[0] == kt.place and d[1] == A_WORK)
         gain = kt.gain_full
         if slot in sp.meal_slots:
             ok = self.kit_staff.get(kt.prep[slot], 0) >= kt.min_staff and \
-                all(self.stock[k] >= q for k, q in kt.stock_use)
+                all(self.stock[k] >= q for k, q in sp.meal_inputs)
             if ok:
-                for k, q in kt.stock_use:
+                for k, q in sp.meal_inputs:
                     self.stock[k] -= q
             else:
                 gain = kt.gain_half
@@ -272,10 +286,10 @@ class NpcEngine:
             nd = p.need
             if d[2] in free_layers:
                 self.choice[d[3][:sp.free.choice_key_chars]] += 1
-            th = ns.act_thought.get(d[1])
+            th = self._act_thought.get(d[1])
             if th:
                 self.moods.think(p, th, day)
-            self.acts[sp.groups[0] if p.office is None else sp.groups[1]][ns.category.get(d[1], ns.category_default)] += 1
+            self.acts[sp.groups[0] if p.office is None else sp.groups[1]][self._category.get(d[1], ns.category_default)] += 1
             hungry += nd['h'] < ns.hungry_line
             tired += nd['e'] < ns.tired_line
             pk = packed.get(d)
@@ -289,12 +303,8 @@ class NpcEngine:
         for layer, k in Counter(map(itemgetter(2), dec.values())).items():
             stat[PKG_STAT + layer] += k
         self.fac.check_overflow(ctx.occ, day, slot)
-        # 5 观察者所在场所的细节叙述：只读，只计数，不改任何状态
-        if self.observer:
-            here = sorted((i for i, d in dec.items() if d[0] == self.observer),
-                          key=lambda i: self.rng(self.seed, 'narr', day, slot, i))
-            self.narr += len(here)
-            self.narr_last = here
+        # 5 观察者所在场所的细节叙述：只读，不改任何状态、不进任何哈希（钩子：lod.observe；现在只计数）
+        lod.observe(self, ctx, day, slot)
         # 6 偷食 → 见证 → 是否举报；巡夜查寮；脚本事件
         self.perc.thefts(ctx, day, slot)
         self.perc.bed_check(ctx, day, slot)
@@ -313,7 +323,8 @@ class NpcEngine:
         g = self.script.gossip
         if g and g[0] == day and slot == self.script.gossip_slot:
             a, w = self.ix_of(g[1]), self.ix_of(g[2])
-            e = self.emit(FOOD_THEFT, a, self.spec.kitchen.place, [w], day, slot, why=self.script.gossip_why)
+            v = self.spec.violations[A_STEAL]                  # 脚本里的偷食：触犯“偷食”规范的那个活动
+            e = self.emit(v.event, a, v.place, [w], day, slot, why=self.script.gossip_why)
             self.rumor.track(e.id, [w])
 
     def run_day(self, day):

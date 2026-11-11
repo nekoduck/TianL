@@ -4,8 +4,10 @@
 时辰内再分 8 刻——刻只用于观察者所在场所的细节叙述，从不参与决定。
 绝对时刻 t = day * 12 + slot。第 0 年为“预热年”。
 
-默认历法与 v0.2 完全一致；B1 把节日、结夏、收麦收粟日迁入 defs/calendar 后，
-由 set_default_calendar(Calendar.from_def(...)) 装入，结果必须逐字节相同。
+本模块的默认历法（DEFAULT_FESTIVALS 与 Calendar() 的缺省参数）是 v0.2 原型的历法，保留给两处用途：
+M0 的核心测试，以及 NPC 引擎的模块级 cal()（引擎尚未改成从 defs 取历法）。
+B1 内核不读它：内核的历法由 defs/calendar/<scope>.toml 经 Calendar.from_def 构造（tianl.kernel.spec.Spec.cal），
+节日、结夏、收麦收粟日都在 defs 里；tests/test_b1_defs.py 逐日核对两者相同。set_default_calendar 目前没有调用者。
 """
 SLOTS = '子丑寅卯辰巳午未申酉戌亥'
 SLOTS_PER_DAY = 12
