@@ -1,9 +1,11 @@
 """tools/canon_run.py 的实现：有原文时跑第 0–2 阶段并补证据指针；没有原文时给出清晰提示，退出码 0。
 
 流程：
-  0 规范化 -> 源文本库（段落哈希索引写 out/canon/text_index.json，不含原文）
+  0 规范化 -> 源文本库（按三联版面切 0–52 回；段落哈希索引写 out/canon/text_index.json，不含原文）；
+              输出各回段数/字数表，并核对 data/canon/text_manifest.json（--write-manifest 重新生成）
   1 提及普查 -> out/canon/mentions.jsonl（实体、回、段、起止字位），并核对“按字位取回同样的字”
-  2 消歧合并 -> out/canon/resolve_report.txt（含“同一段内一个称呼只指一个实体”的校验、30 人是否都找到）
+  2 消歧合并 -> out/canon/resolve_report.txt（含“同一段内一个称呼只指一个实体”的校验、30 人是否都找到）；
+              输出全书提及排名前 20 的已登记实体（还没有实体登记时只输出文本统计）
   证据 -> 已有 basis=text 的断言：核对指针；basis=recall 的断言：找“主体与值同段出现”的候选段，写
           out/canon/evidence_candidates.jsonl。**同段出现不等于原文支持**；只有给了复核器（--review anthropic，或测试里
           注入 reviewer）且判“支持”，并加 --write，才会把断言升为 basis=text 并写回断言文件。
@@ -17,34 +19,24 @@ import sys
 from pathlib import Path
 
 from . import llm as L
-from . import merge as M
+from . import names as N
 from . import schema as S
 from . import text as T
+from . import textcli
 
 HINT = ('没有找到原著文本，第 0–2 阶段无事可做（退出码 0）。\n'
-        '  把《天龙八部》文本（UTF-8 纯文本，按“第X回”分章；版本以你提供的为准，默认三联版）放在 sources/ 下，\n'
+        '  把《天龙八部》文本（UTF-8 纯文本，三联版面：顶格“一 标题”式回标题；版本以你提供的为准）放在 sources/ 下，\n'
         '  例如 sources/tianlong.txt，然后运行：python3 tools/canon_run.py --source sources/tianlong.txt\n'
         '  没有原文时世界照常运行，所有断言保持 basis=recall、evidence=[]（见 docs/DECISIONS.md 第三节）。\n'
         '  注意：原文只放本地，仓库不收（sources/ 已被 .gitignore 忽略）。')
 
 
 def _registry(canon_dir, explicit):
-    if explicit:
-        recs, _ = M.read_census(explicit)
-        return M.merge_rows(recs).entities
-    census = S.CANON_DIR / 'census' if canon_dir is None else Path(canon_dir) / 'census'
-    if S.list_jsonl_files(census):
-        return M.merge_census(census).entities
-    f = Path(canon_dir or S.CANON_DIR) / 'entities.jsonl'
-    return [o for _, o in S.read_jsonl(f)[0]] if f.is_file() else []
+    return N.load_registry(canon_dir, explicit)
 
 
 def _find_source(arg):
-    if arg:
-        return Path(arg)
-    d = S.REPO_ROOT / 'sources'
-    cands = sorted(d.glob('*.txt')) if d.is_dir() else []
-    return cands[0] if cands else None
+    return T.find_source(arg)
 
 
 def candidate_evidence(store, a, by_para, limit=3):
@@ -74,7 +66,10 @@ def _apply(updates):
 def main(argv=None, out=None, reviewer=None, extractor=None):
     out = out or sys.stdout
     ap = argparse.ArgumentParser(prog='canon_run', description='原著 -> 数据：第 0–2 阶段与证据指针')
-    ap.add_argument('--source', help='原著文本（UTF-8，按回分章）；缺省取 sources/ 下第一个 .txt')
+    ap.add_argument('--source', help='原著文本（UTF-8，三联版面）；缺省 sources/tianlong.txt，其次 sources/ 下第一个 .txt')
+    ap.add_argument('--expect', type=int, default=T.BOOK_CHAPTERS,
+                    help=f'要求正好这么多回（三联版面；默认 {T.BOOK_CHAPTERS}，0 = 不要求）')
+    ap.add_argument('--write-manifest', action='store_true', help='重新生成 data/canon/text_manifest.json')
     ap.add_argument('--canon-dir', default=str(S.CANON_DIR))
     ap.add_argument('--entities', help='显式指定登记表（普查文件或目录）')
     ap.add_argument('--out', default=str(S.REPO_ROOT / 'out' / 'canon'), help='中间产物目录（被 .gitignore 忽略）')
@@ -95,18 +90,44 @@ def main(argv=None, out=None, reviewer=None, extractor=None):
     outdir.mkdir(parents=True, exist_ok=True)
     rc = 0
     # 阶段 0
-    store = T.TextStore.from_file(src)
+    try:
+        store = T.load_book(src, canon_dir=canon, expect_chapters=a.expect)
+    except T.TextFormatError as ex:
+        print(f'阶段 0 规范化失败：原文版面不符：{ex}', file=out)
+        return 2
     st = store.stats()
     (outdir / 'text_index.json').write_text(json.dumps(store.index(), ensure_ascii=False, separators=(',', ':')),
                                             encoding='utf-8')
-    print(f'阶段 0 规范化：{st["chapters"]} 回，{st["paragraphs"]} 段，{st["sentences"]} 句，{st["chars"]} 字'
-          f'（编码 {store.meta.get("encoding", "?")}）', file=out)
+    cl = store.meta.get('clean', {})
+    print(f'阶段 0 规范化：{st["chapters"]} 回（另有卷首/后记/附录），{st["paragraphs"]} 段，{st["sentences"]} 句，'
+          f'{st["chars"]} 字（编码 {store.meta.get("encoding", "?")}，版面 {store.meta.get("layout", "?")}，规则 {T.NORMALIZER_ID}）', file=out)
+    print(f'  去除：水印标记 {cl.get("watermark_tokens", 0)} 处、站点头尾行 {cl.get("site_lines", 0)}、'
+          f'分隔行 {cl.get("separator_lines", 0)}、空行 {cl.get("blank_lines", 0)}；全书规范化文本 sha256 {store.text_sha256()[:16]}…', file=out)
+    mf = store.meta.get('manifest')
+    if a.write_manifest:
+        mpath = T.default_manifest_path(canon)
+        mpath.parent.mkdir(parents=True, exist_ok=True)
+        mpath.write_text(textcli.dump_manifest(store.manifest()), encoding='utf-8', newline='\n')
+        print(f'  文本清单：已写入 {mpath}', file=out)
+    elif mf == 'ok':
+        print('  文本清单：与 data/canon/text_manifest.json 相符', file=out)
+    elif mf == 'mismatch':
+        print('  文本清单：不符！' + store.meta['manifest_problems'][0], file=out)
+        for pr in store.meta['manifest_problems'][1:6]:
+            print(f'    {pr}', file=out)
+        rc = 1
+    else:
+        print('  文本清单：还没有（加 --write-manifest 生成）', file=out)
     for w in store.meta['warnings']:
-        print(f'  警告：{w}', file=out)
+        if not w.startswith('还没有文本清单') and w not in store.meta.get('manifest_problems', []):
+            print(f'  警告：{w}', file=out)
+    print(f'  {"回":>3}  {textcli._pad("标题", 30)}{"段":>6}{"字":>9}', file=out)
+    for n, title, paras, chars in store.chapter_rows():
+        print(f'  {n:>3}  {textcli._pad(title, 30)}{paras:>6}{chars:>9}', file=out)
     # 阶段 1
     rows = _registry(canon, a.entities)
     if not rows:
-        print('没有登记表（data/canon/census 或 entities.jsonl），阶段 1–2 跳过。', file=out)
+        print('没有实体登记（data/canon/census 或 entities.jsonl），阶段 1–2 跳过：只输出了文本统计。', file=out)
         return rc
     ident = []
     for _, o in [(f'{f}:{n}', o) for f, n, o in S.read_records(canon / 'identities')[0]]:
@@ -131,6 +152,8 @@ def main(argv=None, out=None, reviewer=None, extractor=None):
     for m in res.unresolved:
         unres[m.surface] = unres.get(m.surface, 0) + 1
     lines.append('未消歧称呼（前 20）：' + '；'.join(f'{k}×{v}' for k, v in sorted(unres.items(), key=lambda kv: -kv[1])[:20]))
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:20]
+    lines.append('全书提及排名前 20 的已登记实体：' + '；'.join(f'{index.names.get(e, e)}({e.split(":")[0]}) {n}' for e, n in top))
     found = [(n, i, counts.get(i, 0)) for n, i, _ in S.RECALL_30]
     miss = [f'{n}({i})' for n, i, c in found if c == 0]
     lines.append(f'30 人召回（提及）：{30 - len(miss)}/30 找到' + (f'；未找到：{", ".join(miss)}' if miss else ''))

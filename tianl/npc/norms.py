@@ -81,7 +81,7 @@ class Norms:
             if c.state != cs.open:
                 continue
             if c.acc and c.rep < day:
-                self.sanction(eid, c, day, '举报')
+                self.sanction(eid, c, day, cs.via_report)
             elif not c.acc and c.sus and not c.asked:                     # 传讯当夜不在寮的人
                 c.asked = True
                 o = eng.people[eng.ev_by_id[eid].actor]
@@ -89,7 +89,7 @@ class Norms:
                 if o.ix in c.sus and o.gone is None and \
                         eng.rng(eng.seed, 'confess', eid) < cs.confess_base + cs.confess_r * o.R / SCALE:
                     eng.stat['confess'] += 1
-                    self.sanction(eid, c, day, '认错')
+                    self.sanction(eid, c, day, cs.via_confess)
             elif not c.acc and day - c.opened > cs.stale_days:
                 c.state = cs.cold
 
@@ -113,7 +113,7 @@ class Norms:
         if st.thought:
             eng.moods.think(off, st.thought, day)
         if st.gone:
-            off.gone = day
+            off.gone, off.gone_why = day, st.txt
         eng.moods.think(off, sp.cases.sanction_thought, day)
         for a in sorted(c.acc):
             eng.opinions.add_mod(off.ix, a, sp.cases.accuse_mod, day)

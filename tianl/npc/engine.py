@@ -2,11 +2,13 @@
 
 * 与外界只通过 Host 交互（事件、随机数、内核命令）；规格对象 SiteSpec 描述世界；
 * 一切随机都是 host.rng(seed, 用途, 日, 时辰, 人…)，与调用次序无关——多生成一条叙述不会改写任何人的未来；
-* 人内部用 ix（int，稳定，新人追加），外部用 pid（str）；
+* 人内部用 ix（int，稳定，新人追加），外部用 pid（str）；事件同理：内部用引擎自己的流水号 id（见闻、案卷、随机数键），
+  Host 给的事件 id（hid）只在边界出现——所以引擎的行为与 Host 怎么编号、别处写了多少事件无关；
 * 每个决定都留“生效层与原因”（轨迹打包），where / explain 随时可答（计划 12.2 第九条“说得清”）。
 """
 import hashlib
 from collections import Counter
+from operator import itemgetter
 from time import perf_counter
 
 from ..core import SLOTS, clamp, gauss, t_of
@@ -14,7 +16,8 @@ from .events import FOOD_THEFT, label as event_label
 from .facilities import Facilities
 from .freechoice import FreeChoice
 from .jobs import JobBoard
-from .model import EvRec, PersonSpec, Profile, Script, SlotCtx, Symbols, pack, unpack
+from .model import (BASE_DECISION, GAP, EvRec, PersonSpec, Profile, Script, SlotCtx, Symbols, pack, place_of,
+                    unpack)
 from .mood import Moods
 from .needs import Needs
 from .norms import Norms
@@ -24,9 +27,12 @@ from .rumor import Rumor
 from .spec import A_WORK, L_FREE, L_SLACK, TRAIT_KEYS, SpecError
 from .stack import Stack
 
+HASH_CHARS = 16                     # state_hash 取 sha256 十六进制的前几位（基线口径）
+PKG_STAT = 'pkg_'                   # 统计键前缀：每层行为包占了多少个决定
+
 
 class NpcEngine:
-    def __init__(self, spec, host, acting=True, script=None):
+    def __init__(self, spec, host, acting=True, script=None, person_factory=None):
         problems = spec.validate()
         if problems:
             raise SpecError(problems)
@@ -35,16 +41,19 @@ class NpcEngine:
         self.acting = acting                       # 监院是否派人代理（v0.2 的“指派”一级）
         self.script = Script.coerce(script)
         self.world = None                          # attach() 之后是内核 World
+        self.person_factory = person_factory       # pid -> PersonSpec：on_person_added(pid) 遇到名册里没有的 pid 时用（集成层提供）
         # 人
         self.people, self.pids, self._ix = [], [], {}
         self.by = {}                               # 岗位名 -> [ix]（None 键是清众）
         self.common = []                           # 清众（无岗位者）的档案，建人次序
         self.sym = Symbols()
+        self._packed = {}                          # 决定四元组 -> 轨迹打包值（同样的决定天天重复，驻留一次就够）
         # 世界状态
         self.stock = dict(spec.kitchen.stock_init)  # 厨房库存：水、柴（挑水打柴入账，斋食出账）
         self.kit_staff = {}                        # 备斋时辰 -> 当时在厨房干活的人数
         self.sight = set()                         # 当日查寮记下的空铺者
-        self.evs, self.ev_by_id = [], {}           # 引擎自留的事件记录（ix 版本）
+        self.evs, self.ev_by_id = [], {}           # 引擎自留的事件记录（ix 版本）；ev_by_id 以引擎流水号为键
+        self.ev_by_hid = {}                        # Host 事件 id -> 记录
         self.dec = {}                              # 最近一个时辰各人的决定 ix -> (场所, 活动, 层, 原因)
         self.last = None                           # 最近跑完的 (日, 时辰)
         # 统计（只用于报告与验收，不进入任何决定）
@@ -69,15 +78,27 @@ class NpcEngine:
         self.world = world
 
     def on_person_added(self, person):
-        """收录、选角、迁入：给 PersonSpec 就建人；给 pid 且已在名册里则什么也不做。"""
+        """收录、选角、迁入（ARCHITECTURE 5.1 的 on_person_added(pid)）。
+
+        给 pid：已在名册里就什么也不做；不在则向 person_factory(pid) 要一份 PersonSpec 来建人（没有工厂就报错）。
+        给 PersonSpec：直接建人（独立运行与测试用）。返回档案。
+        """
         if isinstance(person, PersonSpec):
             return self.add_person(person)
-        return self.people[self.ix_of(person)]
+        if isinstance(person, int) or person in self._ix:
+            return self.people[self.ix_of(person)]
+        if self.person_factory is None:
+            raise LookupError('名册里没有 %r，且没有 person_factory 可以建它' % (person,))
+        ps = self.person_factory(person)
+        if ps.pid != person:
+            raise ValueError('person_factory(%r) 给出的 PersonSpec.pid 是 %r' % (person, ps.pid))
+        return self.add_person(ps)
 
     def on_person_removed(self, pid, why):
         p = self.people[self.ix_of(pid)]
         if p.gone is None:
             p.gone = self.last[0] if self.last else 0
+            p.gone_why = why
             self.stat['left_' + why] += 1
 
     # ================= 建人 =================
@@ -138,11 +159,13 @@ class NpcEngine:
     def emit(self, kind, actor, place, wit, day, slot, cause=None, **data):
         """写一条事件：经 Host 落地，引擎另留 ix 版本；按显著度给每个见证人记见闻。"""
         pids = self.pids
+        hcause = None if cause is None else self.ev_by_id[cause].hid          # 对 Host 说话用它自己的 id
         he = self.host.ev(kind, None if actor is None else pids[actor], place, [pids[w] for w in wit], day, slot,
-                          cause, **data)
-        rec = EvRec(he.id, kind, actor, place, list(wit), day, slot, cause, data)
+                          hcause, **data)
+        rec = EvRec(len(self.evs), he.id, kind, actor, place, list(wit), day, slot, cause, data)
         self.evs.append(rec)
         self.ev_by_id[rec.id] = rec
+        self.ev_by_hid[rec.hid] = rec
         sal = self.spec.salience.get(kind, 0)
         if sal > 0:
             P = self.people
@@ -211,9 +234,9 @@ class NpcEngine:
             if p.gone is not None:
                 continue
             d = decide(p, day, slot, ctx)
-            if len(d) == 5:                                  # 巡寮者：决定里带着所巡之处
-                ctx.seen, ctx.patroller = d[4], p.ix
-                d = d[:4]
+            if len(d) > BASE_DECISION:                       # 巡寮者：决定里带着所巡之处
+                ctx.seen, ctx.patroller = d[BASE_DECISION], p.ix
+                d = d[:BASE_DECISION]
             dec[p.ix] = d
         # 2 闲谈配对与转述
         self.rumor.pair(ctx, day, slot)
@@ -240,24 +263,31 @@ class NpcEngine:
         # 4 需求结算；想法；落轨迹（统计、哈希在此累积）
         ns = sp.needs
         t = t_of(day, slot)
-        sid, hup = self.sym.intern, self._h.update
+        sid, hup, packed = self.sym.intern, self._h.update, self._packed
         free_layers = (L_FREE, L_SLACK)
+        hungry = tired = 0
         for i, d in dec.items():
             p = P[i]
             self.needs.settle(p, d, slot, gain)
             nd = p.need
             if d[2] in free_layers:
-                self.choice[d[3][:2]] += 1
+                self.choice[d[3][:sp.free.choice_key_chars]] += 1
             th = ns.act_thought.get(d[1])
             if th:
                 self.moods.think(p, th, day)
             self.acts[sp.groups[0] if p.office is None else sp.groups[1]][ns.category.get(d[1], ns.category_default)] += 1
-            stat['ps'] += 1
-            stat['hungry'] += nd['h'] < ns.hungry_line
-            stat['tired'] += nd['e'] < ns.tired_line
-            stat['pkg_' + d[2]] += 1
-            p.trail.push(t, pack(sid(d[0]), sid(d[1]), sid(d[2]), sid(d[3])))
+            hungry += nd['h'] < ns.hungry_line
+            tired += nd['e'] < ns.tired_line
+            pk = packed.get(d)
+            if pk is None:
+                pk = packed[d] = pack(sid(d[0]), sid(d[1]), sid(d[2]), sid(d[3]))
+            p.trail.push(t, pk)
             hup(('%d,%d,%d,%s,%s;' % (day, slot, i, d[0], d[1])).encode())
+        stat['ps'] += len(dec)
+        stat['hungry'] += hungry
+        stat['tired'] += tired
+        for layer, k in Counter(map(itemgetter(2), dec.values())).items():
+            stat[PKG_STAT + layer] += k
         self.fac.check_overflow(ctx.occ, day, slot)
         # 5 观察者所在场所的细节叙述：只读，只计数，不改任何状态
         if self.observer:
@@ -299,7 +329,8 @@ class NpcEngine:
 
     # ================= 查询 API =================
     def where(self, who, day, slot):
-        """(场所 code, 活动, 层, 原因) | None。任何已跑过的时辰都能答。"""
+        """(场所 code, 活动, 层, 原因) | None。任何已跑过的时辰都能答；
+        None = 没有记录：还没跑到、加入之前、离开之后（离开的缘由见 explain）、或轨迹中间缺格。"""
         p = self.people[self.ix_of(who)]
         v = p.trail.get(t_of(day, slot))
         if v is None:
@@ -327,6 +358,14 @@ class NpcEngine:
         p = self.people[ix]
         w = self.where(ix, day, slot)
         if w is None:
+            end = p.trail.end
+            if end is None and p.gone is not None:
+                end = t_of(p.gone + 1, 0)                   # 从没有过记录的人：离开当日之后都算离开
+            if p.gone is not None and t_of(day, slot) >= end:      # 离开之后：说明去了哪里
+                why = p.gone_why or ''
+                return {'pid': p.pid, 'name': p.name, 'day': day, 'slot': slot, 'slot_name': SLOTS[slot], 'place': None,
+                        'place_name': None, 'act': None, 'layer': None, 'layer_rank': None, 'reason': why,
+                        'gone': p.gone, 'text': '第%d日%s时 %s已于第%d日离寺（%s）' % (day, SLOTS[slot], p.name, p.gone, why)}
             return None
         place, act, layer, reason = w
         out = {'pid': p.pid, 'name': p.name, 'day': day, 'slot': slot, 'slot_name': SLOTS[slot], 'place': place,
@@ -335,17 +374,17 @@ class NpcEngine:
         out['text'] = '第%d日%s时 %s在%s：%s（生效层「%s」）' % (day, SLOTS[slot], p.name, out['place_name'], reason, layer)
         if self.last == (day, slot):
             out['state'] = {'need': dict(p.need), 'mood': self.moods.mood(p), 'ill': p.ill >= day,
-                            'confined': p.conf >= day, 'kneel': p.kneel >= day, 'pending': list(p.pending),
+                            'confined': p.conf >= day, 'kneel': p.kneel >= day,
+                            'pending': [self.ev_by_id[e].hid for e in p.pending],
                             'thoughts': [tuple(x) for x in p.thoughts]}
         return out
 
     def news_of(self, who):
-        """他知道哪些事：[(事件 id, 事件种类, 强度, 经手层数, 听谁说的 pid | None)]，强的在前。"""
+        """他知道哪些事：[(Host 事件 id, 事件种类, 强度, 经手层数, 听谁说的 pid | None)]，强的在前（平手按发生先后）。"""
         p = self.people[self.ix_of(who)]
-        out = [(e, self.ev_by_id[e].kind, v[0], v[1], None if v[2] is None else self.pids[v[2]])
-               for e, v in p.news.items()]
-        out.sort(key=lambda x: (-x[2], x[0]))
-        return out
+        rows = sorted(((e, v) for e, v in p.news.items()), key=lambda x: (-x[1][0], x[0]))
+        return [(self.ev_by_id[e].hid, self.ev_by_id[e].kind, v[0], v[1], None if v[2] is None else self.pids[v[2]])
+                for e, v in rows]
 
     def opinion(self, a, b):
         return self.opinions.opinion(self.ix_of(a), self.ix_of(b))
@@ -363,12 +402,12 @@ class NpcEngine:
         return self.opinions.friends()
 
     def cases(self):
-        """案卷列表（立案次序）：每件案子的状态、指认人、定罪依据与处分。"""
+        """案卷列表（立案次序）：每件案子的状态、指认人、定罪依据与处分。eid 是 Host 事件 id（偷食那条）。"""
         P = self.people
         out = []
         for eid, c in self.norms.cases.items():
             e = self.ev_by_id[eid]
-            out.append({'eid': eid, 'actor': None if e.actor is None else self.pids[e.actor], 'day': e.day,
+            out.append({'eid': e.hid, 'actor': None if e.actor is None else self.pids[e.actor], 'day': e.day,
                         'opened': c.opened, 'state': c.state, 'accusers': [P[a].pid for a in sorted(c.acc)],
                         'suspects': [P[a].pid for a in sorted(c.sus)], 'asked': c.asked, 'via': c.via,
                         'sanction': c.txt, 'sanction_day': c.day})
@@ -380,12 +419,16 @@ class NpcEngine:
         h = self._h.copy()
         for e in self.evs:
             h.update(('%s,%s,%d,%d;' % (event_label(e.kind), e.actor, e.day, e.slot)).encode())
-        return h.hexdigest()[:16]
+        return h.hexdigest()[:HASH_CHARS]
+
+    def event_of(self, hid):
+        """Host 事件 id -> 引擎里的事件记录（EvRec）；不是本引擎发的事件则 KeyError。"""
+        return self.ev_by_hid[hid]
 
     def places_of(self, who):
-        """该人每个时辰所在场所的序列（按轨迹次序）。"""
+        """该人每个时辰所在场所的序列（按轨迹次序；轨迹中间缺格的时辰是 None）。"""
         nm = self.sym.names
-        return [nm[(v >> 48) & 0xFFFF] for v in self.people[self.ix_of(who)].trail.arr]
+        return [None if v == GAP else nm[place_of(v)] for v in self.people[self.ix_of(who)].trail.arr]
 
     def agree(self, a, b):
         """两人在同一绝对时刻同处一地的时辰占比（只比两人都有记录的时刻）。"""
@@ -393,8 +436,11 @@ class NpcEngine:
         if A.t0 is None or B.t0 is None:
             return 0.0
         lo, hi = max(A.t0, B.t0), min(A.t0 + len(A), B.t0 + len(B))
-        m = hi - lo
-        if m <= 0:
-            return 0.0
-        same = sum(1 for t in range(lo, hi) if (A.arr[t - A.t0] >> 48) == (B.arr[t - B.t0] >> 48))
-        return same / m
+        both = same = 0
+        for t in range(lo, hi):
+            x, y = A.arr[t - A.t0], B.arr[t - B.t0]
+            if x == GAP or y == GAP:
+                continue
+            both += 1
+            same += place_of(x) == place_of(y)
+        return same / both if both else 0.0

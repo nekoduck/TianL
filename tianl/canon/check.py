@@ -1,10 +1,13 @@
 """综合校验（tools/canon_check.py 的实现）。
 
-子命令（可组合）：--census --assertions --events --secrets --identities --gaps --qa --timeline --recall --all；
---part NAME 只跑某分区的文件（c1..c6）。不给任何子命令等于 --all。输出汇总计数；退出码 0 全部通过、1 有错误。
+子命令（可组合）：--census --assertions --events --secrets --identities --gaps --qa --timeline --recall --evidence --all；
+--part NAME 只跑某分区的文件（普查 p1–p4 c5 c6a c6b c6c；按回文件 ch00–ch52；p1–p4 也圈住范围内的按回文件）。
+不给任何子命令等于 --all。输出汇总计数；退出码 0 全部通过、1 有错误。
 
 诚实口径（docs/DECISIONS.md 第三节）：证据指针有效率只统计 basis = text 的行；没有原文时如实写“0 条有文本支撑”，
 不会因此报通过。
+--evidence：有原文时逐条核对指针（能取回、哈希相符），basis=text 的行须有 ≥1 条有效证据，basis=recall 的行证据须为空；
+没有原文时只给出提示（该节“跳过”，不算失败）。断言的“重复”只是警告（同一事实可在多回里各出现一次，第 6 阶段合并证据）。
 """
 from __future__ import annotations
 
@@ -18,8 +21,8 @@ from . import merge as M
 from . import schema as S
 
 SECTION_TITLES = {'census': '普查', 'assertions': '断言', 'events': '事件', 'secrets': '秘密', 'identities': '身份',
-                  'gaps': '缺口', 'qa': '问答', 'timeline': '时间线', 'recall': '30 人召回'}
-ORDER = ('census', 'assertions', 'events', 'secrets', 'identities', 'gaps', 'qa', 'timeline', 'recall')
+                  'gaps': '缺口', 'qa': '问答', 'timeline': '时间线', 'recall': '30 人召回', 'evidence': '证据指针'}
+ORDER = ('census', 'assertions', 'events', 'secrets', 'identities', 'gaps', 'qa', 'timeline', 'recall', 'evidence')
 
 
 class Section:
@@ -368,7 +371,7 @@ class Checker:
         if (self.dir / f'{name}.jsonl').is_file():
             fs.append(self.dir / f'{name}.jsonl')
         if scoped and self.part:
-            fs = [f for f in fs if f.stem == self.part]
+            fs = [f for f in fs if S.stem_in_part(f.stem, self.part)]
         return fs
 
     def load(self, name, scoped=True):
@@ -509,13 +512,23 @@ class Checker:
             for e in errs:
                 sec.err(f'{w}: {e}')
             valid.append((w, a))
-        for w in ctx.warnings:
-            sec.warn(w)
         allitems = self.assertions(False) if self.part else items
         mine = {w for w, _ in items}
+        n_before = len(ctx.warnings)
         for e in S.check_assertion_set(allitems, ctx):
             if (not self.part) or any(m in e for m in mine):
                 sec.err(e)
+        dups = [w for w in ctx.warnings[n_before:] if '重复' in w]
+        ctx.warnings = ctx.warnings[:n_before] + [w for w in ctx.warnings[n_before:] if '重复' not in w]
+        if self.part:
+            dups = [w for w in dups if any(m in w for m in mine)]
+        for w in ctx.warnings:
+            sec.warn(w)
+        n_dup = len(dups)
+        for w in dups[:5]:
+            sec.warn(w)
+        if n_dup > 5:
+            sec.warn(f'……另有 {n_dup - 5} 条重复警告（同一事实在多处出现；第 6 阶段合并证据）')
         # 统计
         def cnt(key):
             d = {}
@@ -527,7 +540,8 @@ class Checker:
         for _, a in items:
             v = (a.get('reviewed') or {}).get('verdict') or 'none'
             rvs[v] = rvs.get(v, 0) + 1
-        sec.add(f'断言 {len(items)} 条；等级 {cnt("rank")}；叙述方式 {cnt("mode")}；来源标签 {cnt("tag")}；复核 {rvs}')
+        sec.add(f'断言 {len(items)} 条；等级 {cnt("rank")}；叙述方式 {cnt("mode")}；来源标签 {cnt("tag")}；复核 {rvs}；'
+                f'重复（只警告）{n_dup} 条')
         self._check_pointers(sec, items)
         # 人物必含字段覆盖
         persons = self._scope_persons()
@@ -696,6 +710,80 @@ class Checker:
         sec.info.extend(lines)
         return sec
 
+    def source_path(self):
+        """原文路径：显式 --source；否则仅当数据根目录是仓库默认的 data/canon 时取 sources/tianlong.txt（有才算）。"""
+        if self.source:
+            return Path(self.source)
+        from . import text as T
+        if self.dir.resolve() == S.CANON_DIR.resolve() and T.DEFAULT_SOURCE.is_file():
+            return T.DEFAULT_SOURCE
+        return None
+
+    def evidence_section(self):
+        """--evidence：有原文时逐条核对指针；basis=text 的行须有 >=1 条有效证据，basis=recall 的行证据须为空。"""
+        sec = Section('evidence')
+        src = self.source_path()
+        if src is None or not Path(src).is_file():
+            sec.skipped = ('没有原文，无法核对证据指针（没找到 sources/tianlong.txt；用 --source 指定）。'
+                           'basis=recall 的行证据须为空仍由各节检查；原文放好后用 --evidence 重跑')
+            return sec
+        from . import text as T
+        try:
+            store = T.TextStore.from_file(src)
+        except (OSError, T.TextFormatError) as ex:
+            sec.err(f'无法载入原文 {src}：{ex}')
+            return sec
+        mf = T.default_manifest_path(self.dir)
+        if mf.is_file():
+            for pr in store.apply_manifest(mf)[:1]:
+                sec.warn(pr)
+        groups = [('断言', self.assertions(True), 'evidence'),
+                  ('事件', self.events(True), 'ev'),
+                  ('秘密', self.secrets(True), 'ev'),
+                  ('身份', [(w, S.expand_identity(o)) for w, o in self.load('identities')], 'ev')]
+        tot_ok = tot_bad = n_text = n_recall = 0
+        for label, items, key in groups:
+            rows = [(w, r) for w, r in items if isinstance(r, dict)]
+            if not rows:
+                continue
+            g_text = g_recall = g_ok = g_bad = 0
+            for w, r in rows:
+                ev = r.get(key)
+                ev = ev if isinstance(ev, list) else []
+                basis = r.get('basis')
+                if basis == 'recall':
+                    g_recall += 1
+                    if ev:
+                        sec.err(f'{w}: basis=recall（凭记忆）的行证据必须为空，却有 {len(ev)} 条；有原文指针请把 basis 改为 text')
+                elif basis == 'text':
+                    g_text += 1
+                    ok = 0
+                    for p in ev:
+                        why = store.check_pointer(p)
+                        if why is None:
+                            q = S.expand_pointer(p)
+                            if q['end'] <= q['start']:
+                                why = '指针取回的是空串（起 = 止）'
+                        if why:
+                            g_bad += 1
+                            sec.err(f'{w}: 证据指针取不回原字：{why}')
+                        else:
+                            ok += 1
+                            g_ok += 1
+                    if ok == 0:
+                        sec.err(f'{w}: basis=text 必须至少有 1 条有效证据指针')
+            sec.add(f'{label}：{len(rows)} 行；basis=text {g_text}，basis=recall {g_recall}；'
+                    f'证据指针 {g_ok + g_bad} 条，有效 {g_ok} 条')
+            tot_ok, tot_bad, n_text, n_recall = tot_ok + g_ok, tot_bad + g_bad, n_text + g_text, n_recall + g_recall
+        tot = tot_ok + tot_bad
+        if tot:
+            sec.add(f'证据指针有效率：{tot_ok}/{tot} = {100 * tot_ok / tot:.1f}%（只统计 basis=text 的行；凭记忆的行 {n_recall} 条不计）')
+        else:
+            sec.add(f'证据指针有效率：不适用（basis=text 的行 {n_text} 条、指针 0 条；凭记忆 {n_recall} 条）；'
+                    f'不会因此报“通过”，见 DECISIONS 第三节')
+        sec.add(f'原文：{Path(src).name}，{store.stats()["chapters"]} 回，{store.stats()["paragraphs"]} 段')
+        return sec
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # 输出与入口
@@ -749,8 +837,11 @@ def main(argv=None, out=None):
     ap.add_argument('--qa', nargs='?', const='', metavar='FILE', help='标准问答集')
     ap.add_argument('--timeline', action='store_true', help='时间线综合检查')
     ap.add_argument('--recall', action='store_true', help='30 人召回')
+    ap.add_argument('--evidence', action='store_true',
+                    help='证据指针：有原文时逐条核对（basis=text 须有 >=1 条有效证据，basis=recall 须为空）；没有原文只提示')
     ap.add_argument('--all', action='store_true', help='全部（不给任何子命令时的默认）')
-    ap.add_argument('--part', metavar='NAME', help=f'只跑某分区的文件：{" ".join(S.PART_NAMES)}')
+    ap.add_argument('--part', metavar='NAME', help=f'只跑某分区的文件：{" ".join(S.PART_NAMES)} 或 ch00–ch52；'
+                                                   f'p1–p4 同时圈住范围内的按回文件')
     ap.add_argument('--canon-dir', default=str(S.CANON_DIR), help='数据根目录（默认 data/canon）')
     ap.add_argument('--entities', help='显式指定登记表（文件或目录），代替普查合并')
     ap.add_argument('--routes', help='路线表 JSONL：{"a","b","slots"}')
@@ -764,8 +855,8 @@ def main(argv=None, out=None):
     ap.add_argument('--quiet', action='store_true', help='不打印警告')
     ap.add_argument('--json', action='store_true', help='以 JSON 输出汇总')
     a = ap.parse_args(argv)
-    if a.part and a.part not in S.PART_NAMES:
-        print(f'未知分区 {a.part!r}；可用：{" ".join(S.PART_NAMES)}', file=out)
+    if a.part and not S.is_part_name(a.part):
+        print(f'未知分区 {a.part!r}；可用：{" ".join(S.PART_NAMES)} 或 ch00–ch52', file=out)
         return 2
     sel = {k: getattr(a, k) for k in ('census', 'assertions', 'events', 'secrets', 'identities', 'gaps', 'qa')}
     run = {k for k, v in sel.items() if v is not None}
@@ -773,6 +864,8 @@ def main(argv=None, out=None):
         run.add('timeline')
     if a.recall:
         run.add('recall')
+    if a.evidence:
+        run.add('evidence')
     if a.all or not run:
         run = set(ORDER)
     paths = {k: v for k, v in sel.items() if v}
@@ -807,6 +900,8 @@ def main(argv=None, out=None):
             secs.append(ck.timeline_section())
         elif name == 'recall':
             secs.append(ck.recall_section())
+        elif name == 'evidence':
+            secs.append(ck.evidence_section())
     n_err = sum(len(s.errors) for s in secs)
     n_warn = sum(len(s.warnings) for s in secs)
     if a.json:

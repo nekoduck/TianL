@@ -291,6 +291,7 @@ class FreeSpec:
     bath_every: int
     bath_phase: int
     bath_slots: tuple
+    choice_key_chars: int           # “自由时段的选择”统计取原因的前几个字作键（只入统计，原型口径：2）
 
 
 @dataclass(frozen=True)
@@ -389,6 +390,8 @@ class CaseSpec:
     confess_r: float
     accuse_mod: str                 # 受罚者对举报人的修正项键
     sanction_thought: str           # 每起处分都给受处分者的想法键
+    via_report: str                 # 案卷 via：凭举报定罪
+    via_confess: str                # 案卷 via：凭本人认错定罪
 
 
 @dataclass(frozen=True)
@@ -577,4 +580,8 @@ class SiteSpec:
             need_in('layer_rank', lay, self.layer_rank, '层标签')
         if len(self.groups) != 2:
             out.append('groups 必须是 (清众, 执事) 两项')
+        if self.free.choice_key_chars < 1:
+            out.append('free.choice_key_chars 至少为 1')
+        if self.cases.via_report == self.cases.via_confess:
+            out.append('cases.via_report 与 cases.via_confess 不能相同（案卷靠它区分定罪依据）')
         return out

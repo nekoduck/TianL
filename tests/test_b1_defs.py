@@ -107,6 +107,38 @@ class DefsMatchPrototype(unittest.TestCase):
             a, b = World().run(120), World(spec=spec).run(120)
             self.assertEqual(a.state_hash(), b.state_hash())
 
+    def test_kernel_false_definitions_stay_out_of_kernel_tables(self):
+        """别的模块往同一 scope 加的场所，标 kernel = false 就不进内核的 place 表（不改状态哈希）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            for cat in KERNEL_CATEGORIES:
+                src = ROOT / 'defs' / cat
+                if not src.is_dir(): continue
+                for f in src.rglob('*.toml'):
+                    out = Path(tmp) / f.relative_to(ROOT / 'defs')
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(f.read_text(encoding='utf-8'), encoding='utf-8')
+            extra = Path(tmp) / 'space' / 'extra.toml'
+            extra.write_text('["place:shaolin:bath"]\ncode = "SH_BATH"\nname = "浴室"\naccess = "open"\nkernel = false\norder = 99\n', encoding='utf-8')
+            spec = load_spec(scope='shaolin', root=tmp)
+            self.assertNotIn('SH_BATH', [p[0] for p in spec.places])
+            self.assertEqual(World(spec=spec).run(30).state_hash(), World().run(30).state_hash())
+
+    def test_missing_role_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for cat in KERNEL_CATEGORIES:
+                src = ROOT / 'defs' / cat
+                if not src.is_dir(): continue
+                for f in src.rglob('*.toml'):
+                    out = Path(tmp) / f.relative_to(ROOT / 'defs')
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(f.read_text(encoding='utf-8').replace(':shaolin:', ':demo:'), encoding='utf-8')
+            # 把“典座”岗位改个角色名（cook -> chef）：内核要用 cook 这个角色
+            for f in Path(tmp).rglob('*.toml'):
+                f.write_text(f.read_text(encoding='utf-8').replace('post:demo:cook', 'post:demo:chef'), encoding='utf-8')
+            with self.assertRaises(Exception) as cm:
+                load_spec(scope='demo', root=tmp)
+            self.assertIn('T.cook', str(cm.exception))
+
     def test_params_override_and_seed_matters(self):
         a, b = World().run(10), World({'seed': 7}).run(10)
         self.assertNotEqual(a.state_hash(), b.state_hash())

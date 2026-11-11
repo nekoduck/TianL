@@ -2,4 +2,4 @@
 from .spec import Spec, Good, load_spec, load_kernel_defs, DEFS_ROOT
 from .world import World, ECON_TABLES
 from .vocab import SHI, GUAN
-from .report import year_report, summary, baseline
+from .report import year_report, summary, baseline, window

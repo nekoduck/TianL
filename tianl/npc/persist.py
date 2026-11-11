@@ -5,5 +5,6 @@
   * persist.load 从表恢复引擎，且“跑 30 日 → 存 → 读 → 再跑 30 日”与“直接跑 60 日”的 state_hash 相同；
   * 控制台的历史查询（迹/闻/情/案）读这些表，“此刻”的查询读内存。
 恢复需要的全部状态：Profile 各字段、Opinions.mods、Norms.cases/announce_q、Perception.undisc、Rumor 的追踪量、
-engine 的 stock/kit_staff/sight、已累积的哈希状态（或重放日志）。
+engine 的 stock/kit_staff/sight、已累积的哈希状态（或重放日志）、事件流水号与 Host 事件 id 的对应（EvRec.id / hid）、
+各人轨迹的下一个应记时刻（Trail.nxt）与 Profile.gone_why。
 """

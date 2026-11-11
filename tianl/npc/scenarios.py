@@ -19,6 +19,13 @@ from .spec import (A_BATH, A_CHANT, A_CHAT, A_MARTIAL, A_MEAL, A_REST, A_STROLL,
 
 PROTO_SEED = 20261110
 
+# ---- 原型 main() 的实验参数（场景的一部分，report.py 只引用这里）----
+GOSSIP_DAY, GOSSIP_WHO, GOSSIP_HEARD = 6, 8, 9     # 传闻实验：第 6 日，清众第 9 位偷食、第 10 位撞见（清众序号从 0 起）
+N1_DAY, N1_DAYS, N1_COOKS = 10, 4, 3               # 实验 N1：第 10 日起典座与前 3 名饭头同时病倒 4 日
+N1_WINDOW = (9, 16)                                # N1 的逐日偷食累计看第 9–16 日
+LONG_DAYS = 90                                     # “90 日”那一行
+EXTRA_SEEDS = (1, 2, 3, 4, 5)                      # 多种子那几行
+
 # 原型的三个“要角”：(清众里的第几位, 性格改写)。第 6 位馋而散漫（惯犯），第 12 位懒，第 21 位刚正。
 PROTO60_CAST = ((5, {'T': 92, 'S': 22, 'D': 45}), (11, {'D': 18, 'S': 38}), (20, {'R': 95, 'S': 90}))
 PROTO60_GLUTTON, PROTO60_LAZY = 5, 11            # 清众序号
@@ -128,7 +135,8 @@ def proto60_spec():
                        tired_line=20),
         ads=ads,
         free=FreeSpec(top_k=3, stroll_place='clo', stroll_act=A_STROLL, stroll_label='散步', bath_every=5,
-                      bath_phase=4, bath_slots=(7, 8)),
+                      bath_phase=4, bath_slots=(7, 8),
+                      choice_key_chars=2),
         jobs=JobsSpec(board=board, work_chat_p=0.6),
         opinion=OpinionSpec(same_dorm=5, same_track=4, same_post=6, compat_div=300, compat_mid=0.75, compat_w=40,
                             lo=-100, hi=100, friend_line=25, foe_line=-15),
@@ -145,7 +153,8 @@ def proto60_spec():
         salience={FOOD_THEFT: 80, SANCTION: 60, THEFT_FOUND: 50, ABSENCE: 0, SLACK: 0, REPORT: 0, BED_EMPTY: 0},
         report=ReportSpec(base=0.15, r_w=0.6, op_w=0.004, lo=0.02, hi=0.98),
         cases=CaseSpec(open='在查', done='已处分', cold='悬案', closed='结案', stale_days=10, confess_base=0.25,
-                       confess_r=0.5, accuse_mod='accuse', sanction_thought='sanction'),
+                       confess_r=0.5, accuse_mod='accuse', sanction_thought='sanction',
+                       via_report='举报', via_confess='认错'),
         ladder=(LadderStep('罚跪香三日', 3, 0, (), None, False),
                 LadderStep('杖责并禁闭二日', 0, 2, (('e', -30),), 'flogged', False),
                 LadderStep('禁闭五日', 0, 5, (), None, False),
@@ -223,10 +232,10 @@ class ProtoRun:
 def gossip_script(run_or_engine_common):
     """原型 main() 的传闻实验脚本：第 6 日，清众里第 9 位偷食，只有第 10 位撞见且不举报。"""
     c = run_or_engine_common
-    return Script(gossip=(6, c[8].ix, c[9].ix))
+    return Script(gossip=(GOSSIP_DAY, c[GOSSIP_WHO].ix, c[GOSSIP_HEARD].ix))
 
 
 def n1_script(engine):
     """实验 N1：第 10 日起典座与三名饭头同时病倒 4 日。"""
-    kit = engine.by['典座'] + engine.by['饭头'][:3]
-    return Script(ill=(10, kit, 4))
+    kit = engine.by['典座'] + engine.by['饭头'][:N1_COOKS]
+    return Script(ill=(N1_DAY, kit, N1_DAYS))

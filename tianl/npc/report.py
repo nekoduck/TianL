@@ -8,11 +8,15 @@ from collections import Counter
 
 from ..core import SLOTS, SLOTS_PER_DAY, rnd_b2
 from .events import FOOD_THEFT, REPORT, SANCTION, THEFT_FOUND, label as event_label
-from .scenarios import PROTO_SEED, ProtoRun, gossip_script
+from .engine import PKG_STAT
+from .scenarios import (EXTRA_SEEDS, LONG_DAYS, N1_DAY, N1_DAYS, N1_WINDOW, PROTO_SEED, ProtoRun, gossip_script,
+                        n1_script)
 
 # 日志里只记录、不比对的两类耗时（机器相关）：把数字换成占位再比
 TIMING_PATTERNS = (re.compile(r'每次 [0-9.]+ 微秒  总耗时 [0-9.]+ 秒'), re.compile(r'每次决策 [0-9.]+ 微秒'))
 TRACE_DAY = 8                                   # 原型打印的“某日四人轨迹”
+PERCENT = 100                                  # 单位换算：百分数
+MICROS = 1e6                                    # 单位换算：微秒
 
 
 def strip_timing(line):
@@ -29,7 +33,7 @@ def summary(eng):
     same = sum(1 for a, b in fr if P[a].dorm == P[b].dorm or P[a].track == P[b].track
                or (P[a].office and P[a].office == P[b].office))
     cs = Counter(c.state for c in eng.norms.cases.values())
-    return {'hash': eng.state_hash(), 'us': eng.elapsed / max(1, st['ps']) * 1e6,
+    return {'hash': eng.state_hash(), 'us': eng.elapsed / max(1, st['ps']) * MICROS,
             'attend': st['came'] / max(1, st['due']), 'hungry': st['hungry'] / st['ps'],
             'tired': st['tired'] / st['ps'], 'theft': st['theft'], 'seen': st['theft_seen'], 'wit': st['wit'],
             'wit_rep': st['wit_rep'], 'report': st['report'], 'disc': st['discovered'], 'cases': dict(cs),
@@ -99,8 +103,8 @@ def proto_report(include_all=False, seed=PROTO_SEED, rng=rnd_b2):
                % (m['viol'], m['full'], m['chat'], m['good'], m['shared']))
     out.append('差事 完成/发布 = %d/%d；代理帮厨 %d 人次；生病 %d 起' % (m['jobs'][0], m['jobs'][1], m['acting'], m['ill']))
     ae, aa = sum(eng.att_exp.values()), sum(eng.att.values())
-    out.append('过堂人数：实到/应到 = %d/%d（偏差 %.2f%%）' % (aa, ae, 100 * abs(aa - ae) / ae))
-    out.append('行为包占比：' + '  '.join('%s %.1f%%' % (k[4:], 100 * v / st['ps'])
+    out.append('过堂人数：实到/应到 = %d/%d（偏差 %.2f%%）' % (aa, ae, PERCENT * abs(aa - ae) / ae))
+    out.append('行为包占比：' + '  '.join('%s %.1f%%' % (k[len(PKG_STAT):], PERCENT * v / st['ps'])
                                         for k, v in sorted(st.items()) if k.startswith('pkg_')))
     for grp in eng.spec.groups:
         tot = sum(eng.acts[grp].values())
@@ -125,28 +129,30 @@ def proto_report(include_all=False, seed=PROTO_SEED, rng=rnd_b2):
     out.append('查寮空铺 %d 次；传讯 %d 人次，认错 %d 起；当面禀告 %d 次'
                % (st['empty_bed'], st['asked'], st['confess'], st['rep_face']))
     rm = eng.rumor
-    out.append('传闻实验（第 6 日丑时，一人撞见、不举报）：仍记得的人数按日 = %s' % [c for d, c in rm.curve])
+    out.append('传闻实验（第 %d 日%s时，一人撞见、不举报）：仍记得的人数按日 = %s'
+               % (script.gossip[0], SLOTS[script.gossip_slot], [c for d, c in rm.curve]))
     out.append('  累计听说过的人数按日 = %s' % [c for d, c in rm.cum])
     out.append('  经手层数分布： %s  月末仍知情 %d 人' % (dict(sorted(rm.hops.items())), rm.curve[-1][1]))
     out.extend(trace_lines(w))
     out.extend(chain_lines(w))
     if not include_all:
         return out, info
-    kit = eng.by['典座'] + eng.by['饭头'][:3]
-    out.append('== 实验 N1：第 10 日起典座与三名饭头同时病倒 4 日 ==')
+    out.append('== 实验 N1：第 %d 日起典座与三名饭头同时病倒 %d 日 ==' % (N1_DAY, N1_DAYS))
+    n1 = n1_script(eng)
     for tag, act in (('无人代理', False), ('监院派人代理', True)):
-        x = ProtoRun(seed=seed, rng=rng, script={'ill': (10, kit, 4)}, acting=act).run()
+        x = ProtoRun(seed=seed, rng=rng, script=n1, acting=act).run()
         mx = summary(x.engine)
         info['n1_' + tag] = (x, mx)
         out.append(line(tag, mx))
-        out.append('   逐日偷食累计（第9–16日）： %s' % [t for d, t, h, hu in x.engine.daily if 9 <= d <= 16])
-    out.append('== 90 日与多种子 ==')
-    x = ProtoRun(seed=seed, rng=rng, days=90).run()
+        lo, hi = N1_WINDOW
+        out.append('   逐日偷食累计（第%d–%d日）： %s' % (lo, hi, [t for d, t, h, hu in x.engine.daily if lo <= d <= hi]))
+    out.append('== %d 日与多种子 ==' % LONG_DAYS)
+    x = ProtoRun(seed=seed, rng=rng, days=LONG_DAYS).run()
     mx = summary(x.engine)
     info['d90'] = (x, mx)
-    out.append(line('90日', mx))
+    out.append(line('%d日' % LONG_DAYS, mx))
     out.append('   每次决策 %.1f 微秒' % mx['us'])
-    for sd in (1, 2, 3, 4, 5):
+    for sd in EXTRA_SEEDS:
         x = ProtoRun(seed=sd, rng=rng).run()
         mx = summary(x.engine)
         info['seed%d' % sd] = (x, mx)

@@ -101,9 +101,7 @@ class ConstantsMatchPrototype(unittest.TestCase):
                 seen.add(float(o))
         walk(self.sp)
         walk(PROTO60_CAST)                                           # 三个要角的性格改写属于场景，不在 SiteSpec 里
-        trivial = {'0', '1', '2', '3', '4'}                          # 下标、计数、常见倍数：不要求出现
-        missing = sorted(n for n in nums - trivial if float(n) not in seen and n not in ('100', '12', '60', '30', '21600'))
-        # 100（刻度）、12（一日时辰数）、60/30（人数与日数的默认）属于单位与场景参数，不在规格里
+        missing = sorted(n for n in nums if float(n) not in seen)         # 不豁免任何数（含 0、1、100、12、60、30）
         self.assertEqual(missing, [], '原型里出现、规格里没有的数：%s' % missing)
 
 
@@ -138,6 +136,33 @@ class StepwiseDifferential(unittest.TestCase):
                              [norm(b.ill), norm(b.conf), norm(b.kneel), norm(b.duty_day), norm(b.lazy_day)])
         self.assertEqual(r.mods, eng.opinions.mods)
         self.assertEqual((r.water, r.wood, r.kit_staff), (eng.stock['water'], eng.stock['wood'], eng.kit_staff))
+
+    def test_random_keys_are_the_same_multiset_as_the_prototype(self):
+        """每一次抽签的键（用途、日、时辰、人……）与原型的抽签键逐一相同、次数相同：不多抽、不少抽、不换键。"""
+        from collections import Counter
+        from tianl.core import rnd_b2
+        probe = ProtoRun().engine
+        kit = probe.by['典座'] + probe.by['饭头'][:3]
+        scripts = (({'gossip': (6, probe.common[8].ix, probe.common[9].ix)}, True), ({'ill': (10, kit, 4)}, False))
+        for script, acting in scripts:
+            ref_keys, port_keys = Counter(), Counter()
+            orig = self.ref.rnd
+
+            def rec_ref(*k):
+                ref_keys[tuple(map(str, k))] += 1
+                return orig(*k)
+
+            def rec_port(*k):
+                port_keys[tuple(map(str, k))] += 1
+                return rnd_b2(*k)
+            self.ref.rnd = rec_ref
+            try:
+                self.ref.World(seed=PROTO_SEED, script=script, acting=acting).run()
+            finally:
+                self.ref.rnd = orig
+            ProtoRun(script=script, acting=acting, rng=rec_port).run()
+            self.assertEqual(ref_keys, port_keys, script)
+            self.assertGreater(sum(port_keys.values()), 10000)
 
     def test_seeds_and_sizes(self):
         for seed in (1, 2, 3, PROTO_SEED):

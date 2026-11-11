@@ -23,6 +23,14 @@ DEFS_ROOT = Path(__file__).resolve().parents[2] / 'defs'
 # 内核用到的定义类别目录（只加载它们，别的模块的定义文件有问题时不拖累内核）
 KERNEL_CATEGORIES = ('calendar', 'space', 'economy', 'org', 'post', 'item', 'scenario')
 META_KEYS = frozenset({'id', 'kind', '_file', 'parent', 'name', 'note', 'order'})
+# 内核代码按“角色名”取场所、账户、品类、农户类别与岗位；任何一座寺院的定义必须把这些角色都配齐
+# （角色名 = 定义编号的最后一段，品类的角色由 role 字段给出）。缺哪个，装配时就报哪个。
+REQUIRED_ROLES = dict(
+    pl='temple gate main_hall fatang refectory granary store guest grounds road estate estate_granary village town port'.split(),
+    ac='org equity port pilgrims town state neighbor shop_grain shop_gen village'.split(),
+    cm='staple fuel fresh textile lumber'.split(),
+    hh='tenant wood'.split(),
+    T='abbot supervisor cook stock_keeper manor_head guest_master grounds_keeper disciplinarian almoner discipline_head'.split())
 
 
 class Good:
@@ -63,8 +71,8 @@ def load_kernel_defs(root=None):
 
 
 def _scoped(defs, kind, scope):
-    """某 scope 下某 kind 的全部定义，按 (order, 编号) 排序。"""
-    rows = [d for d in defs.by_kind(kind) if d['id'].split(':')[1] == scope]
+    """某 scope 下某 kind 的全部定义，按 (order, 编号) 排序。带 kernel = false 的定义不进内核（留给别的模块用）。"""
+    rows = [d for d in defs.by_kind(kind) if d['id'].split(':')[1] == scope and d.get('kernel', True)]
     return sorted(rows, key=lambda d: (d.get('order', 0), d['id']))
 
 
@@ -199,7 +207,13 @@ class Spec:
             s.scenario = {k: v for k, v in g('scenario', 'regress').items() if k not in META_KEYS}
         except KeyError:
             s.scenario = {}
+        s.check_roles()
         return s
+
+    def check_roles(self):
+        missing = [f'{ns}.{r}' for ns, roles in REQUIRED_ROLES.items() for r in roles if not hasattr(getattr(self, ns), r)]
+        if missing:
+            raise DefsError([f'scope {self.scope!r} 缺少内核要用的角色：' + '、'.join(missing)])
 
     def code(self, ref):
         """定义编号 -> 运行时钥匙（place / account / commodity / item 的 code）。"""

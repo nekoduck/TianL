@@ -34,7 +34,41 @@ FLAG_RE = re.compile(r'^[a-z][a-z0-9_]*$')
 ASCII_KEY_RE = re.compile(r'^[a-z_][a-z0-9_]*$')
 HASH_RE = re.compile(r'^[0-9a-f]{16}$')
 
-PART_NAMES = ('c1', 'c2', 'c3', 'c4', 'c5', 'c6')
+# 分区名（文件名的主干）。普查分区：人物按“首见回”分 p1–p4，其余 c5 地点、c6a 组织、c6b 武学、c6c 物与文书；
+# 断言/事件/秘密/身份按回产出 chNN（ch00 卷首、ch01–ch50 正文、ch51 后记、ch52 附录）。
+# c1–c6 是上一版（无原文时）的人物/类型分区，仍然认（只追加不改名）。
+CENSUS_PARTS = ('p1', 'p2', 'p3', 'p4', 'c5', 'c6a', 'c6b', 'c6c')
+PART_NAMES = ('c1', 'c2', 'c3', 'c4', 'c5', 'c6') + ('p1', 'p2', 'p3', 'p4', 'c6a', 'c6b', 'c6c')
+PART_CHAPTERS = {'p1': (0, 12), 'p2': (13, 25), 'p3': (26, 38), 'p4': (39, 52)}   # 首见回范围（含两端）
+CHAPTER_PART_RE = re.compile(r'^ch(\d{2})$')
+MAX_CHAPTER = 52
+
+
+def is_part_name(name):
+    """分区名或按回文件名（ch00–ch52）。"""
+    if name in PART_NAMES:
+        return True
+    m = CHAPTER_PART_RE.match(name) if isinstance(name, str) else None
+    return bool(m) and int(m.group(1)) <= MAX_CHAPTER
+
+
+def part_of_chapter(ch):
+    """回号 -> 人物普查分区 p1–p4。"""
+    for k, (lo, hi) in PART_CHAPTERS.items():
+        if lo <= ch <= hi:
+            return k
+    return None
+
+
+def stem_in_part(stem, part):
+    """文件主干 stem 是否属于分区 part：同名，或 part 是 p1–p4 而 stem 是落在其回范围内的 chNN。"""
+    if stem == part:
+        return True
+    m = CHAPTER_PART_RE.match(stem)
+    rng = PART_CHAPTERS.get(part)
+    if m and rng:
+        return rng[0] <= int(m.group(1)) <= rng[1]
+    return False
 
 MAX_TEXT = 120        # 任何自由文字字段的上限（防止把原著长段引文写进库）
 MAX_NAME = 30
@@ -431,7 +465,11 @@ def _validate_provenance(rec, where, ctx, errs, check_review=True, ev_name='ev')
 
 
 def _expand_provenance(rec):
-    """就地补默认并规范中文标签（rec 是浅拷贝）。"""
+    """就地补默认并规范中文标签（rec 是浅拷贝）。紧凑键 b（= basis）、e（= ev）也接受（canon_resolve 统一写 b）。"""
+    if 'b' in rec and 'basis' not in rec:
+        rec['basis'] = rec.pop('b')
+    if 'e' in rec and 'ev' not in rec:
+        rec['ev'] = rec.pop('e')
     rec['tag'] = norm_enum('tag', rec.get('tag', 'text'))
     rec['basis'] = norm_enum('basis', rec.get('basis', 'recall'))
     rec['ev'] = _expand_evidence(rec.get('ev', []))
@@ -806,7 +844,10 @@ def _span(q):
 
 def check_assertion_set(items, ctx=None):
     """集合级检查。items: [(where, 完整格式断言)]。返回错误列表：
-    重复编号、重复内容、单值属性首选断言的时间重叠冲突。"""
+    同编号却内容不同、单值属性首选断言的时间重叠冲突。
+    **“重复”只是警告**（经 ctx.warn 报告，不进错误列表）：同编号同内容、或不同编号但内容相同（相同主体、属性、值、限定词、
+    叙述方式）——同一事实可在多回里各出现一次，第 6 阶段合并证据。"""
+    ctx = _ctx(ctx)
     errs = []
     by_id, by_content = {}, {}
     groups = {}
@@ -814,15 +855,19 @@ def check_assertion_set(items, ctx=None):
         if not isinstance(a, dict):
             continue
         i = a.get('id')
-        if i in by_id:
-            errs.append(f'{where}: 断言编号 {i} 与 {by_id[i]} 重复')
-        else:
-            by_id[i] = where
         ck = assertion_id({**a, 'id': None})
-        if ck in by_content and by_content[ck][1] != i:
-            errs.append(f'{where}: 与 {by_content[ck][0]} 内容重复（相同主体、属性、值、限定词、叙述方式）')
+        if i in by_id:
+            w0, ck0 = by_id[i]
+            if ck0 == ck:
+                ctx.warn(f'{where}: 断言编号 {i} 与 {w0} 重复（内容相同；第 6 阶段合并证据）')
+            else:
+                errs.append(f'{where}: 断言编号 {i} 与 {w0} 相同但内容不同（编号冲突）')
         else:
-            by_content.setdefault(ck, (where, i))
+            by_id[i] = (where, ck)
+            if ck in by_content and by_content[ck][1] != i:
+                ctx.warn(f'{where}: 与 {by_content[ck][0]} 内容重复（相同主体、属性、值、限定词、叙述方式；第 6 阶段合并证据）')
+            else:
+                by_content.setdefault(ck, (where, i))
         prop = PROPS.get(a.get('property'))
         if prop is None or prop.multi or prop.derived:
             continue
@@ -1361,39 +1406,40 @@ def apply_traits(words, table):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# 30 人召回名单（固定）
+# 30 人召回名单（固定）。第三列是人物普查分区：按“首见回”（姓名或所列别名在正文第 1–50 回里第一次出现的回）：
+# p1 = 第 1–12 回，p2 = 13–25，p3 = 26–38，p4 = 39–52（见 docs/CANON_SCHEMA.md 第 11、12 节）
 # ----------------------------------------------------------------------------------------------------------------------
 RECALL_30 = (
-    ('乔峰', 'person:canon:qiaofeng', 'c2'),
-    ('段誉', 'person:canon:duanyu', 'c1'),
-    ('虚竹', 'person:canon:xuzhu', 'c3'),
-    ('慕容复', 'person:canon:murongfu', 'c4'),
-    ('王语嫣', 'person:canon:wangyuyan', 'c4'),
-    ('阿朱', 'person:canon:azhu', 'c4'),
-    ('阿紫', 'person:canon:azi', 'c3'),
-    ('木婉清', 'person:canon:muwanqing', 'c1'),
-    ('钟灵', 'person:canon:zhongling', 'c1'),
-    ('段正淳', 'person:canon:duanzhengchun', 'c1'),
-    ('保定帝', 'person:canon:baodingdi', 'c1'),
-    ('刀白凤', 'person:canon:daobaifeng', 'c1'),
-    ('段延庆', 'person:canon:duanyanqing', 'c1'),
-    ('叶二娘', 'person:canon:yeerniang', 'c1'),
-    ('云中鹤', 'person:canon:yunzhonghe', 'c1'),
-    ('南海鳄神', 'person:canon:nanhaieshen', 'c1'),
-    ('鸠摩智', 'person:canon:jiumozhi', 'c3'),
-    ('游坦之', 'person:canon:youtanzhi', 'c2'),
-    ('天山童姥', 'person:canon:tianshantonglao', 'c3'),
-    ('李秋水', 'person:canon:liqiushui', 'c3'),
-    ('无崖子', 'person:canon:wuyazi', 'c3'),
-    ('丁春秋', 'person:canon:dingchunqiu', 'c3'),
-    ('苏星河', 'person:canon:suxinghe', 'c3'),
-    ('玄慈', 'person:canon:xuanci', 'c3'),
-    ('萧远山', 'person:canon:xiaoyuanshan', 'c2'),
-    ('慕容博', 'person:canon:murongbo', 'c4'),
-    ('康敏', 'person:canon:kangmin', 'c2'),
-    ('全冠清', 'person:canon:quanguanqing', 'c2'),
-    ('包不同', 'person:canon:baobutong', 'c4'),
-    ('风波恶', 'person:canon:fengboe', 'c4'),
+    ('乔峰', 'person:canon:qiaofeng', 'p1'),
+    ('段誉', 'person:canon:duanyu', 'p1'),
+    ('虚竹', 'person:canon:xuzhu', 'p3'),
+    ('慕容复', 'person:canon:murongfu', 'p1'),
+    ('王语嫣', 'person:canon:wangyuyan', 'p1'),
+    ('阿朱', 'person:canon:azhu', 'p1'),
+    ('阿紫', 'person:canon:azi', 'p2'),
+    ('木婉清', 'person:canon:muwanqing', 'p1'),
+    ('钟灵', 'person:canon:zhongling', 'p1'),
+    ('段正淳', 'person:canon:duanzhengchun', 'p1'),
+    ('保定帝', 'person:canon:baodingdi', 'p1'),
+    ('刀白凤', 'person:canon:daobaifeng', 'p1'),
+    ('段延庆', 'person:canon:duanyanqing', 'p1'),
+    ('叶二娘', 'person:canon:yeerniang', 'p1'),
+    ('云中鹤', 'person:canon:yunzhonghe', 'p1'),
+    ('南海鳄神', 'person:canon:nanhaieshen', 'p1'),
+    ('鸠摩智', 'person:canon:jiumozhi', 'p1'),
+    ('游坦之', 'person:canon:youtanzhi', 'p2'),
+    ('天山童姥', 'person:canon:tianshantonglao', 'p1'),
+    ('李秋水', 'person:canon:liqiushui', 'p3'),
+    ('无崖子', 'person:canon:wuyazi', 'p3'),
+    ('丁春秋', 'person:canon:dingchunqiu', 'p1'),
+    ('苏星河', 'person:canon:suxinghe', 'p3'),
+    ('玄慈', 'person:canon:xuanci', 'p1'),
+    ('萧远山', 'person:canon:xiaoyuanshan', 'p2'),
+    ('慕容博', 'person:canon:murongbo', 'p1'),
+    ('康敏', 'person:canon:kangmin', 'p2'),
+    ('全冠清', 'person:canon:quanguanqing', 'p2'),
+    ('包不同', 'person:canon:baobutong', 'p2'),
+    ('风波恶', 'person:canon:fengboe', 'p2'),
 )
 RECALL_IDS = tuple(r[1] for r in RECALL_30)
 assert len(RECALL_IDS) == 30 and len(set(RECALL_IDS)) == 30

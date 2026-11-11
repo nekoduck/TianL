@@ -1,6 +1,7 @@
 """tianl/npc 的接口与性质测试：Host 边界、rng 注入、查询 API、ix/pid、观察者无关、源码规矩。
 （与原型的数字、哈希比对在 test_npc_proto.py；与原型常量、逐步差分在 test_npc_spec.py。）
 """
+import ast
 import dataclasses
 import os
 import re
@@ -12,7 +13,7 @@ from tianl.core import cal, rnd, rnd_b2
 from tianl.npc import NpcEngine, PersonSpec, ProtoRun, Script, StandaloneHost, proto60_spec
 from tianl.npc import events as E
 from tianl.npc.host import CmdResult, Event, Host
-from tianl.npc.model import Symbols, Trail, pack, unpack
+from tianl.npc.model import FIELD_MASK, GAP, Symbols, Trail, pack, unpack
 from tianl.npc.spec import SpecError
 from tianl.npc.scenarios import gossip_script
 
@@ -76,18 +77,37 @@ class HostBoundary(unittest.TestCase):
         self.assertEqual(x.engine.stat['job_post'], 870)
         self.assertGreater(x.engine.stat['half_meal'], 0)                 # 没人挑水打柴，库存耗尽，半餐
 
-    def test_non_contiguous_event_ids_are_used_as_given(self):
-        class Offset(StandaloneHost):
+    def test_engine_behaviour_does_not_depend_on_how_the_host_numbers_events(self):
+        """随机数键与见闻用引擎自己的流水号；Host 的事件 id（从 1000 起、每次跳 3、夹杂别处写的事件）只出现在边界。"""
+        class Busy(StandaloneHost):
+            def __init__(self, *a, **kw):
+                super().__init__(*a, **kw)
+                self.next_id = 1000
+                self.by_id = {}
+
             def ev(self, kind, actor, place, witnesses, day, slot, cause=None, **data):
                 e = super().ev(kind, actor, place, witnesses, day, slot, cause, **data)
-                e.id += 1000
+                e.id, self.next_id = self.next_id, self.next_id + 3
+                self.by_id[e.id] = e
                 return e
-        h = Offset(20261110, rnd_b2)
+        h = Busy(20261110, rnd_b2)
         x = ProtoRun(host=h, script=gossip_script(ProtoRun().common)).run()
         eng = x.engine
-        self.assertTrue(all(e.id >= 1000 for e in eng.evs))
-        self.assertTrue(all(c['eid'] >= 1000 for c in eng.cases()))
-        self.assertTrue(all(n[0] >= 1000 for p in eng.pids for n in eng.news_of(p)))
+        self.assertEqual(x.hash, BASE_HASH)                                  # 与 StandaloneHost 的结果逐位相同
+        self.assertEqual([e.id for e in eng.evs], list(range(len(eng.evs))))    # 引擎流水号从 0 连续
+        self.assertTrue(all(e.hid >= 1000 and e.hid % 3 == 1 for e in eng.evs))
+        self.assertEqual([e.hid for e in eng.evs], [e.id for e in h.events])    # hid 就是 Host 给的
+        for e in h.events:                                                    # 交给 Host 的 cause 是 Host 自己的 id
+            if e.cause is not None:
+                self.assertIn(e.cause, h.by_id)
+                self.assertEqual(h.by_id[e.cause].kind, E.FOOD_THEFT)
+        self.assertTrue(all(c['eid'] >= 1000 for c in eng.cases()))           # 边界出口：案卷、见闻都给 Host 的 id
+        news = [n for p in eng.pids for n in eng.news_of(p)]
+        self.assertTrue(news and all(n[0] in h.by_id for n in news))
+        self.assertEqual(eng.event_of(news[0][0]).hid, news[0][0])
+        ref = base_run().engine
+        self.assertEqual(eng.stat, ref.stat)
+        self.assertEqual([eng.places_of(i) for i in range(60)], [ref.places_of(i) for i in range(60)])
 
     def test_host_base_class_is_abstract(self):
         h = Host()
@@ -238,7 +258,7 @@ class Queries(unittest.TestCase):
             sanctions = [e for e in eng.evs if e.kind == E.SANCTION]
             self.assertEqual(len(sanctions), eng.stat['sanction'])
             for s in sanctions:
-                c = by_case[s.cause]
+                c = by_case[eng.ev_by_id[s.cause].hid]
                 self.assertIn(c['via'], ('举报', '认错'))
                 self.assertEqual(eng.ev_by_id[s.cause].kind, E.FOOD_THEFT)
                 reports = [e for e in eng.evs if e.kind == E.REPORT and e.cause == s.cause]
@@ -258,6 +278,20 @@ class Queries(unittest.TestCase):
         self.assertEqual([c['sanction'] for c in eng.cases() if c['sanction']],
                          ['罚跪香三日', '杖责并禁闭二日', '禁闭五日', '迁单出寺'])    # 四级阶梯各走一遍
         self.assertEqual(eng.people[x.glutton.ix].gone, 83)                     # 计划 8.5：第 83 日迁单出寺
+
+    def test_explain_says_where_a_departed_monk_went(self):
+        x = ProtoRun(days=90).run()
+        eng, g = x.engine, x.glutton
+        self.assertEqual((g.gone, g.gone_why), (83, '迁单出寺'))
+        self.assertIsNone(eng.where(g.ix, 83, 11))                               # where 仍是契约里的 None
+        ex = eng.explain(g.pid, 83, 11)
+        self.assertEqual((ex['gone'], ex['reason'], ex['place'], ex['layer']), (83, '迁单出寺', None, None))
+        self.assertIn('已于第83日离寺', ex['text'])
+        self.assertEqual(eng.explain(g.ix, 90, 0)['gone'], 83)
+        self.assertNotIn('gone', eng.explain(g.ix, 83, 5))                       # 迁单当日巳时（裁断时辰）仍有正常的决定
+        self.assertEqual(eng.explain(g.ix, 83, 6)['gone'], 83)                   # 此后没有决定
+        self.assertNotIn('gone', eng.explain(g.ix, 82, 11))
+        self.assertIsNone(eng.explain(eng.people[0].ix, 99, 0))                  # 没离开的人：没记录就是 None
 
     def test_state_invariants(self):
         for p in self.eng.people:
@@ -296,10 +330,33 @@ class IxAndPid(unittest.TestCase):
         p = eng.on_person_added(PersonSpec('P9002', '来客', None, '武', 'dorm1'))
         self.assertEqual(eng.on_person_added('P9002'), p)
         eng.on_person_removed('P9002', '游方')
-        self.assertEqual(p.gone, 2)
+        self.assertEqual((p.gone, p.gone_why), (2, '游方'))
         eng.run_day(3)
         self.assertIsNone(eng.where('P9002', 3, 0))                # 已离开的人不再有决定
         self.assertEqual(eng.stat['left_游方'], 1)
+        ex = eng.explain('P9002', 3, 0)                            # 但 explain 说得清去了哪里
+        self.assertEqual((ex['gone'], ex['reason']), (2, '游方'))
+
+    def test_on_person_added_by_pid_uses_the_integration_factory(self):
+        """ARCHITECTURE 5.1 的 on_person_added(pid)：名册里没有的 pid 由集成层的 person_factory 说明它是谁。"""
+        eng = ProtoRun(days=2).run().engine
+        with self.assertRaises(LookupError):                       # 没有工厂：不凭空造人
+            eng.on_person_added('P9100')
+        asked = []
+
+        def factory(pid):
+            asked.append(pid)
+            return PersonSpec(pid, '来者', None, '学', 'dorm3')
+        eng.person_factory = factory
+        p = eng.on_person_added('P9100')
+        self.assertEqual((p.pid, p.ix, p.dorm, asked), ('P9100', 60, 'dorm3', ['P9100']))
+        self.assertIs(eng.on_person_added('P9100'), p)             # 再来一次：已在名册，不再问工厂
+        self.assertIs(eng.on_person_added(60), p)
+        self.assertEqual(asked, ['P9100'])
+        eng.person_factory = lambda pid: PersonSpec('别人', '错', None, '学', 'dorm3')
+        with self.assertRaises(ValueError):                        # 工厂给错了人
+            eng.on_person_added('P9101')
+        self.assertEqual(len(eng.people), 61)
 
     def test_script_accepts_pid_or_ix(self):
         g = ProtoRun().common
@@ -336,10 +393,51 @@ class Model(unittest.TestCase):
     def test_trail(self):
         t = Trail()
         self.assertIsNone(t.get(5))
+        self.assertIsNone(t.end)
         t.push(10, 7)
         t.push(11, 8)
         self.assertEqual((t.get(10), t.get(11), t.get(12), t.get(9)), (7, 8, None, None))
-        self.assertEqual(len(t), 2)
+        self.assertEqual((len(t), t.t0, t.end), (2, 10, 12))
+
+    def test_trail_tolerates_gaps_and_rejects_rewinds(self):
+        t = Trail()
+        t.push(10, 7)
+        t.push(13, 9)                                               # 中间 11、12 没记（暂离再回）
+        self.assertEqual([t.get(k) for k in range(9, 15)], [None, 7, None, None, 9, None])
+        self.assertEqual((len(t), t.end), (4, 14))
+        self.assertEqual(t.get(13), 9)                              # 对号入座，不错位
+        with self.assertRaises(ValueError):
+            t.push(13, 1)                                           # 重复
+        with self.assertRaises(ValueError):
+            t.push(12, 1)                                           # 回退
+        self.assertEqual(t.get(13), 9)
+
+    def test_gap_marker_cannot_collide_with_a_real_decision(self):
+        s = Symbols()
+        for i in range(FIELD_MASK - 1):                             # 符号号 0..FIELD_MASK-2 都可分配
+            s.intern(i)
+        self.assertEqual(s.intern('x'), FIELD_MASK - 1)
+        with self.assertRaises(OverflowError):                      # FIELD_MASK 留给 GAP
+            s.intern('y')
+        self.assertNotEqual(pack(FIELD_MASK - 1, FIELD_MASK - 1, FIELD_MASK - 1, FIELD_MASK - 1), GAP)
+        self.assertEqual(unpack(GAP), (FIELD_MASK,) * 4)
+
+    def test_queries_survive_a_gap_in_a_trail(self):
+        eng = NpcEngine(proto60_spec(), StandaloneHost(1, rnd_b2))
+        a = eng.add_person(PersonSpec('A', '甲', None, '武', 'dorm1'))
+        b = eng.add_person(PersonSpec('B', '乙', None, '武', 'dorm1'))
+        sid = eng.sym.intern
+        hall = pack(sid('hall'), sid('chant'), sid('集体'), sid('早课'))
+        zen = pack(sid('zen'), sid('zazen'), sid('集体'), sid('晨坐'))
+        for t, v in ((24, hall), (25, hall), (27, zen)):            # A 缺了 t=26
+            a.trail.push(t, v)
+        for t, v in ((24, hall), (25, zen), (26, hall), (27, zen)):
+            b.trail.push(t, v)
+        self.assertEqual(eng.places_of('A'), ['hall', 'hall', None, 'zen'])
+        self.assertIsNone(eng.where('A', 2, 2))                      # t=26：没有记录
+        self.assertEqual(eng.where('A', 2, 3)[0], 'zen')             # t=27：没有错位
+        self.assertEqual(eng.where('B', 2, 2)[0], 'hall')
+        self.assertEqual(eng.agree('A', 'B'), 2 / 3)                 # 只比两人都有记录的 3 个时辰：t=24、25、27
 
     def test_spec_is_frozen(self):
         sp = proto60_spec()
@@ -400,6 +498,23 @@ class SpecValidation(unittest.TestCase):
             NpcEngine(bad, StandaloneHost(1, rnd_b2))
         self.assertEqual(cm.exception.problems, problems)
 
+    def test_new_fields_are_validated(self):
+        sp = proto60_spec()
+        bad = dataclasses.replace(sp, free=dataclasses.replace(sp.free, choice_key_chars=0),
+                                  cases=dataclasses.replace(sp.cases, via_confess=sp.cases.via_report))
+        problems = bad.validate()
+        self.assertTrue(any('choice_key_chars' in p for p in problems))
+        self.assertTrue(any('via_report' in p for p in problems))
+
+    def test_via_labels_come_from_the_spec(self):
+        sp = proto60_spec()
+        renamed = dataclasses.replace(sp, cases=dataclasses.replace(sp.cases, via_report='据举报', via_confess='自认'))
+        x = ProtoRun(spec=renamed, days=90, seed=4).run()
+        vias = {c['via'] for c in x.engine.cases() if c['via']}
+        self.assertEqual(vias, {'据举报', '自认'})
+        y = ProtoRun(days=90, seed=4).run()                                  # 换了标签，行为不变
+        self.assertEqual(x.hash, y.hash)
+
 
 @unittest.skipUnless(os.environ.get('TIANL_SLOW'), '慢测试：TIANL_SLOW=1 打开')
 class SlowScale(unittest.TestCase):
@@ -422,6 +537,23 @@ class SourceRules(unittest.TestCase):
             for n, line in enumerate(f.read_text(encoding='utf-8').splitlines(), 1):
                 code = line.split('#')[0]
                 self.assertIsNone(bad.search(code), '%s:%d: %s' % (f.name, n, line))
+
+    def test_no_semantic_numbers_outside_spec_and_scenarios(self):
+        """spec.py 与 scenarios.py 之外，数值字面量只能是下标/计数用的 0 1 2 3，或模块级的具名常量（UPPER_CASE = …）。
+        所以引擎里没有藏着的参数：要调一个数，只能去 SiteSpec 或场景。"""
+        const = re.compile(r'^_?[A-Z][A-Z0-9_]*$')
+        for f in sorted(NPC_SRC.glob('*.py')):
+            if f.name in ('spec.py', 'scenarios.py'):
+                continue
+            tree = ast.parse(f.read_text(encoding='utf-8'))
+            named = set()
+            for st in tree.body:
+                if isinstance(st, ast.Assign) and all(isinstance(t, ast.Name) and const.match(t.id) for t in st.targets):
+                    named.update(id(n) for n in ast.walk(st))
+            for n in ast.walk(tree):
+                if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool) \
+                        and id(n) not in named:
+                    self.assertIn(n.value, (0, 1, 2, 3), '%s:%d 有未命名的数值常数 %r' % (f.name, n.lineno, n.value))
 
     def test_wall_clock_only_for_reporting(self):
         users = [f.name for f in sorted(NPC_SRC.glob('*.py')) if 'perf_counter' in f.read_text(encoding='utf-8')]
