@@ -1,0 +1,15 @@
+{"s":"org:canon:tiejianmen","p":"org_kind","v":"sect"}
+{"s":"org:canon:tiejianmen","p":"post_def","v":"掌门","q":{"lv":1}}
+{"s":"org:canon:tiejianmen","p":"rule","v":"门人不得私授剑法","t":"seed"}
+{"s":"org:canon:baishisi","p":"org_kind","v":"temple"}
+{"s":"org:canon:baishisi","p":"seat","v":"place:canon:baishisi"}
+{"s":"martial:canon:liuyunjianfa","p":"m_kind","v":"sword"}
+{"s":"martial:canon:liuyunjianfa","p":"of_org","v":"org:canon:tiejianmen"}
+{"s":"martial:canon:liuyunjianfa","p":"power","v":"top"}
+{"s":"item:canon:qingyufu","p":"item_kind","v":"token"}
+{"s":"item:canon:qingyufu","p":"holder","v":"org:canon:baishisi","q":{"to":2}}
+{"s":"item:canon:qingyufu","p":"holder","v":"person:canon:suxiaotang","q":{"from":3,"to":3}}
+{"s":"item:canon:qingyufu","p":"holder","v":"person:canon:linyuan","q":{"from":4}}
+{"s":"document:canon:duqouzhangce","p":"doc_kind","v":"ledger"}
+{"s":"document:canon:duqouzhangce","p":"reveals","v":"secret:canon:heiyi_shi_xiaotang"}
+{"s":"document:canon:duqouzhangce","p":"location","v":"place:canon:qingyundu"}

@@ -1,0 +1,8 @@
+# 合成样本：虚构的“青云渡”世界，与原著无关。c1 登记人物。
+{"id":"person:canon:linyuan","type":"person","name":"林远","aliases":["林少侠","远哥"],"note":"铁剑门弟子"}
+{"id":"person:canon:suxiaotang","type":"person","name":"苏小棠","aliases":["小棠","苏姑娘"],"note":"来历不明的少女"}
+{"id":"person:canon:huiming","type":"person","name":"慧明","aliases":["慧明大师",{"name":"大师","ambiguous":true}],"note":"白石寺住持"}
+{"id":"person:canon:huineng","type":"person","name":"慧能","aliases":["慧能大师",{"name":"大师","ambiguous":true}],"note":"白石寺僧人"}
+{"id":"person:canon:tieshanzi","type":"person","name":"铁山子","aliases":["掌门"],"note":"铁剑门掌门，林远的师父"}
+{"id":"person:canon:leijian","type":"person","name":"雷剑","aliases":[],"note":"铁剑门老掌门，开局前已去世"}
+{"id":"org:canon:tiejianmen","type":"org","name":"铁剑门","aliases":[],"note":"林远的门派"}

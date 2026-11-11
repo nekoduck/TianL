@@ -1,0 +1,149 @@
+# 规则参数 K：v0.2 每日结算里散落在代码中的阈值与比例，原型数值原样迁出，改动即改世界。
+# 命名后缀：_shi 为“石”（代码里 x 1000 合），_guan 为“贯”（代码里 x 1000 文），_days 为日数，_sla 为订单时限（日）。
+# 凡写 _n/_d 的是整数分子分母（先乘后整除，保持原型的取整次序）。
+
+["param:shaolin:rules"]
+name = "钱粮规则参数"
+
+# ---- 粮档位（降级阶梯）：寺库存粮可支日数 >= tier_cover[i] 即为第 i 档；变好要多出 tier_pad 日余量
+tiers = ["充足", "留意", "紧张", "告急", "断供"]
+tier_mult = [1.0, 1.0, 0.8, 0.6, 0.6]        # 各档口粮倍率
+tier_cover = [60, 30, 10, 1]
+tier_pad = 5
+tier_light = 1        # 此档及以前仍算“正常供”（斋饭不写减供）
+tier_alms = 2         # 此档起可外出募化
+tier_crisis = 3       # 此档起向邻寺借粮、暂停挂单
+tier_famine = 4       # 此档僧人开始游方离寺
+
+# ---- 天气
+snow_min_days = 4
+snow_span = 9
+
+# ---- 香客
+closed_pilgrim_mult = 0.1       # 封路时香客锐减
+pilgrim_noise = [0.7, 0.6]      # 人数 = 基数 x (a + b x 随机)
+
+# ---- 收成
+yield_base = 0.92               # 年景 = base + var x 随机
+yield_var = 0.16
+bad_yield = 0.7                 # 年景低于此数为灾年
+bad_rent_share = 0.3            # 灾年寺院减租（分成）
+bad_tax_mult = 0.5              # 灾年两税减半
+price_yield_ref = 0.95          # 年景低于此数粮价上扬
+price_yield_slope = 1.2
+hh_yield_base = 0.85            # 各户收成的个体浮动
+hh_yield_var = 0.3
+repay_n = 3                     # 佃户收成扣租后，欠粮最多按此分数归还
+repay_d = 10
+
+# ---- 农户
+member_min = 3                  # 户口 = min + int(随机 x span)
+member_span = 5
+immig_prob = 0.5                # 岁首每个空出的佃田由外来户补上的概率
+immig_cash_guan = 1             # 迁入户携带的钱
+sell_n = 9                      # 卖粮价 = 粮价 x n / d
+sell_d = 10
+sell_reserve_days = 60          # 农户卖粮时，留够下次收成前的口粮再加此日数
+shop_cash_floor_guan = 50       # 粮铺卖不出去的底线：账上至少留这么多钱
+hh_shop = [
+  { c = "commodity:shaolin:oilsalt", want = "hh_salt", floor_guan = 0 },
+  { c = "commodity:shaolin:cloth", want = "hh_cloth", floor_guan = 3 },
+]
+hh_spare_floor_guan = 3         # 家用杂项：留这么多买粮钱，富余的才花
+hh_rich_guan = 2                # 钱多的多花：超出 hh_rich_guan 的部分的 n/d
+hh_rich_n = 6
+hh_rich_d = 10
+hh_buy_days = 10                # 缺粮户一次买够的日数
+hh_borrow_cap_shi = 6           # 佃户向庄仓借粮的累计上限
+hunger_relief = 2               # 断粮满此日数（再饿一日），寺院在“充足”档时赈济
+relief_days = 10                # 赈济十日口粮
+hunger_leave = 30               # 断粮超此日数离乡
+
+# ---- 价格
+thin_shop_stock_shi = 100       # 粮铺存粮低于此数，粮价上浮
+thin_markup = 1.1
+
+# ---- 寺院粮库规则
+reserve_days = 400              # 秋收后留足的蓄粮日数，余粮出售
+transfer_below = 75             # 寺库可支日数低于此数，从庄仓调粮
+transfer_to = 120
+transfer_sla = 20
+buy_below = 45                  # 寺库加庄仓合计低于此数，向粮铺市购
+buy_to = 90
+buy_sla = 12
+alms_below = 30                 # 档位紧张以下且总量低于此数，募化
+alms_gap = 20                   # 两次募化至少相隔
+alms_sla = 16
+borrow_days = 30                # 向邻寺借粮的日数量
+borrow_sla = 10
+convoy_days = 2                 # 庄仓 -> 寺库 车队路程
+purchase_days = 1               # 市购、村购入库路程
+borrow_ship_days = 3            # 邻寺借粮路程
+alms_days = 10                  # 募化一轮用时
+alms_grain = [20, 40]           # 募化所得粮（石）= a + b x 随机，再按年景折减
+alms_money = [5, 10]            # 募化所得钱（贯）
+charity_shi = 20                # 施粥用粮
+merit_n = 6                     # 岁末结余（超库钱目标部分）拨作修造功德的比例
+merit_d = 10
+
+# ---- 杂项补货
+restock_sla = 10
+veg_reorder = 10                # 鲜菜低于此数补，补到 veg_upto
+veg_upto = 15
+veg_sla = 6
+veg_cap = 6                     # 村里每日供菜上限（担）
+wood_cap_n = 3                  # 村里每日供柴上限 = 樵户数 x n / d
+wood_cap_d = 2
+veg_yield_default = 1           # 菜园日产（担）：按月份
+veg_yield = [
+  { months = [3, 4, 5], q = 4 },
+  { months = [6, 7, 8], q = 7 },
+  { months = [9, 10], q = 5 },
+]
+cloth_due_step = 75             # 立项一次应发僧衣匹数
+cloth_due_cap = 150             # 欠发不过两季
+cloth_sla = 14
+timber_reorder = 30
+timber_upto = 60
+timber_sla = 14
+forage_q = 5                    # 封路缺柴，普请打柴（担/日）
+meal_slot = 3                   # 斋粥事件记在哪个时辰
+
+# ---- 损坏与修缮
+damage_prob = 0.028             # 每日损坏概率（damage_months 内乘 damage_month_mult）
+damage_months = [6, 7, 11, 12]
+damage_month_mult = 2
+damage_targets = ["僧寮屋瓦", "山门木栅", "库房墙垣", "斋堂梁柱", "藏经阁窗棂", "钟楼檐角"]
+repair_timber = [10, 20]        # 用料 = a + int(随机 x b)
+repair_labor = [5, 15]          # 人日
+repair_sla = 30
+labor_per_day = 5               # 每日出工人数（工期 = 人日 / 此数 进一）
+
+# ---- 采买审批
+prio_reserve_from = 7           # 优先级 >= 此数的品类，批前先留 reserve_guan 压库钱
+reserve_guan = 60
+afford_min_div = 5              # 批得起的量不足原量 1/此数则暂缓
+
+# ---- 订单时限
+grace_days = 5                  # 超期宽限
+renew_cap = 180                 # 续单时限上限
+renew_mult = 2
+
+# ---- 铺户
+import_sla = 12
+import_days = 5
+import_markup_pct = 105         # 粮铺进粮价 = 粮价 x pct / 100
+import_discount = 0.85          # 杂货进货价 = 单价 x 此数
+import_floor_guan = 20          # 进货时账上至少留这么多钱
+shop_grain_low_shi = 100        # 粮铺存粮低于此数进粮，补到 target
+shop_grain_target_shi = 300
+shop_grain_high_shi = 500       # 高于此数外销，降到 target
+export_pct = 95
+
+# ---- 人
+mortality = [[30, 0.003], [50, 0.008], [65, 0.02]]   # [年龄上界, 年死亡率]；以上用 mortality_old
+mortality_old = 0.06
+audit_slot = 4                  # 月朔点检事件记在哪个时辰
+leave_prob = 0.05               # 断供档位下，每人每日游方离寺概率
+vac_limit = 3                   # 关键岗位连续空缺超此日数记违规
+pool_min = 150                  # 取名字池至少这么多不同的字

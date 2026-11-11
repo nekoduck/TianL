@@ -156,7 +156,17 @@ controller.py  Controller 协议；Program / Player / LLMStub          （C9）
 engine.py      NpcEngine：把以上串成一个时辰的 tick
 persist.py     每日落盘到 npc_* 表；可从表恢复
 scenarios.py   原型场景（60 僧 30 日）与实验 N1
+events.py      NPC 事件类型代码与中文渲染                       （第一步新增）
+host.py        Host 接口、Event、StandaloneHost；之后集成代理写 KernelHost（第一步新增）
+handlers.py    handler 登记表（本步只有准入门）                  （第一步新增）
+report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共用）（第一步新增）
 ```
+
+引擎与外界只通过 **Host** 交互（细节与各模块说明见 `docs/NPC_ENGINE.md`）：
+`host.ev(kind, actor, place, witnesses, day, slot, cause=None, **data) -> 含 id 的 Event`（actor 与 witnesses 在边界上是外部 id）、
+`host.seed`、`host.rng`、`host.cmd(name, pid, **args) -> CmdResult`（内核命令口，本步是 stub）。
+规格对象 `SiteSpec` 是不可变数据类，`SiteSpec.validate()` 做引用完整性自检；本步由 `scenarios.proto60_spec()` 构造，
+`from_defs()` 留给之后的 defs 驱动步骤。人的内部下标 `ix`（int，稳定，新人追加）与外部编号 `pid`（str）分开，随机数键里用 `ix`。
 
 **行为包是数据**（计划 6.2）：第 7、8、9 层的包由 `package:*` 定义声明（`layer / who / when / do`，`when` 可写日历键），
 需要条件判断的包（偷食起念、贪睡、值守轮换……）用 `handler = "<名>"` + `params` 引用 `tianl/npc` 里登记的处理器。
@@ -171,13 +181,15 @@ scenarios.py   原型场景（60 僧 30 日）与实验 N1
 4. 需求结算；想法；落轨迹。
 5. 观察者所在场所的细节叙述——**只读**，不得改任何状态。
 6. 偷食 → 见证 → 是否举报；巡夜查寮记空铺；脚本事件。
-7. 典座清点（丑/寅）；维那点名（卯、酉）；怠工被巡寮撞见；举报送达；裁断；午斋后公告。
+7. 典座清点（寅）；维那点名（卯、酉）；怠工被巡寮撞见；举报送达；裁断；午斋后公告。
 
 ### 6.2 NPC 事件类型（大写英文代码；负责人在 NPC_ENGINE.md 登记完整清单并给出中文渲染）
 
 最少包含：`FOOD_THEFT`（偷食）、`THEFT_FOUND`（失窃）、`REPORT`、`CASE_OPENED`、`SANCTION`（处分）、`ABSENCE`（缺课）、
 `SLACK`（怠工）、`BED_EMPTY`（夜不在寮）、`CONFESS`、`SUMMON`、`ANNOUNCE`、`ILL`、`RECOVER`、`CHAT`（可抽样记录）。
 所有 NPC 事件的 payload 含 `wit`（见证人 id 列表）；`cause` 列串起因果链，供“为何”回溯。
+**第一步只发其中七种**（偷食、失窃、举报、处分、缺课、怠工、夜不在寮）：多发一条会改变事件编号、进而改写以事件编号为键的随机抽签，
+原型哈希就无法复现；其余代码已在 `events.py` 登记，何时发见 `docs/NPC_ENGINE.md` 第 6 节。
 
 ### 6.3 持久化
 
@@ -190,8 +202,10 @@ scenarios.py   原型场景（60 僧 30 日）与实验 N1
 九个阶段（计划 3.2）与产物格式见 `docs/CANON_SCHEMA.md`（A 负责人**第一件事**是写它，其余模块依赖它）。固定的几点：
 
 * 断言 = 主体、属性、值 + 限定词 + 等级 + 出处 + 来源标签 + 复核（Wikidata 陈述模型）；属性清单封闭，取自计划 3.4。
-* 来源标签四种：原著明文 / 原著推断（须写理由）/ 史料先验 / 种子生成。另加字段 `basis`：`text`（有原文指针）或 `recall`（凭模型对原著的记忆，**无原文可指**）。
-  没有原文文本时全部断言 `basis = recall`、`evidence = []`；验收报告里“证据指针有效率”只统计 `basis = text` 的行，**如实写“0 条有文本支撑”**。
+* 来源标签四种：原著明文 / 原著推断（须写理由）/ 史料先验 / 种子生成。另加字段 `basis`：`text`（有原文指针）或 `recall`（凭模型记忆补的缺口，无原文可指）。
+  **用户已提供三联版全文**（本地 `sources/tianlong.txt`，永不入库，见 DECISIONS 第三节）：第 3–4 阶段按回做滑动窗口抽取，每条断言带原文指针（`basis = text`）；
+  只有缺口填补与开局状态推断才允许 `basis = recall` / `tag = infer`。验收报告里“证据指针有效率”“抽样精度”分别统计两类。
+  证据只存指针（回、段、段内起止字位、段落哈希），**不存引文**；`tests/test_no_text_leak.py` 抽样断言原文长片段不出现在任何入库文件里。
 * 人物的话只记成“某人这么说过”（叙述方式 = 人物之口），不直接当事实；真相与各人认知分两处存。
 * 事件的 `time` 用世界日数（开局为 0，旧案为负）；前提与结果用封闭的操作词表（`at / alive / knows / flag / has` 等），
   情节事件库、按书重放、条件触发都吃这套词表。

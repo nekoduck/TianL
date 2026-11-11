@@ -1,0 +1,14 @@
+# 农户类别（v0.2 的 tenant / owner / wood 三类）。classes 的顺序即开局造户的顺序（状态哈希按 rowid 遍历）。
+#   role：内核按角色取类别（tenant 佃户：交租、可向庄仓借粮；owner 自耕户：纳两税；wood 樵菜户：供柴供菜、领工钱）；
+#   code：household.kind 里存的值；prefix：户号前缀（户号 = prefix + 三位序号）；count：P 里的户数键；
+#   mu：人均田亩；place：住处；cash：开局存钱（贯）。
+# special：按户号指定的特殊户（members 人口；name 户名）。
+["param:shaolin:households"]
+name = "农户类别"
+grain_days = 140              # 开局存粮：人口 x 日口粮 x 此日数
+classes = [
+  { role = "tenant", code = "tenant", label = "佃户", prefix = "HH_T", count = "n_tenant", mu = 10, place = "place:shaolin:estate", cash = 2 },
+  { role = "owner", code = "owner", label = "自耕户", prefix = "HH_O", count = "n_owner", mu = 8, place = "place:shaolin:village", cash = 5 },
+  { role = "wood", code = "wood", label = "樵菜户", prefix = "HH_W", count = "n_wood", mu = 2, place = "place:shaolin:village", cash = 2 },
+]
+special = [{ id = "HH_O001", members = 2, name = "乔三槐家" }]

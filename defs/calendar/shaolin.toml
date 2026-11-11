@@ -1,0 +1,51 @@
+# 少林寺历法与节令（v0.2 口径，一年 360 日、每月 30 日）。
+# tianl.core.calendar.Calendar.from_def 读取 year / festivals / retreat / wheat_doy / millet_doy；
+# 其余字段是内核的“农事、香期与结算时刻表”，由 tianl.kernel.spec 读取。
+# doy = 年内第几日（0 起）；窗口 [from, to) 左闭右开；month 为 1..12。
+
+["calendar:shaolin:main"]
+name = "少林寺历"
+year = 360
+festivals = { "1-1" = "元日", "1-15" = "上元", "2-15" = "涅槃日", "4-8" = "佛诞", "4-15" = "结夏", "7-15" = "盂兰盆", "12-8" = "腊八" }
+retreat = [[4, 15], [7, 15]]          # 结夏安居：四月十五至七月十五（含两端）
+wheat_doy = 125                       # 收麦日
+millet_doy = 245                      # 收粟日
+
+# 农事：calendar 的 wheat/millet 标志 -> 作物名（顺序即收获检查顺序）
+crops = [{ flag = "wheat", name = "麦" }, { flag = "millet", name = "粟" }]
+
+# 时节
+winter_months = [11, 12, 1]           # 腊冬：香客少、封山、多烧柴
+busy_windows = [[120, 135], [240, 255]]   # 农忙：香客少
+
+# 香客数的季节因子
+pilgrim_winter = 0.6
+pilgrim_busy = 0.5
+pilgrim_shuowang = 3                  # 朔望加倍
+pilgrim_festival = [
+  { name = "元日", mult = 2 },
+  { name = "上元", mult = 1.34 },
+  { name = "佛诞", mult = 10 },
+  { name = "盂兰盆", mult = 1.67 },
+  { name = "腊八", mult = 6.7 },
+]
+donor_festivals = ["元日", "上元", "佛诞", "盂兰盆", "腊八"]   # 大节：必有大施主
+charity_festival = "腊八"             # 施粥日
+
+# 粮价季节因子（先匹配先得；都不中为 1.0）
+grain_season = [
+  { from = 125, to = 185, factor = 0.92 },
+  { from = 245, to = 305, factor = 0.92 },
+  { from = 60, to = 125, factor = 1.10 },
+]
+
+# 年内结算日
+new_year_doy = 0                      # 岁首：招佃、僧龄加一
+year_end_doy = 359                    # 岁末：铺户盈余转出
+sell_doys = [130, 250]                # 农户卖余粮
+shop_doys = [132, 252]                # 农户购置家用
+after_harvest_doys = [135, 255]       # 寺院：还邻寺借粮、售余粮
+return_doys = [140, 260]              # 游方僧归寺
+recruit_doy = 90                      # 四月初一：收录新僧
+cloth_due_doys = [85, 235]            # 立项：本季应发僧衣
+cloth_hold_windows = [[85, 100], [235, 250]]   # 这些窗口内不发僧衣（布还在采买路上）

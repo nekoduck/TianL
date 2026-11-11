@@ -1,0 +1,149 @@
+# 岗位（v0.2 的 SITE 与 CRITICAL）。id 的最后一段是内核用的角色名（如 supervisor = 监院），name 是库里存的岗位名。
+# site：岗位的站点（上锁场所的“钥匙”、作息里的“执事”处）；副职沿用正职的站点（名字 = 副职前缀 + name）。
+# critical：关键岗位的检查次序（1 起）；关键岗位无人任职超过 K.vac_limit 日记违规。hall：该岗位是某院堂的首座，继任只从该院堂选。
+
+["post:shaolin:abbot"]
+order = 1
+name = "方丈"
+site = "place:shaolin:abbot"
+critical = 1
+
+["post:shaolin:zen_head"]
+order = 2
+name = "首座"
+site = "place:shaolin:zen"
+
+["post:shaolin:supervisor"]
+order = 3
+name = "监院"
+site = "place:shaolin:office"
+critical = 2
+
+["post:shaolin:disciplinarian"]
+order = 4
+name = "维那"
+site = "place:shaolin:main_hall"
+critical = 9
+
+["post:shaolin:cook"]
+order = 5
+name = "典座"
+site = "place:shaolin:kitchen"
+critical = 3
+
+["post:shaolin:grounds_keeper"]
+order = 6
+name = "直岁"
+site = "place:shaolin:grounds"
+critical = 8
+
+["post:shaolin:stock_keeper"]
+order = 7
+name = "库头"
+site = "place:shaolin:granary"
+critical = 4
+
+["post:shaolin:guest_master"]
+order = 8
+name = "知客"
+site = "place:shaolin:guest"
+critical = 6
+
+["post:shaolin:librarian"]
+order = 9
+name = "藏主"
+site = "place:shaolin:library"
+critical = 7
+
+["post:shaolin:infirm_head"]
+order = 10
+name = "延寿堂主"
+site = "place:shaolin:infirm"
+
+["post:shaolin:manor_head"]
+order = 11
+name = "庄主"
+site = "place:shaolin:estate"
+critical = 5
+
+["post:shaolin:gardener"]
+order = 12
+name = "园头"
+site = "place:shaolin:garden"
+
+["post:shaolin:almoner"]
+order = 13
+name = "化主"
+site = "place:shaolin:office"
+
+["post:shaolin:discipline_head"]
+order = 14
+name = "戒律院首座"
+site = "place:shaolin:jielv"
+hall = "戒律院"
+
+["post:shaolin:damo_head"]
+order = 15
+name = "达摩院首座"
+site = "place:shaolin:damo"
+hall = "达摩院"
+
+["post:shaolin:puti_head"]
+order = 16
+name = "菩提院首座"
+site = "place:shaolin:puti"
+hall = "菩提院"
+
+# 值守排班（v0.2 make_roster）：每日结算时为次日落盘，之后不再重算。
+# 每条：label 班名（库里存的值）；place 值守处；slots 值守的时辰序号（子 = 0）；n 每时辰几人；hall、gen 候选人的院堂与辈分。
+# 候选人按人号排序，第 j 个时辰、第 k 个位置取 e[(日 x stride + (j // shift) x n + k) % len(e)]（stride、shift 见 org 定义）。
+["rule:shaolin:roster"]
+name = "值守班表"
+posts = [
+  { label = "山门", place = "place:shaolin:gate", slots = [3, 4, 5, 6, 7, 8, 9, 10], n = 2, hall = "罗汉堂", gen = "虚" },
+  { label = "藏经阁", place = "place:shaolin:library", slots = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], n = 1, hall = "藏经阁", gen = "虚" },
+  { label = "夜巡", place = "place:shaolin:grounds", slots = [11, 0, 1], n = 2, hall = "罗汉堂", gen = "慧" },
+  { label = "粮库", place = "place:shaolin:granary", slots = [10, 11, 0, 1, 2], n = 1, hall = "戒律院", gen = "虚" },
+]
+
+# 作息模板（v0.2 template）：先查例外（指派），再查值守班表，最后按此表自上而下取第一条命中的规则。
+# when 的条件全部成立才命中；out 自上而下取第一个条件成立者（无 when 者为缺省）。
+#   slots：当前时辰在此字串里；base：本人的岗位（去副职前缀后）在此列表里；site：本人岗位有无站点；
+#   gen：辈分在此列表里；hall_mapped：本人院堂有对应场所；hall_in：院堂名在此列表里；shuowang / retreat：朔望 / 结夏安居期。
+#   place：场所引用，或 "$home"（住处）、"$site"（岗位站点）、"$hall"（院堂所在，无则用 fallback）。
+["rule:shaolin:timetable"]
+name = "作息模板"
+rules = [
+  { when = { base = ["post:shaolin:manor_head"] }, out = [
+      { when = { slots = "辰巳未申" }, place = "place:shaolin:estate", act = "庄务" },
+      { place = "place:shaolin:estate", act = "歇息" } ] },
+  { when = { slots = "亥子丑" }, out = [ { place = "$home", act = "歇息" } ] },
+  { when = { slots = "寅" }, out = [
+      { when = { base = ["post:shaolin:cook"] }, place = "place:shaolin:kitchen", act = "执事" },
+      { place = "place:shaolin:main_hall", act = "课诵" } ] },
+  { when = { slots = "卯" }, out = [
+      { when = { base = ["post:shaolin:cook"] }, place = "place:shaolin:kitchen", act = "执事" },
+      { place = "place:shaolin:refectory", act = "斋粥" } ] },
+  { when = { slots = "午" }, out = [ { place = "place:shaolin:refectory", act = "斋粥" } ] },
+  { when = { slots = "酉" }, out = [ { place = "place:shaolin:main_hall", act = "课诵" } ] },
+  { when = { slots = "戌" }, out = [
+      { when = { site = true, base = ["post:shaolin:supervisor", "post:shaolin:stock_keeper", "post:shaolin:guest_master"] }, place = "$site", act = "执事" },
+      { place = "place:shaolin:zen", act = "坐禅" } ] },
+  { when = { shuowang = true, slots = "辰" }, out = [ { place = "place:shaolin:fatang", act = "布萨" } ] },
+  { when = { site = true }, out = [ { place = "$site", act = "执事" } ] },
+  { when = { gen = ["玄"] }, out = [
+      { when = { slots = "辰申" }, place = "$hall", fallback = "place:shaolin:zen", act = "授徒" },
+      { place = "$hall", fallback = "place:shaolin:zen", act = "禅修" } ] },
+  { when = { hall_mapped = true }, out = [
+      { when = { slots = "辰巳申" }, place = "$hall", act = "练功" },
+      { when = { hall_in = ["达摩院", "般若堂"] }, place = "$hall", act = "研武" },
+      { place = "$hall", act = "普请" } ] },
+  { when = { gen = ["空"] }, out = [
+      { when = { slots = "辰未" }, place = "place:shaolin:grounds", act = "普请" },
+      { when = { slots = "巳" }, place = "place:shaolin:zen", act = "学经" },
+      { place = "place:shaolin:yard", act = "练功" } ] },
+  { when = { retreat = true, slots = "未" }, out = [ { place = "place:shaolin:zen", act = "坐禅" } ] },
+  { out = [
+      { when = { slots = "辰未" }, place = "place:shaolin:grounds", act = "普请" },
+      { place = "place:shaolin:yard", act = "练功" } ] },
+]

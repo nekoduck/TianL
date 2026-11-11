@@ -1,0 +1,32 @@
+# 参数 P（v0.2 的 P，原样；键名不得改，World(params={...}) 按这些键覆盖）。
+# 单位：粮 1 石 = 1000 合；钱 1 贯 = 1000 文；一年 360 日。括号内是换算。
+["param:shaolin:main"]
+name = "少林寺钱粮参数"
+seed = 20261110
+monks = 300                   # 定员（僧）
+guest_cap = 30                # 客房容量（人）
+guest_rate = 0.05             # 香客中留宿比例
+ration_monk = 15              # 合/人/日
+ration_folk = 13              # 合/人/日（农户）
+yield_net = 1.2               # 亩产（石/亩/年，已扣种子）
+rent_share = 0.5              # 分成租
+tax = 0.1                     # 两税（石/亩/年）
+temple_mu = 4000              # 寺田亩数（开局后按佃户田亩合计重算）
+n_tenant = 80                 # 佃户数
+n_owner = 25                  # 自耕户数
+n_wood = 15                   # 樵菜户数
+grain_price = 1000            # 文/石（基准）
+pilgrims = 30                 # 平日香客数
+alms_each = 30                # 人均香火钱（文）
+donor_prob = 0.15             # 朔望日大施主概率
+donor_gift = 20000            # 大施主布施（20 贯）
+rite_prob = 0.06666666666666667   # 每日法事概率（2/30）
+rite_fee = 5000               # 一场法事（5 贯）
+treasury_target = 600000      # 年终库钱目标（600 贯），超出部分的六成拨作修造功德
+convoy = 60000                # 庄仓 -> 寺库 每日车队运量（60 石）
+wage = 100                    # 工钱（文/人日）
+hh_misc = 500                 # 农户家用杂项（文/次）
+hh_salt = 8                   # 农户购盐（斤/次）
+hh_cloth = 1                  # 农户购布（匹/次）
+town_bg_income = 120          # 樵菜户每人每月卖给县城背景需求的收入（文）
+snow_prob = 0.015             # 冬季每日大雪封山概率

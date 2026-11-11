@@ -1,0 +1,128 @@
+# 品类（v0.2 的 GOODS 与 SHOP_BANDS）。order 即原型字典顺序。
+#   price 单价（文，粮除外，粮价随季节、年景浮动）；use 寺院日用量；low 补货线（天）；up 补到（天）；
+#   prio 缺钱时的审批优先级（小者先批；>= K.prio_reserve_from 者批前先留压库钱）；
+#   band = [低线, 补到]：铺户（杂货行）自己的进货带；
+#   restock = true：库头按 low/up 补货的“杂项”（按 order 依次检查）；
+#   consume_order：每日消耗的检查次序（>0 才每日消耗）；
+#   use_winter_extra / use_per_pilgrims / use_festival_mult：日用量的浮动（冬加量；每 N 香客加一；朔望节日乘数）；
+#   spoil_cap：存量超此数当日腐坏；role：内核按角色取品类（staple 主粮、fuel 柴、fresh 鲜菜、textile 布、lumber 木料）。
+
+["commodity:shaolin:grain"]
+order = 1
+code = "grain"
+role = "staple"
+name = "粮"
+unit = "合"
+prio = 0
+
+["commodity:shaolin:firewood"]
+order = 2
+code = "firewood"
+role = "fuel"
+name = "柴炭"
+unit = "担"
+price = 40
+use = 8
+low = 10
+up = 17
+prio = 1
+consume_order = 1
+use_winter_extra = 3
+
+["commodity:shaolin:veg"]
+order = 3
+code = "veg"
+role = "fresh"
+name = "蔬"
+unit = "担"
+price = 30
+use = 5
+low = 1
+up = 3
+prio = 2
+consume_order = 2
+spoil_cap = 15
+
+["commodity:shaolin:oilsalt"]
+order = 4
+code = "oilsalt"
+name = "油盐"
+unit = "斤"
+price = 40
+use = 5
+low = 20
+up = 50
+prio = 3
+consume_order = 3
+restock = true
+band = [300, 900]
+
+["commodity:shaolin:medicine"]
+order = 5
+code = "medicine"
+name = "药材"
+unit = "剂"
+price = 200
+use = 1
+low = 20
+up = 50
+prio = 4
+consume_order = 4
+restock = true
+band = [60, 200]
+
+["commodity:shaolin:incense"]
+order = 6
+code = "incense"
+name = "香烛"
+unit = "份"
+price = 30
+use = 4
+low = 20
+up = 50
+prio = 5
+consume_order = 6
+restock = true
+band = [120, 400]
+use_per_pilgrims = 50
+use_festival_mult = 3
+
+["commodity:shaolin:paper"]
+order = 7
+code = "paper"
+name = "纸墨"
+unit = "份"
+price = 100
+use = 1
+low = 20
+up = 50
+prio = 6
+consume_order = 5
+restock = true
+band = [50, 160]
+
+["commodity:shaolin:cloth"]
+order = 8
+code = "cloth"
+role = "textile"
+name = "布"
+unit = "匹"
+price = 1000
+use = 0
+low = 0
+up = 0
+prio = 7
+band = [80, 330]
+
+["commodity:shaolin:timber"]
+order = 9
+code = "timber"
+role = "lumber"
+name = "木石料"
+unit = "料"
+price = 500
+use = 0
+low = 0
+up = 0
+prio = 8
+band = [60, 200]

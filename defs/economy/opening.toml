@@ -1,0 +1,24 @@
+# 开局存货（v0.2 _populate 的 produce 序列）。stock 的顺序即 stock 表的插入顺序，不得改动。
+# 数量三选一：qty（原始单位，粮为合）；days（该品类日用量 x 日数）；band = "hi"（取该品类 band 的上限）。
+# 开局注资见 account 的 opening_cash，农户的存钱存粮见 param:shaolin:households。
+["param:shaolin:opening"]
+name = "开局存货"
+stock = [
+  { owner = "account:shaolin:org", place = "place:shaolin:granary", c = "commodity:shaolin:grain", qty = 400000 },
+  { owner = "account:shaolin:org", place = "place:shaolin:estate_granary", c = "commodity:shaolin:grain", qty = 900000 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:firewood", days = 12 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:veg", days = 2 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:oilsalt", days = 45 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:medicine", days = 45 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:incense", days = 45 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:paper", days = 45 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:cloth", qty = 10 },
+  { owner = "account:shaolin:org", place = "place:shaolin:store", c = "commodity:shaolin:timber", qty = 60 },
+  { owner = "account:shaolin:shop_grain", place = "place:shaolin:town", c = "commodity:shaolin:grain", qty = 300000 },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:oilsalt", band = "hi" },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:medicine", band = "hi" },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:incense", band = "hi" },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:paper", band = "hi" },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:cloth", band = "hi" },
+  { owner = "account:shaolin:shop_gen", place = "place:shaolin:town", c = "commodity:shaolin:timber", band = "hi" },
+]

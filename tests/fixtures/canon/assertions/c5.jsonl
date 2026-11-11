@@ -1,0 +1,10 @@
+{"s":"place:canon:qingyunshan","p":"place_kind","v":"mountain"}
+{"s":"place:canon:baishisi","p":"place_kind","v":"temple"}
+{"s":"place:canon:baishisi","p":"parent","v":"place:canon:qingyunshan"}
+{"s":"place:canon:baishisi","p":"owner_org","v":"org:canon:baishisi"}
+{"s":"place:canon:baishisi","p":"access","v":"夜间不接待女客","t":"seed"}
+{"s":"place:canon:qingyundu","p":"place_kind","v":"water"}
+{"s":"place:canon:yunmengzhen","p":"place_kind","v":"town"}
+{"s":"place:canon:qingyundu","p":"route","v":"place:canon:baishisi","q":{"slots":6,"rel":"山路"}}
+{"s":"place:canon:baishisi","p":"route","v":"place:canon:yunmengzhen","q":{"slots":12}}
+{"s":"place:canon:qingyundu","p":"route","v":"place:canon:yunmengzhen","q":{"slots":20,"rel":"水路"}}

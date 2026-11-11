@@ -1,0 +1,17 @@
+# 独有物（v0.2 的 item 表）。keeper 是保管岗位（持有此岗位者取之合规）；custodian = "keeper" 表示开局由该岗位的首任者持有；
+# home 是物的“应在处”，月朔点检发现它不在 home 即记失窃。
+["item:shaolin:yijinjing"]
+order = 1
+code = "IT_YJJ"
+name = "《易筋经》"
+home = "place:shaolin:puti"
+keeper = "post:shaolin:puti_head"
+custodian = "keeper"
+
+["item:shaolin:banruozhang"]
+order = 2
+code = "IT_BRZ"
+name = "《般若掌》图谱"
+home = "place:shaolin:library"
+keeper = "post:shaolin:librarian"
+custodian = "keeper"

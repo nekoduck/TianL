@@ -1,0 +1,74 @@
+# 账户（v0.2 的边界账户、寺院账户、铺户账户）。order 即原型 account 表的插入顺序（状态哈希按 rowid 遍历，不得改动）。
+# boundary = 1：边界账户，可以透支（代表本地图之外的世界）；0：不得透支。
+# opening_cash（贯）：开局由 EQUITY 注资，按 order 依次执行。year_end_cap（贯）：岁末超出部分转给 TOWN_BG（铺主家用与商税）。
+# virtual = true：只作收款人/货主的占位名，不进 account 表（VILLAGE = 樵菜户全体，按人口分账）。
+# 内核代码用 id 的最后一段当角色名取账户（如 account:shaolin:org -> 本寺账户），不写死 code。
+
+["account:shaolin:equity"]
+order = 1
+code = "EQUITY"
+boundary = 1
+name = "期初权益"
+
+["account:shaolin:port"]
+order = 2
+code = "PORT"
+boundary = 1
+name = "外地口岸"
+
+["account:shaolin:pilgrims"]
+order = 3
+code = "PILGRIMS"
+boundary = 1
+name = "香客与施主"
+
+["account:shaolin:town"]
+order = 4
+code = "TOWN_BG"
+boundary = 1
+name = "县城背景需求"
+
+["account:shaolin:state"]
+order = 5
+code = "STATE"
+boundary = 1
+name = "官府"
+
+["account:shaolin:neighbor"]
+order = 6
+code = "NEIGHBOR"
+boundary = 1
+name = "邻寺"
+
+["account:shaolin:org"]
+order = 7
+code = "ORG_SH"
+boundary = 0
+name = "少林寺"
+opening_cash = 600
+
+["account:shaolin:shop_grain"]
+order = 8
+code = "SHOP_GRAIN"
+boundary = 0
+name = "粮铺"
+office = "粮铺"
+opening_cash = 800
+year_end_cap = 800
+shop = true
+
+["account:shaolin:shop_gen"]
+order = 9
+code = "SHOP_GEN"
+boundary = 0
+name = "杂货行"
+office = "杂货行"
+opening_cash = 500
+year_end_cap = 500
+shop = true
+
+["account:shaolin:village"]
+order = 10
+code = "VILLAGE"
+virtual = true
+name = "樵菜户全体"

@@ -1,0 +1,23 @@
+# 日报（chronicle）里用到的、不能从场所/岗位/账户的名字推出来的少林寺专有词。
+["param:shaolin:labels"]
+name = "日报用词"
+grain_market = "登封粮市"     # 县城的粮市
+shop = "铺户"                 # 铺户开单时的署名（无岗位人时）
+temple_store = "寺库"         # 寺院存粮
+dorm = "僧寮"                 # 住处不在场所表里时的统称（住处 SH_DORM_n）
+
+# 寺院粮账的类别（年度报表 year_report 的 grain 字典的键）。键是内核用的英文名，值是报表里的中文类别名。
+[ "param:shaolin:labels".grain_ledger ]
+rent = "租入"                 # 佃户交租入庄仓
+tax = "两税"                  # 寺田两税
+repaid = "佃户还粮"           # 佃户归还庄仓借粮
+repay_neighbor = "还邻寺"     # 归还邻寺借粮
+sold = "售出"                 # 售余粮
+bought = "市购"               # 向粮铺市购
+transfer = "庄仓调入"         # 庄仓调入寺库
+meals = "口粮"                # 斋粥用粮
+borrow_neighbor = "借邻寺"    # 向邻寺借粮
+lend_tenant = "借给佃户"      # 庄仓借给佃户
+relief = "赈济"              # 赈济农户
+alms = "募化"                # 募化所得
+charity = "施粥"             # 节日施粥

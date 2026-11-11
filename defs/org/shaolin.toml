@@ -1,0 +1,92 @@
+# 少林寺这个组织：辈分、院堂、要角、取名、岗位任命序、独有物之外的人事规则、值守班表。
+# 开局造人的次序（决定人号 P0001…，状态哈希按 rowid 遍历，不得改动）：先 canon（要角，按列表序），
+# 再按 gens 的顺序、每辈 n 人生成无名僧，之后按 quota 给各辈前若干人分院堂，按 master_gen 定师承，
+# 最后按 appointments 的顺序任命。取名与年龄的随机键见 tianl/kernel/people.py。
+["org:shaolin:main"]
+name = "少林寺"
+account = "account:shaolin:org"          # 本寺账户（person.org 里存它的 code）
+default_hall = "清众"                      # 未分院堂者的院堂名
+deputy_prefix = "副"                       # 副职 = 前缀 + 正职名；正职出缺时副职代理
+visitor_gen = "外"                         # 外来香客的“辈分”标记：其位置恒在客堂
+visitor_place = "place:shaolin:guest"
+visitor_act = "香客"
+lock_slots = "亥子丑寅"                    # 夜间上锁的时辰（用于 access = locked_night 的场所）
+elders_home = "place:shaolin:elders"       # 无院堂可归的长辈的住处
+discipline_place = "place:shaolin:jielv"   # 违规被见、举报送往之处
+dorm = { prefix = "SH_DORM_", per = 20, recruit = 15 }   # 僧寮：第 i 个人住 prefix + (i // per + 1)；新收录者住 prefix + recruit
+recruit = { gen = "空", age_min = 14, age_span = 7 }      # 每年四月初一补足员额
+roster_stride = 5                          # 值守排班：(日 x stride + 班次序 x n + k) % 人数
+roster_shift = 2                           # 每 shift 个时辰换一班
+canon_masters = [{ name = "虚竹", master = "慧轮" }]       # 要角之间指定的师承
+
+# 辈分：n 无名僧人数；age 年龄区间（含两端）；master_gen 师承辈分（自该辈全体随机选师）；
+# senior 长辈（按院堂住处所，不住僧寮）；quota 前若干人依次分到各院堂。
+gens = [
+  { gen = "玄", n = 20, age = [55, 78], senior = true, quota = [{ hall = "达摩院", n = 7 }, { hall = "戒律院", n = 1 }, { hall = "证道院", n = 2 }, { hall = "菩提院", n = 2 }, { hall = "藏经阁", n = 1 }] },
+  { gen = "慧", n = 65, age = [38, 58], master_gen = "玄", quota = [{ hall = "罗汉堂", n = 15 }, { hall = "达摩院", n = 6 }, { hall = "般若堂", n = 10 }, { hall = "戒律院", n = 6 }, { hall = "藏经阁", n = 3 }, { hall = "菩提院", n = 3 }, { hall = "证道院", n = 3 }] },
+  { gen = "虚", n = 119, age = [20, 40], master_gen = "慧", quota = [{ hall = "罗汉堂", n = 40 }, { hall = "般若堂", n = 15 }, { hall = "戒律院", n = 4 }, { hall = "藏经阁", n = 4 }, { hall = "菩提院", n = 3 }] },
+  { gen = "空", n = 89, age = [12, 22], master_gen = "虚" },
+]
+
+# 院堂 -> 场所
+halls = [
+  { name = "达摩院", place = "place:shaolin:damo" },
+  { name = "罗汉堂", place = "place:shaolin:luohan" },
+  { name = "戒律院", place = "place:shaolin:jielv" },
+  { name = "般若堂", place = "place:shaolin:bore" },
+  { name = "菩提院", place = "place:shaolin:puti" },
+  { name = "证道院", place = "place:shaolin:zhengdao" },
+  { name = "藏经阁", place = "place:shaolin:library" },
+]
+
+# 原著要角（凭记忆，落正式数据前需对照原文；home 缺省按辈分与院堂推出）
+canon = [
+  { name = "玄慈", gen = "玄", age = 62, hall = "方丈院", home = "place:shaolin:abbot" },
+  { name = "玄寂", gen = "玄", age = 60, hall = "戒律院" },
+  { name = "玄难", gen = "玄", age = 61, hall = "达摩院" },
+  { name = "玄苦", gen = "玄", age = 63, hall = "证道院" },
+  { name = "慧轮", gen = "慧", age = 48, hall = "清众" },
+  { name = "虚竹", gen = "虚", age = 24, hall = "清众" },
+  { name = "缘根", gen = "缘", age = 45, hall = "清众" }
+]
+
+# 继任：出缺的正职先由副职顶上；无副职则从在寺、非要角、年满 min_age、无职者中选。
+# 院堂首座只从本院堂选，辈分次序 hall_rank；其余岗位 other_rank。同辈先年长，再先入。
+succession = { min_age = 25, hall_rank = "玄慧虚", other_rank = "慧玄虚" }
+
+# 任命序（开局）：post 为岗位；canon 指定要角；pick = "hall" 取某辈某院堂的第 index 人，pick = "free" 取某辈尚未分院堂者的下一人；
+# deputy = true 为该岗位的副职。
+appointments = [
+  { post = "post:shaolin:abbot", canon = "玄慈" },
+  { post = "post:shaolin:discipline_head", canon = "玄寂" },
+  { post = "post:shaolin:damo_head", canon = "玄难" },
+  { post = "post:shaolin:puti_head", pick = "hall", gen = "玄", hall = "菩提院", index = 0 },
+  { post = "post:shaolin:gardener", canon = "缘根" },
+  { post = "post:shaolin:zen_head", pick = "free", gen = "玄" },
+  { post = "post:shaolin:supervisor", pick = "free", gen = "玄" },
+  { post = "post:shaolin:librarian", pick = "hall", gen = "慧", hall = "藏经阁", index = 0 },
+  { post = "post:shaolin:librarian", deputy = true, pick = "hall", gen = "慧", hall = "藏经阁", index = 1 },
+  { post = "post:shaolin:disciplinarian", pick = "free", gen = "慧" },
+  { post = "post:shaolin:cook", pick = "free", gen = "慧" },
+  { post = "post:shaolin:grounds_keeper", pick = "free", gen = "慧" },
+  { post = "post:shaolin:stock_keeper", pick = "free", gen = "慧" },
+  { post = "post:shaolin:guest_master", pick = "free", gen = "慧" },
+  { post = "post:shaolin:infirm_head", pick = "free", gen = "慧" },
+  { post = "post:shaolin:manor_head", pick = "free", gen = "慧" },
+  { post = "post:shaolin:almoner", pick = "free", gen = "慧" },
+  { post = "post:shaolin:supervisor", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:disciplinarian", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:cook", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:grounds_keeper", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:stock_keeper", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:guest_master", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:manor_head", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:gardener", deputy = true, pick = "free", gen = "慧" },
+  { post = "post:shaolin:almoner", deputy = true, pick = "free", gen = "慧" },
+]
+
+# 取名：法名 = 辈分字 + 池中一字。reserved 为保留法名（要角及原著他人），不得被无名僧取用。
+# 池按出现顺序去重后用随机键取字，所以字序不得改动。
+[ "org:shaolin:main".names ]
+pool = "净明觉悟智海定真如法云山泉松月灯镜心性德行愿忍静观照圆通达道常乐安宁广清凉光严华藏宝远深诚信义仁勇毅恒谦和顺平正方直素淡闲逸怀谷风雷雨露霜雪河岳岩峰岭林木枫柏桐梅莲苇舟桥钟磬度果尚相色受想识闻思修证彻见本元始终永寿福根尘劫刹慈能持戒施善缘了凡朗澈湛渊泓润济普贤文殊迦叶耆宿晦晓昙坚澄湖渚汀洲峦嶂霞霁晴岚溪涧潭瀑芝荃蘅芷杉槐榆楠"
+reserved = ["慧真", "慧观", "慧轮", "玄因", "玄垢", "玄寂", "玄悲", "玄慈", "玄渡", "玄澄", "玄生", "玄痛", "玄石", "玄苦", "玄难", "虚竹"]

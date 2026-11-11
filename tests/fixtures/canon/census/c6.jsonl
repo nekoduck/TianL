@@ -1,0 +1,5 @@
+{"id":"org:canon:tiejianmen","type":"org","name":"铁剑门","aliases":["铁剑派"],"note":"江湖小门派"}
+{"id":"org:canon:baishisi","type":"org","name":"白石寺","aliases":[],"note":"寺院（组织）"}
+{"id":"martial:canon:liuyunjianfa","type":"martial","name":"流云剑法","aliases":[],"note":"铁剑门剑法"}
+{"id":"item:canon:qingyufu","type":"item","name":"青玉符","aliases":["玉符"],"note":"信物"}
+{"id":"document:canon:duqouzhangce","type":"document","name":"渡口账册","aliases":[],"note":"记着往来客人的账册"}

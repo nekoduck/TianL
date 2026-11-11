@@ -1,0 +1,192 @@
+# 少林寺内核用到的场所（v0.2 的 PLACE_NAME）。code 是运行时钥匙，数据库与事件日志里的场所一律用 code。
+# order 即原型字典顺序：place 表按此顺序插入，状态哈希按 rowid 遍历，所以不得改动顺序。
+# access = locked_night 的场所夜间（见 org:shaolin:main 的 lock_slots）无钥匙不得进入。
+# 住处 SH_DORM_n 不是场所表里的行，由 org:shaolin:main 的 dorm 规则生成，故不在此列。
+
+["place:shaolin:temple"]
+order = 1
+code = "SH"
+name = "少林寺"
+access = "open"
+note = "寺院整体（事件的泛指地点）"
+
+["place:shaolin:gate"]
+order = 2
+code = "SH_GATE"
+name = "山门"
+access = "open"
+
+["place:shaolin:main_hall"]
+order = 3
+code = "SH_HALL"
+name = "大雄宝殿"
+access = "open"
+
+["place:shaolin:fatang"]
+order = 4
+code = "SH_FATANG"
+name = "法堂"
+access = "open"
+
+["place:shaolin:zen"]
+order = 5
+code = "SH_ZEN"
+name = "禅堂"
+access = "open"
+
+["place:shaolin:refectory"]
+order = 6
+code = "SH_REFECTORY"
+name = "斋堂"
+access = "open"
+
+["place:shaolin:kitchen"]
+order = 7
+code = "SH_KITCHEN"
+name = "香积厨"
+access = "open"
+
+["place:shaolin:granary"]
+order = 8
+code = "SH_GRANARY"
+name = "粮库"
+access = "locked_night"
+
+["place:shaolin:store"]
+order = 9
+code = "SH_STORE"
+name = "杂库"
+access = "open"
+
+["place:shaolin:office"]
+order = 10
+code = "SH_OFFICE"
+name = "库司"
+access = "open"
+
+["place:shaolin:abbot"]
+order = 11
+code = "SH_ABBOT"
+name = "方丈院"
+access = "open"
+
+["place:shaolin:damo"]
+order = 12
+code = "SH_DAMO"
+name = "达摩院"
+access = "open"
+
+["place:shaolin:luohan"]
+order = 13
+code = "SH_LUOHAN"
+name = "罗汉堂"
+access = "open"
+
+["place:shaolin:jielv"]
+order = 14
+code = "SH_JIELV"
+name = "戒律院"
+access = "open"
+
+["place:shaolin:bore"]
+order = 15
+code = "SH_BORE"
+name = "般若堂"
+access = "open"
+
+["place:shaolin:puti"]
+order = 16
+code = "SH_PUTI"
+name = "菩提院"
+access = "open"
+
+["place:shaolin:zhengdao"]
+order = 17
+code = "SH_ZHENGDAO"
+name = "证道院"
+access = "open"
+
+["place:shaolin:library"]
+order = 18
+code = "SH_LIBRARY"
+name = "藏经阁"
+access = "locked_night"
+
+["place:shaolin:infirm"]
+order = 19
+code = "SH_INFIRM"
+name = "延寿堂"
+access = "open"
+
+["place:shaolin:guest"]
+order = 20
+code = "SH_GUEST"
+name = "客堂"
+access = "open"
+
+["place:shaolin:garden"]
+order = 21
+code = "SH_GARDEN"
+name = "菜园"
+access = "open"
+
+["place:shaolin:yard"]
+order = 22
+code = "SH_YARD"
+name = "练武场"
+access = "open"
+
+["place:shaolin:grounds"]
+order = 23
+code = "SH_GROUNDS"
+name = "寺内各处"
+access = "open"
+note = "寺内各处（巡夜、普请的泛指地点）"
+
+["place:shaolin:elders"]
+order = 24
+code = "SH_ELDERS"
+name = "长老寮"
+access = "open"
+
+["place:shaolin:road"]
+order = 25
+code = "SH_ROAD"
+name = "少室山道"
+access = "open"
+note = "少室山道，唯一的进山通路；封路即它不通"
+
+["place:shaolin:estate"]
+order = 26
+code = "EST"
+name = "柏谷庄"
+access = "open"
+note = "寺属田庄"
+
+["place:shaolin:estate_granary"]
+order = 27
+code = "EST_GRANARY"
+name = "庄仓"
+access = "open"
+note = "庄仓：庄上存粮处"
+
+["place:shaolin:village"]
+order = 28
+code = "VIL"
+name = "少室山脚村"
+access = "open"
+note = "山脚村落，樵菜户与自耕户所在"
+
+["place:shaolin:town"]
+order = 29
+code = "DF"
+name = "登封县城"
+access = "open"
+note = "县城，粮铺与杂货行所在"
+
+["place:shaolin:port"]
+order = 30
+code = "PORT"
+name = "洛阳方向"
+access = "open"
+note = "外地口岸：货物进出本地图的边界"
