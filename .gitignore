@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.sqlite
+*.sqlite-journal
+*.db
+.DS_Store
+# 原著文本只放本地，永不入库（计划 3.1 第 2 条）；目录占位文件除外
+sources/*
+!sources/.gitkeep
+!sources/README.md
+/out/
+.scratch/
