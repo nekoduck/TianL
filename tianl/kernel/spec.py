@@ -33,8 +33,8 @@ REQUIRED_ROLES = dict(
     cm='staple fuel fresh textile lumber'.split(),
     hh='tenant wood'.split(),
     T='abbot supervisor cook stock_keeper manor_head guest_master grounds_keeper disciplinarian almoner discipline_head'.split())
-# 历法定义必须写全的字段。tianl.core.Calendar.from_def 对 festivals / retreat / wheat_doy / millet_doy / year 缺省会回落到 v0.2 少林寺的值
-# （那份默认历法是 M0 的东西，不归内核），所以新寺院漏写时不会报错、只会悄悄用上少林寺的节日与结夏期；内核在这里先查全再交给它。
+# 历法定义必须写全的字段。tianl.core.Calendar.from_def 对 festivals / retreat / wheat_doy / millet_doy 没有缺省值（漏写报 ValueError），
+# 年长（year）可不写，写了必须是 360；内核在这里把它们连同农事香期时刻表一起先查全，一次报齐，再交给 Calendar。
 REQUIRED_CALENDAR = ('festivals retreat wheat_doy millet_doy crops winter_months busy_windows pilgrim_winter pilgrim_busy pilgrim_shuowang '
                      'pilgrim_festival donor_festivals charity_festival grain_season new_year_doy year_end_doy sell_doys shop_doys '
                      'after_harvest_doys return_doys recruit_doy cloth_due_doys cloth_hold_windows').split()

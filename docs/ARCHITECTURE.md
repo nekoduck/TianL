@@ -173,7 +173,7 @@ report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共�
 `host.ev(kind, actor, place, witnesses, day, slot, cause=None, **data) -> 含 id 的 Event`（actor 与 witnesses 在边界上是外部 id）、
 `host.seed`、`host.rng`、`host.cmd(name, pid, **args) -> CmdResult`（内核命令口，本步是 stub）。
 规格对象 `SiteSpec` 是不可变数据类，`SiteSpec.validate()` 做引用完整性自检；由 `SiteSpec.from_defs(defs, 'scenario:<scope>:main')` 从 defs 构造
-（第二步；`scenarios.proto60_spec()` 是原型场景加载一次后的缓存），缺字段、引用不存在的包、处理器未登记或参数不合法都抛带逐条说明的 `SpecError`。人的内部下标 `ix`（int，稳定，新人追加）与外部编号 `pid`（str）分开，随机数键里用 `ix`。
+（第二步；`scenarios.proto60_spec()` 是原型场景加载一次后的缓存）。出错都带逐条说明：引用不存在的定义（含包），严格加载时由 `Defs.load()` 抛 `DefsError`，非严格加载时在 `from_defs` 里汇入 `SpecError`；缺字段、处理器未登记、参数缺失或类型取值不合法、包与准入门的引用对不上，由 `from_defs` 读字段时**一次报全**，抛 `SpecError`；规格内部的交叉核对（`SiteSpec.validate()`）在这一步没有问题之后才做，不通过同样抛 `SpecError`。人的内部下标 `ix`（int，稳定，新人追加）与外部编号 `pid`（str）分开，随机数键里用 `ix`。
 
 **行为包是数据**（计划 6.2）：第 7、8、9 层的包由 `package:*` 定义声明（`layer / who / when / do`，`when` 可写日历键），
 需要条件判断的包（偷食起念、贪睡、值守轮换……）用 `handler = "<名>"` + `params` 引用 `tianl/npc` 里登记的处理器。
@@ -186,7 +186,7 @@ report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共�
 1. 各人决定（起点按 `(day*7+slot*3)%n` 轮转，保证工位预约公平且确定；系数是 `rule:schedule` 的 `rotate`）；每人每个时辰的入口是
    **钩子 `controller.decide(engine, p, day, slot, ctx)`**（有操纵者才经过：`Controller.choose(ctx, candidates)`；默认走程序的栈）。
 2. 闲谈配对（按好恶挑人，落单改散步）；转述传闻。
-3. 差事结算（工作板产出）；斋食（厨房人手 → 足量/半餐）。
+3. 差事结算（工作板产出）；斋食（厨房人手 → 足量/半餐；内核粮账的半餐减量按 5.1 的时序约束次日生效）。
 4. 需求结算；想法；落轨迹。
 5. 观察者所在场所的细节叙述——**只读**，不得改任何状态（**钩子 `lod.observe(engine, ctx, day, slot)`**）。
 6. 偷食 → 见证 → 是否举报；巡夜查寮记空铺；脚本事件。
@@ -242,7 +242,7 @@ report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共�
 | --- | --- |
 | M0 | `python3 -m unittest tests.test_core_defs` |
 | A1–A4 | `python3 tools/canon_check.py`（指针有效率仅统计 basis=text；30 人召回；时间线无环/无人两地/死后不出场/路程可行；必填字段有来源） |
-| B1 | 默认 `python3 -m unittest tests.test_b1_kernel tests.test_b1_defs tests.test_b1_branches`：基准哈希 49f6ddde04dfa7f5、E1 与 E3 的日志数字、日志里没走到的分支与原型逐位对照；`TIANL_SLOW=1` 再验 E2/E2b/E5/E6、十年基准、六个种子、人物与独有物测试；与日志逐行比对用 `tools/shaolin_regress.py --all`（命令见 KERNEL_DEFS 第 7 节） |
+| B1 | 默认 `python3 -m unittest tests.test_b1_kernel tests.test_b1_defs tests.test_b1_branches tests.test_b1_params`：基准哈希 49f6ddde04dfa7f5、E1 与 E3 的日志数字、日志里没走到的分支与原型逐位对照、规则参数清单完备；`TIANL_SLOW=1` 再验 E2/E2b/E5/E6、十年基准、六个种子、人物与独有物测试、45 个参数各在其场景里起作用；与日志逐行比对用 `tools/shaolin_regress.py --all`（命令见 KERNEL_DEFS 第 7 节） |
 | B2 | 各项需求月末均值 ≥ 20；设施容量按“人数×频次”反推 |
 | B3 | 十年全图运行不变量违规 0 |
 | B4 | 原型复用率 ≥ 70%；按书重放不违反任何物理规则 |

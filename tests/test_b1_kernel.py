@@ -15,7 +15,7 @@ import re
 import unittest
 from pathlib import Path
 
-from tests.test_b1_common import REF_HASH, baseline_world
+from tests.test_b1_common import BASELINE_DAYS, REF_HASH, baseline_world
 from tianl.core.calendar import SLOTS_PER_DAY, YEAR
 from tianl.kernel import World, year_report
 
@@ -103,7 +103,7 @@ class BaselineTests(unittest.TestCase, LogNumbers):
     @classmethod
     def setUpClass(cls):
         cls.w = baseline_world()                       # 进程内共享、只读
-        cls.w2 = World().run(360 * 4)                  # 另跑一遍，验证“重跑一致”
+        cls.w2 = split_phase_world()[0]                # 另跑一遍（分步走法、接着空引擎），验证“重跑一致”
 
     def test_hash_matches_prototype(self):
         self.assertEqual(self.w.state_hash(), REF_HASH)
@@ -198,13 +198,23 @@ class ExperimentTests(unittest.TestCase, LogNumbers):
 
 class StepTests(unittest.TestCase):
     def test_step_equals_split_phases(self):
-        a = World().run(400)
+        """未接引擎：step() 与 begin_day + 12 x run_slot + end_day 逐位相同（这里走 130 日，含第一次收录与第一场收成；整个基准的分步走法在下一条）。"""
+        a = World().run(130)
         b = World()
-        for _ in range(400):
+        for _ in range(130):
             b.begin_day()
             for _ in range(SLOTS_PER_DAY): b.run_slot()
             b.end_day()
-        self.assertEqual((b.day, b.slot), (400, 0))
+        self.assertEqual((b.day, b.slot), (130, 0))
+        self.assertEqual(a.state_hash(), b.state_hash())
+        self.assertEqual(a.econ_hash(), b.econ_hash())
+        self.assertEqual(a.series, b.series)
+
+    def test_split_phases_over_the_whole_baseline_equal_step(self):
+        """整个基准（预热 1 年 + 3 年）用分步走法（并接着空引擎）跑一遍，与 step() 跑的基准逐位相同：哈希、经济表哈希、逐日序列。"""
+        a, (b, _) = baseline_world(), split_phase_world()
+        self.assertEqual((b.day, b.slot), (BASELINE_DAYS, 0))
+        self.assertEqual(b.state_hash(), REF_HASH)
         self.assertEqual(a.state_hash(), b.state_hash())
         self.assertEqual(a.econ_hash(), b.econ_hash())
         self.assertEqual(a.series, b.series)
@@ -301,6 +311,24 @@ class StubEngine:
     def where(self, pid, day, slot): return self.managed.get(pid)
 
 
+_split_cache = {}
+
+
+def split_phase_world():
+    """(世界, 空引擎)：预热 1 年 + 3 年，接着一个什么也不做的引擎，且不用 step()，手动 begin_day + 12 x run_slot + end_day。
+    进程内只算一遍、只读（基准要 2.7 秒，默认整套测试有 60 秒线）：它同时是“重跑一致”“分步与 step 逐位等价”“空引擎不改变状态”三项检查的对象，
+    三项各自与 baseline_world()（step() 跑的、没接引擎）或 REF_HASH 比对，所以任何一项出了偏差都会红。"""
+    if 'w' not in _split_cache:
+        eng = StubEngine()
+        w = World(engine=eng)
+        for _ in range(BASELINE_DAYS):
+            w.begin_day()
+            for _ in range(SLOTS_PER_DAY): w.run_slot()
+            w.end_day()
+        _split_cache['w'] = (w, eng)
+    return _split_cache['w']
+
+
 class EngineHookTests(unittest.TestCase):
     def test_call_order_and_phase_boundaries(self):
         seen = {}
@@ -325,14 +353,28 @@ class EngineHookTests(unittest.TestCase):
 
     def test_inert_engine_changes_nothing_econ_hash_neutral(self):
         base = baseline_world()
-        eng = StubEngine()
-        w = World(engine=eng).run(360 * 4)
+        w, eng = split_phase_world()                               # 整个基准，接着空引擎
         self.assertEqual(w.state_hash(), REF_HASH)
         self.assertEqual(w.econ_hash(), base.econ_hash())          # 经济中立性
         removed = [c for c in eng.calls if c[0] == 'removed']
         self.assertEqual(len(removed), w.cnt['deaths'])
         self.assertTrue(all(c[2] == '圆寂' for c in removed))
         self.assertEqual(len([c for c in eng.calls if c[0] == 'added']), len(w.pids) - 300)
+
+    def test_real_npc_engine_attaches_and_stays_econ_neutral(self):
+        """协议冒烟：真正的 NpcEngine（C 段，原型场景 60 僧）经 attach 接上内核，begin_day / run_slot / end_day 的签名与次序对得上，
+        经济表哈希与不接引擎的世界相同。两边的名册与场所还各管各的（KernelHost 与名册映射是集成代理的事），所以这里只验协议与经济中立性，不验 where 的内容。
+        这是跨模块的契约测试：C 段改了 ProtoRun 或 Engine 协议，这里先红。"""
+        from tianl.core import rnd
+        from tianl.npc.scenarios import ProtoRun
+        days = 60
+        base = World().run(days)
+        run = ProtoRun(rng=rnd)
+        w = World(engine=run.engine).run(days)
+        self.assertEqual(run.engine.last, (days - 1, SLOTS_PER_DAY - 1))        # 每个日每个时辰引擎都被叫到
+        self.assertIs(run.engine.world, w)
+        self.assertEqual(w.econ_hash(), base.econ_hash())
+        self.assertEqual(w.viol, base.viol)
 
     def test_active_engine_driving_commands_keeps_economy_neutral(self):
         """会动手的引擎：每个时辰调 cmd_move、每日末调 set_meal_ration(次日, 1)（撤销）与 cmd_steal_food（开关关着）。

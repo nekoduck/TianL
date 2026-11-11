@@ -26,7 +26,7 @@
 {"s":"person:canon:sikongxuan","p":"age_hint","v":"老者","b":"text","e":[[1,148,41,46,"590cbccafef2c4f4"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:sikongxuan","p":"org","v":"org:canon:shennongbang","b":"text","e":[[1,148,76,90,"590cbccafef2c4f4"],[1,162,0,17,"88e60c508ad6f7f9"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:sikongxuan","p":"post","v":"帮主","q":{"org":"org:canon:shennongbang"},"b":"text","e":[[1,148,76,90,"590cbccafef2c4f4"],[1,185,17,21,"740d2bb45229d1c7"]],"rv":"sup","rb":"model:reviewer"}
-{"s":"person:canon:sikongxuan","p":"trait","v":"孤傲","t":"infer","w":"叙述者写其神态倨傲，高坐岩上，对来客不起身","b":"text","e":[[1,148,69,75,"590cbccafef2c4f4"]],"rv":"sup","rb":"model:reviewer"}
+{"s":"person:canon:sikongxuan","p":"trait","v":"自负","t":"infer","w":"高坐岩上不起身，叙述者写其神态倨傲，可见自视甚高","b":"text","e":[[1,148,69,75,"590cbccafef2c4f4"]]}
 {"s":"person:canon:sikongxuan","p":"trait","v":"狠毒","t":"infer","w":"下令活埋少女，又逼段誉服下致命毒药","b":"text","e":[[1,172,22,34,"4addd7fc3620a2b1"],[1,189,8,17,"c25341d7429a9fbd"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:sikongxuan","p":"trait","v":"坚毅","t":"infer","w":"为阻貂毒蔓延，当机立断自断右手","b":"text","e":[[1,185,86,93,"740d2bb45229d1c7"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:sikongxuan","p":"feud","v":"person:canon:zhongling","q":{"rel":"貂伤之恨"},"t":"infer","w":"被貂咬伤断手，暗下决心伤愈后报复钟灵","b":"text","e":[[1,207,82,91,"85236c12e30f08b6"]],"rv":"sup","rb":"model:reviewer"}
@@ -41,7 +41,6 @@
 {"s":"person:canon:zuozimu","p":"trait","v":"爱面子","t":"infer","w":"念头里最在意的是被人当众讥笑后门派颜面受损","b":"text","e":[[1,13,82,89,"54f234d58cdcda63"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:zuozimu","p":"trait","v":"自负","t":"infer","w":"见弟子得胜便神色得意，对不起眼的宾客连客套也省去","b":"text","e":[[1,3,53,59,"7827c8c517ddee74"],[1,6,0,9,"42ef52d570416e01"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:zuozimu","p":"trait","v":"谨慎","t":"infer","w":"顾忌少女背后的师长，大敌当前不愿再添对头，对她忍让","b":"text","e":[[1,36,102,113,"1c20d2f38bc8ed6c"],[1,96,15,22,"a3256becca1b99b4"]],"rv":"sup","rb":"model:reviewer"}
-{"s":"person:canon:zuozimu","p":"might","v":"top","t":"infer","w":"出剑极快，能斩蛇而不伤人，在场宾客叹服，同派掌门也暗自佩服","n":"相对本回在场者的约判；复核：出剑快、众人叹服只能说明剑术高明；一流档次缺乏明说，属本回相对判断","b":"text","e":[[1,32,40,44,"b5fc4fd42b1c5208"],[1,43,84,92,"1e5a87b6d735745e"]],"rv":"doubt","rb":"model:reviewer"}
 {"s":"person:canon:zuozimu","p":"speech","v":"颐指气使","b":"text","e":[[1,76,60,69,"5592ac75e030c8e5"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:zuozimu","p":"ambition","v":"revenge","q":{"target":"org:canon:shennongbang","speaker":"person:canon:zuozimu"},"r":"norm","m":"speech","w":"师弟遭神农帮毒死后立誓报仇","b":"text","e":[[1,54,52,61,"c768e4f7f19b231f"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"person:canon:xinshuangqing","p":"gender","v":"female","b":"text","e":[[1,3,14,23,"7827c8c517ddee74"]],"rv":"sup","rb":"model:reviewer"}
@@ -101,7 +100,7 @@
 {"s":"martial:canon:yiyangzhi","p":"m_kind","v":"finger","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"钟灵描述点穴时用一指戳在身上，据此归为指法","b":"text","e":[[1,116,49,63,"9cc730cd8b2dcf66"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"martial:canon:yiyangzhi","p":"of_org","v":"org:canon:daliduanshi","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","b":"text","e":[[1,118,22,34,"dffe86008982b324"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"martial:canon:yiyangzhi","p":"power","v":"peak","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"钟灵赞其为举世罕有的点穴绝技，推为登峰造极","b":"text","e":[[1,118,22,34,"dffe86008982b324"]],"rv":"sup","rb":"model:reviewer"}
-{"s":"martial:canon:yiyangzhi","p":"limit","v":"为大理段家秘传，武林人士人人觊觎其谱诀","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","b":"text","e":[[1,118,59,65,"dffe86008982b324"]],"rv":"sup","rb":"model:reviewer"}
+{"s":"martial:canon:yiyangzhi","p":"limit","v":"属段家的绝技，习武之人个个觊觎其穴道谱诀","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","b":"text","e":[[1,118,59,65,"dffe86008982b324"]]}
 {"s":"martial:canon:yiyangzhi","p":"taboo","v":"不可对外声张段家会此指法，免遭人觊觎绑架","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","b":"text","e":[[1,119,118,129,"65e17b47d0f4f572"],[1,210,53,67,"231f0ff8813deaa3"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"org:canon:wuliangjian","p":"org_kind","v":"sect","t":"infer","w":"是设有掌门、分宗传承的剑派，按原型归为门派","b":"text","e":[[1,8,59,70,"180748fead235a75"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"org:canon:wuliangjian","p":"seat","v":"place:canon:jianhugong","b":"text","e":[[1,8,59,70,"180748fead235a75"]],"rv":"sup","rb":"model:reviewer"}
@@ -126,7 +125,7 @@
 {"s":"org:canon:shennongbang","p":"post_def","v":"帮主","q":{"lv":1},"b":"text","e":[[1,148,76,90,"590cbccafef2c4f4"],[1,92,33,41,"fb720eec58aaec62"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"org:canon:shennongbang","p":"post_def","v":"香主","q":{"speaker":"person:canon:zuozimu"},"r":"norm","m":"speech","n":"层级不详","b":"text","e":[[1,57,27,40,"ea49f529082585e4"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"org:canon:shennongbang","p":"org_rel","v":"org:canon:wuliangjian","q":{"rel":"hostile"},"b":"text","e":[[1,52,166,174,"05e7f0a5b60f88ed"],[1,54,41,51,"c768e4f7f19b231f"]],"rv":"sup","rb":"model:reviewer"}
-{"s":"org:canon:shennongbang","p":"org_rel","v":"org:canon:lingjiugong","q":{"rel":"subordinate","speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"神农帮人自称奉灵鹫宫号令，司空玄又畏童姥责罚，可见神农帮听命于灵鹫宫","n":"方向：神农帮隶属灵鹫宫","b":"text","e":[[1,88,120,131,"3bf43b140d76b0e7"],[1,193,34,42,"4955e894d6fcbdcc"]],"rv":"sup","rb":"model:reviewer"}
+{"s":"org:canon:shennongbang","p":"org_rel","v":"org:canon:lingjiugong","q":{"rel":"subordinate","speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"神农帮人自称奉灵鹫宫的号令行事，可见神农帮听命于灵鹫宫","n":"方向：神农帮隶属灵鹫宫；钟灵转述偷听所得","b":"text","e":[[1,88,120,131,"3bf43b140d76b0e7"]]}
 {"s":"org:canon:lingjiugong","p":"seat","v":"place:canon:piaomiaofeng","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"称其为缥缈峰上的灵鹫宫，据点在该峰","b":"text","e":[[1,88,120,131,"3bf43b140d76b0e7"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:wuliangshan","p":"place_kind","v":"mountain","t":"infer","w":"名为山，剑湖宫等处在山中","b":"text","e":[[1,7,45,55,"56bff5ad6e692da2"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:wuliangshan","p":"parent","v":"place:canon:daliguo","b":"text","e":[[1,7,45,55,"56bff5ad6e692da2"]],"rv":"sup","rb":"model:reviewer"}
@@ -139,10 +138,17 @@
 {"s":"place:canon:lianwuting","p":"place_kind","v":"building","t":"infer","w":"是厅堂，东西两侧设座，场中比剑","b":"text","e":[[1,3,0,9,"7827c8c517ddee74"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:lianwuting","p":"parent","v":"place:canon:jianhugong","t":"infer","w":"比剑在练武厅，东宗掌门念头里称此为剑湖宫中，故厅属剑湖宫","b":"text","e":[[1,3,0,9,"7827c8c517ddee74"],[1,13,46,57,"54f234d58cdcda63"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:lianwuting","p":"func","v":"比剑观礼","b":"text","e":[[1,3,0,9,"7827c8c517ddee74"],[1,9,42,49,"e35daa677f0b80b0"]],"rv":"sup","rb":"model:reviewer"}
-{"s":"place:canon:wuliangyubi","p":"func","v":"两宗钻研对象","q":{"speaker":"person:canon:xinshuangqing"},"r":"norm","m":"speech","t":"infer","w":"辛双清问左子穆五年来对无量玉壁的钻研心得，可见两宗都在研究它","b":"text","e":[[1,6,109,120,"42ef52d570416e01"]],"rv":"sup","rb":"model:reviewer"}
+{"s":"place:canon:wuliangyubi","p":"func","v":"东宗掌门钻研的对象","q":{"speaker":"person:canon:xinshuangqing"},"r":"norm","m":"speech","t":"infer","w":"辛双清追问左子穆这几年对它的钻研心得，可见它是其潜心研究之物","b":"text","e":[[1,6,109,120,"42ef52d570416e01"]]}
 {"s":"place:canon:puer","p":"parent","v":"place:canon:yunnan","t":"infer","w":"叙述者称其为滇南之地，滇即云南","b":"text","e":[[1,10,5,15,"be78b260538cf5fb"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:lancangjiang","p":"place_kind","v":"water","t":"infer","w":"称江，有西岸","b":"text","e":[[1,209,80,85,"f9984305d354e8a3"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:piaomiaofeng","p":"place_kind","v":"mountain","q":{"speaker":"person:canon:zhongling"},"r":"norm","m":"speech","t":"infer","w":"称峰，灵鹫宫所在","b":"text","e":[[1,88,120,131,"3bf43b140d76b0e7"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:yunnan","p":"place_kind","v":"region","t":"infer","w":"作为武林地域名使用","b":"text","e":[[1,9,50,65,"e35daa677f0b80b0"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:shanxi","p":"place_kind","v":"region","t":"infer","w":"作为迁居去处的地域名使用","b":"text","e":[[1,8,207,218,"180748fead235a75"]],"rv":"sup","rb":"model:reviewer"}
 {"s":"place:canon:daliguo","p":"place_kind","v":"region","t":"infer","w":"国名，无量山在其境内","b":"text","e":[[1,7,45,55,"56bff5ad6e692da2"]],"rv":"sup","rb":"model:reviewer"}
+{"s":"person:canon:duanyu","p":"trait","v":"好管闲事","t":"infer","w":"不听钟灵劝阻，执意去劝解神农帮与无量剑的仇杀","b":"text","e":[[1,127,240,250,"4ac832f8fb22129a"],[1,150,39,43,"99a189e895b45654"]]}
+{"s":"person:canon:sikongxuan","p":"trait","v":"多疑","t":"infer","w":"疑心二人来意另有蹊跷，又疑钟灵写信会耍花样","b":"text","e":[[1,155,72,81,"953b0a90c469b764"],[1,201,42,48,"f7717f561595bb67"]]}
+{"s":"org:canon:wuliangjianbeizong","p":"post_def","v":"掌门","q":{"lv":1},"b":"text","e":[[1,8,207,218,"180748fead235a75"]]}
+{"s":"org:canon:daliduanshi","p":"org_kind","v":"other","t":"infer","w":"是以大理国国姓相称的家族，不属门派帮会等几种原型","b":"text","e":[[1,10,90,99,"be78b260538cf5fb"]]}
+{"s":"document:canon:yijing","p":"doc_kind","v":"other","t":"infer","w":"是儒家典籍，不属信函凭证图卷等类","b":"text","e":[[1,146,63,74,"6145c43ca0412652"]]}
+{"s":"person:canon:duanyu","p":"trait","v":"诙谐","t":"infer","w":"面对威逼仍拿自己怕痛怕死打趣，又对出言挑衅者反唇相讥","b":"text","e":[[1,18,123,132,"b53068c33ffe3f1b"],[1,26,132,141,"0d8ad284ccc12b67"]]}
+{"s":"person:canon:duanyu","p":"trait","v":"多情","t":"infer","w":"见钟灵美貌便心头一荡，凝望出神，还在险境中亲吻了她","b":"text","e":[[1,132,110,116,"150c22a52eb60594"],[1,203,90,97,"837be4dc9751234d"]]}

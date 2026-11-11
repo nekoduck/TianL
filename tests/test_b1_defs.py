@@ -190,7 +190,7 @@ class DefsMatchPrototype(unittest.TestCase):
             self.assertIn('T.cook', str(cm.exception))
 
     def test_new_scope_must_spell_out_its_own_calendar(self):
-        """Calendar.from_def 对 festivals / retreat / wheat_doy / millet_doy 缺省回落到少林寺的值：新寺院漏写不能悄悄用上它们，装配时就报。"""
+        """新寺院的历法漏写任何一个必填字段（四项历法字段、农事香期时刻表）都不行，装配时就报，缺哪个报哪个：没有任何地方会悄悄补上少林寺的节日与结夏期。"""
         for field in ('festivals', 'retreat', 'wheat_doy', 'millet_doy', 'sell_doys'):
             with self.subTest(field), tempfile.TemporaryDirectory() as tmp:
                 copy_defs(tmp, lambda t: re.sub(rf'(?m)^{field} = .*$', '', t))
@@ -261,6 +261,7 @@ class NoShaolinConstantsInCode(unittest.TestCase):
         names |= {a.name for a in S.accounts if a.name} | {a.office for a in S.accounts if a.office}
         names |= {g.name for g in S.goods.values()} | set(S.cal.festivals.values()) | {c.label for c in S.hh_classes}
         names |= {v for v in S.labels.values() if isinstance(v, str)} | {gd.gen for gd in S.org.gens}
+        names |= {S.scenario['visitor'][k] for k in ('name', 'hall', 'kind')} | {S.scenario['canon_probe']}   # 回归场景里的人名与人员类别也只能在 defs 里（visitor.org 与 where 的层名“外来香客”撞字，不查）
         cls.labels_nested = {v for k in ('reasons', 'grain_ledger') for v in S.labels[k].values()}
         for i in D.ids():
             d = D.get(i)
@@ -344,6 +345,30 @@ class NoShaolinConstantsInCode(unittest.TestCase):
             with self.assertRaises(Exception) as cm:
                 load_spec(root=tmp)
             self.assertIn('incense', str(cm.exception))
+
+    def test_missing_label_is_reported(self):
+        """labels 顶层必备键（日报与路况用词）漏写，装配时就报，缺哪个报哪个。"""
+        for key in ('snow_closure', 'temple_store', 'grain_market'):
+            with self.subTest(key), tempfile.TemporaryDirectory() as tmp:
+                copy_defs(tmp, lambda t: re.sub(rf'(?m)^{key} = .*$', '', t))
+                with self.assertRaises(Exception) as cm:
+                    load_spec(root=tmp)
+                self.assertIn(key, str(cm.exception))
+                self.assertIn('labels', str(cm.exception))
+
+    def test_snow_closure_reason_comes_from_labels(self):
+        """冬季大雪封路的原因（写进 route_closure.reason 与 ROAD_CLOSED 事件，是状态哈希口径）取自 labels.snow_closure，代码里没有这个字面量。"""
+        base = baseline_world()
+        reasons = {r[0] for r in base.x('SELECT reason FROM route_closure')}
+        self.assertEqual(reasons, {load_spec().labels['snow_closure']})          # 基准里有四场大雪，原因都是它
+        with tempfile.TemporaryDirectory() as tmp:
+            copy_defs(tmp, lambda t: t.replace('snow_closure = "大雪封山"', 'snow_closure = "雪阻山路"'))
+            w = World(spec=load_spec(root=tmp)).run(700)                          # 基准里第一场大雪在第 690 日
+        rows = w.x('SELECT from_day, to_day, reason FROM route_closure').fetchall()
+        self.assertEqual(rows, [(r[0], r[1], '雪阻山路') for r in base.x('SELECT from_day, to_day FROM route_closure WHERE from_day<700')])
+        self.assertTrue(all('雪阻山路' in r[0] for r in w.x("SELECT payload FROM event_log WHERE type='ROAD_CLOSED'").fetchall()))
+        text = '\n'.join(f.read_text(encoding='utf-8') for f in (ROOT / 'tianl' / 'kernel').glob('*.py'))
+        self.assertNotIn('大雪封山', text)
 
     def test_defs_do_hold_them(self):
         """反过来：这些常量确实在 defs 里。"""

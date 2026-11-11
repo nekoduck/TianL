@@ -19,7 +19,7 @@ from tianl.npc.model import FIELD_MASK, GAP, Symbols, Trail, pack, unpack
 from tianl.npc.model import Case
 from tianl.npc.spec import A_GUARD, A_MARTIAL, A_STROLL, L_FREE, L_SLACK, AdSpec, NeedTerm, SpecError
 from tianl.npc.scenarios import PROTO_SEED, gossip_script, proto60_roster, proto60_scenario
-from tests.test_npc_support import with_when
+from tests.test_npc_support import shared_run as support_run, with_when
 
 BASE_HASH = 'e8f8209eeb8ca94a'
 GOSSIP_SLOT = proto60_scenario().gossip.slot            # 传闻脚本发生的时辰：场景（defs）给，引擎里没有缺省
@@ -32,17 +32,10 @@ def base_run(**kw):
     return ProtoRun(**kw).run()
 
 
-_SHARED = {}
-
-
 def shared_run(seed=PROTO_SEED, days=30, gossip=False):
-    """只读用的运行结果，整个模块里同样的（种子、日数、脚本）只跑一次。凡是会改引擎的测试
+    """只读用的运行结果（各测试文件之间共用，见 test_npc_support.shared_run）。凡是会改引擎的测试
     （加人、设观察者、换 Host、改规格）一律不要用它，各自 ProtoRun 一份。"""
-    key = (seed, days, gossip)
-    if key not in _SHARED:
-        kw = {'script': gossip_script(ProtoRun().common)} if gossip else {}
-        _SHARED[key] = ProtoRun(seed=seed, days=days, **kw).run()
-    return _SHARED[key]
+    return support_run(seed=seed, days=days, gossip=gossip)
 
 
 class HostBoundary(unittest.TestCase):

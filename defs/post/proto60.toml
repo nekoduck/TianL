@@ -213,8 +213,11 @@ ranks = [
 
 # ---------------------------------------------------------------- 时间表
 # night 夜间时辰（子 0 … 亥 11）；rotate = [日系数, 时辰系数]：各人决定的起点按 (日×a + 时辰×b) % 人数 轮转（保证工位预约公平且确定）；
-# meal_slots 斋食时辰；seasons 季节与月份（行为包 when.season 用）。
+# meal_slots 斋食时辰；seasons 季节与月份（行为包 when.season 用）；
+# calendar 这处场所的历法（calendar 定义的编号）：行为包 when 里的 festival、month、day_of_month、season 键都按它，不按别处的历。
+# 原型场景就是少林寺，所以引用少林寺历；另一处场所（丐帮分舵、庄园）写自己的 calendar 定义并改这一行。
 ["rule:proto60:schedule"]
+calendar = "calendar:shaolin:main"
 night = [11, 0, 1]
 rotate = [7, 3]
 meal_slots = [4, 6]

@@ -11,7 +11,7 @@
 
     pulse(engine, day)
 
-现在是空操作。C7 只改本文件里 pulse 的函数体（要自己判断今天是不是月初 / 岁首：engine 不替它判断，历法用 tianl.core.cal(day)）；
+现在是空操作。C7 只改本文件里 pulse 的函数体（要自己判断今天是不是月初 / 岁首：engine 不替它判断，历法用 engine.cal(day)，即这处场所自己的历法 engine.spec.calendar，不是全局默认；返回含 month / dom / year / festival 的字典）；
 不要改 engine.py。注意：pulse 里若收人 / 送人（engine.add_person / on_person_removed）或发事件，会改变基线哈希，要按
 docs/NPC_ENGINE.md 的规矩重立基线并写明原因。
 """

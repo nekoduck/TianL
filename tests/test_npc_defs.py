@@ -23,13 +23,13 @@ from unittest import mock
 from tianl.core import cal, rnd_b2
 from tianl.defs import Defs, DefsError
 from tianl.npc import NpcEngine, ProtoRun, StandaloneHost, controller, life, lod, persist, proto60_spec
-from tianl.npc.defsload import ROLES, field_docs
+from tianl.npc.defsload import ROLES, docs_markdown, field_docs
 from tianl.npc.handlers import GATE_PARAMS, GATES, PACKAGE_HANDLERS, Param, ParamCtx, check_params, package_handler
 from tianl.npc.report import scale_report
-from tianl.npc.scenarios import DEFS_ROOT, PROTO60_ID, gossip_script, load_defs, proto60_roster, proto60_scenario
-from tianl.npc.spec import (L_DEVIANT, L_DUTY, L_GROUP, DoSpec, PackageSpec, ScenarioSpec, SiteSpec, SpecError, WhenSpec,
+from tianl.npc.scenarios import DEFS_ROOT, PROTO60_ID, given_name, gossip_script, load_defs, proto60_roster, proto60_scenario
+from tianl.npc.spec import (L_DEVIANT, L_GROUP, DoSpec, PackageSpec, ScenarioSpec, SiteSpec, SpecError, WhenSpec,
                             WhoSpec)
-from tests.test_npc_support import handler_packages, package, pkg_index, with_package
+from tests.test_npc_support import package, pkg_index, shared_run, with_package
 
 BASE_HASH = 'e8f8209eeb8ca94a'      # 基准 = 60 僧 × 30 日 + 传闻脚本（gossip，第 6 日）；不带脚本的 ProtoRun() 是另一个世界（5002a67d7ebb5feb）
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
@@ -120,7 +120,7 @@ class DefsDrivenSpec(unittest.TestCase):
 # ================================================================= 2 行为包是数据
 def baseline_hash():
     """原型基准的哈希：与 reference/logs/npc_run_log.txt 的“基准”一行同一个运行（场景的传闻脚本在内），rnd_b2。"""
-    return ProtoRun(script=gossip_script(ProtoRun().common)).run().hash
+    return shared_run(gossip=True).hash                          # 只读共用的一次运行（见 test_npc_support.shared_run）
 
 
 def W(**kw):
@@ -228,6 +228,118 @@ class CalendarKeys(unittest.TestCase):
         self.assertEqual(chant(8), 0)
 
 
+class ScopeCalendar(unittest.TestCase):
+    """历法是这处场所（scope）的数据，不是全局默认：行为包 when 里的 festival / month / day_of_month / season 键按 rule:schedule 的
+    calendar 引用的那份历法算。第二位独立验证者指出：此前引擎读全局默认的少林历，给丐帮分舵或庄园写新 defs 时节日键仍按少林历。"""
+
+    OTHER = ('["calendar:proto60:main"]\nname = "另一座寺的历"\nyear = 360\nfestivals = { "1-10" = "开山节", "3-3" = "踏青" }\n'
+             'retreat = [[4, 15], [7, 15]]\nwheat_doy = 100\nmillet_doy = 200')
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sp = proto60_spec()
+
+    @staticmethod
+    def point_at_another_calendar(pd, text=None):
+        pd.append('calendar/proto60.toml', text or ScopeCalendar.OTHER)
+        pd.edit('post/proto60.toml', 'calendar = "calendar:shaolin:main"', 'calendar = "calendar:proto60:main"')
+
+    def test_the_spec_carries_the_calendar_named_in_the_schedule_rule(self):
+        defs = load_defs()
+        self.assertEqual(defs.get('rule:proto60:schedule')['calendar'], 'calendar:shaolin:main')
+        self.assertEqual(self.sp.calendar.festivals, {(1, 1): '元日', (1, 15): '上元', (2, 15): '涅槃日', (4, 8): '佛诞',
+                                                       (4, 15): '结夏', (7, 15): '盂兰盆', (12, 8): '腊八'})
+        eng = ProtoRun(days=1).engine
+        self.assertEqual(eng.cal(14), cal(14))                      # 原型场景就是少林寺：引用的是少林历，与全局默认同值
+        self.assertEqual((eng.cal(14)['dom'], eng.cal(14)['festival']), (15, '上元'))
+
+    def test_another_calendar_moves_the_festival_keys(self):
+        with patched_defs() as pd:
+            self.point_at_another_calendar(pd)
+            sp = SiteSpec.from_defs(pd.load(strict=True), PROTO60_ID)
+        self.assertEqual(sp.calendar.festivals, {(1, 10): '开山节', (3, 3): '踏青'})
+        self.assertNotEqual(sp, self.sp)
+        r = ProtoRun(spec=extra_class_package(sp, '开山', festivals=('开山节',)), days=16).run()
+        self.assertGreaterEqual(label_counts(r, 9)['开山'], 40)       # 月内第 10 日（模拟第 9 日）：这座寺的节日
+        self.assertEqual(sum(label_counts(r, d)['开山'] for d in range(1, 17) if d != 9), 0)
+        r = ProtoRun(spec=extra_class_package(sp, '节日', festivals=True), days=16).run()
+        self.assertGreaterEqual(label_counts(r, 9)['节日'], 40)
+        self.assertEqual(label_counts(r, 14)['节日'], 0)             # 少林历的上元（第 14 日）在这座寺里不是节日
+        self.assertEqual(label_counts(r, 14)['早课'] >= 40, True)
+        r = ProtoRun(spec=extra_class_package(sp, '月半', doms=(15,)), days=16).run()
+        self.assertGreaterEqual(label_counts(r, 14)['月半'], 40)      # 月内日不依赖节日表，两座寺相同
+
+    def test_the_global_default_calendar_is_not_read_by_the_engine(self):
+        """换掉全局默认历法（tianl.core.set_default_calendar），引擎的结果一字不差：它读的是规格里的历法。"""
+        from tianl.core import set_default_calendar
+        from tianl.core.calendar import Calendar
+        base = ProtoRun(spec=extra_class_package(self.sp, '上元', festivals=('上元',)), days=16).run()
+        set_default_calendar(Calendar({(9, 9): '重阳'}, ((4, 15), (7, 15)), 125, 245))
+        try:
+            self.assertEqual(cal(14)['festival'], None)                          # 全局默认确实换了
+            r = ProtoRun(spec=extra_class_package(self.sp, '上元', festivals=('上元',)), days=16).run()
+            self.assertEqual(r.hash, base.hash)
+            self.assertGreaterEqual(label_counts(r, 14)['上元'], 40)             # 引擎仍按自己的历法：第 14 日是上元
+            self.assertEqual(r.engine.cal(14)['festival'], '上元')
+            self.assertEqual(ProtoRun(script=gossip_script(ProtoRun().common)).run().hash, BASE_HASH)
+        finally:
+            set_default_calendar(None)                                          # 回到“第一次用到时从 defs 读”
+        self.assertEqual(cal(14)['festival'], '上元')
+
+    def test_no_npc_module_reads_the_global_default_calendar(self):
+        """源码规矩：tianl/npc 里没有模块从 tianl.core 引入全局的 cal / cal_str / default_calendar（历法只经 SiteSpec.calendar 进来）。"""
+        banned = {'cal', 'cal_str', 'default_calendar', 'set_default_calendar'}
+        for f in sorted(NPC_SRC.glob('*.py')):
+            for n in ast.walk(ast.parse(f.read_text(encoding='utf-8'))):
+                if isinstance(n, ast.ImportFrom) and (n.module or '').split('.')[-1] in ('core', 'calendar'):
+                    self.assertEqual(banned & {a.name for a in n.names}, set(), '%s:%d 引入了全局历法' % (f.name, n.lineno))
+
+    def test_a_festival_the_calendar_does_not_have_is_an_error(self):
+        sp = extra_class_package(self.sp, '佛诞X', festivals=('佛诞X',))
+        problems = sp.validate()
+        self.assertTrue(any('佛诞X' in m and '不在这处场所的历法里' in m and '上元' in m for m in problems), problems)
+        with patched_defs() as pd:
+            self.point_at_another_calendar(pd)
+            pd.edit('post/proto60_packages.toml', '"package:proto60:free",\n]', '"package:proto60:fest", "package:proto60:free",\n]')
+            pd.append('post/proto60_packages.toml', '["package:proto60:fest"]\nlayer = "集体"\nwhen = { festival = "上元", slot = 3 }\n'
+                      'do = { place = "place:proto60:zen", act = "zazen", label = "上元法会" }')
+            text = '\n'.join(problems_of(pd))
+        self.assertIn('package:proto60:fest', text)                              # 少林历的上元，换了历法之后就是笔误
+        self.assertIn("节日 '上元' 不在这处场所的历法里", text)
+        self.assertIn('开山节', text)
+
+    def test_month_and_day_of_month_are_range_checked(self):
+        sp = extra_class_package(extra_class_package(self.sp, '十三月', months=(13,)), '三十一日', doms=(31,))
+        text = '\n'.join(sp.validate())
+        self.assertIn('when.month 里的 13 不是月（1–12）', text)
+        self.assertIn('when.day_of_month 里的 31 不是月内日（1–30）', text)
+        bad = dataclasses.replace(self.sp, seasons={**self.sp.seasons, '春': (0, 1, 2)})
+        self.assertTrue(any('seasons[春]：月份 0 不是 1–12' in m for m in bad.validate()))
+
+    def test_calendar_field_errors_are_readable(self):
+        with patched_defs() as pd:
+            pd.edit('post/proto60.toml', 'calendar = "calendar:shaolin:main"\n', '')
+            self.assertIn('缺少字段 calendar', '\n'.join(problems_of(pd)))
+        with patched_defs() as pd:
+            pd.edit('post/proto60.toml', 'calendar = "calendar:shaolin:main"', 'calendar = "calendar:nowhere:main"')
+            with self.assertRaises(DefsError) as cm:
+                pd.load(strict=True)
+            self.assertIn('rule:proto60:schedule', '\n'.join(cm.exception.problems))
+            self.assertIn('calendar:nowhere:main', '\n'.join(cm.exception.problems))
+            self.assertIn('不存在的 calendar:nowhere:main', '\n'.join(problems_of(pd)))
+        with patched_defs() as pd:
+            self.point_at_another_calendar(pd, ScopeCalendar.OTHER.replace('festivals = { "1-10" = "开山节", "3-3" = "踏青" }\n', ''))
+            text = '\n'.join(problems_of(pd))
+            self.assertIn('calendar:proto60:main', text)
+            self.assertIn('festivals', text)                                     # 历法定义缺 festivals：说明哪份历法缺什么
+        with patched_defs() as pd:
+            self.point_at_another_calendar(pd, ScopeCalendar.OTHER.replace('year = 360', 'year = 361'))
+            self.assertIn('一年必须是 360 日', '\n'.join(problems_of(pd)))
+        with patched_defs() as pd:
+            pd.edit('post/proto60.toml', 'calendar = "calendar:shaolin:main"', 'calendar = "place:proto60:hall"')
+            self.assertIn('应引用 calendar 类定义', '\n'.join(problems_of(pd)))
+
+
 # ================================================================= 3 处理器登记表与参数校验
 class HandlerRegistry(unittest.TestCase):
     @classmethod
@@ -248,7 +360,6 @@ class HandlerRegistry(unittest.TestCase):
 
     def test_the_prototype_uses_the_handlers_the_task_names(self):
         used = {pk.handler for pk in self.sp.stack if pk.handler}
-        self.assertEqual(used, set(PACKAGE_HANDLERS) - {'__unused__'} if False else used)
         for name in ('tempted', 'lazy', 'kitchen_duty', 'proxy_cook', 'patrol_duty', 'gate_duty', 'errand', 'slack',
                      'court_report', 'physiology', 'forced', 'penalty', 'free'):
             self.assertIn(name, used)
@@ -477,7 +588,15 @@ class ErrorReporting(unittest.TestCase):
         with patched_defs() as pd:
             pd.edit('facility/proto60.toml', 'admission = { gate = "bath_day", every = 5, phase = 4, slots = [7, 8] }\n', '')
             pd.edit('facility/proto60.toml', 'order = 7\nad = { label = "沐浴"', 'order = 7\nadmission = { gate = "lib_open", office = "post:proto60:librarian", slots = [1] }\nad = { label = "沐浴"')
-            self.assertEqual(problems_of(pd), []) if False else None
+            sp = SiteSpec.from_defs(pd.load(), PROTO60_ID)          # 合法：准入门可以换成另一道，只要参数对得上——不抛错，且确实换了
+            bath = next(ad for ad in sp.ads if ad.act == 'bath')
+            self.assertEqual((bath.gate, bath.gate_params['slots']), ('lib_open', (1,)))
+        with patched_defs() as pd:                                  # 参数的类型、取值范围在读 defs 时就查（不等规格自检）
+            pd.edit('facility/proto60.toml', 'every = 5, ', 'every = "often", ')
+            self.has(problems_of(pd), 'ad bath 的准入门 bath_day', '参数 every 应是 int', "'often'")
+        with patched_defs() as pd:
+            pd.edit('facility/proto60.toml', 'every = 5, ', 'every = 0, ')
+            self.has(problems_of(pd), 'ad bath 的准入门 bath_day', '参数 every = 0 小于下限')
 
     def test_all_problems_are_collected_not_just_the_first(self):
         with patched_defs() as pd:
@@ -487,6 +606,25 @@ class ErrorReporting(unittest.TestCase):
             probs = problems_of(pd)
         self.has(probs, 'package:proto60:penalty', 'th_base', 'post:proto60:head_cook')
         self.assertGreaterEqual(len(probs), 3)
+
+    def test_structural_and_value_mistakes_are_reported_together(self):
+        """“一次报全”不分结构错与取值错：缺字段、处理器写错、参数缺失、类型不对、越界、时辰不对、活动不存在、准入门参数不合法，
+        同时出现时一次全报（它们都在读 defs 时查；之前类型与越界错要等结构错修完才出现）。"""
+        with patched_defs() as pd:
+            pd.edit('post/proto60_packages.toml', 'k = 1.6', 'k = "high"', 0)                              # 类型错（两个起念包都错）
+            pd.edit('post/proto60_packages.toml', 'p_cap = 0.9', 'p_cap = 1.9')                           # 越界
+            pd.edit('post/proto60_packages.toml', 'handler = "kitchen_duty"', 'handler = "kitchen_dutyy"')  # 处理器写错
+            pd.edit('post/proto60_packages.toml', 'faint_e = 10, ', '')                                    # 缺参数
+            pd.edit('post/proto60_packages.toml', 'when = { slot = 9 }', 'when = { slot = 13 }')            # 时辰不对
+            pd.edit('post/proto60_packages.toml', 'act = "chant", label = "早课"', 'act = "fly", label = "早课"')   # 活动不存在
+            pd.edit('post/proto60_packages.toml', 'layer = "处分"\nhandler = "penalty"', 'handler = "penalty"')   # 缺字段
+            pd.edit('post/proto60.toml', 'count = 4', 'count = "four"')                                    # 岗位的字段类型
+            pd.edit('facility/proto60.toml', 'every = 5, ', 'every = 0, ')                                 # 准入门参数越界
+            probs = problems_of(pd)
+        self.has(probs, '缺少字段 layer', "处理器 'kitchen_dutyy' 未登记", '缺少参数 faint_e', '参数 k 应是 float', '参数 p_cap = 1.9 大于上限',
+                 '不是时辰（0–11）', "活动 'fly' 没有对应的交互", '字段 count 应是 整数', '参数 every = 0 小于下限')
+        self.assertEqual(len(probs), len(set(probs)))                  # 没有重复报同一条
+        self.assertGreaterEqual(len(probs), 10)
 
     def test_unknown_scenario_and_missing_role(self):
         defs = load_defs()
@@ -590,7 +728,37 @@ class Hooks(unittest.TestCase):
             self.assertEqual(len(spy.seen), 3 * 12)
             day, slot, ix, cands = spy.seen[0]
             self.assertEqual((day, slot, ix, len(cands)), (1, 0, 5, 1))
-            self.assertEqual(cands[0], run.engine.dec_of_first_slot if False else cands[0])
+            self.assertEqual(cands[0], base.engine.where(5, day, slot))      # 第一个候选就是程序（栈）的选择（四元组：场所、活动、层、原因）
+
+    def test_stack_decide_is_idempotent_per_person_and_slot(self):
+        """decide 有副作用（占工位、记统计……），同一个人同一个时辰（同一个 ctx）只算一次；再问原样返回、不再占位——
+        controller.candidates 之类多次取“程序的选择”的调用者不会重复占位（controller.py 的硬约束）。"""
+        from tianl.npc.model import SlotCtx
+        eng = ProtoRun(days=1).engine
+        day, slot = 1, 7                                              # 申时：自由时段，会占工位
+        eng.begin_day(day)
+        ctx = SlotCtx(day, slot)
+        p = eng.people[eng.common[0].ix]
+        d1 = eng.stack.decide(p, day, slot, ctx)
+        occ, stat = dict(ctx.occ), dict(eng.stat)
+        d2 = eng.stack.decide(p, day, slot, ctx)
+        self.assertIs(d1, d2)
+        self.assertEqual((dict(ctx.occ), dict(eng.stat)), (occ, stat))     # 没有再占位、没有再记统计
+        self.assertEqual(controller.candidates(eng, p, day, slot, ctx), [d1])
+        self.assertEqual((dict(ctx.occ), dict(eng.stat)), (occ, stat))
+        q = eng.people[eng.common[1].ix]                               # 换一个人照常算
+        self.assertIsNotNone(eng.stack.decide(q, day, slot, ctx))
+        self.assertEqual(eng.stack.decide(p, day, slot, ctx), d1)      # 中间插了别人，p 仍按他自己的 ctx 记忆走完（记忆只有一格：不同的人会重算）
+        ctx2 = SlotCtx(day, slot)                                      # 新的 ctx（新的时辰对象）重新决定
+        self.assertEqual(eng.stack.decide(p, day, slot, ctx2)[:2], d1[:2])
+
+    def test_explain_after_leaving_uses_the_words_of_the_defs(self):
+        sp = dataclasses.replace(proto60_spec(), leave_word='出帮')
+        run = ProtoRun(spec=sp, days=1).run()
+        run.engine.on_person_removed(run.engine.people[3].pid, '游方')
+        ex = run.engine.explain(run.engine.people[3].pid, 2, 0)
+        self.assertIn('已于第1日出帮（游方）', ex['text'])
+        self.assertNotIn('离寺', ex['text'])
 
     def test_a_controller_can_choose_among_candidates(self):
         """候选不止一个时（C9 会列出合法替代）操纵者选哪个就是哪个：这里临时把候选扩成两个，验证选择生效。"""
@@ -651,11 +819,14 @@ class Generalization(unittest.TestCase):
             pd.edit_re('facility/proto60.toml', r'stations = (\d+)', lambda m: 'stations = %d' % (5 * int(m.group(1))))
             defs = pd.load(strict=True)
             sp, scn = SiteSpec.from_defs(defs, PROTO60_ID), ScenarioSpec.from_defs(defs, PROTO60_ID)
-        big = ProtoRun(spec=sp, scenario=scn).run().engine
-        small = ProtoRun(n=300, days=scn.days).run().engine             # 只改人口
-        self.assertEqual((len(big.people), big.stat['ps']), (300, 300 * 12 * 30))
+        days = 10                                                        # 十日就够看出差别（省时间）
+        big = ProtoRun(spec=sp, scenario=scn, days=days).run().engine
+        small = ProtoRun(n=300, days=days).run().engine                  # 只改人口
+        self.assertEqual((len(big.people), big.stat['ps']), (300, 300 * 12 * days))
         self.assertEqual(big.fac.violations, [])
-        self.assertEqual((big.stat['job_done'], big.stat['job_post']), (5 * 870, 5 * 870))
+        posted = sum(j.count for j in sp.jobs.board) * days              # 每日板上的人手数 × 日数：全部完成
+        self.assertEqual((big.stat['job_done'], big.stat['job_post']), (posted, posted))
+        self.assertEqual(posted, 5 * sum(j.count for j in proto60_spec().jobs.board) * days)
         self.assertLess(big.stat['full'] * 10, small.stat['full'])       # 满员改选少了一个数量级以上
         work = lambda e: e.acts['清众']['作务'] / sum(e.acts['清众'].values())
         self.assertGreater(work(big), 3 * work(small))                   # 清众的作务时间占比明显回升
@@ -669,11 +840,40 @@ class Generalization(unittest.TestCase):
             self.assertEqual(len({ps.pid for ps in r}), n)
         self.assertEqual(len(proto60_roster(sp)), scn.population)
 
+    def test_names_stay_unique_however_large_the_population(self):
+        """字池只有 62 个字：超过一圈，名字后面多缀字（given_name），所以 300 人、数千人都不重名；第一圈与原型的取法逐字相同。"""
+        sp = proto60_spec()
+        pool = sp.name_pool
+        for n in (60, 300, 1000, 4000):
+            r = proto60_roster(sp, n)
+            self.assertEqual(len({ps.name for ps in r}), n, n)
+        r60, r300 = proto60_roster(sp, 60), proto60_roster(sp, 300)
+        self.assertEqual([ps.name for ps in r60], [ps.name for ps in r300[:60]])         # 人口变了，前 60 位的名字不变
+        for ps in r60:
+            i = int(ps.pid[1:]) - 1
+            self.assertEqual(ps.name, (next(o.prefix for o in sp.offices if o.name == ps.office) if ps.office else sp.common_prefix) + pool[i])
+        self.assertEqual(given_name('甲', 'ab', 0), '甲a')
+        self.assertEqual([given_name('甲', 'ab', i) for i in range(2, 8)], ['甲aa', '甲ba', '甲ab', '甲bb', '甲aaa', '甲baa'])
+
     def test_other_sizes_run(self):
         for n in (28, 90, 150):                                        # 28 = 只有岗位者；其余是不同大小的寺
             run = ProtoRun(n=n, days=6).run()
             self.assertEqual(run.engine.stat['ps'], n * 12 * 6)
             self.assertEqual(run.engine.fac.violations, [])
+
+    def test_site_words_in_report_titles_and_explain_come_from_defs(self):
+        """报表标题里的“60 僧 × 30 日”与 explain 里的“离寺”不写死在代码里：量词取场景的 track_suffix，说法取 org:main 的 leave_word。"""
+        report_src = (NPC_SRC / 'report.py').read_text(encoding='utf-8')
+        self.assertIsNone(re.search(r'\d+ ?僧', report_src))
+        self.assertNotIn('离寺', (NPC_SRC / 'engine.py').read_text(encoding='utf-8'))
+        sp, scn = proto60_spec(), proto60_scenario()
+        self.assertEqual((sp.leave_word, scn.track_suffix), ('离寺', '僧'))
+        with patched_defs() as pd:                                  # 换一座“帮”：只改 defs，说法与量词跟着变
+            pd.edit('org/proto60.toml', 'leave_word = "离寺"', 'leave_word = "出帮"')
+            pd.edit('scenario/proto60.toml', 'track_suffix = "僧"', 'track_suffix = "众"')
+            defs = pd.load(strict=True)
+            sp2, scn2 = SiteSpec.from_defs(defs, PROTO60_ID), ScenarioSpec.from_defs(defs, PROTO60_ID)
+        self.assertEqual((sp2.leave_word, scn2.track_suffix), ('出帮', '众'))
 
     def test_the_scale_report_cli(self):
         import subprocess
@@ -697,6 +897,32 @@ class DocsInSync(unittest.TestCase):
         self.assertGreater(len(rows), 200)
         missing = sorted({'%s: %s' % (kind, path) for kind, path, *_ in rows if '`%s`' % path not in self.section})
         self.assertEqual(missing, [], '文档第 12 节漏了这些字段（python3 -m tianl.npc.defsload 可重新生成字段表）')
+
+    @staticmethod
+    def tables_of(text):
+        """文本里“**标题**”后紧跟的表：{标题: [表行（含表头）]}。"""
+        out, title, started = {}, None, False
+        for line in text.splitlines():
+            if re.match(r'^\*\*.+\*\*$', line):
+                title, started = line, False
+            elif line.startswith('|') and title:
+                out.setdefault(title, []).append(line)
+                started = True
+            elif line.strip() and started:
+                title, started = None, False
+        return out
+
+    def test_field_tables_are_exactly_the_generated_ones(self):
+        """字段表逐表逐行与代码生成的一致：说明文字改了、默认值改了、类型改了而文档没跟着改，都会红；
+        文档里多出来的（代码里已经没有的）字段表也会红。重新生成：python3 -m tianl.npc.defsload。"""
+        gen = self.tables_of(docs_markdown(load_defs(), PROTO60_ID))
+        doc = self.tables_of(self.section)
+        self.assertGreaterEqual(len(gen), 40)
+        field_title = re.compile(r'^\*\*(`[^`]+`|处理器 `[^`]+`|准入门 `[^`]+`)')
+        self.assertEqual(sorted(t for t in doc if field_title.match(t) and t not in gen), [], '文档里有代码里已经没有的字段表')
+        for title, rows in gen.items():
+            self.assertIn(title, doc, '文档缺这张字段表：%s' % title)
+            self.assertEqual(doc[title], rows, '字段表与代码不一致：%s' % title)
 
     def test_every_handler_gate_and_hook_is_documented(self):
         for name in list(PACKAGE_HANDLERS) + list(GATES):

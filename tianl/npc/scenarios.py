@@ -71,6 +71,17 @@ def _common_track(spec, j):
     return spec.common_tracks[-1][0]
 
 
+def given_name(prefix, pool, i):
+    """第 i 位（从 0 起）的名字：前缀 + 字池里的第 i % 池长 个字；字池每用完一圈，名字后面多缀一个字
+    （第 k 圈缀 k 的“双射 P 进制”写法：1..P 缀池里的一个字，P+1 起缀两个字……），所以人口再多也不重名；第一圈与原型的取法完全相同。"""
+    lap, j = divmod(i, len(pool))
+    tail = ''
+    while lap:
+        lap, r = divmod(lap - 1, len(pool))
+        tail = pool[r] + tail
+    return prefix + pool[j] + tail
+
+
 def proto60_roster(spec, n=None, scenario=None):
     """名册：先按岗位表依次排岗位人员，其余为清众（姓名、修行方向、寮房都由序号决定）。n 缺省取场景的人口。"""
     n = (scenario or proto60_scenario()).population if n is None else n
@@ -79,10 +90,10 @@ def proto60_roster(spec, n=None, scenario=None):
     for o in spec.offices:
         for _ in range(o.count):
             i = len(out)
-            out.append(PersonSpec(pid_of(i), o.prefix + pool[i], o.name, cyc[i % len(cyc)], dorms[i % len(dorms)]))
+            out.append(PersonSpec(pid_of(i), given_name(o.prefix, pool, i), o.name, cyc[i % len(cyc)], dorms[i % len(dorms)]))
     for j in range(n - len(out)):
         i = len(out)
-        out.append(PersonSpec(pid_of(i), spec.common_prefix + pool[i % len(pool)], None, _common_track(spec, j),
+        out.append(PersonSpec(pid_of(i), given_name(spec.common_prefix, pool, i), None, _common_track(spec, j),
                               dorms[i % len(dorms)]))
     return out
 

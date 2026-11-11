@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from ..core import SLOTS_PER_DAY
-from .spec import (A_GUARD, A_MEAL, A_PATROL, A_SLEEP, A_WORK, L_DEVIANT, L_DUTY, L_ERRAND, L_FORCED, L_FREE, L_PENALTY,
-                   L_PHYS, L_REACT, L_SLACK)
+from .spec import (A_GUARD, A_MEAL, A_PATROL, A_SLEEP, A_WORK, DAYS_PER_MONTH, FIRST_DOM, FIRST_MONTH, L_DEVIANT, L_DUTY, L_ERRAND, L_FORCED, L_FREE,
+                   L_PENALTY, L_PHYS, L_REACT, L_SLACK, MONTHS_PER_YEAR, OWN_BED, PERIODS, STATUS_COMMON, STATUS_HOLDER)
 
 REQUIRED = object()                 # Param 的“必填”哨兵
 
@@ -132,21 +132,154 @@ def check_value(p, v, ctx):
     return None
 
 
-def check_params(schema, params, ctx):
-    """已规范化的 params（引用已换成 code / 岗位名，列表已是元组，默认值已补齐）对照参数表：返回问题列表。"""
+def check_params(schema, params, ctx, present_only=False):
+    """已规范化的 params（引用已换成 code / 岗位名，列表已是元组，默认值已补齐）对照参数表：返回问题列表。
+
+    present_only = True：只查给了值的参数的类型、取值范围与引用，不报“缺少 / 未知”（读 defs 时 norm_params 已经报过它们，
+    不重复；值为 None 的是引用没解析出来、也已经报过）。"""
     out = []
     names = {p.name for p in schema}
     for k in params:
-        if k not in names:
+        if k not in names and not present_only:
             out.append('未知参数 %s（可用：%s）' % (k, '、'.join(sorted(names)) or '无'))
     for p in schema:
         if p.name not in params:
-            out.append('缺少参数 %s' % p.name)
+            if not present_only:
+                out.append('缺少参数 %s' % p.name)
+            continue
+        if present_only and params[p.name] is None:
             continue
         msg = check_value(p, params[p.name], ctx)
         if msg:
             out.append(msg)
     return out
+
+
+# ---------------------------------------------------------------- 一个行为包自身的校验（读 defs 时与规格自检共用一份）
+class _Anything:
+    """“还没读到的那张表”：什么都算在里面（对应的引用检查跳过，不制造连带的假问题）。"""
+
+    def __contains__(self, _):
+        return True
+
+
+ANYTHING = _Anything()
+
+
+@dataclass(frozen=True)
+class Known:
+    """校验一个包时用到的几张表：SiteSpec 自检时是完整的（Known.of(spec)）；defsload 读到一半时，读不全的那几张是 None（对应检查跳过）。
+    places：场所 code 的集合；office_names：岗位名集合；acts：活动代码 -> 交互；layer_rank：层标签 -> 层号；seasons：季节名 -> 月份；
+    patrol_office：巡寮的岗位名；festivals：这处场所的历法里的节日名集合（行为包 when.festival 写的节日名要在里面）。"""
+    places: object = None
+    office_names: object = None
+    acts: object = None
+    layer_rank: object = None
+    seasons: object = None
+    patrol_office: object = None
+    festivals: object = None
+
+    @classmethod
+    def of(cls, spec):
+        return cls(spec.places, {o.name for o in spec.offices}, spec.interactions, spec.layer_rank, spec.seasons, spec.patrol.office,
+                   set(spec.calendar.festivals.values()))
+
+
+class _ParamView:
+    """给 check_value 看的视图（places / offices / acts 三张表）：缺的那张当“什么都算在里面”。"""
+
+    def __init__(self, k):
+        self.places = ANYTHING if k.places is None else k.places
+        self.offices = ANYTHING if k.office_names is None else k.office_names
+        self.acts = ANYTHING if k.acts is None else k.acts
+
+
+def _in(table, key):
+    return table is None or key in table
+
+
+def package_shape_problems(pk, k):
+    """包的层、谁、何时、做什么（do）的问题；k 是 Known。文字同一份：规格自检与读 defs 都用它。"""
+    out = []
+    where = '包 %s' % pk.id
+    if not _in(k.layer_rank, pk.layer):
+        out.append('%s.layer：层标签 %r 未登记' % (where, pk.layer))
+    if pk.who.offices is not None and k.office_names is not None:
+        for off in pk.who.offices:
+            if off not in k.office_names:
+                out.append('%s.who：岗位 %r 未登记' % (where, off))
+    if pk.who.status not in (None, STATUS_COMMON, STATUS_HOLDER):
+        out.append('%s：who.status 只能是 %r 或 %r' % (where, STATUS_COMMON, STATUS_HOLDER))
+    for v in pk.when.slots or ():
+        if not 0 <= v < SLOTS_PER_DAY:
+            out.append('%s：when.slot 里的 %r 不是时辰（0–%d）' % (where, v, SLOTS_PER_DAY - 1))
+    for per in pk.when.periods or ():
+        if per not in PERIODS:
+            out.append('%s.when.period：时段名 %r 未登记' % (where, per))
+    if pk.when.seasons is not None and k.seasons is not None:
+        for s in pk.when.seasons:
+            if s not in k.seasons:
+                out.append('%s.when.season：季节 %r 未登记' % (where, s))
+    for v in pk.when.months or ():
+        if not FIRST_MONTH <= v <= MONTHS_PER_YEAR:
+            out.append('%s：when.month 里的 %r 不是月（1–%d）' % (where, v, MONTHS_PER_YEAR))
+    for v in pk.when.doms or ():
+        if not FIRST_DOM <= v <= DAYS_PER_MONTH:
+            out.append('%s：when.day_of_month 里的 %r 不是月内日（1–%d）' % (where, v, DAYS_PER_MONTH))
+    if k.festivals is not None and isinstance(pk.when.festivals, tuple):
+        for f in pk.when.festivals:
+            if f not in k.festivals:
+                out.append('%s.when.festival：节日 %r 不在这处场所的历法里（有：%s）' % (where, f, '、'.join(sorted(k.festivals)) or '无'))
+    if (pk.do is None) == (pk.handler is None):
+        out.append('%s：必须二选一：do（声明式）或 handler（处理器）' % where)
+    if pk.do is not None:
+        do = pk.do
+        if do.place != OWN_BED and not _in(k.places, do.place):
+            out.append('%s.do.place：场所 %r 不在 places 里' % (where, do.place))
+        if not _in(k.acts, do.act):
+            out.append('%s.do.act：活动 %r 没有对应的交互' % (where, do.act))
+        if do.claim:
+            if do.overflow_place is None:
+                out.append('%s：claim = true 必须写 overflow.place（满员改去哪里）' % where)
+            elif not _in(k.places, do.overflow_place):
+                out.append('%s.do.overflow.place：场所 %r 不在 places 里' % (where, do.overflow_place))
+        elif do.overflow_place is not None:
+            out.append('%s：overflow 只对 claim = true 的包有意义' % where)
+    return out
+
+
+def package_handler_problems(pk, k, present_only=False):
+    """包的处理器与参数的问题（登记过没有、只能带哪些层、参数类型与取值与引用、用到的活动、who 是否对得上）。
+    present_only：只查给了值的参数（读 defs 时，缺 / 未知参数 norm_params 已经报过）。"""
+    out = []
+    if pk.handler is None:
+        return out
+    where = '包 %s' % pk.id
+    hd = PACKAGE_HANDLERS.get(pk.handler)
+    if hd is None:
+        if not present_only:
+            out.append('%s：处理器 %r 未登记（已登记：%s）' % (where, pk.handler, '、'.join(sorted(PACKAGE_HANDLERS))))
+        return out
+    if pk.layer not in hd.layers:
+        out.append('%s：处理器 %s 只能带层 %s，不是 %r' % (where, pk.handler, '/'.join(hd.layers), pk.layer))
+    out.extend('%s（处理器 %s）：%s' % (where, pk.handler, m)
+               for m in check_params(hd.params, pk.params, _ParamView(k), present_only))
+    for act in hd.acts:
+        if not _in(k.acts, act):
+            out.append('%s（处理器 %s 用到的活动）：活动 %r 没有对应的交互' % (where, pk.handler, act))
+    if hd.who_office and k.patrol_office is not None and pk.who.offices != (k.patrol_office,):
+        out.append('%s：处理器 %s 的 who 必须正是 org 里该部门的岗位 %s' % (where, pk.handler, (k.patrol_office,)))
+    return out
+
+def ad_gate_problems(ad, k, present_only=False):
+    """一条广告的准入门的问题（登记过没有、参数）；present_only 同 package_handler_problems。"""
+    if ad.gate is None:
+        return []
+    if ad.gate not in GATES:
+        return [] if present_only else ['ad %s：准入门 %r 未登记' % (ad.act, ad.gate)]
+    return ['ad %s 的准入门 %s：%s' % (ad.act, ad.gate, m)
+            for m in check_params(GATE_PARAMS[ad.gate], ad.gate_params, _ParamView(k), present_only)]
+
 
 
 # ---------------------------------------------------------------- 准入门（交互的 admission）

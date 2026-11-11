@@ -5,17 +5,25 @@
 """
 import dataclasses
 import importlib.util
+import multiprocessing
 import sys
+import traceback
+import types
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from tianl.npc import ProtoRun, proto60_spec
 from tianl.npc import events as E
 from tianl.npc.scenarios import PROTO_SEED, proto60_scenario
-from tests.test_npc_support import (class_acts, group_acts, handler_packages, office_posts, package, with_effects,
-                                    with_interaction, with_params)
+from tests.test_npc_support import class_acts, group_acts, office_posts, package
 
 GOSSIP_SLOT = proto60_scenario().gossip.slot            # 传闻脚本发生的时辰：场景（defs）给，引擎里没有缺省
+
+# 原型 World / P 上，逐步差分要比的字段（摘要只带它们）
+REF_FIELDS = ('hash', 'narr', 'places', 'stat', 'events', 'choice', 'acts', 'moodlow', 'pd', 'daily', 'mods', 'water', 'wood', 'kit_staff')
+REF_PERSON_FIELDS = ('id', 'need', 'thoughts', 'news', 'pending', 'absent', 'slackd', 'offences', 'gone', 'office', 'dorm', 'track',
+                     'D', 'S', 'G', 'T', 'R', 'ill', 'conf', 'kneel', 'duty_day', 'lazy_day')
 
 REF_PATH = Path(__file__).resolve().parent.parent / 'reference' / 'npc_spike.py'
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
@@ -125,35 +133,62 @@ class StepwiseDifferential(unittest.TestCase):
 
     _both = {}                                              # 配置 -> both() 的结果（没有 patch、没改规格的运行才缓存，只读共用）
 
+    @staticmethod
+    def ref_run(ref, seed, n, days, script, acting, observer, patch, record):
+        """原型跑一遍，返回 (只含对照要用的数据的摘要, 抽签键多重集或 None)。patch：{原型模块级常数名: 新值}，只在内存里临时改原型模块
+        （不碰文件），跑完恢复。摘要里是纯数据（可 pickle）：对照用到的字段全在，别的不带。"""
+        ref_keys = Counter() if record else None
+        saved = {k: getattr(ref, k) for k in list(patch or {}) + ['rnd']}
+        try:
+            for k, v in (patch or {}).items():
+                setattr(ref, k, v)
+            if record:
+                orig = ref.rnd
+
+                def rec_ref(*k):
+                    ref_keys[tuple(map(str, k))] += 1
+                    return orig(*k)
+                ref.rnd = rec_ref
+            r = ref.World(seed=seed, n=n, days=days, script=script, acting=acting, observer=observer).run()
+        finally:
+            for k, v in saved.items():
+                setattr(ref, k, v)
+        out = types.SimpleNamespace(**{a: getattr(r, a) for a in REF_FIELDS})
+        out.people = [types.SimpleNamespace(**{a: getattr(p, a) for a in REF_PERSON_FIELDS}) for p in r.people]
+        return out, ref_keys
+
     @classmethod
     def both(cls, seed, n, days, script=None, acting=True, observer=None, spec=None, patch=None, record=False):
-        """原型与移植版各跑一遍：返回 (原型 World 的结果, 移植版 ProtoRun, 原型抽签键多重集, 移植抽签键多重集)。
+        """原型与移植版各跑一遍：返回 (原型 World 的摘要, 移植版 ProtoRun, 原型抽签键多重集, 移植抽签键多重集)。
         patch：{原型模块级常数名: 新值}，只在内存里临时改原型模块（不碰文件），跑完恢复；spec 给对应改过的规格。
         record=True 时另记两边的每一次抽签的键（多重集，键里的每一项转成字符串；否则后两项是 None）。
+        原型那一遍放在 fork 出来的子进程里，与移植版同时跑（两边互不相干，各占一个核；没有 fork 的平台串行），结果只带比对要用的数据。
         没有 patch、没改规格的配置按配置缓存：几条测试要同一个配置（比如“传闻脚本”）就只跑一次，结果只读共用。"""
         key = (seed, n, days, repr(script), acting, observer) if spec is None and not patch else None
         hit = cls._both.get(key) if key else None
         if hit is not None and (hit[2] is not None or not record):
             return hit
-        from collections import Counter
         from tianl.core import rnd_b2
         from tianl.npc.host import StandaloneHost
-        ref_keys, port_keys = (Counter(), Counter()) if record else (None, None)
-        saved = {k: getattr(cls.ref, k) for k in list(patch or {}) + ['rnd']}
-        try:
-            for k, v in (patch or {}).items():
-                setattr(cls.ref, k, v)
-            if record:
-                orig = cls.ref.rnd
+        args = (cls.ref, seed, n, days, script, acting, observer, patch, record)
+        child = parent_conn = None
+        if 'fork' in multiprocessing.get_all_start_methods():
+            ctx = multiprocessing.get_context('fork')
+            parent_conn, child_conn = ctx.Pipe(duplex=False)
 
-                def rec_ref(*k):
-                    ref_keys[tuple(map(str, k))] += 1
-                    return orig(*k)
-                cls.ref.rnd = rec_ref
-            r = cls.ref.World(seed=seed, n=n, days=days, script=script, acting=acting, observer=observer).run()
-        finally:
-            for k, v in saved.items():
-                setattr(cls.ref, k, v)
+            def work():
+                try:
+                    child_conn.send(('ok', cls.ref_run(*args)))
+                except BaseException:                                  # noqa: BLE001 —— 子进程里的任何错都带回父进程
+                    child_conn.send(('error', traceback.format_exc()))
+                finally:
+                    child_conn.close()
+            sys.stdout.flush()                                         # fork 前清空缓冲：子进程退出时不会把父进程没写完的输出再写一遍
+            sys.stderr.flush()
+            child = ctx.Process(target=work)
+            child.start()
+            child_conn.close()
+        port_keys = Counter() if record else None
         host = None
         if record:
             def rec_port(*k):
@@ -161,6 +196,14 @@ class StepwiseDifferential(unittest.TestCase):
                 return rnd_b2(*k)
             host = StandaloneHost(seed, rec_port)
         g = ProtoRun(seed=seed, n=n, days=days, script=script, acting=acting, observer=observer, spec=spec, host=host).run()
+        if child is None:
+            r, ref_keys = cls.ref_run(*args)
+        else:
+            status, payload = parent_conn.recv()
+            child.join()
+            if status != 'ok':
+                raise AssertionError('原型子进程出错：\n' + payload)
+            r, ref_keys = payload
         out = (r, g, ref_keys, port_keys)
         if key:
             cls._both[key] = out

@@ -3,7 +3,28 @@
 """
 import dataclasses
 
+from tianl.npc import ProtoRun
+from tianl.npc.scenarios import gossip_script, n1_script, proto60_scenario
 from tianl.npc.spec import L_GROUP, L_IDENT, L_POST
+
+_RUNS = {}
+
+
+def shared_run(seed=None, n=None, days=None, gossip=False, n1=False):
+    """**只读**用的运行结果：整个测试进程里（各 test_npc_* 模块之间）同样的（种子、人口、日数、脚本）只跑一次，其余直接取用。
+    gossip：带场景的传闻脚本（基准世界）；n1：带实验 N1 的脚本（无人代理）。凡是会改引擎的测试（加人、设观察者、换 Host、改规格、挂操纵者）
+    一律不要用它，各自 ProtoRun 一份。省的是时间：这些运行在各文件里本来各跑一遍，加起来占默认测试的一大块。"""
+    scn = proto60_scenario()                                       # 没给的取场景的缺省，这样“缺省”与“显式给了缺省值”是同一个键
+    seed, n, days = (scn.seed if seed is None else seed), (scn.population if n is None else n), (scn.days if days is None else days)
+    key = (seed, n, days, gossip, n1)
+    if key not in _RUNS:
+        kw = {}
+        if gossip:
+            kw['script'] = gossip_script(ProtoRun().common)
+        if n1:
+            kw['script'], kw['acting'] = n1_script(ProtoRun().engine), False
+        _RUNS[key] = ProtoRun(seed=seed, n=n, days=days, **kw).run()
+    return _RUNS[key]
 
 
 def pkg_index(sp, name):

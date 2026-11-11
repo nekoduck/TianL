@@ -1,0 +1,8 @@
+{"s":"place:canon:daliguo","p":"place_kind","v":"region","t":"infer","w":"作者把它当作国家级的政权地域来介绍，称之为小国","b":"text","e":[[0,39,8,22,"816205c3a95b033a"],[0,38,20,28,"3fd0ee20469815d9"]]}
+{"s":"place:canon:daliguo","p":"parent","v":"place:canon:yunnan","r":"norm","t":"infer","w":"作者说明该国地处云南中部，故以云南为其所属的较大区域","n":"云南是作者所用的现代省名，仅作粗略归属，不代表精确疆界","b":"text","e":[[0,39,8,22,"816205c3a95b033a"]]}
+{"s":"place:canon:yunnan","p":"place_kind","v":"region","t":"infer","w":"作者以省级区域称呼它，属较大的区域一级","b":"text","e":[[0,39,8,22,"816205c3a95b033a"]]}
+{"s":"place:canon:dasong","p":"place_kind","v":"region","t":"infer","w":"作者把宋与辽、大理并列称为国，属国家级地域","b":"text","e":[[0,38,20,28,"3fd0ee20469815d9"]]}
+{"s":"place:canon:liaoguo","p":"place_kind","v":"region","t":"infer","w":"作者把辽与宋、大理并列称为国，属国家级地域","b":"text","e":[[0,38,20,28,"3fd0ee20469815d9"]]}
+{"s":"org:canon:daliguo","p":"rule","v":"帝王多崇信佛教，常有人让出皇位去出家为僧，成为惯例","t":"infer","w":"作者概述史实，历代皇帝信佛而常避位出家，这是一种惯例，并非成文规定","b":"text","e":[[0,39,29,48,"816205c3a95b033a"]]}
+{"s":"person:canon:baodingdi","p":"post","v":"皇帝","q":{"org":"org:canon:daliguo"},"n":"卷首述史，只列他为大理国皇帝之一；后文才交代避位出家，时间此处未写","b":"text","e":[[0,39,71,90,"816205c3a95b033a"]]}
+{"s":"person:canon:zhaoxu","p":"post","v":"皇帝","q":{"org":"org:canon:dasong"},"t":"infer","w":"作者以哲宗年间的年号来定故事年代，哲宗是庙号，故此人是当时在位的宋朝皇帝","n":"年号属其在位期间，具体年份未写","b":"text","e":[[0,39,154,172,"816205c3a95b033a"]]}

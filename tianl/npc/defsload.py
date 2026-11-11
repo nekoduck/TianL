@@ -10,9 +10,12 @@
 同 scope 里没被任何地方用到的定义（多半是漏了引用），都记成一条问题，最后一起抛 SpecError，每条写明哪条定义的哪个字段。
 Reader 读字段时同时登记“字段表”（field_docs()），docs/NPC_ENGINE.md 第 12 节的字段表由它生成，并有测试核对文档没有漏字段。
 """
+from collections import namedtuple
+
 from .events import LABELS as EVENT_LABELS
-from .handlers import GATES, GATE_PARAMS, PACKAGE_HANDLERS, REQUIRED
-from .spec import (NEED_KEYS, OWN_BED, ROTATE_ARITY, TRAIT_KEYS, AdSpec, AnnounceSpec, CaseSpec, ChatSpec, CourtSpec, DoSpec, FreeSpec,
+from .handlers import (GATES, GATE_PARAMS, PACKAGE_HANDLERS, REQUIRED, Known, ad_gate_problems, package_handler_problems,
+                       package_shape_problems)
+from .spec import (NEED_KEYS, OWN_BED, ROTATE_ARITY, TRAIT_KEYS, SiteCalendar, AdSpec, AnnounceSpec, CaseSpec, ChatSpec, CourtSpec, DoSpec, FreeSpec,
                    GateSpec, GossipSpec, IllSpec, InteractionSpec, InventorySpec, JobSpec, JobsSpec, KitchenSpec, LadderStep,
                    MoodLine, MoodSpec, ModSpec, N1Spec, NeedSpec, NeedTerm, OfficeSpec, OpinionSpec, PackageSpec, PatrolSpec,
                    ReportSpec, RollCallSpec, RumorSpec, ScenarioSpec, SiteSpec, SlackSpec, SpecError, ThoughtSpec,
@@ -29,6 +32,7 @@ DEFAULT_DURATION = 1                                     # 交互的缺省时长
 SCOPE_KINDS = ('place', 'facility', 'interaction', 'post', 'job', 'trait', 'package', 'thought', 'modifier', 'event',
                'norm', 'ladder', 'org', 'rule')          # 本模块消费的类别：同 scope 里没被用到的定义会被报出来
 _TYPE_NAMES = {'int': '整数', 'num': '数', 'str': '字符串', 'bool': '布尔'}
+Schedule = namedtuple('Schedule', 'night rotate meal seasons calendar')   # rule:schedule 读出来的东西
 _NONE = object()                                         # 读字段时“没有默认值（可缺省为 None）”的占位
 
 
@@ -558,8 +562,12 @@ class Builder:
         return out
 
     # ---------------------------------------------------------------- 行为包
-    def build_packages(self, layers):
+    def build_packages(self, known=None):
+        """读行为包。known（handlers.Known）是已读干净的几张表：包自己的校验（层、谁、何时、做什么、处理器与参数的类型取值与引用）
+        在读的时候就做，与规格自检 SiteSpec.validate 用同一份（handlers.package_shape_problems / package_handler_problems）——
+        所以包的问题与结构上的问题一次报全，不必等第二阶段。"""
         ctx = self.ctx
+        self.known = known or Known()
         stack_def = ctx.role('rule', 'stack')
         r0 = Reader(ctx, stack_def)
         pdefs = r0.refs('packages', 'package', '行为包的判定先后：包的编号列表（自上而下第一个成立的生效）')
@@ -609,7 +617,10 @@ class Builder:
                 params = self.norm_params(d['id'] + ' 的处理器 %s' % handler, hd.params, raw, 'handler:' + handler)
         elif raw:
             ctx.err(d['id'], '没有 handler 的包不该有 params')
-        return PackageSpec(d['id'], _ok(layer)[0], who, when, do, handler, params)
+        pk = PackageSpec(d['id'], _ok(layer)[0], who, when, do, handler, params)
+        ctx.problems.extend(package_shape_problems(pk, self.known))
+        ctx.problems.extend(package_handler_problems(pk, self.known, present_only=True))      # 缺 / 未知参数上面 norm_params 已报过
+        return pk
 
     def who(self, r):
         if r is None:
@@ -798,11 +809,17 @@ class Builder:
         for x in r.tables('seasons', '季节与月份：[{ name, months }]（行为包 when.season 用）'):
             seasons[x.str('name', '季节名')] = x.list('months', 'int', '这个季节包括哪几个月')
             x.finish()
+        cd = r.ref('calendar', 'calendar', '这处场所的历法（calendar 定义的编号）：行为包 when 里的 festival、month、day_of_month、season 键都按它')
         r.finish()
-        _ok(night, rotate, meal)
+        _ok(night, rotate, meal, cd)
         if len(rotate) != ROTATE_ARITY:
             self.ctx.err('rule:schedule', 'rotate 必须是 [日系数, 时辰系数] 两项')
-        return night, rotate, meal, seasons
+        try:
+            calendar = SiteCalendar.from_def(cd)
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError) as e:
+            self.ctx.err('rule:schedule', '字段 calendar 引用的历法 %s 读不出来：%s' % (cd.get('id', '?'), e))
+            raise _Cascade()
+        return Schedule(night, rotate, meal, seasons, calendar)
 
     def build_needs(self):
         r = Reader(self.ctx, self.rule('needs'))
@@ -901,17 +918,18 @@ class Builder:
         roam = r.refs('roam', 'place', '巡寮的候选场所（僧值每次从中按随机序挑几处）')
         cap_default = r.int('default_stations', '没登记工位数的场所按此数算')
         cycle = r.str('office_track_cycle', '岗位者的修行方向按序号循环')
-        pool = r.str('name_pool', '取法名用的字池（岗位前缀 + 池中第 i 个字）')
+        pool = r.str('name_pool', '取法名用的字池（前缀 + 池中第 i 个字；超过一圈，名字后再缀池里的字，所以人口再多也不重名）')
         cp = r.str('common_prefix', '清众的法名前缀')
         tracks = []
         for x in r.tables('common_tracks', '清众按序分方向：[{ track, count }]（不写 count = 其余全部）'):
             tracks.append((x.str('track', '修行方向'), x.int('count', '人数', default=None)))
             x.finish()
         groups = r.list('groups', 'str', '时间分配统计的两组名称（清众，岗位者）')
+        leave_word = r.str('leave_word', '人离开本处的说法：explain 写“已于第 N 日离寺（缘由）”里的“离寺”')
         r.finish()
-        _ok(name, dorms, roam, cap_default, cycle, pool, cp, groups)
+        _ok(name, dorms, roam, cap_default, cycle, pool, cp, groups, leave_word)
         return (name, tuple(x['code'] for x in dorms), tuple(x['code'] for x in roam), cap_default, cycle, pool, cp,
-                tuple(tracks), groups)
+                tuple(tracks), groups, leave_word)
 
 
 def build_site(defs, scenario_id):
@@ -921,20 +939,35 @@ def build_site(defs, scenario_id):
     ctx = Ctx(defs, scope)
     b = Builder(ctx)
     g = ctx.guard
-    places = g(b.build_places)
+
+    def clean(fn, *a):
+        """跑一步装配，返回 (结果, 这一步没有记任何问题)：读不干净的表，在“读到一半”的包校验里当没读到（None），不制造连带的假问题。"""
+        n = len(ctx.problems)
+        v = g(fn, *a)
+        return v, len(ctx.problems) == n
+
+    places, places_ok = clean(b.build_places)
     capacity = g(b.build_capacity)
     thoughts = g(b.build_thoughts)
     mods = g(b.build_mods)
     salience = g(b.build_events)
-    layers = g(b.build_layers)
-    offices = g(b.build_offices)
+    layers, layers_ok = clean(b.build_layers)
+    offices, offices_ok = clean(b.build_offices)
     traits = g(b.build_traits)
     jobs = g(b.build_jobs)
-    inter = g(b.build_interactions)
-    stack = g(b.build_packages, layers)
-    sched = g(b.build_schedule)
+    inter, inter_ok = clean(b.build_interactions)
+    sched, sched_ok = clean(b.build_schedule)
     main = g(b.build_main)
-    kitchen, court, gate, patrol = g(b.build_kitchen), g(b.build_court), g(b.build_gate), g(b.build_patrol)
+    kitchen, court, gate = g(b.build_kitchen), g(b.build_court), g(b.build_gate)
+    patrol, patrol_ok = clean(b.build_patrol)
+    known = Known(places if places_ok else None, {o.name for o in offices} if offices_ok and offices else None,
+                  inter[0] if inter_ok and inter else None, layers if layers_ok else None,
+                  sched.seasons if sched_ok and sched else None, patrol.office if patrol_ok and patrol else None,
+                  set(sched.calendar.festivals.values()) if sched_ok and sched else None)
+    stack = g(b.build_packages, known)
+    if inter_ok and inter:                              # 准入门的参数（类型、取值、引用）：读完交互就查，不等规格自检
+        for ad in inter[1]:
+            ctx.problems.extend(ad_gate_problems(ad, known, present_only=True))
     rollcall, slack, theft = g(b.build_rollcall), g(b.build_slack), g(b.build_theft)
     needs, illness, opinion = g(b.build_needs), g(b.build_illness), g(b.build_opinion)
     chat, rumor, mood = g(b.build_chat), g(b.build_rumor), g(b.build_mood)
@@ -947,14 +980,14 @@ def build_site(defs, scenario_id):
                 ctx.err(d['id'], '没有被任何地方引用或使用（漏了引用？拼错了 role？）')
     if ctx.problems:
         raise SpecError(ctx.problems)
-    night, rotate, meal, seasons = sched
-    name, dorms, roam, cap_default, cycle, pool, cp, ctracks, groups = main
+    night, rotate, meal, seasons, calendar = sched
+    name, dorms, roam, cap_default, cycle, pool, cp, ctracks, groups, leave_word = main
     interactions, ads, violations = inter
     report, cases, ladder, announce, inventory = theft
     spec = SiteSpec(
         name=name, scope=scope, places=places, capacity=capacity, cap_default=cap_default, dorms=dorms, roam=roam,
-        night=night, rotate=rotate, meal_slots=meal, seasons=seasons, offices=offices, office_track_cycle=cycle,
-        name_pool=pool, common_prefix=cp, common_tracks=ctracks, groups=groups, traits=traits, layer_rank=layers,
+        night=night, rotate=rotate, meal_slots=meal, seasons=seasons, calendar=calendar, offices=offices, office_track_cycle=cycle,
+        name_pool=pool, common_prefix=cp, common_tracks=ctracks, groups=groups, leave_word=leave_word, traits=traits, layer_rank=layers,
         stack=stack, interactions=interactions, violations=violations, kitchen=kitchen, patrol=patrol, gate=gate,
         court=court, rollcall=rollcall, inventory=inventory, slack=slack, illness=illness, needs=needs, ads=ads,
         free=free, jobs=board, opinion=opinion, mods=mods, thoughts=thoughts, mood=mood, chat=chat, rumor=rumor,
@@ -994,7 +1027,7 @@ def build_scenario(defs, scenario_id, ctx=None):
     obs = r.ref('observer_place', 'place', '“观察者在廊下”那一行的观察处')
     trace_day = r.int('trace_day', '报表里“某日四人轨迹”的日子')
     trace_post = r.ref('trace_post', 'post', '轨迹里第四人的岗位')
-    suffix = r.str('track_suffix', '清众的称呼 = 修行方向 + 此字')
+    suffix = r.str('track_suffix', '清众的称呼 = 修行方向 + 此字（报表标题“60 僧 × 30 日”里的量词也用它）')
     long_days = r.int('long_days', '“长跑”那一行的日数')
     seeds = r.list('extra_seeds', 'int', '多种子那几行')
     r.finish()
@@ -1040,7 +1073,7 @@ def field_docs(defs, scenario_id):
                b.build_gate, b.build_patrol, b.build_rollcall, b.build_slack, b.build_theft, b.build_needs, b.build_illness,
                b.build_opinion, b.build_chat, b.build_rumor, b.build_mood):
         ctx.guard(fn)
-    ctx.guard(b.build_packages, None)
+    ctx.guard(b.build_packages)
     jobs = ctx.guard(b.build_jobs)
     ctx.guard(b.build_board, jobs)
     inter = ctx.guard(b.build_interactions)

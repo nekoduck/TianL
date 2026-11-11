@@ -10,7 +10,6 @@
 越轨不是一层包：它是性格加需求让人跳过本该生效的包（计划 6.1 补充规则）。
 为了快，(岗位, 方向, 时辰) 相同的人共用一份“适用的包”清单（只留 who 与 when.slot 都对得上的），运行时再查日历条件。
 """
-from ..core import cal
 from .handlers import PACKAGE_HANDLERS
 from .spec import L_DUTY, OWN_BED, STATUS_COMMON, STATUS_HOLDER
 
@@ -132,6 +131,7 @@ class Stack:
         self._for = {}                          # (岗位, 方向, 时辰) -> 适用的步骤
         self._duty_for = {}                     # (岗位, 方向, 时辰) -> 适用的值守步骤
         self._dm = None                         # 值守的记忆：(ix, 日, 时辰, 结果)
+        self._decided = None                    # 最近一次决定的记忆：(ix, ctx, 决定)；同一个人同一个 ctx 只算一次（decide 有副作用）
         self._kday, self._k = None, None        # 日历键的缓存（按日）
         self._season = {m: name for name, months in self.sp.seasons.items() for m in months}
         self.begin_steps = [pk for pk in self.sp.stack
@@ -139,9 +139,10 @@ class Stack:
 
     # ---------- 日历键 ----------
     def keys(self, day):
-        """当日的日历键：day dom month festival season weather（weather 由 Host 的 weather(day) 提供，没有就是 None）。"""
+        """当日的日历键：day dom month festival season weather。day 以外的几项按这处场所的历法（SiteSpec.calendar，defs 里 rule:schedule 的
+        calendar 引用的定义）；weather 由 Host 的 weather(day) 提供，没有就是 None。"""
         if self._kday != day:
-            c = cal(day)
+            c = self.sp.calendar.cal(day)
             wf = getattr(self.eng.host, 'weather', None)
             self._k = {'day': day, 'dom': c['dom'], 'month': c['month'], 'festival': c['festival'],
                        'season': self._season.get(c['month']), 'weather': wf(day) if wf else None}
@@ -194,6 +195,12 @@ class Stack:
         return tuple(out)
 
     def decide(self, p, day, slot, ctx):
+        """p 这个时辰的决定。**有副作用**（占工位、记统计、改贪睡与代班的状态、认领差事），所以同一个人在同一个时辰（同一个 ctx）只算一次：
+        再问就原样返回第一次的结果、不再占位——多次取“程序的选择”的调用者（controller.candidates、预览）因此不会重复占位。
+        要在这个时辰给出别的选择，由调用者在不调用本函数的前提下只读地列出替代项（见 controller.py）。"""
+        m = self._decided
+        if m is not None and m[0] == p.ix and m[1] is ctx:
+            return m[2]
         key = (p.office, p.track, slot)
         steps = self._for.get(key)
         if steps is None:
@@ -201,6 +208,7 @@ class Stack:
         for s in steps:
             d = s.run(self, p, day, slot, ctx)
             if d is not None:
+                self._decided = (p.ix, ctx, d)
                 return d
         raise LookupError('行为包栈没有给出决定：%s（岗位 %r，方向 %r）第 %d 日 %d 时辰；栈里缺一个兜底的包（free）？'
                           % (p.pid, p.office, p.track, day, slot))

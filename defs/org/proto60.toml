@@ -5,9 +5,9 @@
 # 寺院整体：
 #   dorms    寮房（有序：第 i 个人住第 i % 寮数 个）；寮房是私人场所，不记容量     roam  巡寮的候选场所（僧值每次从中按随机序挑几处）
 #   default_stations  没登记工位数（facility.stations）的场所按此数算（实际上不设限）
-#   office_track_cycle  岗位者的修行方向按序号循环      name_pool  取法名用的字池（岗位前缀 + 池中第 i 个字）
+#   office_track_cycle  岗位者的修行方向按序号循环      name_pool  取法名用的字池（前缀 + 池中第 i 个字；超过一圈，名字后再缀池里的字，人口再多也不重名）
 #   common_prefix  清众的法名前缀   common_tracks  清众按序分方向（不写 count = 其余全部）
-#   groups  时间分配统计的两组名称（清众，岗位者）
+#   groups  时间分配统计的两组名称（清众，岗位者）   leave_word  人离开本处的说法（explain 里“已于第 N 日离寺”）
 ["org:proto60:main"]
 name = "少林寺·原型六十僧"
 dorms = ["place:proto60:dorm1", "place:proto60:dorm2", "place:proto60:dorm3"]
@@ -22,6 +22,7 @@ name_pool = "明净空海山石泉松竹云月风清远静定觉悟通达道德�
 common_prefix = "虚"
 common_tracks = [ { track = "武", count = 14 }, { track = "学", count = 10 }, { track = "禅" } ]
 groups = ["清众", "执事"]
+leave_word = "离寺"
 
 # 香积厨：place 厨房；dining 斋堂（到课＝过堂人数在此统计）；prep 备斋时辰（斋食时辰 meal 用备斋时辰 prep 的在厨人手判断足量或半餐）；
 # min_staff 足量所需人手；gain_full / gain_half 足量 / 半餐给的饥；stock_init 开局库存（水、柴；每顿斋耗什么见 interaction:meal 的 inputs，挑水打柴入账见 job 的 outputs）。

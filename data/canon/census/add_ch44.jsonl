@@ -1,0 +1,11 @@
+{"id":"place:canon:qiaosanhuaiwu","type":"place","name":"乔三槐旧居","aliases":["乔三槐屋"],"note":"少室山东南的山农陋屋，乔三槐夫妇遗下的空屋，乔峰幼年成长处；段誉重伤后被乔峰安置于此，钟灵先已借住（第44回）"}
+{"id":"place:canon:shennongge","type":"place","name":"神农阁","aliases":[],"note":"灵鹫宫内收藏医书药典的处所，钥匙由竹剑掌管；虚竹要为阿紫寻换眼之法须去此处（第44回）"}
+{"id":"place:canon:tongzhou","type":"place","name":"同州","aliases":[],"note":"自少室山去西夏途中所到之地，段誉在此一带向众人讲楚汉旧事，巴天石、朱丹臣追上送信（第44回）"}
+{"id":"place:canon:jingxibeilu","type":"place","name":"京西北路","aliases":[],"note":"大宋的路名，河南府属此路（第44回叙述者交代）"}
+{"id":"place:canon:yongxingjunlu","type":"place","name":"永兴军路","aliases":[],"note":"大宋的路名，西赴西夏途中的陕州、解州、河中府属此路（第44回叙述者交代）"}
+{"id":"place:canon:xingzhoushandaoguan","type":"place","name":"兴州山道关卡","aliases":[],"note":"通往兴州的陡峭山径上的关卡，吐蕃宗赞王子属下两名大汉把守，清明前封关拦人（第44回）；确切位置书中未写"}
+{"id":"item:canon:biyushizi","type":"item","name":"碧玉狮子","aliases":[],"note":"碧玉雕成的狮子，段正淳托巴天石送给萧峰的见面薄礼（第44回）"}
+{"id":"item:canon:xiangyashan","type":"item","name":"象牙扇","aliases":[],"note":"象牙骨的扇子，扇面是段正淳亲手抄录的佛经，托朱丹臣送给虚竹的薄礼（第44回）"}
+{"id":"item:canon:muhu","type":"item","name":"木虎","aliases":["小老虎","木雕小虎"],"note":"乔三槐在萧峰五岁时亲手雕给他的小木老虎，收在旧居炕边桌子的抽屉里，萧峰见之触动旧情（第44回）"}
+{"id":"document:canon:duanzhengchunjiashu","type":"document","name":"段正淳致段誉的信","aliases":[],"note":"段正淳亲笔写给段誉的信，嘱他到西夏后设法娶公主以结姻亲，由巴天石、朱丹臣送到（第44回）"}
+{"id":"document:canon:duanzhengchunqiuqinhan","type":"document","name":"段正淳求亲函","aliases":["求亲函件"],"note":"盖有镇南王大印的信函，是段正淳向西夏皇帝求亲的亲笔函件，由巴天石交段誉到兴州后呈递（第44回）"}

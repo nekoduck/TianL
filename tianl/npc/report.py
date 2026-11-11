@@ -148,7 +148,7 @@ def proto_report(include_all=False, seed=None, rng=rnd_b2):
     eng = w.engine
     st = eng.stat
     info.update(base=w, m=m)
-    out.append('== 基准：60 僧 × 30 日 × 12 时辰 ==')
+    out.append('== 基准：%d %s × %d 日 × %d 时辰 ==' % (len(eng.people), scn.track_suffix, w.days, SLOTS_PER_DAY))
     out.append(line('基准', m))
     out.append('决策数 %d  每次 %.1f 微秒  总耗时 %.2f 秒' % (st['ps'], m['us'], eng.elapsed))
     out.append('预约越界 %d 次；设施满员改选 %d 次；闲谈 %d 次（投机 %.2f）；传话 %d 次'

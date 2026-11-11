@@ -334,6 +334,12 @@ class NpcEngine:
             self.run_slot(day, slot)
         self.end_day(day)
 
+    def cal(self, day):
+        """这一日在这处场所的历法里是哪天：dict(day, year, doy, month, dom, term, festival, shuowang, retreat, wheat, millet)。
+        历法是规格的一部分（spec.calendar，defs 里 rule:schedule 的 calendar 引用的定义），不是全局默认；
+        生活脉冲、行为包的日历键都按它。"""
+        return self.spec.calendar.cal(day)
+
     # ================= 观察者 =================
     def set_observer(self, place):
         self.observer = place
@@ -376,7 +382,7 @@ class NpcEngine:
                 why = p.gone_why or ''
                 return {'pid': p.pid, 'name': p.name, 'day': day, 'slot': slot, 'slot_name': SLOTS[slot], 'place': None,
                         'place_name': None, 'act': None, 'layer': None, 'layer_rank': None, 'reason': why,
-                        'gone': p.gone, 'text': '第%d日%s时 %s已于第%d日离寺（%s）' % (day, SLOTS[slot], p.name, p.gone, why)}
+                        'gone': p.gone, 'text': '第%d日%s时 %s已于第%d日%s（%s）' % (day, SLOTS[slot], p.name, p.gone, self.spec.leave_word, why)}
             return None
         place, act, layer, reason = w
         out = {'pid': p.pid, 'name': p.name, 'day': day, 'slot': slot, 'slot_name': SLOTS[slot], 'place': place,

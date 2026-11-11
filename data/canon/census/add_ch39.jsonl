@@ -1,0 +1,11 @@
+{"id":"place:canon:lingjiugongshishi","type":"place","name":"灵鹫宫地下石室","aliases":["灵鹫宫地下石窖"],"note":"灵鹫宫后花园假山下地道尽头的石室，壁上刻满武功图像；童姥生前常在此揣摩，虚竹在此研习（第39回）"}
+{"id":"document:canon:shibituxiang","type":"document","name":"石壁图像","aliases":["石壁图解"],"note":"刻在灵鹫宫地下石室四壁的圆圈图解，按甲乙子丑编号，含天山折梅手、天山六阳掌及小无相功的奥秘（第39回）"}
+{"id":"place:canon:weizhou","type":"place","name":"渭州","aliases":[],"note":"西北的州城，乔峰与阿朱途经并投宿于招商客栈（第39回由玄石追述）"}
+{"id":"place:canon:zhaoshangkezhan","type":"place","name":"招商客栈","aliases":[],"note":"渭州城内的客栈，乔峰与阿朱投宿，玄垢、玄石宿在隔壁暗中监视（第39回追述）"}
+{"id":"place:canon:caiyuanzi","type":"place","name":"菜园子","aliases":[],"note":"少林寺内的大片菜地，由僧人缘根统率长工管理，犯戒僧被罚来挑粪浇菜（第39回）"}
+{"id":"place:canon:junhe","type":"place","name":"濬河","aliases":[],"note":"卫辉一带的河，乔峰曾自河边一艘船中出来，船中发现谭公谭婆与赵钱孙尸体（第39回追述）"}
+{"id":"place:canon:renjiyaodian","type":"place","name":"仁济药店","aliases":[],"note":"天台县城的药店，朴者曾分十天从这里取砒霜，店家因智光威望不敢推辞收钱（第39回追述）"}
+{"id":"item:canon:shichu","type":"item","name":"石杵","aliases":[],"note":"丐帮在徐长老家中寻得的粗大石杵，被认作击断他肋骨的凶器，卫辉开吊时供在灵牌前（第39回追述）"}
+{"id":"item:canon:pishuang","type":"item","name":"砒霜","aliases":[],"note":"智光大师自尽所服的寻常毒药，由弟子朴者分十天从天台县城药店取来（第39回追述）"}
+{"id":"martial:canon:sanrudiyu","type":"martial","name":"三入地狱","aliases":[],"note":"摩诃指中连捺三下的正宗招数，鸠摩智在少林大殿以此移开铜鼎（第39回）"}
+{"id":"martial:canon:xiagutianfeng","type":"martial","name":"峡谷天风","aliases":[],"note":"般若掌中的一招，鸠摩智用它试虚竹，掌力狠猛有违该掌本意（第39回）"}

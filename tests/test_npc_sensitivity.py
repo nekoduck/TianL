@@ -7,10 +7,10 @@
 比对；只要有一个场景的指纹变了，这个数就“活着”。
 
 * 默认（快）：对一份手挑的关键数字（举报概率、认错、起念、传闻……）逐个验证它们活着；
-  再对“基准世界里碰不到”的十个字段（FORMERLY_UNREACHED）各用一个专门的场景验证它们活着（一次改动、一次重跑）。
+  再对“基准世界里碰不到”的 23 个字段（FORMERLY_UNREACHED：十个，加季节表的 12 个月份，加刚正的下限）各用一个专门的场景验证它们活着（一次改动、一次重跑）。
 * TIANL_SLOW=1：对全部数值字段做普查（约 350 个，多进程，约 1 分钟）。普查之后仍没有可见效果的字段，必须逐个写在
   UNREACHED 里并说明为什么——这是一份诚实的清单：它们在这些场景里没有被触及（容量不吃紧、保护线从不越过……），
-  不是“已验证无误”。清单变短或变长都要改这里，不许悄悄放过。（现有 13 个，见 UNREACHED：12 个季节表项与刚正的下限。）
+  不是“已验证无误”。清单变短或变长都要改这里，不许悄悄放过。（现有 0 个，见 UNREACHED：季节表的 12 个月份由 seasonal 场景显形，刚正的下限由 lowR 场景显形。）
 
 规格由 defs 构造（proto60_spec()），行为包与交互也是规格里的数据（字段路径形如 stack.9.params.k、interactions.sick.effects.e、
 ads.5.gate_params.slots.2）：包里的每个参数、每个时辰、每个日子条件，交互里的每个需求增减，都在普查之列。
@@ -32,12 +32,14 @@ from tianl.core import rnd_b2
 from tianl.npc import NpcEngine, ProtoRun, StandaloneHost, proto60_spec
 from tianl.npc import events as E
 from tianl.npc.scenarios import PROTO_SEED, gossip_script, n1_script, proto60_roster
-from tianl.npc.spec import SpecError
+from tianl.npc.spec import DAYS_PER_MONTH, L_GROUP, MONTHS_PER_YEAR, DoSpec, PackageSpec, SpecError, WhenSpec, WhoSpec
 from tests.test_npc_support import pkg_index, with_params, with_when
 
 R = dataclasses.replace
+FIRST_RUN_DAY = 1                                           # ProtoRun 从第 1 日起算（FIRST_DAY）
+LOW_R_SEED = 5                                              # 这个种子的开局里有人的刚正被夹在下限（lowR 场景）；种子 1、4、6、8、9……也有
 PROTOTYPE_SCENARIOS = ('n1', 'base', 'd90', 'd90s4', 's34')       # 由便宜到贵；N1 无人代理里举报、传讯、处分最密
-STRESS_SCENARIOS = ('tight', 'weary', 'grudge', 'emit')            # 专为基准世界碰不到的字段造的世界（见模块说明）
+STRESS_SCENARIOS = ('tight', 'weary', 'grudge', 'emit', 'seasonal', 'lowR')   # 专为基准世界碰不到的字段造的世界（见模块说明）
 SCENARIOS = PROTOTYPE_SCENARIOS + STRESS_SCENARIOS
 
 
@@ -66,7 +68,21 @@ def grudge(sp):
     return R(sp, ladder=(R(sp.ladder[0], thought='flogged'), R(st, kneel_days=0, conf_days=1), R(st, conf_days=1)))
 
 
-TRANSFORMS = {'tight': tight, 'weary': weary, 'grudge': grudge}     # 其余场景的规格就是原规格
+SEASON_PLACES = (('春', 'zen'), ('夏', 'hall'), ('秋', 'lib'), ('冬', 'yard'))      # 每个季节的卯时课去不同的地方，指纹才看得出是哪个季节生效
+
+
+def seasonal(sp):
+    """四个季节各加一个卯时的声明式包（when.season）：原型场景没有包用季节，季节表（rule:schedule 的 seasons）因此从不被读到。
+    加上它们、再把每月第一日各跑一遍（run_scenario 的 seasonal），季节表里的每个月份都有一个月在用它。"""
+    def season_package(season, place):
+        when = WhenSpec(slots=(3,), periods=None, days=None, doms=None, months=None, festivals=None, weathers=None, seasons=(season,))
+        return PackageSpec('package:test:' + season, L_GROUP, WhoSpec(None, None, None), when,
+                           DoSpec(place, 'zazen', season + '课', False, None, ''), None, {})
+    i = pkg_index(sp, 'morning_chant')
+    return R(sp, stack=sp.stack[:i] + tuple(season_package(*x) for x in SEASON_PLACES) + sp.stack[i:])
+
+
+TRANSFORMS = {'tight': tight, 'weary': weary, 'grudge': grudge, 'seasonal': seasonal}     # 其余场景的规格就是原规格
 
 
 def leaves(o, path=()):
@@ -169,6 +185,14 @@ def run_scenario(spec, kind):
         return fingerprint(ProtoRun(spec=spec, days=40, script=n1_script(r0.engine), acting=False).run())
     if kind == 'emit':
         return emit_fingerprint(spec)
+    if kind == 'lowR':                                     # 开局里有人的刚正被夹到下限的种子，跑 N1 无人代理（举报与认错最密）
+        return fingerprint(ProtoRun(spec=spec, seed=LOW_R_SEED, days=20, script=n1_script(r0.engine), acting=False).run())
+    if kind == 'seasonal':                                 # 十二个月各跑一日（每月第一日之后的一天）：日子不连续，轨迹允许缺格
+        r = ProtoRun(spec=spec, days=1)
+        for month in range(MONTHS_PER_YEAR):
+            r.engine.run_day(FIRST_RUN_DAY + month * DAYS_PER_MONTH)
+        r.hash = r.engine.state_hash()
+        return fingerprint(r)
     raise KeyError(kind)
 
 
@@ -247,7 +271,7 @@ CRITICAL = ('report.base', 'report.r_w', 'report.lo', 'cases.confess_r', 'cases.
             'rumor.p_add', 'inventory.p_find', _pkg('slack', 'params.low_mood_add'), 'jobs.work_chat_p')
 CRITICAL_SCENARIOS = ('n1',)                               # 它们在 N1 无人代理里都看得出来；普查才用全部场景
 
-# 只用原型世界（PROTOTYPE_SCENARIOS）时看不出变化的十个字段：逐个说明为什么碰不到。它们要在 STRESS_SCENARIOS 里才显出差别
+# 只用原型世界（PROTOTYPE_SCENARIOS）时看不出变化的字段（十个，外加十二个季节表项与刚正的下限）：逐个说明为什么碰不到。它们要在 STRESS_SCENARIOS 里才显出差别
 # （FORMERLY_UNREACHED 给出每个字段用哪个场景、改成什么）。慢测试断言这份清单：在原型世界里它们确实是死的，在加上专门场景后确实活。
 AD_OF = {a.act: i for i, a in enumerate(SPEC.ads)}                     # 广告在 ads 里的下标
 LIB_SLOT_2 = 'ads.%d.gate_params.slots.2' % AD_OF['study']              # 经阁的第三个开阁时辰（交互 admission 的参数）
@@ -264,7 +288,13 @@ PROTOTYPE_DEAD = {
     'salience.REPORT': '举报事件没有见证人，见闻强度无处可记（改成 100 也没有差别）',
     'salience.BED_EMPTY': '夜不在寮的见证人是巡夜者：强度 1、7 都低于外传下限 25，当日就衰减没了（改成 50 才显出差别）',
 }
-# 这十个字段各在哪个专门场景里、改成什么值时显出差别（默认就验证：一次改动、一次重跑）。
+SEASON_FIELDS = tuple('seasons.%s.%d' % (name, i) for name in '春夏秋冬' for i in range(3))     # 季节表里的 12 个月份
+SEASON_WHY = ('季节表（行为包 when.season 的词表）：原型场景里没有包用季节，且 20–40 日的场景只走到正月（春）；'
+              '加上 seasonal 场景（四个季节各一个包、每月第一日各跑一日）才显形')
+PROTOTYPE_DEAD.update({name: SEASON_WHY for name in SEASON_FIELDS})
+PROTOTYPE_DEAD['traits.lo.R'] = ('刚正的下限 5：种子 20261110 的开局里没有人的刚正低到被夹到 5；种子 4 里有两人，但举报与认错的场面没轮到他们'
+                                 '（性格按 (种子, 键, ix) 抽；lowR 场景换成种子 5 的开局，改成 22 才显出差别）')
+# 这些字段各在哪个专门场景里、改成什么值时显出差别（默认就验证：一次改动、一次重跑）。
 FORMERLY_UNREACHED = {
     'capacity.zen': ('tight', 71),
     'cap_default': ('tight', 1000),
@@ -277,12 +307,12 @@ FORMERLY_UNREACHED = {
     'salience.REPORT': ('emit', 1),
     'salience.BED_EMPTY': ('emit', 1),
 }
-# 加上专门场景之后，普查仍看不出变化的字段：逐个说明（共 13 个）。它们在这些场景里没有被触及，不是“已验证”。
-SEASON_WHY = ('季节表（行为包 when.season 的词表）：原型场景里没有包用季节，且 20–40 日的场景只走到正月（春），'
-              '夏秋冬与春的后两个月从没被日历走到——when.season 本身的行为由 tests/test_npc_defs.py 的 CalendarKeys 验证')
-UNREACHED = {'seasons.%s.%d' % (name, i): SEASON_WHY for name in '春夏秋冬' for i in range(3)}
-UNREACHED['traits.lo.R'] = ('刚正的下限 5：原型这 60 人（种子 20261110 的开局）里没有人的刚正低到被夹到 5'
-                            '（精进、守戒、合群、馋的下限与四项的上限都有人碰到；性格按 (种子, 键, ix) 抽，换种子或加人就可能碰到）')
+# 季节表的月份改成 13 - 月：这个月就不属于原来的季节（四个季节的月份互不相交），当月的卯时课从“某季课”变回默认的早课
+FORMERLY_UNREACHED.update({name: ('seasonal', MONTHS_PER_YEAR + 1 - LEAF[name][1]) for name in SEASON_FIELDS})
+FORMERLY_UNREACHED['traits.lo.R'] = ('lowR', 22)
+# 加上专门场景之后，普查仍看不出变化的字段：逐个说明。它们在这些场景里没有被触及，不是“已验证”。现在一个也没有；
+# 以后再出现，要么修，要么写在这里并说明为什么（清单变长变短都要改这里，不许悄悄放过）。
+UNREACHED = {}
 
 
 class CriticalNumbersMatter(unittest.TestCase):
@@ -319,7 +349,7 @@ class CriticalNumbersMatter(unittest.TestCase):
 
 
 class FormerlyUnreachedNumbersMatter(unittest.TestCase):
-    """默认就跑：基准世界里碰不到的十个字段，在各自的专门场景里改一次、重跑一次，指纹必须变。"""
+    """默认就跑：基准世界里碰不到的字段（十个，加季节表的 12 个月份，加刚正的下限），在各自的专门场景里改一次、重跑一次，指纹必须变。"""
 
     def test_each_has_a_world_where_it_matters(self):
         t0 = time.perf_counter()
@@ -329,6 +359,20 @@ class FormerlyUnreachedNumbersMatter(unittest.TestCase):
             self.assertNotEqual(var, LEAF[name][1])
             self.assertNotEqual(got, base[kind], '%s 改成 %r 之后场景 %s 的指纹没有变' % (name, var, kind))
         print('\n[原先碰不到的字段] %d 个都在专门场景里活着，%.1f 秒' % (len(items), time.perf_counter() - t0))
+
+    def test_the_low_r_world_really_has_someone_at_the_lower_bound(self):
+        """lowR 场景的前提：这个种子的开局里确有人的刚正被夹在下限（lo.R）。"""
+        lo = SPEC.traits.lo['R']
+        self.assertTrue(any(p.R == lo for p in ProtoRun(seed=LOW_R_SEED, days=1).engine.people))
+
+    def test_the_seasonal_world_uses_every_month_of_the_season_table(self):
+        """seasonal 场景的前提：十二个月各跑一日，每个月卯时课都是当月季节的包（季节表里每个月份都被读到）。"""
+        r = ProtoRun(spec=BASE_SPEC['seasonal'], days=1)
+        for month in range(MONTHS_PER_YEAR):
+            day = FIRST_RUN_DAY + month * DAYS_PER_MONTH
+            r.engine.run_day(day)
+            labels = {r.engine.where(p.ix, day, 3)[3] for p in r.engine.people}
+            self.assertIn('春夏秋冬'[month // 3] + '课', labels, month + 1)
 
     def test_the_stress_worlds_are_only_spec_changes(self):
         """专门场景只是换了规格（不改引擎），并且换完仍通过 validate()；它们各自与原规格确有不同。"""
@@ -353,15 +397,15 @@ class FormerlyUnreachedNumbersMatter(unittest.TestCase):
 
 
 @unittest.skipUnless(os.environ.get('TIANL_SLOW'), '慢测试：TIANL_SLOW=1 打开')
-class PrototypeWorldsAloneLeaveTenFieldsDead(unittest.TestCase):
+class PrototypeWorldsAloneLeaveSomeFieldsDead(unittest.TestCase):
     def test_every_scenario_is_deterministic(self):
         """“改动后指纹变了”才说明引擎读了这个数，前提是同一规格重跑指纹不变：九个场景各重跑一次核对。"""
         base = baseline()
         for kind in SCENARIOS:
             self.assertEqual(run_scenario(BASE_SPEC[kind], kind), base[kind], '场景 %s 不确定' % kind)
 
-    def test_the_ten_fields_are_dead_in_the_prototype_worlds(self):
-        """诚实记录的可执行版：只用五个原型世界，这十个字段确实看不出变化；专门场景才让它们显形。"""
+    def test_the_formerly_unreached_fields_are_dead_in_the_prototype_worlds(self):
+        """诚实记录的可执行版：只用五个原型世界，这些字段（十个，加季节表的 12 个月份，加刚正的下限）确实看不出变化；专门场景才让它们显形。"""
         baseline(PROTOTYPE_SCENARIOS)
         for got in pool_map(_probe_prototype_worlds, [LEAF[name] for name in PROTOTYPE_DEAD]):
             # 'checked'（有的改法被 validate() 拒绝，其余改法看不出变化）同样是“没有可见效果”；只有 live 才说明它在原型世界里已经显形

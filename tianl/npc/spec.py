@@ -15,9 +15,12 @@ from functools import cached_property
 from itertools import pairwise
 from typing import Optional
 
-from ..core import SLOTS_PER_DAY
+from ..core.calendar import MONTHS, YEAR, Calendar
 
 SCALE = 100.0                       # 需求与性格刻度的满值（0–100）
+MONTHS_PER_YEAR = len(MONTHS)       # 历法的一年几个月、每月几日：取自 tianl.core.calendar（月 = doy // 每月日数 + 1，见 Calendar.cal）
+DAYS_PER_MONTH = YEAR // MONTHS_PER_YEAR
+FIRST_MONTH = FIRST_DOM = 1         # 历法里月与月内日都从 1 数起（Calendar.cal 的 month、dom）
 
 # ---- 需求键与性格键（ARCHITECTURE 第 3 节：h 饥 e 困 c 洁 s 群 a 志；D 精进 S 守戒 G 合群 T 馋 R 刚正）----
 NEED_KEYS = ('h', 'e', 'c', 's', 'a')
@@ -53,6 +56,19 @@ GROUPS_ARITY, BONUS_ARITY, ROTATE_ARITY = 2, 3, 2          # groups=(清众, 执
 MOOD_LINES_ENABLED, AT_LEAST = 1, 1
 # when 的具体程度（数小者先匹配）：具体日子 → 天气 → 季节 → 默认
 SPEC_DAY, SPEC_WEATHER, SPEC_SEASON, SPEC_DEFAULT = 0, 1, 2, 3
+
+
+class SiteCalendar(Calendar):
+    """tianl.core.Calendar 加上“值相等”：规格（SiteSpec）逐字段比较时，两次从同一份 defs 读出来的历法要相等。
+    历法本身（节日表、结夏、农事日）与内核共用同一个类，同一个 calendar 定义既喂内核也喂 NPC 引擎；这里不改它的任何行为。"""
+
+    def _ident(self):
+        return (tuple(sorted(self.festivals.items())), self.retreat, self.wheat_doy, self.millet_doy, self.year)
+
+    def __eq__(self, other):
+        return isinstance(other, SiteCalendar) and self._ident() == other._ident()
+
+    __hash__ = None                 # 值相等的可变对象不可哈希（规格里本来也有字典，整个 SiteSpec 本来就不可哈希）
 
 
 class SpecError(ValueError):
@@ -432,6 +448,7 @@ class SiteSpec:
     rotate: tuple
     meal_slots: tuple
     seasons: dict                   # 季节名 -> 月份元组（行为包 when.season 用）
+    calendar: SiteCalendar          # 这处场所的历法（rule:schedule 的 calendar 引用的 calendar 定义）：节日、月、月内日、季节的键都按它
     # 人群
     offices: tuple
     office_track_cycle: str
@@ -439,6 +456,7 @@ class SiteSpec:
     common_prefix: str
     common_tracks: tuple            # ((方向, 人数或 None), …)：清众按序分方向，None 表示其余全部
     groups: tuple                   # (清众的名称, 执事的名称)
+    leave_word: str                 # 人离开本处时 explain 里的说法（离寺、出帮……）
     traits: TraitSpec
     # 行为包栈与交互
     layer_rank: dict                # 层标签 -> 计划 6.1 的层号（越轨与怠工记 0）
@@ -518,8 +536,9 @@ class SiteSpec:
 
     def validate(self):
         """引用完整性自检：返回问题列表（空表示通过）。引擎构造时会调用，不通过就拒绝开跑。"""
-        from .handlers import GATES, GATE_PARAMS, PACKAGE_HANDLERS, ParamCtx, check_params
+        from .handlers import Known, ad_gate_problems, package_handler_problems, package_shape_problems
         out = []
+        known = Known.of(self)
         pl = set(self.places)
         names = {o.name for o in self.offices}
 
@@ -531,6 +550,14 @@ class SiteSpec:
             if key not in table:
                 out.append('%s：活动 %r 没有对应的交互' % (where, key) if what == '活动' else '%s：%s %r 未登记' % (where, what, key))
 
+        if not isinstance(self.calendar, SiteCalendar):
+            out.append('calendar：应是 SiteCalendar（由 rule:schedule 的 calendar 引用的定义构造）')
+        elif self.calendar.year != YEAR:
+            out.append('calendar：一年必须是 %d 日（tianl.core.calendar.YEAR；内核与 NPC 引擎都按它算月与节令）' % YEAR)
+        for season, months in self.seasons.items():
+            for m in months:
+                if not FIRST_MONTH <= m <= MONTHS_PER_YEAR:
+                    out.append('seasons[%s]：月份 %r 不是 1–%d' % (season, m, MONTHS_PER_YEAR))
         for code in self.capacity:
             need_place('capacity', code)
         for code in self.roam:
@@ -594,12 +621,7 @@ class SiteSpec:
             if ad.place != OWN_BED:
                 need_place('ad %s' % ad.act, ad.place)
             need_in('ad %s' % ad.act, ad.act, self.interactions, '活动')
-            if ad.gate is not None:
-                if ad.gate not in GATES:
-                    out.append('ad %s：准入门 %r 未登记' % (ad.act, ad.gate))
-                else:
-                    out.extend('ad %s 的准入门 %s：%s' % (ad.act, ad.gate, m) for m in check_params(
-                        GATE_PARAMS[ad.gate], ad.gate_params, ParamCtx(self)))
+            out.extend(ad_gate_problems(ad, known))
             for t in ad.terms:
                 need_in('ad %s' % ad.act, t.need, NEED_KEYS, '需求键')
             for key in ((ad.scale[0],) if ad.scale else ()) + ((ad.pref[1],) if ad.pref else ()):
@@ -649,58 +671,16 @@ class SiteSpec:
             need_in('layer_rank', lay, self.layer_rank, '层标签（引擎认识的）')
         if not self.stack:
             out.append('stack 不能为空')
-        pctx = ParamCtx(self)
         seen_ids = set()
         duty_pos = []
         for pos, pk in enumerate(self.stack):
-            where = '包 %s' % pk.id
             if pk.id in seen_ids:
-                out.append('%s：在栈里出现了两次' % where)
+                out.append('包 %s：在栈里出现了两次' % pk.id)
             seen_ids.add(pk.id)
-            need_in(where + '.layer', pk.layer, self.layer_rank, '层标签')
             if pk.layer == L_DUTY:
                 duty_pos.append(pos)
-            if pk.who.offices is not None:
-                for off in pk.who.offices:
-                    need_in(where + '.who', off, names, '岗位')
-            if pk.who.status not in (None, STATUS_COMMON, STATUS_HOLDER):
-                out.append('%s：who.status 只能是 %r 或 %r' % (where, STATUS_COMMON, STATUS_HOLDER))
-            for v in pk.when.slots or ():
-                if not 0 <= v < SLOTS_PER_DAY:
-                    out.append('%s：when.slot 里的 %r 不是时辰（0–%d）' % (where, v, SLOTS_PER_DAY - 1))
-            for per in pk.when.periods or ():
-                need_in(where + '.when.period', per, PERIODS, '时段名')
-            if pk.when.seasons is not None:
-                for s in pk.when.seasons:
-                    need_in(where + '.when.season', s, self.seasons, '季节')
-            if (pk.do is None) == (pk.handler is None):
-                out.append('%s：必须二选一：do（声明式）或 handler（处理器）' % where)
-            if pk.do is not None:
-                do = pk.do
-                if do.place != OWN_BED:
-                    need_place(where + '.do.place', do.place)
-                need_in(where + '.do.act', do.act, self.interactions, '活动')
-                if do.claim:
-                    if do.overflow_place is None:
-                        out.append('%s：claim = true 必须写 overflow.place（满员改去哪里）' % where)
-                    else:
-                        need_place(where + '.do.overflow.place', do.overflow_place)
-                elif do.overflow_place is not None:
-                    out.append('%s：overflow 只对 claim = true 的包有意义' % where)
-            if pk.handler is not None:
-                hd = PACKAGE_HANDLERS.get(pk.handler)
-                if hd is None:
-                    out.append('%s：处理器 %r 未登记（已登记：%s）' % (where, pk.handler, '、'.join(sorted(PACKAGE_HANDLERS))))
-                    continue
-                if pk.layer not in hd.layers:
-                    out.append('%s：处理器 %s 只能带层 %s，不是 %r' % (where, pk.handler, '/'.join(hd.layers), pk.layer))
-                out.extend('%s（处理器 %s）：%s' % (where, pk.handler, m) for m in check_params(hd.params, pk.params, pctx))
-                for act in hd.acts:
-                    need_in(where + '（处理器 %s 用到的活动）' % pk.handler, act, self.interactions, '活动')
-                if hd.who_office:
-                    want = (self.patrol.office,)
-                    if pk.who.offices != want:
-                        out.append('%s：处理器 %s 的 who 必须正是 org 里该部门的岗位 %s' % (where, pk.handler, want))
+            out.extend(package_shape_problems(pk, known))        # 层、谁、何时、做什么、处理器与参数：与读 defs 时同一份校验（handlers.py）
+            out.extend(package_handler_problems(pk, known))
         if duty_pos and duty_pos != list(range(duty_pos[0], duty_pos[0] + len(duty_pos))):
             out.append('值守层的包必须在栈里相邻（反应包要先问“此刻有没有值守”）')
         if not any(pk.handler == 'free' for pk in self.stack):

@@ -20,6 +20,13 @@
 
 C9 只改本文件：写 Player / LLMStub，扩充 candidates（列出该层合法的替代选择，如自由时段的前几名广告），并决定哪些层锁死
 （forced / penalty / duty / group：只给一个候选）。不要改 engine.py。默认的 Program 就是“取候选的第一个”。
+
+给 C9 的一条硬约束（接手前先读）：engine.stack.decide 有副作用（占工位、记统计、改贪睡与代班的状态、认领差事），不是只读的“看一看”。
+  * 同一个人同一个时辰（同一个 SlotCtx）decide 只算一次，再调用原样返回第一次的结果、不再占位（stack.py；有测试），
+    所以 candidates / 预览可以放心再取“程序的选择”，但**不得为了凑候选而换着参数多次调用它**——那样只会拿到同一个结果；
+  * 替代候选要自己只读地列出（例如读 engine.fac.open_ads / score 给自由时段前几名，不占位）；
+  * 若操纵者选了程序的选择之外的候选，而程序的选择已经占了工位 / 认领了差事，要先放掉那份占用（在这里加放位的函数；不要改 engine.py），
+    再占替代项的工位；放不了就把这一层锁死、只给一个候选。
 """
 from dataclasses import dataclass
 

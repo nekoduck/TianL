@@ -8,6 +8,21 @@
 传闻参数、心情三道线都来自 defs；第一步的全部哈希与数字一字不差地复现；四个给后续步骤的钩子（`life.pulse`、`controller.decide`、`lod.observe`、`persist.flush`）
 已在 `engine.py` 里预留（默认空操作）。第二步的全部内容见**第 12 节（defs 字段、处理器、示范）与第 13 节（钩子）**；第 1–11 节是第一步的记录，涉及 defs 的地方已随第二步改过。
 
+**第二步的修订（针对独立验证者；没有动任何已有的数字与哈希，`python3 tools/npc_regress.py --all --diff` 仍是 55 行全部一致）**：
+① 报错“一次报全”此前只在同一阶段内成立（类型、越界错要等结构错修完才出现）：现在行为包与准入门自身的全部问题（层、谁、何时、做什么、处理器与参数的类型 / 取值 / 引用）在读 defs 时就一次查全，
+与规格自检共用同一份校验函数（12.3）；② 300 僧名册重名（字池只有 62 字）：超过一圈后名字后缀字（`scenarios.given_name`），第一圈与原型逐字相同（12.10）；
+③ 两处写死的场所用词挪进 defs：explain 里的“离寺”（`org:main.leave_word`）、报表标题的“60 僧”量词（`scenario:main.track_suffix`）；
+④ `stack.decide` 有副作用——同一个人同一个时辰只算一次、再问原样返回（给 C9 的约束，第 13 节）；⑤ 测试：死代码改成真断言；`DocsInSync` 增加逐表逐行与代码生成的字段表比对（原先只做子串检查）；
+`test_npc_spec` 的“原型那一遍”放进 fork 出来的子进程与移植版同时跑，几个只读的运行在各 npc 测试文件之间共用（`test_npc_support.shared_run`）；
+⑥ 文档措辞：ARCHITECTURE 6 节的错误类型（`DefsError` / `SpecError`）、本节的测试用时。
+
+**第二步的第二次修订（针对第二位独立验证者；同样没有动任何已有的数字与哈希，55 行日志仍全部一致）**：
+① **历法随 scope 走**：此前 `stack.py` 读的是 `tianl.core.cal()` 的全局默认（少林历），给丐帮分舵或庄园写新 defs 时 `when.festival / month / day_of_month` 仍按少林历，文档也没写这条限制。
+现在历法是规格的一部分：`rule:<scope>:schedule` 新增必填字段 `calendar`（引用一条 `calendar` 定义），`SiteSpec.calendar`（`SiteCalendar`：核心 `Calendar` 加值相等）喂给日历键；`engine.cal(day)` 给后续步骤用；
+`tianl/npc` 里没有任何模块再引入全局 `cal`（有 AST 测试）；节日名写错、月不在 1–12、月内日不在 1–30、季节表的月份越界，读 defs 时就报错（12.2、12.9 第 8 步、12.10）。原型场景引用 `calendar:shaolin:main`，与全局默认同值，所以基准哈希不变。
+② 数值普查里“无可见效果”的 13 个字段清零：12 个季节表项用新的专门场景 `seasonal`（四个季节各一个包、每月第一日各跑一日）显形，`traits.lo.R` 用 `lowR`（种子 5 的开局里有人的刚正被夹在下限，跑 N1）显形；
+普查变为 409 个字段：380 活、29 受校验、0 无可见效果、0 崩（第 8 节、11.1）。③ 文档对账：测试总数与各文件数、“npc 五个测试文件”（`test_npc_support` 是夹具，没有测试）、慢测试数与用时，以实跑为准（11.1）。
+
 **第一步（C 段，已完成并经独立验证与三轮修订）**：把 60 僧 30 日原型**忠实**移植成模块化的 `tianl/npc` 包。
 第一步的规格用 Python 数据类（`SiteSpec`）手写，`scenarios.proto60_spec()` 构造出与原型完全一致的一套（第二步起改为 defs 构造，字段不变）。
 哈希、全部汇总数字、逐行日志已由 `tests/test_npc_proto.py` 自动比对；与原型的逐步差分（轨迹、统计、事件序列、终态）
@@ -27,12 +42,13 @@
 ⑤ 默认测试没有因新增检查而变慢（没有削弱任何比对）：新增了 13 个测试，npc 四个测试文件合计仍是 18 到 20 秒（本机，随负载浮动；修订前 90 个测试 18 到 19 秒）。做法：
 `test_npc_engine` 里只读的 90 日与基准运行共用（`shared_run`）；`test_npc_spec` 里同一配置的“原型 + 移植版”运行只跑一次（`both()`：逐步差分与抽签键多重集共用同一次运行）；
 `test_npc_sensitivity` 的默认检查用 fork 多进程（没有 fork 的平台退回串行）。新增检查本身很便宜：十个字段的专门场景约 1 秒，防御性分支与场所短码的测试合计不到 1 秒。
-整套默认测试（含别的步骤的）在本机约 48 到 52 秒，其中 `test_b1_kernel` 一个文件就约 22 秒，不在本步名下。
+整套默认测试（含别的步骤的）如实记录：第一步修订时本机 53 到 55 秒（别的代理同时在跑时 57 到 60 秒，独立验证者三次实测 57.4 / 57.7 / 59.9 秒）；第二步第二次修订后（368 个测试）本机两次实测 54.0 与 52.9 秒（修订前独立验证者测得 359 个、51.8 秒；新增的 9 个测试约 1 秒，其余是机器负载的浮动），**离 60 秒的线只有几秒的余量，不算稳**；
+其中 `test_b1_kernel` 一个文件约 20 秒（不是 npc 的）、npc 五个文件各自单独跑约 3 到 7 秒（`test_npc_engine` 6.6、`test_npc_defs` 5.5、`test_npc_spec` 5.1、`test_npc_proto` 3.4、`test_npc_sensitivity` 3.4；合起来在一个进程里因共用只读运行而少几秒），后者是原型逐步差分的必要开销——没有放宽任何比对，也没有把默认检查挪去慢测试。没有哪一个测试特别慢（最慢的 1 秒左右），想再省时间只能一个个去共用只读运行。
 
 ## 1. 模块划分与依赖方向
 
 ```
-spec.py        规格数据类：SiteSpec 及其子规格（不可变）。引擎里没有魔数，所有常数都是这里的字段；from_defs 转给 defsload。
+spec.py        规格数据类：SiteSpec 及其子规格（不可变）与 SiteCalendar（核心 Calendar 加值相等；历法是规格的一部分）。引擎里没有魔数，所有常数都是这里的字段；from_defs 转给 defsload。
 defsload.py    由 defs 构造规格：SiteSpec.from_defs / ScenarioSpec.from_defs，读字段时顺手校验、一次报全；字段表由它生成（第 12 节）。
 events.py      NPC 事件类型代码（大写英文）及中文渲染。哈希用中文渲染，所以代码与中文一一对应。
 host.py        Host 接口、Event、StandaloneHost（事件存内存列表）。
@@ -259,15 +275,19 @@ class Host:
 * `python3 -m unittest tests.test_npc_sensitivity`：**规格里的每个数都在起作用**。哈希只管“谁在哪、发生了什么事”，常数抄错或引擎悄悄不读它，
   只要没改变这两样就发现不了。这里把 `SiteSpec` 的数值字段逐个改动（每个试三种改法），在九个场景里重跑，用比哈希细得多的指纹
   （需求、想法、见闻、好恶修正项、**两两好恶的实际值**、案卷、统计、传闻曲线、层号……）比对。九个场景分两类：
-  五个**原型世界**（N1 无人代理、传闻脚本、90 日、种子 4 的 90 日、种子 34 的 N1），和四个**专门场景**——先把规格换成一个更挤、更累、更记仇的世界，再在这个世界上逐个改字段
+  五个**原型世界**（N1 无人代理、传闻脚本、90 日、种子 4 的 90 日、种子 34 的 N1），和六个**专门场景**——先把规格换成一个更挤、更累、更记仇的世界，再在这个世界上逐个改字段
   （`tight`：工位稀缺、浴室井台没登记容量、功课挪到未时让申时空出来、夜里更易起念；`weary`：困饿孤的消耗加重；`grudge`：好恶放大、处分阶梯连着杖责；
-  `emit`：不跑世界，直接发一遍每种事件看见闻强度）。专门场景只换规格、不改引擎，所以“改一个数、世界就变”在这里仍只说明引擎读了这个数。
-  默认验两件事：手挑的十个关键数字（举报概率、认错、立案过期、起念、传闻、清点、怠工、工友闲谈……）；原先碰不到的十个字段各在专门场景里改一次、重跑一次。
-  `TIANL_SLOW=1` 对全部 345 个数值字段做普查（多进程，约 1 分钟）：**343 个活着、2 个被 `validate()` 拒绝（`meal_slots`）、0 个无可见效果**。
-  只用五个原型世界时，有十个字段是死的（`capacity.zen cap_default library.slots.2 needs.eff.sick.e opinion.lo opinion.hi thoughts.flogged.cap
-  thoughts.warned_bed.cap salience.REPORT salience.BED_EMPTY`：容量不吃紧、好恶碰不到上下限、举报没有见证人……）；这份清单与每条原因写在测试的 `PROTOTYPE_DEAD` 里，
+  `emit`：不跑世界，直接发一遍每种事件看见闻强度；`seasonal`：四个季节各加一个卯时的包、十二个月各跑一日——日子不连续，轨迹允许缺格；`lowR`：种子 5 的开局里有人的刚正被夹在下限，跑 N1）。
+  专门场景只换规格（或种子）、不改引擎，所以“改一个数、世界就变”在这里仍只说明引擎读了这个数。（场景总数因此是 11 个。）
+  默认验两件事：手挑的十个关键数字（举报概率、认错、立案过期、起念、传闻、清点、怠工、工友闲谈……）；原先碰不到的 23 个字段（十个，加季节表的 12 个月份，加刚正的下限）各在专门场景里改一次、重跑一次。
+  `TIANL_SLOW=1` 对全部数值字段做普查（多进程，约 1.5 分钟）：第一步是 345 个字段、**343 个活着、2 个被 `validate()` 拒绝（`meal_slots`）、0 个无可见效果**；
+  **第二步（defs 驱动后，规格多了各行为包的参数、季节表等字段）：第一次是 409 个字段：367 个活着、29 个被规格自检拒绝、13 个无可见效果、0 个崩；第二次修订（加了 `seasonal`、`lowR`）后是 409 个字段：380 个活着、29 个被规格自检拒绝、0 个无可见效果、0 个崩**。
+  原先那 13 个无可见效果的是 12 个季节表项（`seasons.<季>.<i>`：原型场景没有包用季节，且 30 日只走到正月）与 `traits.lo.R`（原型这 60 人里没人的刚正低到被夹到下限）：前者由 `seasonal` 显形（把月份改成 13 − 月，这个月就不再属于原来的季节，当月卯时课变回早课），
+  后者由 `lowR` 显形（改成 22 才有可见差别；改成 6 或 2 仍看不出，因为被夹到下限的那几个人没轮到举报与认错的场面——这只说明引擎读了这个数）。`when.season` 的行为另由 `tests/test_npc_defs.py` 的 `CalendarKeys` 验证。
+  只用五个原型世界时，有 23 个字段是死的（十个：`capacity.zen cap_default library.slots.2 needs.eff.sick.e opinion.lo opinion.hi thoughts.flogged.cap
+  thoughts.warned_bed.cap salience.REPORT salience.BED_EMPTY`：容量不吃紧、好恶碰不到上下限、举报没有见证人……；加十二个季节表项，加 `traits.lo.R`）；这份清单与每条原因写在测试的 `PROTOTYPE_DEAD` 里，
   慢测试断言“在原型世界里它们确实死、加上专门场景后确实活”，清单变长变短都要改测试，不许悄悄放过。
-  “活着”只说明引擎读了这个数，不说明数值合理；专门场景是人为造的世界，普查仍是有限场景下的结论。`UNREACHED`（加上专门场景后仍看不出变化的字段）目前是空的。
+  “活着”只说明引擎读了这个数，不说明数值合理；专门场景是人为造的世界，普查仍是有限场景下的结论。`UNREACHED`（加上专门场景后仍看不出变化的字段）第一步是空的，第二步第一次有 13 个，现在又是空的——以后再出现，要么修，要么写在那里并说明为什么。
 * `python3 -m unittest tests.test_npc_engine.DefensiveBranches`：三处基准世界与所有对照场景都走不到的防御分支，直接造世界走一遍
   （原型这几处要么 `IndexError` 要么不可达，没法逐项比对，所以断言的是行为合理、不崩、不越界）：自由时段能选的广告都满员 → 去廊下散步
   （`freechoice` 末行；练武场容量 2 与 0 各一个世界，断言“坐满之后别人散步”“占用从不超过容量”“`free_none` 仍是 0”）；没有藏主 → 藏经阁不开（`handlers.lib_open`，
@@ -355,7 +375,7 @@ class Host:
 * **新人与离开**：`add_person` 只追加 ix；`on_person_removed(pid, why)` 只标 `gone` 与 `gone_why`，不删档案（事件与见闻还指着它）。
 * **持久化**：见 `persist.py` 的 docstring，列了恢复所需的全部状态（现在要加上：事件流水号与 hid 的对应、轨迹的 `nxt`）。
 
-## 11. 本步验收结果（原样数字见 `python3 tools/npc_regress.py --all --diff`）
+## 11. 验收结果（第一步；第二步见本节末尾的第二张表。原样数字见 `python3 tools/npc_regress.py --all --diff`）
 
 | 项 | 结果 |
 | --- | --- |
@@ -369,15 +389,31 @@ class Host:
 | 与日志逐行比对 | 55 行全部一致（耗时行只记录） |
 | 抽签用途 | 引擎源码里读出 21 种（16 种判定 + 5 项性格），四个场景里全部抽到过，键的多重集与原型逐一相同 |
 | 对原型没走到的分支 | “反应”层、戒律院无人断案、当事人已迁单、昏沉不支、困乏未起、工位吃紧：与原型逐项一致（见第 8 节） |
-| 数值普查（`TIANL_SLOW=1`） | 345 个数值字段：343 个活着、2 个受校验、0 个无可见效果（九个场景；只用五个原型世界时有十个是死的，清单与原因见 `tests/test_npc_sensitivity.py` 的 `PROTOTYPE_DEAD`） |
+| 数值普查（`TIANL_SLOW=1`，第一步） | 345 个数值字段：343 个活着、2 个受校验、0 个无可见效果（九个场景；只用五个原型世界时有十个是死的，清单与原因见 `tests/test_npc_sensitivity.py` 的 `PROTOTYPE_DEAD`）；第二步（defs 驱动）见下表 |
 | 防御性分支 | 自由时段候选全满、没有藏主、没有清众：`DefensiveBranches` 直接构造世界断言（改坏源码会红） |
 | 场所短码 | 进入随机键与基线哈希：`PlaceCodesAreKeys` 钉住（第 9 节第 14 条、第 10 节） |
+
+### 11.1 第二步（defs 驱动）验收结果
+
+| 项 | 结果 |
+| --- | --- |
+| 第一步的全部哈希与数字（基准 `e8f8209eeb8ca94a`、重跑、观察者、N1 两组、90 日、五个种子、55 行日志） | 在 defs 驱动下**一字不差**：`python3 tools/npc_regress.py --all --diff` → `与日志逐行比对：一致（共 55 行，不一致 0 处）`；`tests.test_npc_proto` 全绿 |
+| `Defs.load()` 引用完整性 | 100%：整棵 defs 树 233 条定义、300 条引用全部可解析（第二次修订加了 `rule:schedule.calendar` 一条）；原型场景 153 条定义每条都被规格用到 |
+| 原型场景完全由 defs 描述 | `SiteSpec.from_defs` / `ScenarioSpec.from_defs`；代码里只有 `defsload.py` 构造 `SiteSpec` / `ScenarioSpec`（AST 测试） |
+| 代码里没有原型场景的魔数 | `tests.test_npc_engine.SourceRules` 扫 `tianl/npc` 全部模块（含 `spec.py` `scenarios.py`）：只许具名常量与结构用的 0/1/2/3，`handlers.py` 另许 `Param` 的默认值 |
+| 行为包是数据 | 36 个包 + 13 个处理器（`tempted lazy kitchen_duty proxy_cook patrol_duty gate_duty errand slack court_report physiology forced penalty free`）+ 2 个准入门；日历键匹配次序“具体日子 > 天气 > 季节 > 默认”有测试 |
+| 钩子 | 四个（`life.pulse` `controller.decide`〔`Controller.choose`〕`lod.observe` `persist.flush`）：存在、签名与调用点有测试、默认空操作且基准哈希不变 |
+| 泛化 (a)：同一份 defs 人口 60 → 300 跑 30 日 | 决策数 108000，预约越界 0，每个决定都说得清；各层占比与每日时辰分配见 12.9 与 `python3 -m tianl.npc.report --scale 300 --days 30` |
+| 泛化 (b)：缺字段 / 引用不存在的包 / 未登记的处理器 / 参数不合法 | 逐条写明哪条定义的哪个字段，一次报全（12.3 样例；`tests.test_npc_defs.ErrorReporting` 13 项） |
+| 数值普查（`TIANL_SLOW=1`，defs 驱动后） | 409 个数值字段：第一次 367 活、29 受校验、13 无可见效果（12 个季节表项 + `traits.lo.R`）、0 崩；第二次修订（加专门场景 `seasonal`、`lowR`）后 **380 活、29 受校验、0 无可见效果、0 崩**（`UNREACHED` 现在是空的） |
+| 测试 | 默认整套 `python3 -m unittest discover -s tests -t .`：368 个测试绿（24 个慢测试跳过），本机 53 到 54 秒（离 60 秒线只有几秒，见开头的说明）；`TIANL_SLOW=1 python3 -m unittest tests.test_npc_proto tests.test_npc_spec tests.test_npc_engine tests.test_npc_defs tests.test_npc_sensitivity`：npc **五个测试文件** 171 个测试全绿（14 + 15 + 66 + 65 + 11，约 149 秒；`test_npc_support` 是夹具，没有测试）。内核的慢测试不在这条里 |
+| 第二次修订（第二位独立验证者之后） | 历法随 scope 走（`rule:schedule.calendar`，`tests.test_npc_defs.ScopeCalendar` 7 个测试：换历法后节日键跟着变、全局默认被换掉也不受影响、节日名写错 / 月与月内日越界 / 历法字段缺失与不存在都报可读的错、源码里没有模块引入全局 `cal`）；数值普查 13 个“无可见效果”清零（见上行）；文档数字以实跑为准 |
 
 ## 12 defs 驱动（C 段第二步）：字段说明、处理器与“为另一处场所写一套 defs”
 
 第二步把第一步的 Python 数据类规格换成 **defs 驱动**：原型场景 `scenario:proto60` 完全由 `defs/*/proto60*.toml` 描述，
 `SiteSpec.from_defs()` 读它、校验它、拼成引擎认的规格；基准哈希与第一步的全部数字一字不差（第 11 节）。
-本节的字段表由代码生成（`python3 -m tianl.npc.defsload` 重新生成），`tests.test_npc_defs.DocsInSync` 核对本节没有漏字段、处理器或准入门。
+本节的字段表由代码生成（`python3 -m tianl.npc.defsload` 重新生成），`tests.test_npc_defs.DocsInSync` 逐表逐行核对本节的字段表与代码生成的完全一致（说明文字、类型、默认值改了而文档没跟着改，都会红），并核对处理器、准入门、钩子都有说明。
 
 ### 12.1 总览
 
@@ -388,7 +424,7 @@ class Host:
   数值字面量只能是模块级的具名常量（UPPER_CASE = …）、结构用的 0/1/2/3（下标、计数、初值、±1 偏移），以及 `handlers.py` 里 `Param(…)` 的默认值与取值范围。
   最后一项是代码里唯一允许的“参数默认值”；原型场景不靠它（每个值 defs 里都写了，`tests.test_npc_defs.HandlerRegistry.test_defaults_come_from_the_handler_table_not_from_defs` 验证默认值只在 defs 不写时才起作用）。
   具名常量里只有“数据格式的元数”（几项一组）、结构性标识（层标签、活动代码、需求键、性格键）与单位量纲（见 `spec.py` 文件头）。
-* 原型场景的八个文件（共 153 条定义；`kernel = false` 的场所定义内核不读；内核按 scope 过滤，不读 proto60）：
+* 原型场景的八个文件（共 153 条定义，另有 3 个 `_abstract` 父包；`kernel = false` 的场所定义内核不读；内核按 scope 过滤，不读 proto60）：
 
 | 文件 | 内容 |
 | --- | --- |
@@ -404,7 +440,7 @@ class Host:
 * **哪些目录内核会加载**（`kernel.spec.KERNEL_CATEGORIES`）：`calendar space economy org post item scenario`。这些目录里的文件（含 proto60 的）
   只许引用这几个目录里的定义；`facility`、`norm`、`knowledge` 三个目录内核不加载，可以引用任何 kind（所以想法、规范、设施在那里引用场所与岗位）。
   `tests.test_npc_defs.DefsDrivenSpec.test_kernel_still_loads_and_ignores_the_npc_scope` 钉住“内核照常加载、proto60 不进内核的场所表”。
-* `Defs.load()` 严格加载时引用完整性 100%（整棵 defs 树 233 条定义、299 条引用全部可解析，`tests.test_npc_defs` 开头打印）。
+* `Defs.load()` 严格加载时引用完整性 100%（整棵 defs 树 233 条定义、300 条引用全部可解析，`tests.test_npc_defs` 开头打印）。
 
 ### 12.2 键与约定
 
@@ -418,19 +454,28 @@ class Host:
 * **次序**：次序敏感的定义带 `order`（岗位表的次序决定名册——谁排第几、法名与寮房；差事板同级差事的认领先后；自由时段广告平分时先出现的先）；
   行为包的判定先后由 `rule:stack` 的 `packages` 列表决定；同 scope 的包不列进去就报错（不在栈里永远不会生效）。
 * 时辰是 0–11（子 0 … 亥 11）；`slot` 可写一个数或一组数；`when.day` 是模拟日序号，`day_of_month` 是历法的月内日（1–30）。
+* **历法是这处场所的数据**：`rule:<scope>:schedule` 的 `calendar` 字段引用一条 `calendar` 定义（与内核共用同一种定义：`festivals`、`retreat`、`wheat_doy`、`millet_doy`，`year` 只能是 360），
+  `when` 里的 `festival`、`month`、`day_of_month` 与 `rule:schedule.seasons` 的月份都按它算，节日名写错（不在这份历法里）、月不在 1–12、月内日不在 1–30 都在读 defs 时报错。
+  原型场景就是少林寺，引用的是 `calendar:shaolin:main`；丐帮分舵或庄园写自己的 calendar 定义并改这一行，**引擎不读 `tianl.core.cal()` 的全局默认历法**（`tests.test_npc_defs.ScopeCalendar` 把全局默认换掉，结果一字不差）。
 * `parent` 继承与 `_abstract = true`（只供继承）沿用 ARCHITECTURE 第 4 节：`_forced`、`_kitchen_hours`、`_tempted` 三个抽象包把共用的层、时辰、参数写一处，
   子包只写差别（字典逐层合并——子包 `params` 里写的键盖过父包的键、没写的沿用；列表与标量整体替换）。
 
 ### 12.3 加载、校验与报错
 
-`from_defs` 读字段时顺手校验，**把所有问题收集完一起抛 `SpecError`**（`.problems` 是问题列表，每条写明哪条定义的哪个字段），不是撞上第一个就停：
+`from_defs` 读字段时顺手校验，**把这一阶段的所有问题收集完一起抛 `SpecError`**（`.problems` 是问题列表，每条写明哪条定义的哪个字段），不是撞上第一个就停：
 
 * 缺字段、字段类型不对、未知字段（多半是拼错）、引用不存在的定义、引用了 kind 不对的定义；
 * 处理器 / 准入门未登记（报错里列出已登记的名字）、参数缺失 / 未知 / 类型不对 / 越界（按登记表里的 `Param` 校验）；
+* **行为包自身的问题在这一阶段就查全**：层标签没登记、`who` 的岗位、`when` 的时辰 / 时段 / 季节、`do` 的场所与活动、`claim` 与 `overflow` 配套、处理器只能带哪些层、
+  处理器用到的活动、巡寮包的 `who`——与 `SiteSpec.validate()` 用**同一份**校验函数（`handlers.package_shape_problems` / `package_handler_problems` / `ad_gate_problems`），
+  所以“缺字段 + 处理器写错 + 参数类型不对 + 时辰不对 + 活动不存在”同时出现，一次全报（`tests.test_npc_defs.ErrorReporting.test_structural_and_value_mistakes_are_reported_together`）；
+  某张表自己读不干净时（比如场所表里有错），依赖它的引用检查跳过，不制造连带的假问题；
 * 同 scope 里**没被任何地方引用或使用**的定义（想法、修正项、处分阶梯、没列进栈的包等；多半是漏了引用或拼错了 role）；
 * 缺角色（`缺少 org 的角色 'gate'（编号形如 org:proto60:gate，或写 role = "gate"）`）、角色重复。
 
-之后 `SiteSpec.validate()`（引擎构造时也会调，不通过拒绝开跑）再查一遍规格内部的引用完整性：场所、岗位、想法键、修正项键、活动、层标签、值守包相邻、栈里有 `free` 兜底……
+**一次报全的范围，如实写明**：只在这一阶段内成立。这一阶段**没有问题**之后，才进入第二阶段 `SiteSpec.validate()`（引擎构造时也会调，不通过拒绝开跑），
+它再查规格内部的交叉引用：场所、岗位、想法键、修正项键、需求键覆盖、活动、层标签、值守包相邻、栈里有 `free` 兜底、规范与交互的对应……（包与准入门的那部分上面已经提前做了；其余只在第二阶段）。
+所以修完第一阶段的问题之后，仍可能冒出第二阶段才查得出的问题——不会有“修了一个又出一个包的类型错”这种情况，但交叉引用类的问题要分两次才报全。
 
 真实报错样例（`tests.test_npc_defs.ErrorReporting` 里每一条都有对应的测试）：
 
@@ -520,7 +565,7 @@ thought:proto60:unused：没有被任何地方引用或使用（漏了引用？�
 #### 12.4.3 岗位、差事、性格与站点规则：`defs/post/proto60.toml`
 
 岗位 `post`（人岗分离：岗位是表上的一行，人是被任命的；日常时段不在这里，在第 8 层的行为包里）、差事 `job`（工作板上的活；认领即预约）、
-性格刻度 `trait`（开局按 N(mean, sd) 生成再夹到 [lo, hi]）；`rule` 角色：`layers`（层标签与计划 6.1 的层号）、`schedule`（夜间、轮转、斋食时辰、季节）、
+性格刻度 `trait`（开局按 N(mean, sd) 生成再夹到 [lo, hi]）；`rule` 角色：`layers`（层标签与计划 6.1 的层号）、`schedule`（夜间、轮转、斋食时辰、季节、历法）、
 `needs`（五项需求的站点级参数）、`illness`、`board`（工作板的站点参数）。
 
 **`post`**
@@ -572,6 +617,7 @@ thought:proto60:unused：没有被任何地方引用或使用（漏了引用？�
 
 | 字段 | 类型 | 必填 / 默认 | 说明 |
 | --- | --- | --- | --- |
+| `calendar` | 引用 calendar | 必填 | 这处场所的历法（calendar 定义的编号）：行为包 when 里的 festival、month、day_of_month、season 键都按它 |
 | `meal_slots` | [int] | 必填 | 斋食时辰 |
 | `night` | [int] | 必填 | 夜间时辰（子 0 … 亥 11） |
 | `rotate` | [int] | 必填 | [日系数, 时辰系数]：各人决定的起点按 (日×a + 时辰×b) % 人数 轮转 |
@@ -666,8 +712,9 @@ thought:proto60:unused：没有被任何地方引用或使用（漏了引用？�
 | `default_stations` | int | 必填 | 没登记工位数的场所按此数算 |
 | `dorms` | [引用 place] | 必填 | 寮房（有序：第 i 个人住第 i % 寮数 个）；寮房是私人场所，不记容量 |
 | `groups` | [str] | 必填 | 时间分配统计的两组名称（清众，岗位者） |
+| `leave_word` | str | 必填 | 人离开本处的说法：explain 写“已于第 N 日离寺（缘由）”里的“离寺” |
 | `name` | str | 必填 | 名称 |
-| `name_pool` | str | 必填 | 取法名用的字池（岗位前缀 + 池中第 i 个字） |
+| `name_pool` | str | 必填 | 取法名用的字池（前缀 + 池中第 i 个字；超过一圈，名字后再缀池里的字，所以人口再多也不重名） |
 | `office_track_cycle` | str | 必填 | 岗位者的修行方向按序号循环 |
 | `roam` | [引用 place] | 必填 | 巡寮的候选场所（僧值每次从中按随机序挑几处） |
 
@@ -916,7 +963,7 @@ thought:proto60:unused：没有被任何地方引用或使用（漏了引用？�
 | `seed` | int | 必填 | 随机数种子 |
 | `trace_day` | int | 必填 | 报表里“某日四人轨迹”的日子 |
 | `trace_post` | 引用 post | 必填 | 轨迹里第四人的岗位 |
-| `track_suffix` | str | 必填 | 清众的称呼 = 修行方向 + 此字 |
+| `track_suffix` | str | 必填 | 清众的称呼 = 修行方向 + 此字（报表标题“60 僧 × 30 日”里的量词也用它） |
 
 **`scenario:gossip`**
 
@@ -957,7 +1004,7 @@ thought:proto60:unused：没有被任何地方引用或使用（漏了引用？�
   **先具体日子（`day` / `day_of_month` / `festival`），再天气（`weather`），再季节（`season` / `month`），最后默认（只有时辰或什么都没写）**；
   同一程度按栈里的次序。匹配次序是引擎的规矩，不看包在栈里的先后（`tests.test_npc_defs.CalendarKeys` 故意把最不具体的排在最前验证）。
   布萨（`when = { day = [1, 15], slot = 7 }`）就是“具体日子压过默认”的例子：它排在集体日程的最前，不在布萨日同一时辰没有它。
-  日历键由 `stack.Stack.keys(day)` 给：`day dom month festival season`（取自 `tianl.core.cal` 与 `rule:schedule` 的 `seasons`），`weather` 由
+  日历键由 `stack.Stack.keys(day)` 给：`day dom month festival season`（节日、月、月内日取自**这处场所自己的历法** `SiteSpec.calendar`，即 `rule:schedule` 的 `calendar` 引用的 calendar 定义；季节取自同一条规则的 `seasons`；不读全局默认历法），`weather` 由
   **Host 的可选方法 `weather(day)`** 提供，**没有就永不成立**（`StandaloneHost` 没有它；集成世界的 KernelHost 来给）。
 * **声明式 `do`**：`place`（场所编号，或 `"$home"` 本人寮房）、`act`（活动代码，要有对应的交互）、`label`（原因）；`claim = true` 占一个工位，
   满员改去 `overflow.place`、原因加 `overflow.suffix`。
@@ -1184,7 +1231,7 @@ def copy_sutra(st, pkg, p, day, slot, ctx):
 
 读法：集体日程（早晚课、斋食）仍占一半，越轨仍是千分之几——日历上的生活不随人口变形；人口翻五倍而差事板没变，清众的作务时间从 0.94 掉到 0.13、满员改选涨到两万多次
 ——这正说明“人多了，要改的是定义里的数”。第三列只把 `job` 的 `count` 与 `facility` 的 `stations` 乘 5（只改 defs 里的数、不碰代码；
-`tests.test_npc_defs.Generalization.test_editing_only_numbers_in_defs_makes_a_better_300_monk_temple` 复现这一列），满员改选降到 547 次、作务回升到 0.54。
+`tests.test_npc_defs.Generalization.test_editing_only_numbers_in_defs_makes_a_better_300_monk_temple` 用 10 日复现这一列的趋势：差事全部完成、满员改选少一个数量级以上、作务时间占比回升），满员改选降到 547 次、作务回升到 0.54。
 这几列的数字是本机的一次运行（种子 20261110），不是通过线；“像不像一座真的少林寺”要等集成步骤按原著与内核的数据校准。
 
 **真要做一套 300 僧少林寺的 defs，按下面的清单改**（别的场所——丐帮分舵、世家庄园——同理；引擎与处理器不动，只有 defs 与必要的新处理器）：
@@ -1198,7 +1245,7 @@ def copy_sutra(st, pkg, p, day, slot, ctx):
 | 5 岗位（`post`） | `count` 编制放大；新岗位加一条 `post` 与一个第 8 层的 `package:<scope>:post_*`（`who.post`、`when.slot`、`do`）；`disc`（纪律执事）、`kitchen`（厨房职事）标志；`org:court.judges` 的岗位表。 | 名册按岗位表排：岗位者排在前，其余是清众 |
 | 6 差事（`job`） | 每件差事的 `count` 放大，必要时加新差事；`prio` 小的先被认领；`outputs` 的物要在 `org:kitchen.stock_init` 里有库存项。 | 差事完成 / 发布 = 100% |
 | 7 部门（`org`） | `org:main.dorms` 加寮房（第 i 个人住第 i % 寮数 个）、`roam` 巡寮候选；`org:kitchen` 的 `min_staff`、`prep`、`stock_init`（斋食耗什么看 `interaction:meal` 的 `inputs`）；`org:gate.count` 山门轮值人数；`proxy_cook.target`（厨房在岗人手的目标）。 | 半餐 / 斋食次数（基准是 0 / 60） |
-| 8 包与日历 | 加节日、布萨日的包（`when.day_of_month` / `festival`，比默认包优先）；加季节与天气的包；新的条件判断写成处理器（12.6）。 | `tests.test_npc_defs.CalendarKeys` 的写法 |
+| 8 历法、包与日历 | **先定历法**：写（或引用）这座寺自己的 `calendar` 定义（节日表、结夏、收成日；`year` 只能是 360），让 `rule:<scope>:schedule` 的 `calendar` 指向它——`when.festival` / `month` / `day_of_month` 都按它，别处的历不会混进来。再加节日、布萨日的包（`when.day_of_month` / `festival`，比默认包优先）；加季节与天气的包（季节月份在 `rule:schedule.seasons`）；新的条件判断写成处理器（12.6）。 | `tests.test_npc_defs.CalendarKeys` 的写法；`tests.test_npc_defs.ScopeCalendar`（换历法、节日名写错、月 / 月内日越界、全局默认被换掉也不受影响） |
 | 9 规范与知识 | `norm`、`ladder`（处分阶梯）、`thought`、`modifier`、`rule:rumor` 等按这座寺的规矩调。 | 悬空引用与“没人用的定义”都会被报出来 |
 | 10 跑起来 | `spec = SiteSpec.from_defs(defs, 'scenario:<scope>:main')`；`scn = ScenarioSpec.from_defs(...)`；`ProtoRun(spec=spec, scenario=scn).run()`（名册由 `scenarios.proto60_roster` 按岗位表与场景人口排，不含场所特例）；或自己 `NpcEngine(spec, host)` 逐个 `add_person`。 | 看 `report.scale_report` 的各层占比与时间分配 |
 
@@ -1210,7 +1257,13 @@ def copy_sutra(st, pkg, p, day, slot, ctx):
 * 已知限制（如实记）：交互的 `duration` 目前只接受 1（引擎按时辰决定；多时辰的交互留给集成步骤）；心情只启用第一道线（第 13 节之后由 C7）；
   交互只能触犯 `role = "theft"` 的规范（12.8）；`Host.weather(day)` 是可选能力，没有就永不成立；“没被引用”的检查只覆盖想法、修正项、处分阶梯、包与单例角色（场所、设施、交互、岗位、差事、事件、性格本来就是表，每条都会被取用）；
   处理器的参数校验只查类型、引用与范围，不查数值是否“合理”（与 `SiteSpec.validate()` 一样）。
+* 历法的限制（如实记）：`calendar` 定义的 `year` 只能是 360（一年 12 个月、每月 30 日，内核与引擎共用 `tianl.core.calendar.YEAR`）；`when` 里没有“朔望”“结夏安居”“收成日”这类键——
+  它们是历法的字段（`engine.cal(day)` 的 `shuowang retreat wheat millet`），要按它们排日程就在 defs 里写成 `day_of_month` / `month`，或新写一个处理器读 `engine.cal(day)`。
 * 同一套 defs 换成 300 僧只是**不报错、占比合理**，不等于校准过：校准在集成步骤，对照原著与内核数据。
+* 名册的名字：字池（`org:main.name_pool`）只有 62 个字，超过一圈后名字后面多缀字池里的字（`scenarios.given_name`；第一圈与原型的取法逐字相同），所以 300 人、数千人都不重名
+  （`tests.test_npc_defs.Generalization.test_names_stay_unique_however_large_the_population`）。集成步骤用原著人名时换掉名册来源即可，引擎只认 `ix` 与 `pid`。
+* 报表（`report.py`）的各行用词沿用原型日志的格式（“查寮空铺”“过堂人数”“迁单”……），是原型输出格式的一部分，不是引擎行为；换一座场所要换报表时在 `report.py` 里另写一份格式，
+  引擎自己的文字（`explain` 里“离寺”之类的说法、报表标题里的“60 僧”的量词）已经来自 defs（`org:main.leave_word`、`scenario:main.track_suffix`）。
 
 ## 13 钩子（给后续步骤）：之后的步骤只改自己的模块，不再改 `engine.py`
 
@@ -1226,12 +1279,16 @@ def copy_sutra(st, pkg, p, day, slot, ctx):
 
 ### 13.1 各钩子的约定
 
-* **`life.pulse(engine, day)`**：C7 只改本函数体。要不要今天做事（月初、岁首）由它自己判断，历法用 `tianl.core.cal(day)`；引擎不替它判断。
+* **`life.pulse(engine, day)`**：C7 只改本函数体。要不要今天做事（月初、岁首）由它自己判断，历法用 `engine.cal(day)`（这处场所自己的历法，`engine.spec.calendar.cal(day)`，不是全局默认；返回含 `year month dom term festival` 的字典）；引擎不替它判断。
   随机一律走 `engine.rng` 的计数器式键。若在里面收人 / 送人（`engine.add_person` / `on_person_removed`）或发事件，**会改变基线哈希**，按第 10 节“哈希基线”的规矩重立并写明原因。
   心情第二、三道线（低于 20 回避集体、低于 5 触发人生事件）也在这里接：`rule:mood` 的三条线与后果已在 defs 里，`SiteSpec.mood.enabled` 现在是 1，C7 放开 `validate` 的限制。
 * **`Controller.choose(ctx, candidates)`**（`controller.py`）：每份档案一个操纵者，只做一件事——在合法候选里选一个。协议：
   * `class Controller: def choose(self, ctx: ChoiceCtx, candidates: list) -> 决定四元组`；`ChoiceCtx(engine, person, day, slot, slot_ctx)`，想读档案、需求、见闻、眼前的人，都从 `engine` 取；
   * `candidates(engine, p, day, slot, ctx)`：此刻对 p 合法的决定列表，**第一个是程序（栈）的选择**；现在只有它，C9 在此加上该层合法的替代选择，并决定哪些层锁死（强制、处分、值守、集体：只给一个候选）；
+  * **接手前先读：`stack.decide` 有副作用**（占工位、记统计、改贪睡与代班的状态、认领差事），不是只读的“看一看”。保证与约束：同一个人同一个时辰（同一个 `SlotCtx`）`decide` 只算一次，
+    再调用原样返回第一次的结果、不再占位（`tests.test_npc_defs.Hooks.test_stack_decide_is_idempotent_per_person_and_slot`）——所以 `candidates` 与预览可以放心再取“程序的选择”；
+    但**替代候选要自己只读地列出**（例如读 `engine.fac.open_ads` / `score` 给自由时段前几名），不得换着参数多次调用 `decide`；操纵者选了程序的选择之外的候选、而程序的选择已占了工位 / 认领了差事时，
+    要先放掉那份占用（在 `controller.py` 里加放位的函数），放不了就把这一层锁死、只给一个候选；
   * `PROGRAM`（`Program`：取候选的第一个）：没有操纵者的档案就是它；
   * `engine.set_controller(who, ctl)` 挂上 / 摘下（`None` 回到栈）；**操纵者出错、超时、给了候选之外的东西，都回落到候选的第一个**，世界不等它（计划 11.1）；运行时不调用真实 LLM。
   * `engine.controllers` 为空时 `run_slot` 直接走 `stack.decide`，不经过 `controller.decide`；给每个人都配上 `PROGRAM`，哈希与不配时相同（有测试）。
