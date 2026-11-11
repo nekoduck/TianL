@@ -102,7 +102,8 @@ class ProtoRun:
         for ps in proto60_roster(self.spec, n, self.scenario):
             self.engine.add_person(ps)
         for k, tr in self.scenario.cast:
-            self.engine.set_traits(self.engine.common[k].ix, **tr)
+            if k < len(self.engine.common):                  # 人口太小、清众里没有这一位：要角略过（只有岗位者的寺也能跑）
+                self.engine.set_traits(self.engine.common[k].ix, **tr)
         self.engine.set_observer(observer)
         self.hash = None
 

@@ -18,10 +18,11 @@ from tianl.npc.host import CmdResult, Event, Host
 from tianl.npc.model import FIELD_MASK, GAP, Symbols, Trail, pack, unpack
 from tianl.npc.model import Case
 from tianl.npc.spec import A_GUARD, A_MARTIAL, A_STROLL, L_FREE, L_SLACK, AdSpec, NeedTerm, SpecError
-from tianl.npc.scenarios import PROTO_SEED, gossip_script, proto60_roster
+from tianl.npc.scenarios import PROTO_SEED, gossip_script, proto60_roster, proto60_scenario
 from tests.test_npc_support import with_when
 
 BASE_HASH = 'e8f8209eeb8ca94a'
+GOSSIP_SLOT = proto60_scenario().gossip.slot            # 传闻脚本发生的时辰：场景（defs）给，引擎里没有缺省
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
 
 
@@ -376,8 +377,8 @@ class IxAndPid(unittest.TestCase):
 
     def test_script_accepts_pid_or_ix(self):
         g = ProtoRun().common
-        a = ProtoRun(script=Script(gossip=(6, g[8].ix, g[9].ix))).run().hash
-        b = ProtoRun(script={'gossip': (6, g[8].pid, g[9].pid)}).run().hash
+        a = ProtoRun(script=Script(gossip=(6, g[8].ix, g[9].ix), gossip_slot=GOSSIP_SLOT)).run().hash
+        b = ProtoRun(script={'gossip': (6, g[8].pid, g[9].pid), 'gossip_slot': GOSSIP_SLOT}).run().hash
         self.assertEqual(a, b)
         self.assertEqual(a, BASE_HASH)
 
@@ -387,7 +388,7 @@ class IxAndPid(unittest.TestCase):
         self.assertTrue(all(p.id == p.ix for p in g))
         with self.assertRaises(AttributeError):
             g[0].id = 5
-        a = ProtoRun(script={'gossip': (6, g[8].id, g[9].id)}).run().hash         # 任务书里的写法，逐字
+        a = ProtoRun(script={'gossip': (6, g[8].id, g[9].id), 'gossip_slot': GOSSIP_SLOT}).run().hash     # 任务书里的写法（加上场景给的时辰）
         self.assertEqual(a, BASE_HASH)
 
     def test_explicit_traits_override_generation(self):

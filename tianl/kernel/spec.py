@@ -41,6 +41,8 @@ REQUIRED_CALENDAR = ('festivals retreat wheat_doy millet_doy crops winter_months
 # 钱账事由（defs 的 labels.reasons）：内核记账时按这些键取字；goods / hh_goods 是前缀
 REQUIRED_REASONS = ('opening goods hh_goods hh_misc hh_buy hh_sell sell_surplus incense donor rite alms merit repair_wage '
                     'wood_income immigrant shop_year_end export').split()
+# 日报、报表与路况里推不出来的专有词（defs 的 labels 顶层键）：内核按这些键取字
+REQUIRED_LABELS = 'grain_market shop temple_store dorm snow_closure grain_ledger reasons'.split()
 
 
 class Good:
@@ -239,6 +241,9 @@ class Spec:
         missing = [f'{ns}.{r}' for ns, roles in REQUIRED_ROLES.items() for r in roles if not hasattr(getattr(self, ns), r)]
         if missing:
             raise DefsError([f'scope {self.scope!r} 缺少内核要用的角色：' + '、'.join(missing)])
+        miss = [k for k in REQUIRED_LABELS if k not in self.labels]
+        if miss:
+            raise DefsError([f'scope {self.scope!r} 的 labels 缺少：' + '、'.join(miss)])
         miss = [k for k in REQUIRED_REASONS if k not in self.labels.get('reasons', {})]
         if miss:
             raise DefsError([f'scope {self.scope!r} 的 labels.reasons 缺少钱账事由：' + '、'.join(miss)])

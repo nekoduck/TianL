@@ -16,6 +16,8 @@ TIMING_PATTERNS = (re.compile(r'每次 [0-9.]+ 微秒  总耗时 [0-9.]+ 秒'), 
 PERCENT = 100                                  # 单位换算：百分数
 FIRST_SLOT = 0                                  # 一日的第一个时辰（子）：轨迹按“当日第一个决定的次序”排
 MICROS = 1e6                                    # 单位换算：微秒
+SCALE_POPULATION, SCALE_DAYS = 300, 30          # 泛化检查（python3 -m tianl.npc.report）缺省的人口与日数
+ARGS_FROM = 1                                   # sys.argv 里程序名之后才是命令行参数
 
 
 def strip_timing(line):
@@ -124,7 +126,7 @@ def scale_report(n, days, seed=None, rng=rnd_b2):
 def main(argv):
     """python3 -m tianl.npc.report [--scale N] [--days D]：泛化检查（缺省 300 人 30 日）。"""
     import sys
-    n, days = 300, 30
+    n, days = SCALE_POPULATION, SCALE_DAYS
     for flag, name in (('--scale', 'n'), ('--days', 'days')):
         if flag in argv:
             v = int(argv[argv.index(flag) + 1])
@@ -209,4 +211,4 @@ def proto_report(include_all=False, seed=None, rng=rnd_b2):
 
 if __name__ == '__main__':
     import sys
-    main(sys.argv[1:])
+    main(sys.argv[ARGS_FROM:])

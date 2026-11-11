@@ -4,10 +4,10 @@
 时辰内再分 8 刻——刻只用于观察者所在场所的细节叙述，从不参与决定。
 绝对时刻 t = day * 12 + slot。第 0 年为“预热年”。
 
-本模块的默认历法（DEFAULT_FESTIVALS 与 Calendar() 的缺省参数）是 v0.2 原型的历法，保留给两处用途：
-M0 的核心测试，以及 NPC 引擎的模块级 cal()（引擎尚未改成从 defs 取历法）。
-B1 内核不读它：内核的历法由 defs/calendar/<scope>.toml 经 Calendar.from_def 构造（tianl.kernel.spec.Spec.cal），
-节日、结夏、收麦收粟日都在 defs 里；tests/test_b1_defs.py 逐日核对两者相同。set_default_calendar 目前没有调用者。
+本模块不带任何一座寺院的历法：节日、结夏、收麦收粟日都在 defs/calendar/<scope>.toml 里，经 Calendar.from_def 构造
+（B1 内核的做法见 tianl.kernel.spec.Spec.cal）。Calendar 的这四个字段没有缺省值，漏写就报错，不会悄悄用上别处的历法。
+模块级 cal() / cal_str()（NPC 引擎的原型场景还在用）读“默认历法”：第一次用到时从 defs 里读 DEFAULT_CALENDAR 指的那份，
+也可以用 set_default_calendar 换掉。tests/test_b1_defs.py 把这份历法与 reference/shaolin_spike.py 的 cal() 逐日核对。
 """
 SLOTS = '子丑寅卯辰巳午未申酉戌亥'
 SLOTS_PER_DAY = 12
@@ -18,8 +18,8 @@ TERMS = ('立春 雨水 惊蛰 春分 清明 谷雨 立夏 小满 芒种 夏至 
 MONTHS = '正二三四五六七八九十冬腊'
 NUM = '一二三四五六七八九十'
 
-DEFAULT_FESTIVALS = {(1, 1): '元日', (1, 15): '上元', (2, 15): '涅槃日', (4, 8): '佛诞', (4, 15): '结夏',
-                     (7, 15): '盂兰盆', (12, 8): '腊八'}
+DEFAULT_CALENDAR = 'calendar:shaolin:main'     # 默认历法的定义编号（文件 defs/calendar/<scope>.toml，scope 取编号的中段）
+REQUIRED_FIELDS = ('festivals', 'retreat', 'wheat_doy', 'millet_doy')
 
 
 def t_of(day, slot):
@@ -39,17 +39,21 @@ def dom_name(d):
 
 
 class Calendar:
-    def __init__(self, festivals=None, retreat=((4, 15), (7, 15)), wheat_doy=125, millet_doy=245, year=YEAR):
-        self.festivals = dict(DEFAULT_FESTIVALS if festivals is None else festivals)
+    def __init__(self, festivals, retreat, wheat_doy, millet_doy, year=YEAR):
+        """festivals：{(月, 日): 节名}；retreat：((月, 日), (月, 日))，含两端；wheat_doy / millet_doy：收麦、收粟的年内日序（0 起）。"""
+        self.festivals = dict(festivals)
         self.retreat = tuple(retreat)
         self.wheat_doy, self.millet_doy, self.year = wheat_doy, millet_doy, year
 
     @classmethod
     def from_def(cls, d):
-        """从 defs 里的 calendar 定义构造。festivals 形如 {"4-8": "佛诞"}。"""
-        fest = {tuple(int(x) for x in k.split('-')): v for k, v in d.get('festivals', {}).items()}
-        r = d.get('retreat', [[4, 15], [7, 15]])
-        return cls(fest, (tuple(r[0]), tuple(r[1])), d.get('wheat_doy', 125), d.get('millet_doy', 245), d.get('year', YEAR))
+        """从 defs 里的 calendar 定义构造。festivals 形如 {"4-8": "佛诞"}；festivals / retreat / wheat_doy / millet_doy 必填，缺了报 ValueError。"""
+        miss = [k for k in REQUIRED_FIELDS if k not in d]
+        if miss:
+            raise ValueError(f"历法定义 {d.get('id', '?')} 缺少字段：" + '、'.join(miss))
+        fest = {tuple(int(x) for x in k.split('-')): v for k, v in d['festivals'].items()}
+        r = d['retreat']
+        return cls(fest, (tuple(r[0]), tuple(r[1])), d['wheat_doy'], d['millet_doy'], d.get('year', YEAR))
 
     def cal(self, day):
         y, doy = divmod(day, self.year)
@@ -65,7 +69,20 @@ class Calendar:
         return f"{y}{MONTHS[c['month'] - 1]}月{dom_name(c['dom'])}"
 
 
-_default = Calendar()
+_default = None
+
+
+def default_calendar():
+    """默认历法：第一次用到时从 defs 读 DEFAULT_CALENDAR 指的那份（只读那一个文件，不经过完整加载器）。"""
+    global _default
+    if _default is None:
+        import tomllib
+        from pathlib import Path
+        scope = DEFAULT_CALENDAR.split(':')[1]
+        f = Path(__file__).resolve().parents[2] / 'defs' / 'calendar' / f'{scope}.toml'
+        with open(f, 'rb') as fh:
+            _default = Calendar.from_def(tomllib.load(fh)[DEFAULT_CALENDAR])
+    return _default
 
 
 def set_default_calendar(c):
@@ -74,8 +91,8 @@ def set_default_calendar(c):
 
 
 def cal(day):
-    return _default.cal(day)
+    return default_calendar().cal(day)
 
 
 def cal_str(day):
-    return _default.cal_str(day)
+    return default_calendar().cal_str(day)

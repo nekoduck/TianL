@@ -52,12 +52,14 @@ class Ctx:
         self.used.add(d['id'])
         return d
 
-    def scoped(self, kind):
-        """本 scope 下某 kind 的全部（非抽象）定义，按 (order, 编号) 排序；全部标记为已用。"""
+    def scoped(self, kind, mark=True):
+        """本 scope 下某 kind 的全部（非抽象）定义，按 (order, 编号) 排序；mark = True 时全部标记为已用。
+        想法、修正项这类“该有人引用”的定义用 mark = False 读：没被任何地方引用的由末尾的检查报出（多半是漏了引用）。"""
         rows = [d for d in self.defs.by_kind(kind) if d['id'].split(':')[1] == self.scope]
         rows.sort(key=lambda d: (d.get('order', 0), d['id']))
-        for d in rows:
-            self.use(d)
+        if mark:
+            for d in rows:
+                self.use(d)
         return rows
 
     def role(self, kind, role, required=True):
@@ -134,7 +136,7 @@ class Reader:
         if key in self.d:
             return self.d[key], True
         if required:
-            self.ctx.err(self.id, '缺少字段 %s%s（%s）' % (self.path, key, doc))
+            self.ctx.err(self.id, '缺少字段 %s%s：%s' % (self.path, key, doc))
             return None, False
         return default, False
 
@@ -269,6 +271,17 @@ def _ok(*xs):
     return xs
 
 
+def _each(rows, fn):
+    """对每条定义各跑一遍 fn，某条读不全（_Cascade）只丢掉那一条、继续读下一条：这样一次能报出所有定义的问题，不止第一条。"""
+    out = []
+    for d in rows:
+        try:
+            out.append(fn(d))
+        except _Cascade:
+            continue
+    return out
+
+
 # ================================================================= 装配
 class Builder:
     def __init__(self, ctx):
@@ -303,17 +316,17 @@ class Builder:
         return out
 
     def build_offices(self):
-        out = []
-        for d in self.ctx.scoped('post'):
-            r = Reader(self.ctx, d)
-            name = r.str('name', '岗位名')
-            count = r.int('count', '编制')
-            prefix = r.str('prefix', '法名前缀（建人用）')
-            disc = r.bool('disc', '纪律执事：当面禀告的对象、见证必报', default=False)
-            kitchen = r.bool('kitchen', '厨房职事', default=False)
-            r.finish()
-            out.append(OfficeSpec(*_ok(name, count, prefix, disc, kitchen)))
-        return tuple(out)
+        return tuple(_each(self.ctx.scoped('post'), self._office))
+
+    def _office(self, d):
+        r = Reader(self.ctx, d)
+        name = r.str('name', '岗位名')
+        count = r.int('count', '编制')
+        prefix = r.str('prefix', '法名前缀（建人用）')
+        disc = r.bool('disc', '纪律执事：当面禀告的对象、见证必报', default=False)
+        kitchen = r.bool('kitchen', '厨房职事', default=False)
+        r.finish()
+        return OfficeSpec(*_ok(name, count, prefix, disc, kitchen))
 
     def build_traits(self):
         out = {}
@@ -337,39 +350,44 @@ class Builder:
                          lo=pick('lo'), hi=pick('hi'))
 
     def build_jobs(self):
-        out = []
-        for d in self.ctx.scoped('job'):
-            r = Reader(self.ctx, d)
-            prio = r.int('prio', '优先级：数字小的先被认领')
-            name = r.str('name', '差事名')
-            place = r.ref('place', 'place', '干活的场所')
-            count = r.int('count', '当日需要几人')
-            outputs = r.numdict('outputs', '产出物：物 -> 每名完成者入账的量', default={})
-            r.finish()
-            _ok(prio, name, place, count, outputs)
-            out.append(JobSpec(prio, name, place['code'], count, outputs))
-        return tuple(out)
+        return tuple(_each(self.ctx.scoped('job'), self._job))
+
+    def _job(self, d):
+        r = Reader(self.ctx, d)
+        prio = r.int('prio', '优先级：数字小的先被认领')
+        name = r.str('name', '差事名')
+        place = r.ref('place', 'place', '干活的场所')
+        count = r.int('count', '当日需要几人')
+        outputs = r.numdict('outputs', '产出物：物 -> 每名完成者入账的量', default={})
+        r.finish()
+        _ok(prio, name, place, count, outputs)
+        return JobSpec(prio, name, place['code'], count, outputs)
 
     # ---------------------------------------------------------------- 想法、修正项、事件
     def build_thoughts(self):
         out = {}
-        for d in self.ctx.scoped('thought'):
+        for d in self.ctx.scoped('thought', mark=False):        # 想法该有人引用：没被引用的由末尾的检查报出
+            out[d['id'].rpartition(':')[2]] = None              # 先占位：这条读不全时，引用它的地方不再重复报“不在想法表里”
             r = Reader(self.ctx, d)
-            out[d['id'].rpartition(':')[2]] = ThoughtSpec(*_ok(
-                r.str('label', '标签：同标签共用叠加上限'), r.num('value', '每条的心情增减'), r.int('days', '持续几日'),
-                r.int('cap', '同标签最多同时几条')))
+            vals = (r.str('label', '标签：同标签共用叠加上限'), r.num('value', '每条的心情增减'), r.int('days', '持续几日'),
+                    r.int('cap', '同标签最多同时几条'))
             r.finish()
+            if None not in vals:
+                out[d['id'].rpartition(':')[2]] = ThoughtSpec(*vals)
         self.thoughts = out
         return out
 
     def build_mods(self):
         out = {}
-        for d in self.ctx.scoped('modifier'):
+        for d in self.ctx.scoped('modifier', mark=False):       # 修正项同理
+            out[d['id'].rpartition(':')[2]] = None
             r = Reader(self.ctx, d)
-            out[d['id'].rpartition(':')[2]] = ModSpec(*_ok(
-                r.str('label', '种类：同种类共用叠加上限（不叫 kind：kind 是加载器保留字）'), r.num('value', '每条的好恶增减'),
-                r.int('days', '持续几日'), r.int('cap', '同种类最多几条（满了只续期最老的一条）'), r.str('cause', '起因（“情”命令向玩家说明）')))
+            vals = (r.str('label', '种类：同种类共用叠加上限（不叫 kind：kind 是加载器保留字）'), r.num('value', '每条的好恶增减'),
+                    r.int('days', '持续几日'), r.int('cap', '同种类最多几条（满了只续期最老的一条）'),
+                    r.str('cause', '起因（“情”命令向玩家说明）'))
             r.finish()
+            if None not in vals:
+                out[d['id'].rpartition(':')[2]] = ModSpec(*vals)
         self.mods = out
         return out
 
@@ -450,7 +468,9 @@ class Builder:
                 adm.finish()
             if adm is not None and ad is None:
                 ctx.err(d['id'], 'admission 只对自由时段的广告起作用：没有 ad 的交互不该写 admission')
-            _ok(act, duration, effects, inputs, outputs, category)
+            if None in (act, duration, effects, inputs, outputs, category):      # 这条读不全：丢掉它，继续读下一条（一次报全）
+                r.finish()
+                continue
             viol_t = None
             if norm is not None:
                 if _role_of(norm) != 'theft':
@@ -550,11 +570,7 @@ class Builder:
         for d in ctx.defs.by_kind('package'):
             if d['id'].split(':')[1] == ctx.scope and d['id'] not in in_stack:
                 ctx.err(d['id'], '这个包没有列进 %s 的 packages（不在栈里就永远不会生效；写错了？）' % stack_def['id'])
-        out = []
-        for d in pdefs:
-            if d is not None:
-                out.append(self.package(d))
-        return tuple(out)
+        return tuple(_each((d for d in pdefs if d is not None), self.package))
 
     def package(self, d):
         ctx = self.ctx
@@ -957,9 +973,10 @@ def _scope_of(scenario_id):
 
 
 # ================================================================= 场景（种子、人口、要角、脚本与实验）
-def build_scenario(defs, scenario_id):
+def build_scenario(defs, scenario_id, ctx=None):
+    """ctx 只给 field_docs 用（让场景的字段也登记进同一张字段表）；平常不传。"""
     scope = _scope_of(scenario_id)
-    ctx = Ctx(defs, scope)
+    ctx = ctx or Ctx(defs, scope)
     if scenario_id not in defs:
         raise SpecError(['场景 %s 不存在' % scenario_id])
     d = defs.get(scenario_id)
@@ -1028,21 +1045,23 @@ def field_docs(defs, scenario_id):
     ctx.guard(b.build_board, jobs)
     inter = ctx.guard(b.build_interactions)
     ctx.guard(b.build_free, inter[0])
-    ctx.guard(build_scenario, defs, scenario_id)
+    ctx.guard(build_scenario, defs, scenario_id, ctx)
     rows = [(k, p, *v) for (k, p), v in ctx.docs.items()]
     return sorted(rows)
 
 
-def docs_markdown(defs, scenario_id):
+def docs_markdown(defs, scenario_id, only=None):
     """字段表的 markdown：每个类别一张表（字段路径、类型、必填或默认值、说明），处理器与准入门的参数另有各自的表。
+    only 给定时只输出这些类别（按给定的次序；形如 'interaction'、'norm:theft'、'handler:tempted'）。
     docs/NPC_ENGINE.md 第 12 节的表由它生成（python3 -m tianl.npc.defsload），测试核对文档里没有漏字段。"""
     rows = field_docs(defs, scenario_id)
     by = {}
     for kind, path, typ, req, default, text in rows:
         by.setdefault(kind, []).append((path, typ, req, default, text))
+    kinds = sorted(by, key=lambda k: (k.startswith(('handler:', 'gate:')), k)) if only is None else list(only)
+    title = {'handler': '处理器 `%s` 的参数（package 的 params）', 'gate': '准入门 `%s` 的参数（interaction 的 admission）'}
     out = []
-    for kind in sorted(by, key=lambda k: (k.startswith(('handler:', 'gate:')), k)):
-        title = {'handler': '处理器 `%s` 的参数（package 的 params）', 'gate': '准入门 `%s` 的参数（interaction 的 admission）'}
+    for kind in kinds:
         head, _, name = kind.partition(':')
         out.append('**%s**' % (title[head] % name if head in title else '`%s`' % kind))
         out.append('')
@@ -1058,4 +1077,4 @@ def docs_markdown(defs, scenario_id):
 if __name__ == '__main__':
     import sys
     from .scenarios import PROTO60_ID, load_defs
-    sys.stdout.write(docs_markdown(load_defs(), sys.argv[1] if len(sys.argv) > 1 else PROTO60_ID) + '\n')
+    sys.stdout.write(docs_markdown(load_defs(), PROTO60_ID if len(sys.argv) == 1 else sys.argv[1]) + '\n')

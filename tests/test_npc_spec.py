@@ -15,6 +15,8 @@ from tianl.npc.scenarios import PROTO_SEED, proto60_scenario
 from tests.test_npc_support import (class_acts, group_acts, handler_packages, office_posts, package, with_effects,
                                     with_interaction, with_params)
 
+GOSSIP_SLOT = proto60_scenario().gossip.slot            # 传闻脚本发生的时辰：场景（defs）给，引擎里没有缺省
+
 REF_PATH = Path(__file__).resolve().parent.parent / 'reference' / 'npc_spike.py'
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
 
@@ -198,7 +200,7 @@ class StepwiseDifferential(unittest.TestCase):
         probe = ProtoRun().engine
         kit = probe.by['典座'] + probe.by['饭头'][:3]
         scenarios = {
-            '传闻脚本（监院派人代理）': dict(script={'gossip': (6, probe.common[8].ix, probe.common[9].ix)}),
+            '传闻脚本（监院派人代理）': dict(script={'gossip': (6, probe.common[8].ix, probe.common[9].ix), 'gossip_slot': GOSSIP_SLOT}),
             'N1 无人代理': dict(script={'ill': (10, kit, 4)}, acting=False),
             '种子 4 的 90 日': dict(seed=4, days=90),
             '观察者在廊下 12 日': dict(days=12, observer='clo'),
@@ -325,7 +327,7 @@ class StepwiseDifferential(unittest.TestCase):
 
     def test_with_scripts(self):
         g = ProtoRun().common
-        self.check(PROTO_SEED, 60, 30, script={'gossip': (6, g[8].ix, g[9].ix)}, record=True)      # 与抽签键多重集共用
+        self.check(PROTO_SEED, 60, 30, script={'gossip': (6, g[8].ix, g[9].ix), 'gossip_slot': GOSSIP_SLOT}, record=True)      # 与抽签键多重集共用
         kit = ProtoRun().engine.by['典座'] + ProtoRun().engine.by['饭头'][:3]
         self.check(PROTO_SEED, 60, 30, script={'ill': (10, kit, 4)}, acting=False, record=True)
         self.check(PROTO_SEED, 60, 30, script={'ill': (10, kit, 4)}, acting=True)

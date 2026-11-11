@@ -269,7 +269,7 @@ data/canon/
 | `rule` | 规矩 | string（≤ 60 字的转述） | 是 | 规范 | |
 | `punish` | 处罚 | string（≤ 60 字的转述） | 是 | 规范 | 按轻重一条一个 |
 | `seat` | 据点 | entity(place) | 是 | 组织 | 限定词 `from` `to` |
-| `org_rel` | 与别派的关系 | entity(org) | 是 | 组织 | 限定词 `rel`：`ally` `hostile` `rival` `subordinate` `kin` `neutral` |
+| `org_rel` | 与别派的关系 | entity(org) | 是 | 组织 | 限定词 `rel`：`ally` `hostile` `rival` `subordinate` `kin` `neutral`。**`subordinate` 的方向：主体隶属于值（主体是下属，值是上级）**；其余关系对称，写一边即可 |
 
 ### 5.4 物与文书（主体 `item` 或 `document`）
 

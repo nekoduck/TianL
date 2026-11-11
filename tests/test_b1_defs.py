@@ -76,12 +76,27 @@ class DefsMatchPrototype(unittest.TestCase):
                                           (7, 15): '盂兰盆', (12, 8): '腊八'})
         self.assertEqual((v['retreat'], v['wheat_doy'], v['millet_doy']), (((4, 15), (7, 15)), 125, 245))
 
-    def test_calendar_from_defs_equals_default(self):
+    def test_calendar_from_defs_equals_prototype(self):
+        """defs 里的历法与原型自己的 cal() / cal_str() 逐日相同（二十年）；core 的模块级默认历法也是从 defs 读的，同样与原型相同。"""
+        from tianl.core import calendar as core_calendar
         c = load_spec().cal
-        d = Calendar()
-        for day in range(0, 3 * 360):
-            self.assertEqual(c.cal(day), d.cal(day))
-            self.assertEqual(c.cal_str(day), d.cal_str(day))
+        for day in range(0, 20 * 360):
+            self.assertEqual(c.cal(day), REF.cal(day), day)
+            self.assertEqual(c.cal_str(day), REF.cal_str(day), day)
+            self.assertEqual(core_calendar.cal(day), REF.cal(day), day)
+            self.assertEqual(core_calendar.cal_str(day), REF.cal_str(day), day)
+
+    def test_core_calendar_has_no_built_in_festivals(self):
+        """core 里没有任何一座寺院的节日与收成日：Calendar 的四个字段没有缺省值，从 defs 构造时漏写也报错。"""
+        from tianl.core import calendar as core_calendar
+        self.assertFalse(hasattr(core_calendar, 'DEFAULT_FESTIVALS'))
+        with self.assertRaises(TypeError):
+            Calendar()
+        with self.assertRaises(ValueError) as cm:
+            Calendar.from_def({'festivals': {}, 'retreat': [[1, 1], [1, 2]], 'wheat_doy': 1})
+        self.assertIn('millet_doy', str(cm.exception))
+        d = {'festivals': {'2-3': '甲'}, 'retreat': [[1, 1], [1, 2]], 'wheat_doy': 1, 'millet_doy': 2}
+        self.assertEqual(Calendar.from_def(d).cal(32)['festival'], '甲')              # 二月初三 = 年内第 32 日（0 起）：它读的是我给的字段
 
     def test_accounts_and_opening_follow_prototype(self):
         S = load_spec()
@@ -359,7 +374,7 @@ def hybrid(spec, classes):
         elif c == 'RESERVED': s.org.reserved = list(REF.RESERVED)
         elif c == 'POOL': s.org.pool = REF.POOL
         elif c == 'TIERS': s.K['tiers'], s.K['tier_mult'] = list(REF.TIERS), [REF.MULT[t] for t in REF.TIERS]
-        elif c == 'calendar': s.cal = Calendar()           # core 的默认历法就是 v0.2 原样
+        elif c == 'calendar': s.cal = NS(cal=REF.cal, cal_str=REF.cal_str, festivals={})   # 原型自己的 cal()
         else: raise KeyError(c)
     return s
 

@@ -158,7 +158,7 @@ def people_tests(w):
                 continue
             use[r[1]] = use.get(r[1], 0) + 1; snap[(pid, s)] = r
     tot = sum(use.values())
-    print(f'{w.S.cal.festivals[(4, 8)]}日全寺时间分配: ' + ' '.join(f'{k}{v / tot:.0%}' for k, v in sorted(use.items(), key=lambda kv: -kv[1])))
+    print(f"{w.cal(d0)['festival']}日全寺时间分配: " + ' '.join(f'{k}{v / tot:.0%}' for k, v in sorted(use.items(), key=lambda kv: -kv[1])))
     print(f'在世而查不到位置的人次: {missing}')
     dup = w.x('SELECT COUNT(*) FROM (SELECT day,slot,person FROM roster GROUP BY 1,2,3 HAVING COUNT(*)>1)').fetchone()[0]
     print(f'同一时辰被排两处值守的人次: {dup}')
@@ -178,7 +178,7 @@ def people_tests(w):
     # 三种取物: 物理拒绝 / 违规无人见 -> 月朔点检发现 / 违规被见 -> 当场举报
     v = sc['visitor']
     w.x('BEGIN')
-    thief = w._mk(S.org.visitor_gen, v['name'], v['age'], v['hall'], joined=w.day); w.x("UPDATE person SET kind='临时', org=? WHERE id=?", (v['org'], thief))
+    thief = w._mk(S.org.visitor_gen, v['name'], v['age'], v['hall'], joined=w.day); w.x('UPDATE person SET kind=?, org=? WHERE id=?', (v['kind'], v['org'], thief))
     w.x('COMMIT'); w.run(2); w.x('BEGIN')
     d = w.day
     lp = sc['lock_probe']

@@ -31,7 +31,6 @@ GAP = (1 << (4 * FIELD_BITS)) - 1   # 轨迹里“这一时辰没有记录”的
 # 一个“决定”是四元组 (场所, 活动, 层, 原因)；巡寮者的决定后面多带一项“所巡之处”（stack.duty）
 BASE_DECISION = 4
 PAIR = 2                            # 两两配对（闲谈、工友短谈）：一组两个人
-GOSSIP_SLOT = 1                     # 脚本 gossip 默认发生的时辰（丑；原型口径）。要换时辰在 Script(gossip_slot=…) 里给
 
 
 class Profile:
@@ -180,14 +179,18 @@ class SlotCtx:
 
 @dataclass
 class Script:
-    """场景脚本（scenario 的一部分）：
-    gossip = (日, 当事人, 唯一的见证人)：该日 gossip_slot 时辰发一条只有一人撞见、且不举报的偷食，用来追踪传闻；
+    """场景脚本（scenario 的一部分；时辰与说明文字都由场景 defs 给，代码里没有缺省）：
+    gossip = (日, 当事人, 唯一的见证人)：该日 gossip_slot 时辰发一条只有一人撞见、且不举报的偷食（原因记 gossip_why），用来追踪传闻；
     ill    = (日, [病倒者], 病几日)：该日起集体病倒。
-    人用 ix 或 pid 都行。"""
+    人用 ix 或 pid 都行。写了 gossip 就必须写 gossip_slot（见 scenarios.gossip_script）。"""
     gossip: Optional[tuple] = None
-    gossip_slot: int = GOSSIP_SLOT
-    gossip_why: str = '脚本：只有一人撞见且不举报'
+    gossip_slot: Optional[int] = None
+    gossip_why: str = ''
     ill: Optional[tuple] = None
+
+    def __post_init__(self):
+        if self.gossip is not None and self.gossip_slot is None:
+            raise ValueError('传闻脚本要写 gossip_slot（发生在哪个时辰；场景的 gossip.slot 给）')
 
     @classmethod
     def coerce(cls, x):

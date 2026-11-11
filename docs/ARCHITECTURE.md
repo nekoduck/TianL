@@ -144,7 +144,8 @@ class Engine(Protocol):
 模块划分（计划第 5–11 节；文件名可微调，职责不可缺）：
 
 ```
-spec.py        SiteSpec / PostSpec / PackageSpec …：由 defs 构造（from_defs），引擎只认这些对象
+spec.py        SiteSpec / OfficeSpec / PackageSpec …（不可变数据类）：引擎只认这些对象；SiteSpec.from_defs(defs, 'scenario:<scope>:main') 由 defs 构造
+defsload.py    from_defs 的实现：读字段时校验、一次报全；字段表生成（docs/NPC_ENGINE.md 第 12 节）                （第二步新增）
 model.py       Profile（身份/归属/性格/需求/想法/见闻…）与引擎状态容器
 stack.py       十层行为包栈（强制 处分 反应 情节与指派 值守 生理 集体 岗位 身份 自由 + 越轨）
 needs.py       五项需求、一日收支、惰性求值
@@ -156,23 +157,23 @@ rumor.py       闲谈配对、转述、衰减
 norms.py       越轨、举报、送达、立案、传讯、裁断、处分阶梯、公告、余波
 opinion.py     CK3 式带期限修正项；好友/不睦
 mood.py        想法、心情、三道线
-life.py        月/年脉冲与事件池、人口调节器                      （C7）
-lod.py         眼前/个体/批三档、观察者、刻级叙述                  （C8）
-controller.py  Controller 协议；Program / Player / LLMStub          （C9）
+life.py        月/年脉冲与事件池、人口调节器；钩子 life.pulse(engine, day)                      （C7）
+lod.py         眼前/个体/批三档、观察者、刻级叙述；钩子 lod.observe(engine, ctx, day, slot)       （C8）
+controller.py  Controller 协议；Program / Player / LLMStub；钩子 controller.decide(engine, p, day, slot, ctx)   （C9）
 engine.py      NpcEngine：把以上串成一个时辰的 tick
-persist.py     每日落盘到 npc_* 表；可从表恢复
+persist.py     每日落盘到 npc_* 表；可从表恢复；钩子 persist.flush(engine, day)
 scenarios.py   原型场景（60 僧 30 日）与实验 N1
 events.py      NPC 事件类型代码与中文渲染                       （第一步新增）
 host.py        Host 接口、Event、StandaloneHost；之后集成代理写 KernelHost（第一步新增）
-handlers.py    handler 登记表（本步只有准入门）                  （第一步新增）
+handlers.py    行为包处理器与准入门的登记表（每个带参数表：类型、默认值、取值范围）（第一步新增，第二步补全）
 report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共用）（第一步新增）
 ```
 
 引擎与外界只通过 **Host** 交互（细节与各模块说明见 `docs/NPC_ENGINE.md`）：
 `host.ev(kind, actor, place, witnesses, day, slot, cause=None, **data) -> 含 id 的 Event`（actor 与 witnesses 在边界上是外部 id）、
 `host.seed`、`host.rng`、`host.cmd(name, pid, **args) -> CmdResult`（内核命令口，本步是 stub）。
-规格对象 `SiteSpec` 是不可变数据类，`SiteSpec.validate()` 做引用完整性自检；本步由 `scenarios.proto60_spec()` 构造，
-`from_defs()` 留给之后的 defs 驱动步骤。人的内部下标 `ix`（int，稳定，新人追加）与外部编号 `pid`（str）分开，随机数键里用 `ix`。
+规格对象 `SiteSpec` 是不可变数据类，`SiteSpec.validate()` 做引用完整性自检；由 `SiteSpec.from_defs(defs, 'scenario:<scope>:main')` 从 defs 构造
+（第二步；`scenarios.proto60_spec()` 是原型场景加载一次后的缓存），缺字段、引用不存在的包、处理器未登记或参数不合法都抛带逐条说明的 `SpecError`。人的内部下标 `ix`（int，稳定，新人追加）与外部编号 `pid`（str）分开，随机数键里用 `ix`。
 
 **行为包是数据**（计划 6.2）：第 7、8、9 层的包由 `package:*` 定义声明（`layer / who / when / do`，`when` 可写日历键），
 需要条件判断的包（偷食起念、贪睡、值守轮换……）用 `handler = "<名>"` + `params` 引用 `tianl/npc` 里登记的处理器。
@@ -181,13 +182,18 @@ report.py      汇总与原型输出格式（tools/npc_regress.py 与测试共�
 
 ### 6.1 时辰 tick 的固定次序（沿用原型 step_slot；变更须改本节）
 
-1. 各人决定（起点按 `(day*7+slot*3)%n` 轮转，保证工位预约公平且确定）。
+0. `begin_day` 的第一步：**钩子 `life.pulse(engine, day)`**（月 / 年脉冲，默认空操作）。
+1. 各人决定（起点按 `(day*7+slot*3)%n` 轮转，保证工位预约公平且确定；系数是 `rule:schedule` 的 `rotate`）；每人每个时辰的入口是
+   **钩子 `controller.decide(engine, p, day, slot, ctx)`**（有操纵者才经过：`Controller.choose(ctx, candidates)`；默认走程序的栈）。
 2. 闲谈配对（按好恶挑人，落单改散步）；转述传闻。
 3. 差事结算（工作板产出）；斋食（厨房人手 → 足量/半餐）。
 4. 需求结算；想法；落轨迹。
-5. 观察者所在场所的细节叙述——**只读**，不得改任何状态。
+5. 观察者所在场所的细节叙述——**只读**，不得改任何状态（**钩子 `lod.observe(engine, ctx, day, slot)`**）。
 6. 偷食 → 见证 → 是否举报；巡夜查寮记空铺；脚本事件。
 7. 典座清点（寅）；维那点名（卯、酉）；怠工被巡寮撞见；举报送达；裁断；午斋后公告。
+8. `end_day` 的最后一步：**钩子 `persist.flush(engine, day)`**（每日落盘，只读，默认空操作）。
+
+四个钩子的签名、调用点与约定见 `docs/NPC_ENGINE.md` 第 13 节；之后的步骤（C7 / C8 / C9 / 集成）只改各自的模块，不再改 `engine.py`。
 
 ### 6.2 NPC 事件类型（大写英文代码；负责人在 NPC_ENGINE.md 登记完整清单并给出中文渲染）
 

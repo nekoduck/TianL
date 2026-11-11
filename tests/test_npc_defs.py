@@ -26,12 +26,12 @@ from tianl.npc import NpcEngine, ProtoRun, StandaloneHost, controller, life, lod
 from tianl.npc.defsload import ROLES, field_docs
 from tianl.npc.handlers import GATE_PARAMS, GATES, PACKAGE_HANDLERS, Param, ParamCtx, check_params, package_handler
 from tianl.npc.report import scale_report
-from tianl.npc.scenarios import DEFS_ROOT, PROTO60_ID, load_defs, proto60_roster, proto60_scenario
+from tianl.npc.scenarios import DEFS_ROOT, PROTO60_ID, gossip_script, load_defs, proto60_roster, proto60_scenario
 from tianl.npc.spec import (L_DEVIANT, L_DUTY, L_GROUP, DoSpec, PackageSpec, ScenarioSpec, SiteSpec, SpecError, WhenSpec,
                             WhoSpec)
 from tests.test_npc_support import handler_packages, package, pkg_index, with_package
 
-BASE_HASH = 'e8f8209eeb8ca94a'
+BASE_HASH = 'e8f8209eeb8ca94a'      # 基准 = 60 僧 × 30 日 + 传闻脚本（gossip，第 6 日）；不带脚本的 ProtoRun() 是另一个世界（5002a67d7ebb5feb）
 NPC_SRC = Path(__file__).resolve().parent.parent / 'tianl' / 'npc'
 DOC = Path(__file__).resolve().parent.parent / 'docs' / 'NPC_ENGINE.md'
 
@@ -95,10 +95,10 @@ class DefsDrivenSpec(unittest.TestCase):
         """内核加载 space / org / post / scenario 等目录：proto60 的文件在其中，必须能被它加载、且不进内核的库表。"""
         from tianl.kernel.spec import load_kernel_defs, load_spec
         k = load_kernel_defs()
-        self.assertTrue(any(i.startswith('package:proto60:') is False and i.startswith('place:proto60:') for i in k.ids()))
+        self.assertTrue(any(i.startswith('place:proto60:') for i in k.ids()))          # 内核加载得到 proto60 的文件……
         codes = {p[0] for p in load_spec().places}
-        self.assertFalse({'hall', 'kit', 'dorm1'} & codes)          # 原型短码没有混进内核的场所表
-        self.assertTrue(all(c.startswith('SH') for c in codes))
+        self.assertFalse({'hall', 'kit', 'dorm1'} & codes)          # ……但原型短码没有混进内核的场所表
+        self.assertEqual(codes, {d['code'] for d in map(k.get, k.ids()) if d['id'].startswith('place:shaolin:')})   # 内核的场所表只有 shaolin scope
 
     def test_place_codes_are_the_prototype_short_codes(self):
         """原型场景的场所 code 沿用原型短码（它进随机数键与基线哈希）：defs 里改 code 就是另一个世界。"""
@@ -118,6 +118,11 @@ class DefsDrivenSpec(unittest.TestCase):
 
 
 # ================================================================= 2 行为包是数据
+def baseline_hash():
+    """原型基准的哈希：与 reference/logs/npc_run_log.txt 的“基准”一行同一个运行（场景的传闻脚本在内），rnd_b2。"""
+    return ProtoRun(script=gossip_script(ProtoRun().common)).run().hash
+
+
 def W(**kw):
     """WhenSpec 的简写：没写的条件都是 None。"""
     return WhenSpec(**{k: kw.get(k) for k in ('slots', 'periods', 'days', 'doms', 'months', 'festivals', 'weathers', 'seasons')})
@@ -128,8 +133,8 @@ def extra_class_package(sp, label, **when):
     when.setdefault('slots', (3,))
     pk = PackageSpec('package:test:' + label, L_GROUP, WhoSpec(None, None, None), W(**when),
                      DoSpec('zen', 'zazen', label, False, None, ''), None, {})
-    i = pkg_index(sp, 'evening_zazen') + 1
-    return dataclasses.replace(sp, stack=sp.stack[:i] + (pk,) + sp.stack[i:])
+    i = max([pkg_index(sp, 'evening_zazen')] + [j for j, x in enumerate(sp.stack) if x.id.startswith('package:test:')]) + 1
+    return dataclasses.replace(sp, stack=sp.stack[:i] + (pk,) + sp.stack[i:])          # 排在已加的测试包之后：同级时先加的先列
 
 
 def label_counts(run, day, slot=3):
@@ -351,6 +356,20 @@ def patched_defs():
                 assert text.count(old) >= 1, (rel, old)
                 f.write_text(text.replace(old, new, count) if count else text.replace(old, new), encoding='utf-8')
 
+            def edit_re(self, rel, pattern, repl, flags=0):
+                f = root / rel
+                text = f.read_text(encoding='utf-8')
+                new, n = re.subn(pattern, repl, text, flags=flags)
+                assert n >= 1, (rel, pattern)
+                f.write_text(new, encoding='utf-8')
+
+            def rename_scope(self, old, new):
+                """把名叫 old 的 scope 整个换成 new：文件名与每条编号里的 scope 段（只改 proto60*.toml 这批文件）。"""
+                for f in sorted(root.rglob('%s*.toml' % old)):
+                    text = f.read_text(encoding='utf-8').replace(':%s:' % old, ':%s:' % new)
+                    f.with_name(f.name.replace(old, new)).write_text(text, encoding='utf-8')
+                    f.unlink()
+
             def append(self, rel, text):
                 with (root / rel).open('a', encoding='utf-8') as fh:
                     fh.write('\n' + text + '\n')
@@ -499,7 +518,7 @@ class Hooks(unittest.TestCase):
     def test_defaults_are_no_ops_and_leave_the_baseline_hash(self):
         self.assertIsNone(life.pulse(None, 1))
         self.assertIsNone(persist.flush(None, 1))
-        self.assertEqual(ProtoRun().run().hash, BASE_HASH)
+        self.assertEqual(baseline_hash(), BASE_HASH)
 
     def test_signatures_are_the_documented_ones(self):
         sig = lambda f: list(inspect.signature(f).parameters)
@@ -609,7 +628,37 @@ class Generalization(unittest.TestCase):
         alloc = {g: sum(eng.acts[g].values()) for g in sp.groups}
         self.assertEqual(sum(alloc.values()), st['ps'])
         self.assertTrue(all(v > 0 for v in alloc.values()))
-        self.assertEqual(ProtoRun().run().hash, BASE_HASH)              # 泛化检查不改原型场景（规格不可变、共用的缓存没被动过）
+        self.assertEqual(baseline_hash(), BASE_HASH)                    # 泛化检查不改原型场景（规格不可变、共用的缓存没被动过）
+
+    def test_the_same_defs_under_another_scope_reproduce_the_baseline(self):
+        """引擎里没有 proto60 的任何东西：把整套 defs 的 scope 从 proto60 换成别的名字，同样的世界、同样的哈希。
+        （docs/NPC_ENGINE.md 第 12 节“为另一处场所写一套 defs”的第一步就是复制并改 scope。）"""
+        with patched_defs() as pd:
+            pd.rename_scope('proto60', 'demo')
+            defs = pd.load(strict=True)                              # 引用完整性照样 100%
+            sp, scn = SiteSpec.from_defs(defs, 'scenario:demo:main'), ScenarioSpec.from_defs(defs, 'scenario:demo:main')
+        self.assertEqual(sp.scope, 'demo')
+        self.assertTrue(all(pk.id.startswith('package:demo:') for pk in sp.stack))
+        run = ProtoRun(spec=sp, scenario=scn, script=gossip_script(ProtoRun(spec=sp, scenario=scn).common, scn)).run()
+        self.assertEqual(run.hash, BASE_HASH)
+
+    def test_editing_only_numbers_in_defs_makes_a_better_300_monk_temple(self):
+        """“同一份 defs 只改人口”能跑，但差事板与工位还是 60 人的尺寸（满员改选两万多次）；再把差事数与工位数也放大 5 倍（只改 defs 里的数），
+        满员改选降到几百次、差事完成数跟着涨——这就是第 12 节“把 proto60 改成 300 僧少林寺要改什么”的第一批改动，都不碰代码。"""
+        with patched_defs() as pd:
+            pd.edit('scenario/proto60.toml', 'population = 60', 'population = 300')
+            pd.edit_re('post/proto60.toml', r'(\["job:proto60:[a-z_]+"\][^\[]*?)count = (\d+)', lambda m: '%scount = %d' % (m.group(1), 5 * int(m.group(2))), re.S)
+            pd.edit_re('facility/proto60.toml', r'stations = (\d+)', lambda m: 'stations = %d' % (5 * int(m.group(1))))
+            defs = pd.load(strict=True)
+            sp, scn = SiteSpec.from_defs(defs, PROTO60_ID), ScenarioSpec.from_defs(defs, PROTO60_ID)
+        big = ProtoRun(spec=sp, scenario=scn).run().engine
+        small = ProtoRun(n=300, days=scn.days).run().engine             # 只改人口
+        self.assertEqual((len(big.people), big.stat['ps']), (300, 300 * 12 * 30))
+        self.assertEqual(big.fac.violations, [])
+        self.assertEqual((big.stat['job_done'], big.stat['job_post']), (5 * 870, 5 * 870))
+        self.assertLess(big.stat['full'] * 10, small.stat['full'])       # 满员改选少了一个数量级以上
+        work = lambda e: e.acts['清众']['作务'] / sum(e.acts['清众'].values())
+        self.assertGreater(work(big), 3 * work(small))                   # 清众的作务时间占比明显回升
 
     def test_roster_scales_with_population_only(self):
         sp, scn = proto60_spec(), proto60_scenario()

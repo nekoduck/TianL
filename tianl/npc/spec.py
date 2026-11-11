@@ -529,7 +529,7 @@ class SiteSpec:
 
         def need_in(where, key, table, what):
             if key not in table:
-                out.append('%s：%s %r 未登记' % (where, what, key))
+                out.append('%s：活动 %r 没有对应的交互' % (where, key) if what == '活动' else '%s：%s %r 未登记' % (where, what, key))
 
         for code in self.capacity:
             need_place('capacity', code)

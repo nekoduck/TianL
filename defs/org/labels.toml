@@ -5,6 +5,7 @@ grain_market = "登封粮市"     # 县城的粮市
 shop = "铺户"                 # 铺户开单时的署名（无岗位人时）
 temple_store = "寺库"         # 寺院存粮
 dorm = "僧寮"                 # 住处不在场所表里时的统称（住处 SH_DORM_n）
+snow_closure = "大雪封山"     # 冬季大雪封路的原因：写进 route_closure.reason 与 ROAD_CLOSED 事件，是状态哈希口径的一部分，改一个字哈希就变
 
 # 寺院粮账的类别（年度报表 year_report 的 grain 字典的键）。键是内核用的英文名，值是报表里的中文类别名。
 [ "param:shaolin:labels".grain_ledger ]

@@ -14,7 +14,7 @@ probes = [
   { place = "place:shaolin:puti", slot = 5 },
   { place = "place:shaolin:gate", slot = 4 },
 ]
-visitor = { name = "香客甲", hall = "外客", org = "外来", age = 30 }   # 潜入者：外来香客
+visitor = { name = "香客甲", hall = "外客", org = "外来", kind = "临时", age = 30 }   # 潜入者：外来香客（kind 写进 person.kind，是状态哈希口径的一部分）
 lock_probe = { place = "place:shaolin:library", slot = 0 }       # 子时潜入上锁场所：物理层拒绝
 takes = [
   { item = "item:shaolin:yijinjing", place = "place:shaolin:puti", slot = 6 },

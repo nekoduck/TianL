@@ -15,7 +15,7 @@ class PhasesMixin:
             self.road_ev = self.ev('ROAD_OPEN', place=self.pl.road)
         if c['month'] in self.S.season.winter_months and not self.closed(d) and self.u('snow', d) < self.P['snow_prob']:
             dur = K['snow_min_days'] + int(self.u('snowdur', d) * K['snow_span'])
-            self.close_road(dur, '大雪封山')
+            self.close_road(dur, self.S.labels['snow_closure'])
 
     def close_road(self, dur, reason):
         self.x('INSERT INTO route_closure VALUES(?,?,?,?)', (self.pl.road, self.day, self.day + dur - 1, reason))
